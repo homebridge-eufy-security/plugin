@@ -1,16 +1,16 @@
 {
   "private": true,
-  "displayName": "Plugin Name",
-  "name": "homebridge-plugin-name",
-  "version": "1.0.0",
-  "description": "A short description about what your plugin does.",
+  "displayName": "Homebridge Eufy Security Control",
+  "name": "homebridge-eufy-security-control",
+  "version": "0.0.3",
+  "description": "Control Eufy security settings from homebridge.",
   "license": "Apache-2.0",
   "repository": {
     "type": "git",
-    "url": "git://github.com/USERNAME/GITHUB_PROJECT_NAME.git"
+    "url": "git://github.com/samemory/homebridge-eufy-security-control.git"
   },
   "bugs": {
-    "url": "https://github.com/USERNAME/GITHUB_PROJECT_NAME/issues"
+    "url": "https://github.com/samemory/homebridge-eufy-security-control/issues"
   },
   "engines": {
     "node": ">=10.17.0",
@@ -26,7 +26,10 @@
   "keywords": [
     "homebridge-plugin"
   ],
-  "dependencies": {},
+  "dependencies": {
+    "eufy-node-client": "^0.5.0",
+    "ipaddr.js": "^2.0.0"
+  },
   "devDependencies": {
     "@types/node": "^14.14.6",
     "@typescript-eslint/eslint-plugin": "^4.6.1",

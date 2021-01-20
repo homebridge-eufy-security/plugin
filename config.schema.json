@@ -1,15 +1,24 @@
 {
-  "pluginAlias": "ExampleHomebridgePlugin",
+  "pluginAlias": "EufySecurityControlHomebridgePlugin",
   "pluginType": "platform",
   "singular": true,
   "schema": {
     "type": "object",
     "properties": {
-      "name": {
-        "title": "Name",
+      "username": {
+        "title": "Eufy username",
         "type": "string",
-        "required": true,
-        "default": "Example Dynamic Platform"
+        "required": true
+      },
+      "password": {
+        "title": "Eufy Password",
+        "type": "string",
+        "required": true
+      },
+      "ipAddress": {
+        "title": "Local IP Address (Homebase)",
+        "type": "string",
+        "required": true
       }
     }
   }
