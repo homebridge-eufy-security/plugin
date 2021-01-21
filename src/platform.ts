@@ -153,7 +153,7 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
 
           // create the accessory handler for the restored accessory
           // this is imported from `platformAccessory.ts`
-          new SecuritySystemPlatformAccessory(this, existingAccessory, devClientService);
+          new SecuritySystemPlatformAccessory(this, existingAccessory, devClientService, this.httpService);
 
           // update accessory cache with any changes to the accessory details and information
           this.api.updatePlatformAccessories([existingAccessory]);
@@ -177,7 +177,7 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
         // create the accessory handler for the newly create accessory
         // this is imported from `platformAccessory.ts`
         if (device.type === 'security-mode') {
-          new SecuritySystemPlatformAccessory(this, accessory, devClientService);
+          new SecuritySystemPlatformAccessory(this, accessory, devClientService, this.httpService);
         }
         // link the accessory to your platform
         this.api.registerPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [accessory]);

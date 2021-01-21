@@ -17,6 +17,7 @@ export class SecuritySystemPlatformAccessory {
     private readonly platform: EufySecurityPlatform,
     private readonly accessory: PlatformAccessory,
     private devClientService: DeviceClientService,
+    private httpService: HttpService,
   ) {
 
     this.platform.log.debug('Constructed Switch');
@@ -42,27 +43,51 @@ export class SecuritySystemPlatformAccessory {
 
   }
 
+  async getCurrentStatus() {
+    const hubs = await this.httpService.listHubs();
+    const arm_mode_obj = hubs[0].params.filter(param => param.param_type === 1224)
+
+    return this.convertStatusCodeToHomekit(arm_mode_obj[0].param_value);
+  }
+
+  convertStatusCodeToHomekit(code: string) {
+    switch (code) {
+      case "1": //Eufy HOME
+        return 0; //homekit home
+      case "0": //homekit AWAY
+        return 1; //Eufy away
+      case "2": //homekit NIGHT
+        return 2; //homekit night (for now)
+      case "63": //Eufy OFF
+        return 3; //homekit disarmed
+
+      default:
+        break;
+    }
+  }
+
   /**
    * Handle requests to get the current value of the "Security System Current State" characteristic
    */
-  handleSecuritySystemCurrentStateGet(callback) {
+  async handleSecuritySystemCurrentStateGet(callback) {
     this.platform.log.debug('Triggered GET SecuritySystemCurrentState');
 
     // set this to a valid value for SecuritySystemCurrentState
-    const currentValue = 1;
+    const currentValue = await this.getCurrentStatus();
 
     callback(null, currentValue);
   }
 
 
+
   /**
    * Handle requests to get the current value of the "Security System Target State" characteristic
    */
-  handleSecuritySystemTargetStateGet(callback) {
+  async handleSecuritySystemTargetStateGet(callback) {
     this.platform.log.debug('Triggered GET SecuritySystemTargetState');
 
     // set this to a valid value for SecuritySystemTargetState
-    const currentValue = 1;
+    const currentValue = await this.getCurrentStatus();
 
     callback(null, currentValue);
   }
@@ -98,6 +123,7 @@ export class SecuritySystemPlatformAccessory {
     }
     else {
       this.devClientService.sendCommandWithInt(CommandType.CMD_SET_ARMING, mode);
+      this.service.updateCharacteristic(this.platform.Characteristic.SecuritySystemCurrentState, value)
     }
 
     callback(null);
