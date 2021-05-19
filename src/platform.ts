@@ -20,11 +20,18 @@ interface EufySecurityPlatformConfig extends PlatformConfig {
 interface Device {
 
 }
+process.on('unhandledRejection', (reason, p) => {
+  console.log('Unhandled Rejection at : PRomise ', p, 'reason', reason);
+});
+
+
 
 
 export class EufySecurityPlatform implements DynamicPlatformPlugin {
   public readonly Service: typeof Service = this.api.hap.Service;
   public readonly Characteristic: typeof Characteristic = this.api.hap.Characteristic;
+
+
 
 
   // this is used to track restored cached accessories
@@ -56,7 +63,6 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
       await this.discoverDevices();
     });
   }
-
 
   // async createConnection() {
   //   const hubs = await this.httpService.listHubs();
@@ -110,7 +116,7 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
     ACTOR_ID: ${ACTOR_ID}
     Station SN: ${stationSn}
     DSK_KEY: ${DSK_KEY}
-    `)
+    `);
 
     const lookupService = new LocalLookupService();
     const address = await lookupService.lookup(this.config.ipAddress);
@@ -126,8 +132,8 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
       {
         uniqueId: hubs[0].station_sn,
         displayName: 'Eufy Security',
-        type: 'security-mode'
-      }
+        type: 'security-mode',
+      },
     ];
 
     // loop over the discovered devices and register each one if it has not already been registered

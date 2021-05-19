@@ -45,21 +45,22 @@ export class SecuritySystemPlatformAccessory {
 
   async getCurrentStatus() {
     const hubs = await this.httpService.listHubs();
-    const arm_mode_obj = hubs[0].params.filter(param => param.param_type === 1224)
-
+    const arm_mode_obj = hubs[0].params.filter(param => param.param_type === 1224);
+    this.platform.log.debug('getCurrentStatus() -- ', arm_mode_obj);
+    this.platform.log.debug('getCurrentStatus() RETURN -- ', arm_mode_obj[0].param_value);
     return this.convertStatusCodeToHomekit(arm_mode_obj[0].param_value);
   }
 
   convertStatusCodeToHomekit(code: string) {
     switch (code) {
-      case "1": //Eufy HOME
+      case '1': //Eufy HOME
         return 0; //homekit home
-      case "0": //homekit AWAY
+      case '0': //homekit AWAY
         return 1; //Eufy away
-      case "2": //homekit NIGHT
+      case '2': //homekit NIGHT
         return 2; //homekit night (for now)
-      case "63": //Eufy OFF
-        return 3; //homekit disarmed
+      case '4': //Eufy custom 2 => back camera off
+        return 3; //homekit disarmed (off)
 
       default:
         break;
@@ -74,6 +75,7 @@ export class SecuritySystemPlatformAccessory {
 
     // set this to a valid value for SecuritySystemCurrentState
     const currentValue = await this.getCurrentStatus();
+    this.platform.log.debug('Handle Current System state:  -- ', currentValue);
 
     callback(null, currentValue);
   }
@@ -96,9 +98,24 @@ export class SecuritySystemPlatformAccessory {
    * Handle requests to set the "Security System Target State" characteristic
    */
   handleSecuritySystemTargetStateSet(value, callback) {
+    this.platform.log.debug('IsConnected? ', this.devClientService.isConnected());
+    this.platform.log.debug('devClientService ', this.devClientService);
     this.platform.log.debug('Triggered SET SecuritySystemTargetState:', value);
+    if (!this.devClientService.isConnected()) {
+
+    }
 
     // CMD_SET_ARMING  # 0 => away 1 => home, 2 => schedule, 63 => disarmed
+    //   states: {
+    //     0: "AWAY",
+    //     1: "HOME",
+    //     2: "SCHEDULE",
+    //     3: "CUSTOM1",
+    //     4: "CUSTOM2",
+    //     5: "CUSTOM3",
+    //     47: "GEO",
+    //     63: "DISARMED"
+    // }
 
     let mode = -1;
     switch (value) {
@@ -112,18 +129,24 @@ export class SecuritySystemPlatformAccessory {
         mode = 2; //eufy schedule (for now)
         break;
       case 3: //homekit OFF
-        mode = 63; //eufy disarmed
+        mode = 4; //mapping to custom 3 right now => back camera off
         break;
       default:
         break;
     }
 
     if (mode === -1) {
-      this.platform.log.error('Error Setting security mode!')
-    }
-    else {
-      this.devClientService.sendCommandWithInt(CommandType.CMD_SET_ARMING, mode);
-      this.service.updateCharacteristic(this.platform.Characteristic.SecuritySystemCurrentState, value)
+      this.platform.log.error('Error Setting security mode!');
+    } else {
+      try {
+        this.devClientService.sendCommandWithInt(CommandType.CMD_SET_ARMING, mode);
+        this.service.updateCharacteristic(this.platform.Characteristic.SecuritySystemCurrentState, value);
+      } catch (error) {
+        this.platform.log.error('Error Setting security mode! (Line 141', error);
+      }
+
+
+
     }
 
     callback(null);
