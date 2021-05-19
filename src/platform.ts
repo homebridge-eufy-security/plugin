@@ -2,8 +2,8 @@ import { API, DynamicPlatformPlugin, Logger, PlatformAccessory, PlatformConfig, 
 
 import { PLATFORM_NAME, PLUGIN_NAME } from './settings';
 import { SecuritySystemPlatformAccessory } from './securitySystemPlatformAccessory';
-
-import { HttpService, LocalLookupService, DeviceClientService, CommandType } from 'eufy-node-client';
+import { EufySecurity } from 'eufy-security-client';
+// import { HttpService, LocalLookupService, DeviceClientService, CommandType } from 'eufy-node-client';
 
 /**
  * HomebridgePlatform
@@ -17,13 +17,6 @@ interface EufySecurityPlatformConfig extends PlatformConfig {
   ipAddress: string;
 }
 
-interface Device {
-
-}
-process.on('unhandledRejection', (reason, p) => {
-  console.log('Unhandled Rejection at : PRomise ', p, 'reason', reason);
-});
-
 
 
 
@@ -36,7 +29,7 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
 
   // this is used to track restored cached accessories
   public readonly accessories: PlatformAccessory[] = [];
-  public httpService: HttpService;
+  // public httpService: HttpService;
   private config: EufySecurityPlatformConfig;
   // public devClientService: DeviceClientService,
 
@@ -49,7 +42,7 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
     this.config = config as EufySecurityPlatformConfig;
     this.log.debug('Finished initializing platform:', this.config.name);
 
-    this.httpService = new HttpService(this.config.username, this.config.password);
+    // this.httpService = new HttpService(this.config.username, this.config.password);
 
     // When this event is fired it means Homebridge has restored all cached accessories from disk.
     // Dynamic Platform plugins should only register new accessories after this event was fired,
@@ -103,38 +96,47 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
 
   async discoverDevices() {
 
-    const hubs = await this.httpService.listHubs();
-    const P2P_DID = hubs[0].p2p_did;
-    const ACTOR_ID = hubs[0].member.action_user_id;
+    // const hubs = await this.httpService.listHubs();
+    // const P2P_DID = hubs[0].p2p_did;
+    // const ACTOR_ID = hubs[0].member.action_user_id;
 
-    const stationSn = hubs[0].station_sn;
-    const dsk = await this.httpService.stationDskKeys(stationSn);
-    const DSK_KEY = dsk.dsk_keys[0].dsk_key;
+    // const stationSn = hubs[0].station_sn;
+    // const dsk = await this.httpService.stationDskKeys(stationSn);
+    // const DSK_KEY = dsk.dsk_keys[0].dsk_key;
 
-    this.log.info(`
-    P2P_DID: ${P2P_DID}
-    ACTOR_ID: ${ACTOR_ID}
-    Station SN: ${stationSn}
-    DSK_KEY: ${DSK_KEY}
-    `);
+    // this.log.info(`
+    // P2P_DID: ${P2P_DID} //***REMOVED***
+    // ACTOR_ID: ${ACTOR_ID}
+    // Station SN: ${stationSn} //***REMOVED***
+    // DSK_KEY: ${DSK_KEY}
+    // `);
 
-    const lookupService = new LocalLookupService();
-    const address = await lookupService.lookup(this.config.ipAddress);
-    this.log.info('Found address', address);
+    // const lookupService = new LocalLookupService();
+    // const address = await lookupService.lookup(this.config.ipAddress);
+    // this.log.info('Found address', address);
 
-    const devClientService = new DeviceClientService(address, P2P_DID, ACTOR_ID);
-    await devClientService.connect();
-    this.log.info('Connected!');
+    // const devClientService = new DeviceClientService(address, P2P_DID, ACTOR_ID);
+    // await devClientService.connect();
+    // this.log.info('Connected!');
 
     //const uuid = this.api.hap.uuid.generate(device.device_sn);
 
+    // const devices = [
+    //   {
+    //     uniqueId: hubs[0].station_sn,
+    //     displayName: 'Eufy Security',
+    //     type: 'security-mode',
+    //   },
+    // ];
+
     const devices = [
       {
-        uniqueId: hubs[0].station_sn,
+        uniqueId: '***REMOVED***',
         displayName: 'Eufy Security',
         type: 'security-mode',
       },
     ];
+
 
     // loop over the discovered devices and register each one if it has not already been registered
     for (const device of devices) {
@@ -159,7 +161,7 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
 
           // create the accessory handler for the restored accessory
           // this is imported from `platformAccessory.ts`
-          new SecuritySystemPlatformAccessory(this, existingAccessory, devClientService, this.httpService);
+          new SecuritySystemPlatformAccessory(this, existingAccessory);
 
           // update accessory cache with any changes to the accessory details and information
           this.api.updatePlatformAccessories([existingAccessory]);
@@ -183,7 +185,8 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
         // create the accessory handler for the newly create accessory
         // this is imported from `platformAccessory.ts`
         if (device.type === 'security-mode') {
-          new SecuritySystemPlatformAccessory(this, accessory, devClientService, this.httpService);
+          // new SecuritySystemPlatformAccessory(this, accessory, devClientService, this.httpService);
+          new SecuritySystemPlatformAccessory(this, accessory);
         }
         // link the accessory to your platform
         this.api.registerPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [accessory]);

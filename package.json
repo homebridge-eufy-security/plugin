@@ -28,6 +28,7 @@
   ],
   "dependencies": {
     "eufy-node-client": "^0.5.0",
+    "eufy-security-client": "^0.8.1",
     "ipaddr.js": "^2.0.0"
   },
   "devDependencies": {
