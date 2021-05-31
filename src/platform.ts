@@ -1,159 +1,151 @@
-import { API, DynamicPlatformPlugin, Logger, PlatformAccessory, PlatformConfig, Service, Characteristic } from 'homebridge';
+import {
+  API,
+  DynamicPlatformPlugin,
+  Logger,
+  PlatformAccessory,
+  PlatformConfig,
+  Service,
+  Characteristic,
+} from "homebridge";
 
-import { PLATFORM_NAME, PLUGIN_NAME } from './settings';
-import { SecuritySystemPlatformAccessory } from './securitySystemPlatformAccessory';
-import { EufySecurity } from 'eufy-security-client';
-// import { HttpService, LocalLookupService, DeviceClientService, CommandType } from 'eufy-node-client';
+import { PLATFORM_NAME, PLUGIN_NAME } from "./settings";
+import { SecuritySystemPlatformAccessory } from "./securitySystemPlatformAccessory";
+import {
+  EufySecurity,
+  EufySecurityConfig,
+  HTTPApi,
+  DeviceType,
+  Station,
+  Device,
+} from "eufy-security-client";
+import { throws } from "assert";
+var bunyan = require("bunyan");
+var eufyLog = bunyan.createLogger({ name: "myapp" });
 
 /**
  * HomebridgePlatform
  * This class is the main constructor for your plugin, this is where you should
  * parse the user config and discover/register accessories with Homebridge.
  */
-
 interface EufySecurityPlatformConfig extends PlatformConfig {
   username: string;
   password: string;
   ipAddress: string;
+  enableDetailedLogging: boolean;
+  pollingIntervalMinutes: number;
 }
-
-
-
 
 export class EufySecurityPlatform implements DynamicPlatformPlugin {
   public readonly Service: typeof Service = this.api.hap.Service;
-  public readonly Characteristic: typeof Characteristic = this.api.hap.Characteristic;
-
-
-
+  public readonly Characteristic: typeof Characteristic =
+    this.api.hap.Characteristic;
+  private eufyClient: EufySecurity;
 
   // this is used to track restored cached accessories
   public readonly accessories: PlatformAccessory[] = [];
-  // public httpService: HttpService;
   private config: EufySecurityPlatformConfig;
-  // public devClientService: DeviceClientService,
+  private eufyConfig: EufySecurityConfig;
 
   constructor(
     public readonly log: Logger,
     config: PlatformConfig,
-    public readonly api: API,
-
+    public readonly api: API
   ) {
     this.config = config as EufySecurityPlatformConfig;
-    this.log.debug('Finished initializing platform:', this.config.name);
 
-    // this.httpService = new HttpService(this.config.username, this.config.password);
+    this.eufyConfig = {
+      username: this.config.username,
+      password: this.config.password,
+      country: "US",
+      language: "en",
+      p2pConnectionSetup: 0,
+      pollingIntervalMinutes: this.config.pollingIntervalMinutes,
+      eventDurationSeconds: 10,
+    } as EufySecurityConfig;
+
+    this.log.debug("Finished initializing platform:", this.config.name);
+    this.log.debug(
+      "enableDetailedLogging: " + this.config.enableDetailedLogging
+    );
+    this.eufyClient = !this.config.enableDetailedLogging
+      ? new EufySecurity(this.eufyConfig)
+      : new EufySecurity(this.eufyConfig, eufyLog);
 
     // When this event is fired it means Homebridge has restored all cached accessories from disk.
     // Dynamic Platform plugins should only register new accessories after this event was fired,
     // in order to ensure they weren't added to homebridge already. This event can also be used
     // to start discovery of new accessories.
-    this.api.on('didFinishLaunching', async () => {
-      log.debug('Executed didFinishLaunching callback');
-
+    this.api.on("didFinishLaunching", async () => {
       // await this.createConnection();
       // run the method to discover / register your devices as accessories
       await this.discoverDevices();
     });
   }
 
-  // async createConnection() {
-  //   const hubs = await this.httpService.listHubs();
-  //   const P2P_DID = hubs[0].p2p_did;
-  //   const ACTOR_ID = hubs[0].member.action_user_id;
-
-  //   const stationSn = hubs[0].station_sn;
-  //   const dsk = await this.httpService.stationDskKeys(stationSn);
-  //   const DSK_KEY = dsk.dsk_keys[0].dsk_key;
-
-  //   this.log.info(`
-  //   P2P_DID: ${P2P_DID}
-  //   ACTOR_ID: ${ACTOR_ID}
-  //   Station SN: ${stationSn}
-  //   DSK_KEY: ${DSK_KEY}
-  //   `)
-
-  //   const lookupService = new LocalLookupService();
-  //   const address = await lookupService.lookup(this.config.ipAddress);
-  //   this.log.info('Found address', address);
-
-  //   // this.devClientService = new DeviceClientService(address, P2P_DID, ACTOR_ID);
-  //   // await this.devClientService.connect();
-  //   // this.log.info('Connected!');
-  // }
-
   /**
    * This function is invoked when homebridge restores cached accessories from disk at startup.
    * It should be used to setup event handlers for characteristics and update respective values.
    */
   configureAccessory(accessory: PlatformAccessory) {
-    this.log.info('Loading accessory from cache:', accessory.displayName);
+    this.log.info("Loading accessory from cache:", accessory.displayName);
 
     // add the restored accessory to the accessories cache so we can track if it has already been registered
     this.accessories.push(accessory);
   }
 
-
   async discoverDevices() {
+    this.log.debug("discoveringDevices");
+    this.log.debug(this.eufyConfig.username);
+    this.log.debug(this.eufyConfig.password);
+    await this.eufyClient
+      .connect()
+      .catch((e) => this.log.error("Error authenticating Eufy : ", e));
+    this.log.debug("EufyClient connected " + this.eufyClient.isConnected());
 
-    // const hubs = await this.httpService.listHubs();
-    // const P2P_DID = hubs[0].p2p_did;
-    // const ACTOR_ID = hubs[0].member.action_user_id;
+    await this.refreshData(this.eufyClient);
 
-    // const stationSn = hubs[0].station_sn;
-    // const dsk = await this.httpService.stationDskKeys(stationSn);
-    // const DSK_KEY = dsk.dsk_keys[0].dsk_key;
+    const eufyHubs = await this.eufyClient.getStations();
+    const eufyDevices = await this.eufyClient.getDevices();
 
-    // this.log.info(`
-    // P2P_DID: ${P2P_DID} //***REMOVED***
-    // ACTOR_ID: ${ACTOR_ID}
-    // Station SN: ${stationSn} //***REMOVED***
-    // DSK_KEY: ${DSK_KEY}
-    // `);
+    this.log.debug("Found " + eufyDevices.length + " devices.");
 
-    // const lookupService = new LocalLookupService();
-    // const address = await lookupService.lookup(this.config.ipAddress);
-    // this.log.info('Found address', address);
+    var hubsAndDevices: Array<Device | Station> = [];
 
-    // const devClientService = new DeviceClientService(address, P2P_DID, ACTOR_ID);
-    // await devClientService.connect();
-    // this.log.info('Connected!');
+    // var devices: { uniqueId: string; displayName: string; type: number; isHub: boolean}[] = [];
 
-    //const uuid = this.api.hap.uuid.generate(device.device_sn);
+    for (const device of eufyDevices) {
+      this.log.debug("Found device " + device.getName());
+      hubsAndDevices.push(device);
+    }
 
-    // const devices = [
-    //   {
-    //     uniqueId: hubs[0].station_sn,
-    //     displayName: 'Eufy Security',
-    //     type: 'security-mode',
-    //   },
-    // ];
-
-    const devices = [
-      {
-        uniqueId: '***REMOVED***',
-        displayName: 'Eufy Security',
-        type: 'security-mode',
-      },
-    ];
-
+    for (const hub of eufyHubs) {
+      this.log.debug("Found device " + hub.getName());
+      hubsAndDevices.push(hub);
+    }
 
     // loop over the discovered devices and register each one if it has not already been registered
-    for (const device of devices) {
-
+    for (const device of hubsAndDevices) {
+      var uniqueId = device.getSerial();
+      var displayName = device.getName();
+      var type = device.getDeviceType();
       // generate a unique id for the accessory this should be generated from
       // something globally unique, but constant, for example, the device serial
       // number or MAC address
-      const uuid = this.api.hap.uuid.generate(device.uniqueId);
+      const uuid = this.api.hap.uuid.generate(uniqueId);
 
       // see if an accessory with the same uuid has already been registered and restored from
       // the cached devices we stored in the `configureAccessory` method above
-      const existingAccessory = this.accessories.find(accessory => accessory.UUID === uuid);
+      const existingAccessory = this.accessories.find(
+        (accessory) => accessory.UUID === uuid
+      );
 
       if (existingAccessory) {
         // the accessory already exists
         if (device) {
-          this.log.info('Restoring existing accessory from cache:', existingAccessory.displayName);
+          this.log.info(
+            "Restoring existing accessory from cache:",
+            existingAccessory.displayName
+          );
 
           // if you need to update the accessory.context then you should run `api.updatePlatformAccessories`. eg.:
           // existingAccessory.context.device = device;
@@ -161,22 +153,38 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
 
           // create the accessory handler for the restored accessory
           // this is imported from `platformAccessory.ts`
-          new SecuritySystemPlatformAccessory(this, existingAccessory);
+          switch (type) {
+            case DeviceType.STATION:
+              new SecuritySystemPlatformAccessory(
+                this,
+                existingAccessory,
+                this.eufyClient,
+                device as Station
+              );
+              break;
+            default:
+              break;
+          }
 
           // update accessory cache with any changes to the accessory details and information
           this.api.updatePlatformAccessories([existingAccessory]);
         } else if (!device) {
           // it is possible to remove platform accessories at any time using `api.unregisterPlatformAccessories`, eg.:
           // remove platform accessories when no longer present
-          this.api.unregisterPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [existingAccessory]);
-          this.log.info('Removing existing accessory from cache:', existingAccessory.displayName);
+          this.api.unregisterPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [
+            existingAccessory,
+          ]);
+          this.log.info(
+            "Removing existing accessory from cache:",
+            existingAccessory.displayName
+          );
         }
       } else {
         // the accessory does not yet exist, so we need to create it
-        this.log.error('Adding new accessory:', device.displayName);
+        this.log.error("Adding new accessory:", displayName);
 
         // create a new accessory
-        const accessory = new this.api.platformAccessory(device.displayName, uuid);
+        const accessory = new this.api.platformAccessory(displayName, uuid);
 
         // store a copy of the device object in the `accessory.context`
         // the `context` property can be used to store any data about the accessory you may need
@@ -184,13 +192,84 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
 
         // create the accessory handler for the newly create accessory
         // this is imported from `platformAccessory.ts`
-        if (device.type === 'security-mode') {
-          // new SecuritySystemPlatformAccessory(this, accessory, devClientService, this.httpService);
-          new SecuritySystemPlatformAccessory(this, accessory);
+
+        switch (type) {
+          case DeviceType.STATION:
+            new SecuritySystemPlatformAccessory(
+              this,
+              accessory,
+              this.eufyClient,
+              device as Station
+            );
+            break;
+          default:
+            break;
         }
+
         // link the accessory to your platform
-        this.api.registerPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [accessory]);
+        this.api.registerPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [
+          accessory,
+        ]);
       }
+    }
+  }
+
+  //   private async onConnect(): Promise<void> {
+  //     await this.setStateAsync("info.connection", { val: true, ack: true });
+  //     await this.refreshData(this);
+
+  //     const api = this.eufy.getApi();
+  //     const api_base = api.getAPIBase();
+  //     const token = api.getToken();
+  //     let token_expiration = api.getTokenExpiration();
+  //     const trusted_token_expiration = api.getTrustedTokenExpiration();
+
+  //     if (token_expiration?.getTime() !== trusted_token_expiration.getTime())
+  //         try {
+  //             const trusted_devices = await api.listTrustDevice();
+  //             trusted_devices.forEach(trusted_device => {
+  //                 if (trusted_device.is_current_device === 1) {
+  //                     token_expiration = trusted_token_expiration;
+  //                     api.setTokenExpiration(token_expiration);
+  //                     this.logger.debug(`onConnect(): This device is trusted. Token expiration extended to: ${token_expiration})`);
+  //                 }
+  //             });
+  //         } catch (error) {
+  //             this.logger.error(`trusted_devices - Error:`, error);
+  //         }
+
+  //     if (api_base) {
+  //         this.logger.debug(`Save api_base - api_base: ${api_base}`);
+  //         this.setAPIBase(api_base);
+  //     }
+
+  //     if (token && token_expiration) {
+  //         this.logger.debug(`Save token and expiration - token: ${token} token_expiration: ${token_expiration}`);
+  //         this.setCloudToken(token, token_expiration);
+  //     }
+
+  //     this.eufyClient.registerPushNotifications(this.getPersistentData().push_credentials, this.getPersistentData().push_persistentIds);
+  //     let connectionType = P2PConnectionType.PREFER_LOCAL;
+  //     if (this.config.p2pConnectionType === "only_local") {
+  //         connectionType = P2PConnectionType.ONLY_LOCAL;
+  //     } else if (this.config.p2pConnectionType === "only_local") {
+  //         connectionType = P2PConnectionType.QUICKEST;
+  //     }
+  //     Object.values(this.eufy.getStations()).forEach(function (station: Station) {
+  //         station.connect(connectionType, true);
+  //     });
+  // }
+
+  public async refreshData(client: EufySecurity): Promise<void> {
+    this.log.debug(
+      `PollingInterval: ${this.eufyConfig.pollingIntervalMinutes}`
+    );
+    if (client) {
+      this.log.info("Refresh data from cloud and schedule next refresh.");
+      await client.refreshData();
+      setTimeout(() => {
+        this.refreshData(client);
+      }, this.eufyConfig.pollingIntervalMinutes * 60 * 1000);
     }
   }
 }
