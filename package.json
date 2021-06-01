@@ -27,8 +27,8 @@
     "homebridge-plugin"
   ],
   "dependencies": {
-    "eufy-node-client": "^0.5.0",
-    "eufy-security-client": "^0.8.1",
+    "bunyan": "^1.8.15",
+    "eufy-security-client": "^0.8.2",
     "ipaddr.js": "^2.0.0"
   },
   "devDependencies": {
