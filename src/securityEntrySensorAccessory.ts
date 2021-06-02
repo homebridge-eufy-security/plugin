@@ -4,13 +4,13 @@ import {
   CharacteristicValue,
   CharacteristicSetCallback,
   CharacteristicGetCallback,
-} from "homebridge";
+} from 'homebridge';
 
-import { EufySecurityPlatform } from "./platform";
+import { EufySecurityPlatform } from './platform';
 
 // import { HttpService, LocalLookupService, DeviceClientService, CommandType } from 'eufy-node-client';
 
-import { EufySecurity, HTTPApi, Station, Device, Sensor, EntrySensor } from "eufy-security-client";
+import { EufySecurity, HTTPApi, Station, Device, Sensor, EntrySensor } from 'eufy-security-client';
 
 /**
  * Platform Accessory
@@ -24,20 +24,20 @@ export class SecurityEntrySensorAccessory {
     private readonly platform: EufySecurityPlatform,
     private readonly accessory: PlatformAccessory,
     private eufyClient: EufySecurity,
-    private eufyDevice: EntrySensor
+    private eufyDevice: EntrySensor,
   ) {
-    this.platform.log.debug("Constructed Switch");
+    this.platform.log.debug('Constructed Switch');
     // set accessory information
     this.accessory
       .getService(this.platform.Service.AccessoryInformation)!
-      .setCharacteristic(this.platform.Characteristic.Manufacturer, "Eufy")
+      .setCharacteristic(this.platform.Characteristic.Manufacturer, 'Eufy')
       .setCharacteristic(
         this.platform.Characteristic.Model,
-        "Security Mode Control"
+        'Security Mode Control',
       )
       .setCharacteristic(
         this.platform.Characteristic.SerialNumber,
-        accessory.UUID
+        accessory.UUID,
       );
 
     this.service =
@@ -46,23 +46,23 @@ export class SecurityEntrySensorAccessory {
 
     this.service.setCharacteristic(
       this.platform.Characteristic.Name,
-      accessory.displayName
+      accessory.displayName,
     );
 
     // create handlers for required characteristics
     this.service
       .getCharacteristic(
-        this.platform.Characteristic.ContactSensorState
+        this.platform.Characteristic.ContactSensorState,
       )
-      .on("get", this.handleSecuritySystemCurrentStateGet.bind(this));
+      .on('get', this.handleSecuritySystemCurrentStateGet.bind(this));
 
   }
 
   async getCurrentStatus() {
     this.platform.log.debug(
       this.eufyClient.isConnected()
-        ? "Connected to Eufy API"
-        : "Not connected to Eufy API"
+        ? 'Connected to Eufy API'
+        : 'Not connected to Eufy API',
     );
 
     // const arm_mode_obj = hubs[0].params.filter(param => param.param_type === 1224);
@@ -78,11 +78,11 @@ export class SecurityEntrySensorAccessory {
    * Handle requests to get the current value of the "Security System Current State" characteristic
    */
   async handleSecuritySystemCurrentStateGet(callback) {
-    this.platform.log.debug("Triggered GET SecuritySystemCurrentState");
+    this.platform.log.debug('Triggered GET SecuritySystemCurrentState');
 
     // set this to a valid value for SecuritySystemCurrentState
     const currentValue = await this.getCurrentStatus();
-    this.platform.log.debug("Handle Current System state:  -- ", currentValue);
+    this.platform.log.debug('Handle Current System state:  -- ', currentValue);
 
     callback(null, currentValue);
   }

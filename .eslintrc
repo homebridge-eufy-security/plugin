@@ -32,6 +32,7 @@
     "@typescript-eslint/no-non-null-assertion": "off",
     "@typescript-eslint/explicit-module-boundary-types": "off",
     "@typescript-eslint/semi": ["warn"],
-    "@typescript-eslint/member-delimiter-style": ["warn"]
+    "@typescript-eslint/member-delimiter-style": ["warn"],
+    "@typescript-eslint/no-unused-vars": "off"
   }
 }
