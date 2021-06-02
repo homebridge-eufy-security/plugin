@@ -87,7 +87,9 @@ export class SecuritySystemPlatformAccessory {
         return 1; //Eufy away
       case 2: //homekit NIGHT
         return 2; //homekit night (for now)
-      case 4: //Eufy custom 2 => back camera off
+      case 47: //Eufy custom 2 => back camera off
+        return 4; //homekit disarmed (off)
+      case 63: //Eufy custom 2 => back camera off
         return 3; //homekit disarmed (off)
 
       default:
@@ -152,10 +154,10 @@ export class SecuritySystemPlatformAccessory {
         mode = 0; //eufy away
         break;
       case 2: //homekit NIGHT
-        mode = 2; //eufy schedule (for now)
+        mode = 3; //eufy schedule (for now)
         break;
       case 3: //homekit OFF
-        mode = 4; //mapping to custom 3 right now => back camera off
+        mode = 63; //home kit disarmed
         break;
       default:
         break;
