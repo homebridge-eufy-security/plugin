@@ -4,8 +4,8 @@ import {
   PlatformConfig,
 } from 'homebridge';
 
-import { EufySecurityPlatform, EufySecurityPlatformConfig } from './platform';
-import { EufySecurity, Station } from 'eufy-security-client';
+import { EufySecurityPlatform } from './platform';
+import { EufySecurity, HTTPApi, Station } from 'eufy-security-client';
 
 /**
  * Platform Accessory
@@ -20,7 +20,7 @@ export class SecuritySystemPlatformAccessory {
     private readonly accessory: PlatformAccessory,
     private eufyClient: EufySecurity,
     private eufyStation: Station,
-    private config: EufySecurityPlatformConfig,
+    private config: PlatformConfig,
   ) {
     this.platform.log.debug('Constructed Switch');
     // set accessory information
@@ -72,26 +72,11 @@ export class SecuritySystemPlatformAccessory {
     return this.convertStatusCodeToHomekit(guardMode.value as number);
   }
 
-  convertMode(eufyMode: number) {
-    const modes = [
-      {'hk': 0, 'eufy': this.config.hkHome},
-      {'hk': 1, 'eufy': this.config.hkAway},
-      {'hk': 2, 'eufy': this.config.hkNight},
-      {'hk': 3, 'eufy': this.config.hkOff},
-     
-    ];
-    const modeObj = modes.filter(m => {
-      return m.eufy === eufyMode;
-    });
-
-    return modeObj[0].hk;
-
-  }
-
-
   convertStatusCodeToHomekit(code: number) {
 
-    
+
+
+
     //---Eufy Modes--------
     //     0: "AWAY",
     //     1: "HOME",
@@ -110,21 +95,21 @@ export class SecuritySystemPlatformAccessory {
     //-----------------------
     switch (code) {
       case 0: //Eufy mode
-        return this.convertMode(0);
+        return 0; //homekit mode
       case 1: 
-        return this.convertMode(1);
+        return 1; 
       case 2: 
-        return this.convertMode(2);
+        return 2;
       case 3: 
-        return this.convertMode(3); 
+        return 4; 
       case 4: 
-        return this.convertMode(4); 
+        return 3; 
       case 5: 
-        return this.convertMode(5); 
+        return 3; 
       case 47: 
-        return this.convertMode(47); 
+        return 3; 
       case 63:
-        return this.convertMode(63); 
+        return 3; 
       default:
         break;
     }
@@ -170,29 +155,26 @@ export class SecuritySystemPlatformAccessory {
     //     63: "DISARMED"
     // }
 
-
-
-
     let mode = -1;
     switch (value) {
       case 0: //homekit HOME
-        mode = this.config.hkHome; //eufy home
+        mode = 1; //eufy home
         break;
       case 1: //homekit AWAY
-        mode = this.config.hkAway;
+        mode = 0; //eufy away
         break;
       case 2: //homekit NIGHT
-        mode = this.config.hkNight;
+        mode = 3; //eufy schedule (for now)
         break;
       case 3: //homekit OFF
-        mode = this.config.hkOff;
+        mode = 63; //home kit disarmed
         break;
       default:
         break;
     }
 
     if (mode === -1) {
-      this.platform.log.error('Error Setting security mode! (mode returned -1)');
+      this.platform.log.error('Error Setting security mode!');
     } else {
       try {
         this.eufyClient.setStationProperty(
@@ -206,7 +188,7 @@ export class SecuritySystemPlatformAccessory {
         );
       } catch (error) {
         this.platform.log.error(
-          'Error Setting security mode!',
+          'Error Setting security mode! (Line 141',
           error,
         );
       }

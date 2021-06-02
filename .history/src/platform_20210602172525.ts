@@ -34,16 +34,20 @@ const eufyLog = bunyan.createLogger({ name: 'eufyLog' });
  * This class is the main constructor for your plugin, this is where you should
  * parse the user config and discover/register accessories with Homebridge.
  */
-export interface EufySecurityPlatformConfig extends PlatformConfig {
+interface EufySecurityPlatformConfig extends PlatformConfig {
   username: string;
   password: string;
   ipAddress: string;
   enableDetailedLogging: boolean;
   pollingIntervalMinutes: number;
-  hkHome: number;
-  hkAway: number;
-  hkNight: number;
-  hkOff: number;
+  eufyHome: string;
+  eufyAway: string;
+  eufySchedule: string;
+  eufyC1: string;
+  eufyC2: string;
+  eufyC3: string;
+  eufyC1: string;
+  eufyC1: string;
 }
 
 export class EufySecurityPlatform implements DynamicPlatformPlugin {

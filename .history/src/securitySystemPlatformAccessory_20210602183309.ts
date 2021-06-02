@@ -110,21 +110,23 @@ export class SecuritySystemPlatformAccessory {
     //-----------------------
     switch (code) {
       case 0: //Eufy mode
-        return this.convertMode(0);
+        return modes.filter(m => {
+          return m.hk === 0;
+        }); //homekit mode
       case 1: 
-        return this.convertMode(1);
+        return this.config.eufyHome; 
       case 2: 
-        return this.convertMode(2);
+        return this.config.eufySchedule;
       case 3: 
-        return this.convertMode(3); 
+        return this.config.eufyC1; 
       case 4: 
-        return this.convertMode(4); 
+        return this.config.eufyC2; 
       case 5: 
-        return this.convertMode(5); 
+        return this.config.eufyC3; 
       case 47: 
-        return this.convertMode(47); 
+        return this.config.eufyGeo; 
       case 63:
-        return this.convertMode(63); 
+        return this.config.eufyDisarmed; 
       default:
         break;
     }

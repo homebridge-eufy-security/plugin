@@ -1,0 +1,72 @@
+{
+  "pluginAlias": "EufySecurityControlHomebridgePlugin",
+  "pluginType": "platform",
+  "singular": true,
+  "schema": {
+    "type": "object",
+    "properties": {
+      "username": {
+        "title": "Eufy username",
+        "type": "string",
+        "required": true
+      },
+      "password": {
+        "title": "Eufy Password",
+        "type": "string",
+        "required": true
+      },
+      "ipAddress": {
+        "title": "Local IP Address (Homebase)",
+        "type": "string",
+        "required": false
+      },
+      "enableDetailedLogging": {
+        "title": "Enable Detailed Logging? (True/False)",
+        "type": "string",
+        "required": false
+      }, 
+      "pollingIntervalMinutes": {
+        "title": "Polling Interval (in minutes) ",
+        "type": "string",
+        "required": false
+      }
+    }
+  },
+  "layout": [
+    "name",
+    {
+      "type": "flex",
+      "flex-flow": "row wrap",
+      "items": [
+        "username",
+        {
+          "key": "password",
+          "type": "password"
+        }
+      ]
+    },
+    {
+      "type": "fieldset",
+      "title": "Optional Settings",
+      "expandable": true,
+      "expanded": false,
+      "items": [
+        "pin",
+        "routines",
+        "debug",
+        "refresh",
+        "filter",
+        "deviceListHandling",
+        {
+          "key": "deviceList",
+          "type": "array",
+          "items": {
+            "title": "DeviceName",
+            "description": "Name of the device you want to ignore",
+            "type": "string"
+          }
+        }
+      ]
+    }
+  ]
+}

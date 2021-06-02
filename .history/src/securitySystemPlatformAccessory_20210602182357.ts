@@ -72,7 +72,9 @@ export class SecuritySystemPlatformAccessory {
     return this.convertStatusCodeToHomekit(guardMode.value as number);
   }
 
-  convertMode(eufyMode: number) {
+
+  convertStatusCodeToHomekit(code: number) {
+
     const modes = [
       {'hk': 0, 'eufy': this.config.hkHome},
       {'hk': 1, 'eufy': this.config.hkAway},
@@ -80,18 +82,6 @@ export class SecuritySystemPlatformAccessory {
       {'hk': 3, 'eufy': this.config.hkOff},
      
     ];
-    const modeObj = modes.filter(m => {
-      return m.eufy === eufyMode;
-    });
-
-    return modeObj[0].hk;
-
-  }
-
-
-  convertStatusCodeToHomekit(code: number) {
-
-    
     //---Eufy Modes--------
     //     0: "AWAY",
     //     1: "HOME",
@@ -110,21 +100,21 @@ export class SecuritySystemPlatformAccessory {
     //-----------------------
     switch (code) {
       case 0: //Eufy mode
-        return this.convertMode(0);
+        return this.config.eufyAway; //homekit mode
       case 1: 
-        return this.convertMode(1);
+        return this.config.eufyHome; 
       case 2: 
-        return this.convertMode(2);
+        return this.config.eufySchedule;
       case 3: 
-        return this.convertMode(3); 
+        return this.config.eufyC1; 
       case 4: 
-        return this.convertMode(4); 
+        return this.config.eufyC2; 
       case 5: 
-        return this.convertMode(5); 
+        return this.config.eufyC3; 
       case 47: 
-        return this.convertMode(47); 
+        return this.config.eufyGeo; 
       case 63:
-        return this.convertMode(63); 
+        return this.config.eufyDisarmed; 
       default:
         break;
     }

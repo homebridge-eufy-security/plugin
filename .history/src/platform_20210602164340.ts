@@ -27,23 +27,19 @@ import {
 } from 'eufy-security-client';
 // import { throws } from 'assert';
 import bunyan from 'bunyan';
-const eufyLog = bunyan.createLogger({ name: 'eufyLog' });
+const eufyLog = bunyan.createLogger({ name: 'myapp' });
 
 /**
  * HomebridgePlatform
  * This class is the main constructor for your plugin, this is where you should
  * parse the user config and discover/register accessories with Homebridge.
  */
-export interface EufySecurityPlatformConfig extends PlatformConfig {
+interface EufySecurityPlatformConfig extends PlatformConfig {
   username: string;
   password: string;
   ipAddress: string;
   enableDetailedLogging: boolean;
   pollingIntervalMinutes: number;
-  hkHome: number;
-  hkAway: number;
-  hkNight: number;
-  hkOff: number;
 }
 
 export class EufySecurityPlatform implements DynamicPlatformPlugin {
@@ -171,7 +167,6 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
                 existingAccessory,
                 this.eufyClient,
                 device as Station,
-                this.config,
               );
               break;
             case DeviceType.MOTION_SENSOR:

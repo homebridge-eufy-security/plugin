@@ -27,23 +27,19 @@ import {
 } from 'eufy-security-client';
 // import { throws } from 'assert';
 import bunyan from 'bunyan';
-const eufyLog = bunyan.createLogger({ name: 'eufyLog' });
+const eufyLog = bunyan.createLogger({ name: 'myapp' });
 
 /**
  * HomebridgePlatform
  * This class is the main constructor for your plugin, this is where you should
  * parse the user config and discover/register accessories with Homebridge.
  */
-export interface EufySecurityPlatformConfig extends PlatformConfig {
+interface EufySecurityPlatformConfig extends PlatformConfig {
   username: string;
   password: string;
   ipAddress: string;
   enableDetailedLogging: boolean;
   pollingIntervalMinutes: number;
-  hkHome: number;
-  hkAway: number;
-  hkNight: number;
-  hkOff: number;
 }
 
 export class EufySecurityPlatform implements DynamicPlatformPlugin {
@@ -123,6 +119,7 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
 
     const hubsAndDevices: Array<Device | Station> = [];
 
+    // const devices: { uniqueId: string; displayName: string; type: number; isHub: boolean}[] = [];
 
     for (const device of eufyDevices) {
       this.log.debug('Found device ' + device.getName());
@@ -171,7 +168,6 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
                 existingAccessory,
                 this.eufyClient,
                 device as Station,
-                this.config,
               );
               break;
             case DeviceType.MOTION_SENSOR:
@@ -303,6 +299,52 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
       }
     }
   }
+
+  //   private async onConnect(): Promise<void> {
+  //     await this.setStateAsync("info.connection", { val: true, ack: true });
+  //     await this.refreshData(this);
+
+  //     const api = this.eufy.getApi();
+  //     const api_base = api.getAPIBase();
+  //     const token = api.getToken();
+  //     let token_expiration = api.getTokenExpiration();
+  //     const trusted_token_expiration = api.getTrustedTokenExpiration();
+
+  //     if (token_expiration?.getTime() !== trusted_token_expiration.getTime())
+  //         try {
+  //             const trusted_devices = await api.listTrustDevice();
+  //             trusted_devices.forEach(trusted_device => {
+  //                 if (trusted_device.is_current_device === 1) {
+  //                     token_expiration = trusted_token_expiration;
+  //                     api.setTokenExpiration(token_expiration);
+  //                     this.logger.debug(`onConnect(): This device is trusted. Token expiration extended to: ${token_expiration})`);
+  //                 }
+  //             });
+  //         } catch (error) {
+  //             this.logger.error(`trusted_devices - Error:`, error);
+  //         }
+
+  //     if (api_base) {
+  //         this.logger.debug(`Save api_base - api_base: ${api_base}`);
+  //         this.setAPIBase(api_base);
+  //     }
+
+  //     if (token && token_expiration) {
+  //         this.logger.debug(`Save token and expiration - token: ${token} token_expiration: ${token_expiration}`);
+  //         this.setCloudToken(token, token_expiration);
+  //     }
+
+  //     this.eufyClient.registerPushNotifications(this.getPersistentData().push_credentials, this.getPersistentData().push_persistentIds);
+  //     let connectionType = P2PConnectionType.PREFER_LOCAL;
+  //     if (this.config.p2pConnectionType === "only_local") {
+  //         connectionType = P2PConnectionType.ONLY_LOCAL;
+  //     } else if (this.config.p2pConnectionType === "only_local") {
+  //         connectionType = P2PConnectionType.QUICKEST;
+  //     }
+  //     Object.values(this.eufy.getStations()).forEach(function (station: Station) {
+  //         station.connect(connectionType, true);
+  //     });
+  // }
 
   public async refreshData(client: EufySecurity): Promise<void> {
     this.log.debug(

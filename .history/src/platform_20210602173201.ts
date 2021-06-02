@@ -40,10 +40,14 @@ export interface EufySecurityPlatformConfig extends PlatformConfig {
   ipAddress: string;
   enableDetailedLogging: boolean;
   pollingIntervalMinutes: number;
-  hkHome: number;
-  hkAway: number;
-  hkNight: number;
-  hkOff: number;
+  eufyHome: number;
+  eufyAway: number;
+  eufySchedule: number;
+  eufyC1: number;
+  eufyC2: number;
+  eufyC3: number;
+  eufyGeo: number;
+  eufyDisarmed: number;
 }
 
 export class EufySecurityPlatform implements DynamicPlatformPlugin {
