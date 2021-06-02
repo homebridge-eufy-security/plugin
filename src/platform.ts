@@ -9,7 +9,12 @@ import {
 } from "homebridge";
 
 import { PLATFORM_NAME, PLUGIN_NAME } from "./settings";
+
 import { SecuritySystemPlatformAccessory } from "./securitySystemPlatformAccessory";
+import { SecurityEntrySensorAccessory } from "./securityEntrySensorAccessory";
+import { SecurityMotionSensorAccessory } from "./securityMotionSensorAccessory";
+import { SecurityCameraAccessory } from "./securityCameraAccessory";
+
 import {
   EufySecurity,
   EufySecurityConfig,
@@ -17,6 +22,9 @@ import {
   DeviceType,
   Station,
   Device,
+  EntrySensor,
+  MotionSensor,
+  Camera,
 } from "eufy-security-client";
 import { throws } from "assert";
 var bunyan = require("bunyan");
@@ -162,6 +170,45 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
                 device as Station
               );
               break;
+            case DeviceType.MOTION_SENSOR:
+              new SecurityMotionSensorAccessory(
+                this,
+                existingAccessory,
+                this.eufyClient,
+                device as MotionSensor
+              );
+              break;
+            case DeviceType.CAMERA:
+            case DeviceType.CAMERA2:
+            case DeviceType.CAMERA2C:
+            case DeviceType.CAMERA2C_PRO:
+            case DeviceType.CAMERA2_PRO:
+            case DeviceType.CAMERA_E:
+            case DeviceType.DOORBELL:
+            case DeviceType.BATTERY_DOORBELL:
+            case DeviceType.BATTERY_DOORBELL_2:
+            case DeviceType.FLOODLIGHT:
+            case DeviceType.INDOOR_CAMERA:
+            case DeviceType.INDOOR_CAMERA_1080:
+            case DeviceType.INDOOR_PT_CAMERA:
+            case DeviceType.INDOOR_PT_CAMERA_1080:
+            case DeviceType.SOLO_CAMERA:
+            case DeviceType.SOLO_CAMERA_PRO:
+              new SecurityCameraAccessory(
+                this,
+                existingAccessory,
+                this.eufyClient,
+                device as Camera
+              );
+              break;
+            case DeviceType.SENSOR:
+              new SecurityEntrySensorAccessory(
+                this,
+                existingAccessory,
+                this.eufyClient,
+                device as EntrySensor
+              );
+              break;
             default:
               break;
           }
@@ -200,6 +247,45 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
               accessory,
               this.eufyClient,
               device as Station
+            );
+            break;
+          case DeviceType.MOTION_SENSOR:
+            new SecurityMotionSensorAccessory(
+              this,
+              accessory,
+              this.eufyClient,
+              device as MotionSensor
+            );
+            break;
+          case DeviceType.CAMERA:
+          case DeviceType.CAMERA2:
+          case DeviceType.CAMERA2C:
+          case DeviceType.CAMERA2C_PRO:
+          case DeviceType.CAMERA2_PRO:
+          case DeviceType.CAMERA_E:
+          case DeviceType.DOORBELL:
+          case DeviceType.BATTERY_DOORBELL:
+          case DeviceType.BATTERY_DOORBELL_2:
+          case DeviceType.FLOODLIGHT:
+          case DeviceType.INDOOR_CAMERA:
+          case DeviceType.INDOOR_CAMERA_1080:
+          case DeviceType.INDOOR_PT_CAMERA:
+          case DeviceType.INDOOR_PT_CAMERA_1080:
+          case DeviceType.SOLO_CAMERA:
+          case DeviceType.SOLO_CAMERA_PRO:
+            new SecurityCameraAccessory(
+              this,
+              accessory,
+              this.eufyClient,
+              device as Camera
+            );
+            break;
+          case DeviceType.SENSOR:
+            new SecurityEntrySensorAccessory(
+              this,
+              accessory,
+              this.eufyClient,
+              device as EntrySensor
             );
             break;
           default:
@@ -265,7 +351,7 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
       `PollingInterval: ${this.eufyConfig.pollingIntervalMinutes}`
     );
     if (client) {
-      this.log.info("Refresh data from cloud and schedule next refresh.");
+      this.log.debug("Refresh data from cloud and schedule next refresh.");
       await client.refreshData();
       setTimeout(() => {
         this.refreshData(client);
