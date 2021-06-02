@@ -26,7 +26,7 @@ import {
   Camera,
 } from 'eufy-security-client';
 // import { throws } from 'assert';
-import { bunyan } from 'bunyan';
+import bunyan from 'bunyan';
 const eufyLog = bunyan.createLogger({ name: 'myapp' });
 
 /**
@@ -67,7 +67,7 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
       country: 'US',
       language: 'en',
       p2pConnectionSetup: 0,
-      pollingIntervalMinutes: this.config.pollingIntervalMinutes,
+      pollingIntervalMinutes: this.config.pollingIntervalMinutes?? 10,
       eventDurationSeconds: 10,
     } as EufySecurityConfig;
 

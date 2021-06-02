@@ -18,7 +18,17 @@
       "ipAddress": {
         "title": "Local IP Address (Homebase)",
         "type": "string",
-        "required": true
+        "required": false
+      },
+      "enableDetailedLogging": {
+        "title": "Enable Detailed Logging? (True/False)",
+        "type": "string",
+        "required": false
+      }, 
+      "pollingIntervalMinutes": {
+        "title": "Polling Interval (in minutes) ",
+        "type": "string",
+        "required": false
       }
     }
   }
