@@ -63,7 +63,7 @@ export class SecuritySystemPlatformAccessory {
   }
 
   async getCurrentStatus() {
-    this.platform.log.info(
+    this.platform.log.debug(
       this.eufyClient.isConnected()
         ? "Connected to Eufy API"
         : "Not connected to Eufy API"
