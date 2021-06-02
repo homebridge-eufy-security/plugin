@@ -1,5 +1,4 @@
 {
-  "private": false,
   "displayName": "Homebridge Eufy Security Control",
   "name": "@samemory/homebridge-eufy-security-control",
   "version": "0.0.3",
