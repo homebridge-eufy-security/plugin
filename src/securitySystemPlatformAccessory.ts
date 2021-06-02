@@ -1,16 +1,13 @@
 import {
   Service,
   PlatformAccessory,
-  CharacteristicValue,
-  CharacteristicSetCallback,
-  CharacteristicGetCallback,
 } from "homebridge";
 
 import { EufySecurityPlatform } from "./platform";
 
 // import { HttpService, LocalLookupService, DeviceClientService, CommandType } from 'eufy-node-client';
 
-import { EufySecurity, HTTPApi, Station } from "eufy-security-client";
+import { Station } from "eufy-security-client";
 
 /**
  * Platform Accessory
@@ -23,7 +20,6 @@ export class SecuritySystemPlatformAccessory {
   constructor(
     private readonly platform: EufySecurityPlatform,
     private readonly accessory: PlatformAccessory,
-    private eufyClient: EufySecurity,
     private eufyStation: Station
   ) {
     this.platform.log.debug("Constructed Switch");
@@ -37,7 +33,7 @@ export class SecuritySystemPlatformAccessory {
       )
       .setCharacteristic(
         this.platform.Characteristic.SerialNumber,
-        accessory.UUID
+        eufyStation.getSerial()
       );
 
     this.service =
@@ -64,7 +60,7 @@ export class SecuritySystemPlatformAccessory {
 
   async getCurrentStatus() {
     this.platform.log.debug(
-      this.eufyClient.isConnected()
+      this.eufyStation.isConnected()
         ? "Connected to Eufy API"
         : "Not connected to Eufy API"
     );
@@ -72,10 +68,10 @@ export class SecuritySystemPlatformAccessory {
     // const arm_mode_obj = hubs[0].params.filter(param => param.param_type === 1224);
     // this.platform.log.debug('getCurrentStatus() -- ', arm_mode_obj);
     // this.platform.log.debug('getCurrentStatus() RETURN -- ', arm_mode_obj[0].param_value);
-    const guardMode = this.eufyClient
-      .getStation(this.eufyStation.getSerial())
-      .getGuardMode();
-    this.platform.log.info("Eufy Guard Mode: ", guardMode);
+    const guardMode = this.eufyStation.getGuardMode();
+
+    this.platform.log.debug("Eufy Guard Mode: ", guardMode);
+
     return this.convertStatusCodeToHomekit(guardMode.value as number);
   }
 
@@ -83,13 +79,13 @@ export class SecuritySystemPlatformAccessory {
     switch (code) {
       case 1: //Eufy HOME
         return 0; //homekit home
-      case 0: //homekit AWAY
-        return 1; //Eufy away
-      case 2: //homekit NIGHT
+      case 0: //Eufy AWAY
+        return 1; //homekit away
+      case 2: //Eufy NIGHT
         return 2; //homekit night (for now)
-      case 47: //Eufy custom 2 => back camera off
-        return 4; //homekit disarmed (off)
-      case 63: //Eufy custom 2 => back camera off
+      case 47: //Eufy GEO
+        return 4; //homekit alarm
+      case 63: //Eufy Disarmed
         return 3; //homekit disarmed (off)
 
       default:
@@ -138,7 +134,7 @@ export class SecuritySystemPlatformAccessory {
     //     0: "AWAY",
     //     1: "HOME",
     //     2: "SCHEDULE",
-    //     3: "CUSTOM1",
+    //     3: "NIGHT",
     //     4: "CUSTOM2",
     //     5: "CUSTOM3",
     //     47: "GEO",
@@ -154,10 +150,10 @@ export class SecuritySystemPlatformAccessory {
         mode = 0; //eufy away
         break;
       case 2: //homekit NIGHT
-        mode = 3; //eufy schedule (for now)
+        mode = 3; //eufy NIGHT
         break;
       case 3: //homekit OFF
-        mode = 63; //home kit disarmed
+        mode = 63; //Eufy disarmed
         break;
       default:
         break;
@@ -167,12 +163,7 @@ export class SecuritySystemPlatformAccessory {
       this.platform.log.error("Error Setting security mode!");
     } else {
       try {
-        // this.devClientService.sendCommandWithInt(CommandType.CMD_SET_ARMING, mode);
-        this.eufyClient.setStationProperty(
-          this.eufyStation.getSerial(),
-          "guardMode",
-          mode
-        );
+        this.eufyStation.setGuardMode(mode);
         this.service.updateCharacteristic(
           this.platform.Characteristic.SecuritySystemCurrentState,
           value
