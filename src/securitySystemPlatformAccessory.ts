@@ -28,11 +28,14 @@ export class SecuritySystemPlatformAccessory {
       .setCharacteristic(this.platform.Characteristic.Manufacturer, 'Eufy')
       .setCharacteristic(
         this.platform.Characteristic.Model,
-        'Security Mode Control',
+        eufyStation.getModel(),
       )
       .setCharacteristic(
         this.platform.Characteristic.SerialNumber,
         eufyStation.getSerial(),
+      )
+      .setCharacteristic(
+        this.platform.Characteristic.FirmwareRevision, eufyStation.getSoftwareVersion(),
       );
 
     this.service =
@@ -79,13 +82,11 @@ export class SecuritySystemPlatformAccessory {
       {'hk': 3, 'eufy': this.config.hkOff},
      
     ];
-    this.platform.log.info('Eufy mode from config: ', this.config.hkHome, this.config.hkNight);
     const modeObj = modes.filter(m => {
-      this.platform.log.info('RETURN: ', m.eufy === eufyMode);
       return m.eufy === eufyMode;
     });
 
-    return modeObj[0].hk;
+    return modeObj[0] ? modeObj[0].hk : eufyMode;
 
   }
 

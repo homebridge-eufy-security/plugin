@@ -8,7 +8,7 @@ import { EufySecurityPlatform } from './platform';
 
 // import { HttpService, LocalLookupService, DeviceClientService, CommandType } from 'eufy-node-client';
 
-import { EntrySensor } from 'eufy-security-client';
+import { EntrySensor, EufySecurity } from 'eufy-security-client';
 
 /**
  * Platform Accessory
@@ -22,15 +22,16 @@ export class SecurityEntrySensorAccessory {
     private readonly platform: EufySecurityPlatform,
     private readonly accessory: PlatformAccessory,
     private eufyDevice: EntrySensor,
+    private client: EufySecurity,
   ) {
-    this.platform.log.debug('Constructed Switch');
+    this.platform.log.debug('Constructed Entry Sensor');
     // set accessory information
     this.accessory
       .getService(this.platform.Service.AccessoryInformation)!
       .setCharacteristic(this.platform.Characteristic.Manufacturer, 'Eufy')
       .setCharacteristic(
         this.platform.Characteristic.Model,
-        'Security Mode Control',
+        eufyDevice.getModel(),
       )
       .setCharacteristic(
         this.platform.Characteristic.SerialNumber,
@@ -55,7 +56,8 @@ export class SecurityEntrySensorAccessory {
 
   }
 
-  async getCurrentStatus() {    
+  async getCurrentStatus() { 
+    await this.platform.refreshData(this.client);
     const isSensorOpen = this.eufyDevice.isSensorOpen();
     return isSensorOpen.value;
   }

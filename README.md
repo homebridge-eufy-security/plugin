@@ -14,4 +14,4 @@ This project uses the eufy-security-client made by Bropat: https://github.com/br
 | ------------- | --------------------- | ------------------------------------- |
 | HomeBase      | Can change guard mode | Shows as a security system in HomeKit |
 | Motion Sensor | Reports motion        | Shows as Motion Sensor               |
-| Contact Sensor | Open/Close detection | Shows as Contact Sensor |
+| Entry Sensor | Open/Close detection | Shows as Contact Sensor |
