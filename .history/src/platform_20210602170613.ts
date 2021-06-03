@@ -34,16 +34,16 @@ const eufyLog = bunyan.createLogger({ name: 'eufyLog' });
  * This class is the main constructor for your plugin, this is where you should
  * parse the user config and discover/register accessories with Homebridge.
  */
-export interface EufySecurityPlatformConfig extends PlatformConfig {
+interface EufySecurityPlatformConfig extends PlatformConfig {
   username: string;
   password: string;
   ipAddress: string;
   enableDetailedLogging: boolean;
   pollingIntervalMinutes: number;
-  hkHome: number;
-  hkAway: number;
-  hkNight: number;
-  hkOff: number;
+  "hkHome
+  "hkAway",
+  "hkNight",
+  "hkOff"
 }
 
 export class EufySecurityPlatform implements DynamicPlatformPlugin {
@@ -153,6 +153,10 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
       if (existingAccessory) {
         // the accessory already exists
         if (device) {
+          this.log.info(
+            'Restoring existing accessory from cache:',
+            existingAccessory.displayName,
+          );
 
           // if you need to update the accessory.context then you should run `api.updatePlatformAccessories`. eg.:
           // existingAccessory.context.device = device;
@@ -160,16 +164,60 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
 
           // create the accessory handler for the restored accessory
           // this is imported from `platformAccessory.ts`
-          if(this.register_accessory(existingAccessory, type, device, this.config)) {
-            this.log.info(
-              "Restoring existing accessory from cache:",
-              existingAccessory.displayName
-            );
-  
-            // update accessory cache with any changes to the accessory details and information
-            this.api.updatePlatformAccessories([existingAccessory]);
+          switch (type) {
+            case DeviceType.STATION:
+              new SecuritySystemPlatformAccessory(
+                this,
+                existingAccessory,
+                this.eufyClient,
+                device as Station,
+              );
+              break;
+            case DeviceType.MOTION_SENSOR:
+              new SecurityMotionSensorAccessory(
+                this,
+                existingAccessory,
+                this.eufyClient,
+                device as MotionSensor,
+              );
+              break;
+            case DeviceType.CAMERA:
+            case DeviceType.CAMERA2:
+            case DeviceType.CAMERA2C:
+            case DeviceType.CAMERA2C_PRO:
+            case DeviceType.CAMERA2_PRO:
+            case DeviceType.CAMERA_E:
+            case DeviceType.DOORBELL:
+            case DeviceType.BATTERY_DOORBELL:
+            case DeviceType.BATTERY_DOORBELL_2:
+            case DeviceType.FLOODLIGHT:
+            case DeviceType.INDOOR_CAMERA:
+            case DeviceType.INDOOR_CAMERA_1080:
+            case DeviceType.INDOOR_PT_CAMERA:
+            case DeviceType.INDOOR_PT_CAMERA_1080:
+            case DeviceType.SOLO_CAMERA:
+            case DeviceType.SOLO_CAMERA_PRO:
+              new SecurityCameraAccessory(
+                this,
+                existingAccessory,
+                this.eufyClient,
+                device as Camera,
+              );
+              break;
+            case DeviceType.SENSOR:
+              new SecurityEntrySensorAccessory(
+                this,
+                existingAccessory,
+                this.eufyClient,
+                device as EntrySensor,
+              );
+              break;
+            default:
+              break;
           }
 
+          // update accessory cache with any changes to the accessory details and information
+          this.api.updatePlatformAccessories([existingAccessory]);
         } else if (!device) {
           // it is possible to remove platform accessories at any time using `api.unregisterPlatformAccessories`, eg.:
           // remove platform accessories when no longer present
@@ -183,6 +231,7 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
         }
       } else {
         // the accessory does not yet exist, so we need to create it
+        this.log.error('Adding new accessory:', displayName);
 
         // create a new accessory
         const accessory = new this.api.platformAccessory(displayName, uuid);
@@ -193,73 +242,65 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
 
         // create the accessory handler for the newly create accessory
         // this is imported from `platformAccessory.ts`
-        if(this.register_accessory(accessory, type, device, this.config)) {
-          this.log.error("Adding new accessory:", displayName);
 
-          // link the accessory to your platform
-          this.api.registerPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [
-            accessory,
-          ]);
+        switch (type) {
+          case DeviceType.STATION:
+            new SecuritySystemPlatformAccessory(
+              this,
+              accessory,
+              this.eufyClient,
+              device as Station,
+            );
+            break;
+          case DeviceType.MOTION_SENSOR:
+            new SecurityMotionSensorAccessory(
+              this,
+              accessory,
+              this.eufyClient,
+              device as MotionSensor,
+            );
+            break;
+          case DeviceType.CAMERA:
+          case DeviceType.CAMERA2:
+          case DeviceType.CAMERA2C:
+          case DeviceType.CAMERA2C_PRO:
+          case DeviceType.CAMERA2_PRO:
+          case DeviceType.CAMERA_E:
+          case DeviceType.DOORBELL:
+          case DeviceType.BATTERY_DOORBELL:
+          case DeviceType.BATTERY_DOORBELL_2:
+          case DeviceType.FLOODLIGHT:
+          case DeviceType.INDOOR_CAMERA:
+          case DeviceType.INDOOR_CAMERA_1080:
+          case DeviceType.INDOOR_PT_CAMERA:
+          case DeviceType.INDOOR_PT_CAMERA_1080:
+          case DeviceType.SOLO_CAMERA:
+          case DeviceType.SOLO_CAMERA_PRO:
+            new SecurityCameraAccessory(
+              this,
+              accessory,
+              this.eufyClient,
+              device as Camera,
+            );
+            break;
+          case DeviceType.SENSOR:
+            new SecurityEntrySensorAccessory(
+              this,
+              accessory,
+              this.eufyClient,
+              device as EntrySensor,
+            );
+            break;
+          default:
+            break;
         }
 
+        // link the accessory to your platform
+        this.api.registerPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [
+          accessory,
+        ]);
       }
     }
-  }
-
-  private register_accessory(accessory: PlatformAccessory, type: number, device, config: EufySecurityPlatformConfig) {
-    switch (type) {
-      case DeviceType.STATION:
-        new SecuritySystemPlatformAccessory(
-          this,
-          accessory,
-          device as Station,
-          config
-        );
-        break;
-      case DeviceType.MOTION_SENSOR:
-        new SecurityMotionSensorAccessory(
-          this,
-          accessory,
-          device as MotionSensor
-        );
-        break;
-      case DeviceType.CAMERA:
-      case DeviceType.CAMERA2:
-      case DeviceType.CAMERA2C:
-      case DeviceType.CAMERA2C_PRO:
-      case DeviceType.CAMERA2_PRO:
-      case DeviceType.CAMERA_E:
-      case DeviceType.DOORBELL:
-      case DeviceType.BATTERY_DOORBELL:
-      case DeviceType.BATTERY_DOORBELL_2:
-      case DeviceType.FLOODLIGHT:
-      case DeviceType.INDOOR_CAMERA:
-      case DeviceType.INDOOR_CAMERA_1080:
-      case DeviceType.INDOOR_PT_CAMERA:
-      case DeviceType.INDOOR_PT_CAMERA_1080:
-      case DeviceType.SOLO_CAMERA:
-      case DeviceType.SOLO_CAMERA_PRO:
-        new SecurityCameraAccessory(
-          this,
-          accessory,
-          device as Camera
-        );
-        break;
-      case DeviceType.SENSOR:
-        new SecurityEntrySensorAccessory(
-          this,
-          accessory,
-          device as EntrySensor
-        );
-        break;
-      default:
-        this.log.info(
-          "This accessory is not compatible with this plugin:", accessory.displayName, 
-          "Type:", type
-        );
-        return false;
-    }
-    return true;
   }
 
   public async refreshData(client: EufySecurity): Promise<void> {

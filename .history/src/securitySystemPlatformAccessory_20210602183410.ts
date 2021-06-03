@@ -18,6 +18,7 @@ export class SecuritySystemPlatformAccessory {
   constructor(
     private readonly platform: EufySecurityPlatform,
     private readonly accessory: PlatformAccessory,
+    private eufyClient: EufySecurity,
     private eufyStation: Station,
     private config: EufySecurityPlatformConfig,
   ) {
@@ -32,7 +33,7 @@ export class SecuritySystemPlatformAccessory {
       )
       .setCharacteristic(
         this.platform.Characteristic.SerialNumber,
-        eufyStation.getSerial()
+        accessory.UUID,
       );
 
     this.service =
@@ -59,15 +60,15 @@ export class SecuritySystemPlatformAccessory {
 
   async getCurrentStatus() {
     this.platform.log.debug(
-      this.eufyStation.isConnected()
+      this.eufyClient.isConnected()
         ? 'Connected to Eufy API'
         : 'Not connected to Eufy API',
     );
 
-    const guardMode = this.eufyStation.getGuardMode();
-
+    const guardMode = this.eufyClient
+      .getStation(this.eufyStation.getSerial())
+      .getGuardMode();
     this.platform.log.info('Eufy Guard Mode: ', guardMode);
-
     return this.convertStatusCodeToHomekit(guardMode.value as number);
   }
 
@@ -89,6 +90,8 @@ export class SecuritySystemPlatformAccessory {
 
 
   convertStatusCodeToHomekit(code: number) {
+
+    
     //---Eufy Modes--------
     //     0: "AWAY",
     //     1: "HOME",
@@ -160,12 +163,15 @@ export class SecuritySystemPlatformAccessory {
     //     0: "AWAY",
     //     1: "HOME",
     //     2: "SCHEDULE",
-    //     3: "NIGHT",
+    //     3: "CUSTOM1",
     //     4: "CUSTOM2",
     //     5: "CUSTOM3",
     //     47: "GEO",
     //     63: "DISARMED"
     // }
+
+
+
 
     let mode = -1;
     switch (value) {
@@ -189,7 +195,11 @@ export class SecuritySystemPlatformAccessory {
       this.platform.log.error('Error Setting security mode! (mode returned -1)');
     } else {
       try {
-        this.eufyStation.setGuardMode(mode);
+        this.eufyClient.setStationProperty(
+          this.eufyStation.getSerial(),
+          'guardMode',
+          mode,
+        );
         this.service.updateCharacteristic(
           this.platform.Characteristic.SecuritySystemCurrentState,
           value,

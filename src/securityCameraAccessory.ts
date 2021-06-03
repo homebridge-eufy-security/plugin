@@ -3,7 +3,7 @@ import {
   PlatformAccessory,
 } from "homebridge";
 
-import { EufySecurityPlatform } from "./platform";
+import { EufySecurityPlatform } from './platform';
 
 // import { HttpService, LocalLookupService, DeviceClientService, CommandType } from 'eufy-node-client';
 
@@ -21,15 +21,16 @@ export class SecurityCameraAccessory {
     private readonly platform: EufySecurityPlatform,
     private readonly accessory: PlatformAccessory,
     private eufyDevice: Camera
+
   ) {
-    this.platform.log.debug("Constructed Switch");
+    this.platform.log.debug('Constructed Switch');
     // set accessory information
     this.accessory
       .getService(this.platform.Service.AccessoryInformation)!
-      .setCharacteristic(this.platform.Characteristic.Manufacturer, "Eufy")
+      .setCharacteristic(this.platform.Characteristic.Manufacturer, 'Eufy')
       .setCharacteristic(
         this.platform.Characteristic.Model,
-        "Security Mode Control"
+        'Security Mode Control',
       )
       .setCharacteristic(
         this.platform.Characteristic.SerialNumber,
@@ -42,20 +43,19 @@ export class SecurityCameraAccessory {
 
     this.service.setCharacteristic(
       this.platform.Characteristic.Name,
-      accessory.displayName
+      accessory.displayName,
     );
 
     // create handlers for required characteristics
     this.service
       .getCharacteristic(
-        this.platform.Characteristic.MotionDetected
+        this.platform.Characteristic.MotionDetected,
       )
-      .on("get", this.handleSecuritySystemCurrentStateGet.bind(this));
+      .on('get', this.handleSecuritySystemCurrentStateGet.bind(this));
 
   }
 
   async getCurrentStatus() {
-    
     const isMotionDetected = this.eufyDevice.isMotionDetected();
 
     return isMotionDetected as boolean;
@@ -65,11 +65,11 @@ export class SecurityCameraAccessory {
    * Handle requests to get the current value of the "Security System Current State" characteristic
    */
   async handleSecuritySystemCurrentStateGet(callback) {
-    this.platform.log.debug("Triggered GET SecuritySystemCurrentState");
+    this.platform.log.debug('Triggered GET SecuritySystemCurrentState');
 
     // set this to a valid value for SecuritySystemCurrentState
     const currentValue = await this.getCurrentStatus();
-    this.platform.log.debug("Handle Current System state:  -- ", currentValue);
+    this.platform.log.debug('Handle Current System state:  -- ', currentValue);
 
     callback(null, currentValue);
   }
