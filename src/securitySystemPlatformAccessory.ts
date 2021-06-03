@@ -79,7 +79,9 @@ export class SecuritySystemPlatformAccessory {
       {'hk': 3, 'eufy': this.config.hkOff},
      
     ];
+    this.platform.log.info('Eufy mode from config: ', this.config.hkHome, this.config.hkNight);
     const modeObj = modes.filter(m => {
+      this.platform.log.info('RETURN: ', m.eufy === eufyMode);
       return m.eufy === eufyMode;
     });
 

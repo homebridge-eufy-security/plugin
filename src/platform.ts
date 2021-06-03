@@ -207,6 +207,7 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
   }
 
   private register_accessory(accessory: PlatformAccessory, type: number, device, config: EufySecurityPlatformConfig) {
+    this.log.info('Config info: ', config);
     switch (type) {
       case DeviceType.STATION:
         new SecuritySystemPlatformAccessory(
