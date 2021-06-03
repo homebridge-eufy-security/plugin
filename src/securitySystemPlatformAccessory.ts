@@ -160,7 +160,7 @@ export class SecuritySystemPlatformAccessory {
     //     0: 'AWAY',
     //     1: 'HOME',
     //     2: 'SCHEDULE',
-    //     3: 'NIGHT',
+    //     3: 'CUSTOM1',
     //     4: 'CUSTOM2',
     //     5: 'CUSTOM3',
     //     47: 'GEO',
