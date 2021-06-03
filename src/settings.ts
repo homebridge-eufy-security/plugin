@@ -6,4 +6,4 @@ export const PLATFORM_NAME = 'EufySecurityControlHomebridgePlugin';
 /**
  * This must match the name of your plugin as defined the package.json
  */
-export const PLUGIN_NAME = 'homebridge-eufy-security-control';
+export const PLUGIN_NAME = '@samemory/homebridge-eufy-security-control';

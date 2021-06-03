@@ -35,10 +35,10 @@
       "hkHome": {
         "title": "HomeKit Home",
         "type": "number",
-        "default": 0,
+        "default": 1,
         "oneOf": [
-          {"title": "Home", "enum": [0]},
-          {"title": "Away", "enum": [1]},
+          {"title": "Home", "enum": [1]},
+          {"title": "Away", "enum": [0]},
           {"title": "Schedule", "enum": [2]},
           {"title": "Custom 1", "enum": [3]},
           {"title": "Custom 2", "enum": [4]},
@@ -51,10 +51,10 @@
       "hkAway": {
         "title": "HomeKit Away",
         "type": "number",
-        "default": 1,
+        "default": 0,
         "oneOf": [
-          {"title": "Home", "enum": [0]},
-          {"title": "Away", "enum": [1]},
+          {"title": "Home", "enum": [1]},
+          {"title": "Away", "enum": [0]},
           {"title": "Schedule", "enum": [2]},
           {"title": "Custom 1", "enum": [3]},
           {"title": "Custom 2", "enum": [4]},
@@ -69,8 +69,8 @@
         "type": "number",
         "default": 3,
         "oneOf": [
-          {"title": "Home", "enum": [0]},
-          {"title": "Away", "enum": [1]},
+          {"title": "Home", "enum": [1]},
+          {"title": "Away", "enum": [0]},
           {"title": "Schedule", "enum": [2]},
           {"title": "Custom 1", "enum": [3]},
           {"title": "Custom 2", "enum": [4]},
@@ -85,8 +85,8 @@
         "type": "number",
         "default": 63,
         "oneOf": [
-          {"title": "Home", "enum": [0]},
-          {"title": "Away", "enum": [1]},
+          {"title": "Home", "enum": [1]},
+          {"title": "Away", "enum": [0]},
           {"title": "Schedule", "enum": [2]},
           {"title": "Custom 1", "enum": [3]},
           {"title": "Custom 2", "enum": [4]},
