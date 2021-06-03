@@ -32,7 +32,7 @@ export class SecuritySystemPlatformAccessory {
       )
       .setCharacteristic(
         this.platform.Characteristic.SerialNumber,
-        eufyStation.getSerial()
+        eufyStation.getSerial(),
       );
 
     this.service =

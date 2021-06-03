@@ -20,8 +20,7 @@ export class SecurityCameraAccessory {
   constructor(
     private readonly platform: EufySecurityPlatform,
     private readonly accessory: PlatformAccessory,
-    private eufyDevice: Camera
-
+    private eufyDevice: Camera,
   ) {
     this.platform.log.debug('Constructed Switch');
     // set accessory information
@@ -34,7 +33,7 @@ export class SecurityCameraAccessory {
       )
       .setCharacteristic(
         this.platform.Characteristic.SerialNumber,
-        eufyDevice.getSerial()
+        eufyDevice.getSerial(),
       );
 
     this.service =

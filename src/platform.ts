@@ -163,7 +163,7 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
           if(this.register_accessory(existingAccessory, type, device, this.config)) {
             this.log.info(
               'Restoring existing accessory from cache:',
-              existingAccessory.displayName
+              existingAccessory.displayName,
             );
   
             // update accessory cache with any changes to the accessory details and information
@@ -213,14 +213,14 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
           this,
           accessory,
           device as Station,
-          config
+          config,
         );
         break;
       case DeviceType.MOTION_SENSOR:
         new SecurityMotionSensorAccessory(
           this,
           accessory,
-          device as MotionSensor
+          device as MotionSensor,
         );
         break;
       case DeviceType.CAMERA:
@@ -242,20 +242,20 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
         new SecurityCameraAccessory(
           this,
           accessory,
-          device as Camera
+          device as Camera,
         );
         break;
       case DeviceType.SENSOR:
         new SecurityEntrySensorAccessory(
           this,
           accessory,
-          device as EntrySensor
+          device as EntrySensor,
         );
         break;
       default:
         this.log.info(
           'This accessory is not compatible with this plugin:', accessory.displayName, 
-          'Type:', type
+          'Type:', type,
         );
         return false;
     }
