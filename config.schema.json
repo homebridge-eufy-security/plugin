@@ -37,14 +37,14 @@
         "type": "number",
         "default": 1,
         "oneOf": [
-          {"title": "Home", "enum": 1},
-          {"title": "Away", "enum": 0},
-          {"title": "Schedule", "enum": 2},
-          {"title": "Custom 1", "enum": 3},
-          {"title": "Custom 2", "enum": 4},
-          {"title": "Custom 3", "enum": 5},
-          {"title": "Geofencing", "enum": 47},
-          {"title": "Disarmed", "enum": 63}
+          {"title": "Home", "enum": [1]},
+          {"title": "Away", "enum": [0]},
+          {"title": "Schedule", "enum": [2]},
+          {"title": "Night", "enum": [3]},
+          {"title": "Custom 1", "enum": [4]},
+          {"title": "Custom 2", "enum": [5]},
+          {"title": "Geofencing", "enum": [47]},
+          {"title": "Disarmed", "enum": [63]}
         ],
         "required": false
       },
@@ -53,14 +53,14 @@
         "type": "number",
         "default": 0,
         "oneOf": [
-          {"title": "Home", "enum": 1},
-          {"title": "Away", "enum": 0},
-          {"title": "Schedule", "enum": 2},
-          {"title": "Custom 1", "enum": 3},
-          {"title": "Custom 2", "enum": 4},
-          {"title": "Custom 3", "enum": 5},
-          {"title": "Geofencing", "enum": 47},
-          {"title": "Disarmed", "enum": 63}
+          {"title": "Home", "enum": [1]},
+          {"title": "Away", "enum": [0]},
+          {"title": "Schedule", "enum": [2]},
+          {"title": "Night", "enum": [3]},
+          {"title": "Custom 1", "enum": [4]},
+          {"title": "Custom 2", "enum": [5]},
+          {"title": "Geofencing", "enum": [47]},
+          {"title": "Disarmed", "enum": [63]}
         ],
         "required": false
       },
@@ -69,14 +69,14 @@
         "type": "number",
         "default": 3,
         "oneOf": [
-          {"title": "Home", "enum": 1},
-          {"title": "Away", "enum": 0},
-          {"title": "Schedule", "enum": 2},
-          {"title": "Custom 1", "enum": 3},
-          {"title": "Custom 2", "enum": 4},
-          {"title": "Custom 3", "enum": 5},
-          {"title": "Geofencing", "enum": 47},
-          {"title": "Disarmed", "enum": 63}
+          {"title": "Home", "enum": [1]},
+          {"title": "Away", "enum": [0]},
+          {"title": "Schedule", "enum": [2]},
+          {"title": "Night", "enum": [3]},
+          {"title": "Custom 1", "enum": [4]},
+          {"title": "Custom 2", "enum": [5]},
+          {"title": "Geofencing", "enum": [47]},
+          {"title": "Disarmed", "enum": [63]}
         ],
         "required": false
       },
@@ -85,14 +85,14 @@
         "type": "number",
         "default": 63,
         "oneOf": [
-          {"title": "Home", "enum": 1},
-          {"title": "Away", "enum": 0},
-          {"title": "Schedule", "enum": 2},
-          {"title": "Custom 1", "enum": 3},
-          {"title": "Custom 2", "enum": 4},
-          {"title": "Custom 3", "enum": 5},
-          {"title": "Geofencing", "enum": 47},
-          {"title": "Disarmed", "enum": 63}
+          {"title": "Home", "enum": [1]},
+          {"title": "Away", "enum": [0]},
+          {"title": "Schedule", "enum": [2]},
+          {"title": "Night", "enum": [3]},
+          {"title": "Custom 1", "enum": [4]},
+          {"title": "Custom 2", "enum": [5]},
+          {"title": "Geofencing", "enum": [47]},
+          {"title": "Disarmed", "enum": [63]}
         ],
         "required": false
       }
