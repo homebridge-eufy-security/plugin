@@ -1,16 +1,14 @@
 import {
   Service,
   PlatformAccessory,
-  CharacteristicValue,
-  CharacteristicSetCallback,
-  CharacteristicGetCallback,
 } from 'homebridge';
+
 
 import { EufySecurityPlatform } from './platform';
 
 // import { HttpService, LocalLookupService, DeviceClientService, CommandType } from 'eufy-node-client';
 
-import { EufySecurity, HTTPApi, Station, Device, Sensor, EntrySensor } from 'eufy-security-client';
+import { EntrySensor } from 'eufy-security-client';
 
 /**
  * Platform Accessory
@@ -23,7 +21,6 @@ export class SecurityEntrySensorAccessory {
   constructor(
     private readonly platform: EufySecurityPlatform,
     private readonly accessory: PlatformAccessory,
-    private eufyClient: EufySecurity,
     private eufyDevice: EntrySensor,
   ) {
     this.platform.log.debug('Constructed Switch');
@@ -37,7 +34,7 @@ export class SecurityEntrySensorAccessory {
       )
       .setCharacteristic(
         this.platform.Characteristic.SerialNumber,
-        accessory.UUID,
+        eufyDevice.getSerial(),
       );
 
     this.service =
@@ -58,24 +55,13 @@ export class SecurityEntrySensorAccessory {
 
   }
 
-  async getCurrentStatus() {
-    this.platform.log.debug(
-      this.eufyClient.isConnected()
-        ? 'Connected to Eufy API'
-        : 'Not connected to Eufy API',
-    );
-
-    // const arm_mode_obj = hubs[0].params.filter(param => param.param_type === 1224);
-    // this.platform.log.debug('getCurrentStatus() -- ', arm_mode_obj);
-    // this.platform.log.debug('getCurrentStatus() RETURN -- ', arm_mode_obj[0].param_value);
-    
+  async getCurrentStatus() {    
     const isSensorOpen = this.eufyDevice.isSensorOpen();
-
     return isSensorOpen.value;
   }
 
   /**
-   * Handle requests to get the current value of the "Security System Current State" characteristic
+   * Handle requests to get the current value of the 'Security System Current State' characteristic
    */
   async handleSecuritySystemCurrentStateGet(callback) {
     this.platform.log.debug('Triggered GET SecuritySystemCurrentState');

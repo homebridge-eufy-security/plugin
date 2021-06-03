@@ -18,7 +18,6 @@ export class SecuritySystemPlatformAccessory {
   constructor(
     private readonly platform: EufySecurityPlatform,
     private readonly accessory: PlatformAccessory,
-    private eufyClient: EufySecurity,
     private eufyStation: Station,
     private config: EufySecurityPlatformConfig,
   ) {
@@ -33,7 +32,7 @@ export class SecuritySystemPlatformAccessory {
       )
       .setCharacteristic(
         this.platform.Characteristic.SerialNumber,
-        accessory.UUID,
+        eufyStation.getSerial(),
       );
 
     this.service =
@@ -60,15 +59,15 @@ export class SecuritySystemPlatformAccessory {
 
   async getCurrentStatus() {
     this.platform.log.debug(
-      this.eufyClient.isConnected()
+      this.eufyStation.isConnected()
         ? 'Connected to Eufy API'
         : 'Not connected to Eufy API',
     );
 
-    const guardMode = this.eufyClient
-      .getStation(this.eufyStation.getSerial())
-      .getGuardMode();
+    const guardMode = this.eufyStation.getGuardMode();
+
     this.platform.log.info('Eufy Guard Mode: ', guardMode);
+
     return this.convertStatusCodeToHomekit(guardMode.value as number);
   }
 
@@ -90,23 +89,21 @@ export class SecuritySystemPlatformAccessory {
 
 
   convertStatusCodeToHomekit(code: number) {
-
-    
     //---Eufy Modes--------
-    //     0: "AWAY",
-    //     1: "HOME",
-    //     2: "SCHEDULE",
-    //     3: "CUSTOM1",
-    //     4: "CUSTOM2",
-    //     5: "CUSTOM3",
-    //     47: "GEO",
-    //     63: "DISARMED"
+    //     0: 'AWAY',
+    //     1: 'HOME',
+    //     2: 'SCHEDULE',
+    //     3: 'CUSTOM1',
+    //     4: 'CUSTOM2',
+    //     5: 'CUSTOM3',
+    //     47: 'GEO',
+    //     63: 'DISARMED'
     //-----------------------
     //---HomeKit Modes-------
-    //     0: "AWAY",
-    //     1: "HOME",
-    //     2: "NIGHT",
-    //     3: "OFF",
+    //     0: 'AWAY',
+    //     1: 'HOME',
+    //     2: 'NIGHT',
+    //     3: 'OFF',
     //-----------------------
     switch (code) {
       case 0: //Eufy mode
@@ -131,7 +128,7 @@ export class SecuritySystemPlatformAccessory {
   }
 
   /**
-   * Handle requests to get the current value of the "Security System Current State" characteristic
+   * Handle requests to get the current value of the 'Security System Current State' characteristic
    */
   async handleSecuritySystemCurrentStateGet(callback) {
     this.platform.log.debug('Triggered GET SecuritySystemCurrentState');
@@ -144,7 +141,7 @@ export class SecuritySystemPlatformAccessory {
   }
 
   /**
-   * Handle requests to get the current value of the "Security System Target State" characteristic
+   * Handle requests to get the current value of the 'Security System Target State' characteristic
    */
   async handleSecuritySystemTargetStateGet(callback) {
     this.platform.log.debug('Triggered GET SecuritySystemTargetState');
@@ -156,22 +153,19 @@ export class SecuritySystemPlatformAccessory {
   }
 
   /**
-   * Handle requests to set the "Security System Target State" characteristic
+   * Handle requests to set the 'Security System Target State' characteristic
    */
   handleSecuritySystemTargetStateSet(value, callback) {
     //   states: {
-    //     0: "AWAY",
-    //     1: "HOME",
-    //     2: "SCHEDULE",
-    //     3: "CUSTOM1",
-    //     4: "CUSTOM2",
-    //     5: "CUSTOM3",
-    //     47: "GEO",
-    //     63: "DISARMED"
+    //     0: 'AWAY',
+    //     1: 'HOME',
+    //     2: 'SCHEDULE',
+    //     3: 'NIGHT',
+    //     4: 'CUSTOM2',
+    //     5: 'CUSTOM3',
+    //     47: 'GEO',
+    //     63: 'DISARMED'
     // }
-
-
-
 
     let mode = -1;
     switch (value) {
@@ -195,11 +189,7 @@ export class SecuritySystemPlatformAccessory {
       this.platform.log.error('Error Setting security mode! (mode returned -1)');
     } else {
       try {
-        this.eufyClient.setStationProperty(
-          this.eufyStation.getSerial(),
-          'guardMode',
-          mode,
-        );
+        this.eufyStation.setGuardMode(mode);
         this.service.updateCharacteristic(
           this.platform.Characteristic.SecuritySystemCurrentState,
           value,
