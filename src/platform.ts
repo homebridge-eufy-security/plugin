@@ -162,7 +162,7 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
           // this is imported from `platformAccessory.ts`
           if(this.register_accessory(existingAccessory, type, device, this.config)) {
             this.log.info(
-              "Restoring existing accessory from cache:",
+              'Restoring existing accessory from cache:',
               existingAccessory.displayName
             );
   
@@ -194,7 +194,7 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
         // create the accessory handler for the newly create accessory
         // this is imported from `platformAccessory.ts`
         if(this.register_accessory(accessory, type, device, this.config)) {
-          this.log.error("Adding new accessory:", displayName);
+          this.log.error('Adding new accessory:', displayName);
 
           // link the accessory to your platform
           this.api.registerPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [
@@ -254,8 +254,8 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
         break;
       default:
         this.log.info(
-          "This accessory is not compatible with this plugin:", accessory.displayName, 
-          "Type:", type
+          'This accessory is not compatible with this plugin:', accessory.displayName, 
+          'Type:', type
         );
         return false;
     }

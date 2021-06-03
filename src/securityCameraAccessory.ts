@@ -1,13 +1,13 @@
 import {
   Service,
   PlatformAccessory,
-} from "homebridge";
+} from 'homebridge';
 
 import { EufySecurityPlatform } from './platform';
 
 // import { HttpService, LocalLookupService, DeviceClientService, CommandType } from 'eufy-node-client';
 
-import { Camera } from "eufy-security-client";
+import { Camera } from 'eufy-security-client';
 
 /**
  * Platform Accessory
@@ -62,7 +62,7 @@ export class SecurityCameraAccessory {
   }
 
   /**
-   * Handle requests to get the current value of the "Security System Current State" characteristic
+   * Handle requests to get the current value of the 'Security System Current State' characteristic
    */
   async handleSecuritySystemCurrentStateGet(callback) {
     this.platform.log.debug('Triggered GET SecuritySystemCurrentState');
