@@ -29,6 +29,17 @@ import {
 import bunyan from 'bunyan';
 const eufyLog = bunyan.createLogger({ name: 'eufyLog' });
 
+interface DeviceIdentifier {
+  uniqueId: string;
+  displayName: string;
+  type: number;
+}
+
+interface DeviceContainer {
+  deviceIdentifier: DeviceIdentifier;
+  eufyDevice: Device | Station;
+}
+
 /**
  * HomebridgePlatform
  * This class is the main constructor for your plugin, this is where you should
