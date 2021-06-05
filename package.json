@@ -1,7 +1,7 @@
 {
   "displayName": "Homebridge Eufy Security Control",
   "name": "@samemory/homebridge-eufy-security-control",
-  "version": "0.0.10",
+  "version": "0.0.11",
   "description": "Control Eufy security settings from homebridge.",
   "license": "Apache-2.0",
   "repository": {

@@ -76,10 +76,10 @@ export class SecuritySystemPlatformAccessory {
 
   convertMode(eufyMode: number) {
     const modes = [
-      {'hk': 0, 'eufy': this.config.hkHome},
-      {'hk': 1, 'eufy': this.config.hkAway},
-      {'hk': 2, 'eufy': this.config.hkNight},
-      {'hk': 3, 'eufy': this.config.hkOff},
+      {'hk': 0, 'eufy': this.config.hkHome ?? 1},
+      {'hk': 1, 'eufy': this.config.hkAway ?? 0},
+      {'hk': 2, 'eufy': this.config.hkNight?? 3},
+      {'hk': 3, 'eufy': this.config.hkOff ?? 63},
      
     ];
     const modeObj = modes.filter(m => {
@@ -173,16 +173,16 @@ export class SecuritySystemPlatformAccessory {
     let mode = -1;
     switch (value) {
       case 0: //homekit HOME
-        mode = this.config.hkHome; //eufy home
+        mode = this.config.hkHome ?? 1; //eufy home
         break;
       case 1: //homekit AWAY
-        mode = this.config.hkAway;
+        mode = this.config.hkAway ?? 0;
         break;
       case 2: //homekit NIGHT
-        mode = this.config.hkNight;
+        mode = this.config.hkNight ?? 3;
         break;
       case 3: //homekit OFF
-        mode = this.config.hkOff;
+        mode = this.config.hkOff ?? 63;
         break;
       default:
         break;

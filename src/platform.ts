@@ -269,9 +269,18 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
     );
     if (client) {
       this.log.debug('Refresh data from cloud and schedule next refresh.');
-      await client.refreshData();
+      try {
+        await client.refreshData();
+      } catch (error) {
+        this.log.error('Error refreshing data from Eufy: ', error);
+      }
       setTimeout(() => {
-        this.refreshData(client);
+        try {
+          this.refreshData(client);
+        } catch (error) {
+          this.log.error('Error refreshing data from Eufy: ', error);
+        }
+        
       }, this.eufyConfig.pollingIntervalMinutes * 60 * 1000);
     }
   }
