@@ -1,8 +1,4 @@
-import {
-  Service,
-  PlatformAccessory,
-  PlatformConfig,
-} from 'homebridge';
+import { Service, PlatformAccessory, PlatformConfig } from 'homebridge';
 
 import { EufySecurityPlatform, EufySecurityPlatformConfig } from './platform';
 import { EufySecurity, Station } from 'eufy-security-client';
@@ -35,7 +31,8 @@ export class SecuritySystemPlatformAccessory {
         eufyStation.getSerial(),
       )
       .setCharacteristic(
-        this.platform.Characteristic.FirmwareRevision, eufyStation.getSoftwareVersion(),
+        this.platform.Characteristic.FirmwareRevision,
+        eufyStation.getSoftwareVersion(),
       );
 
     this.service =
@@ -58,6 +55,31 @@ export class SecuritySystemPlatformAccessory {
       .getCharacteristic(this.platform.Characteristic.SecuritySystemTargetState)
       .on('get', this.handleSecuritySystemTargetStateGet.bind(this))
       .on('set', this.handleSecuritySystemTargetStateSet.bind(this));
+
+    this.eufyStation.on(
+      'guard mode',
+      (station: Station, guardMode: number, currentMode: number) =>
+        this.onStationGuardModePushNotification(
+          station,
+          guardMode,
+          currentMode,
+        ),
+    );
+  }
+
+  private onStationGuardModePushNotification(
+    station: Station,
+    guardMode: number,
+    currentMode: number,
+  ): void {
+    const homekitGuardMode = this.convertStatusCodeToHomekit(guardMode);
+    if (homekitGuardMode) {
+      this.service
+        .getCharacteristic(
+          this.platform.Characteristic.SecuritySystemCurrentState,
+        )
+        .updateValue(homekitGuardMode);
+    }
   }
 
   async getCurrentStatus() {
@@ -76,20 +98,17 @@ export class SecuritySystemPlatformAccessory {
 
   convertMode(eufyMode: number) {
     const modes = [
-      {'hk': 0, 'eufy': this.config.hkHome ?? 1},
-      {'hk': 1, 'eufy': this.config.hkAway ?? 0},
-      {'hk': 2, 'eufy': this.config.hkNight?? 3},
-      {'hk': 3, 'eufy': this.config.hkOff ?? 63},
-     
+      { hk: 0, eufy: this.config.hkHome ?? 1 },
+      { hk: 1, eufy: this.config.hkAway ?? 0 },
+      { hk: 2, eufy: this.config.hkNight ?? 3 },
+      { hk: 3, eufy: this.config.hkOff ?? 63 },
     ];
-    const modeObj = modes.filter(m => {
+    const modeObj = modes.filter((m) => {
       return m.eufy === eufyMode;
     });
 
     return modeObj[0] ? modeObj[0].hk : eufyMode;
-
   }
-
 
   convertStatusCodeToHomekit(code: number) {
     //---Eufy Modes--------
@@ -111,20 +130,20 @@ export class SecuritySystemPlatformAccessory {
     switch (code) {
       case 0: //Eufy mode
         return this.convertMode(0);
-      case 1: 
+      case 1:
         return this.convertMode(1);
-      case 2: 
+      case 2:
         return this.convertMode(2);
-      case 3: 
-        return this.convertMode(3); 
-      case 4: 
-        return this.convertMode(4); 
-      case 5: 
-        return this.convertMode(5); 
-      case 47: 
-        return this.convertMode(47); 
+      case 3:
+        return this.convertMode(3);
+      case 4:
+        return this.convertMode(4);
+      case 5:
+        return this.convertMode(5);
+      case 47:
+        return this.convertMode(47);
       case 63:
-        return this.convertMode(63); 
+        return this.convertMode(63);
       default:
         break;
     }
@@ -189,7 +208,9 @@ export class SecuritySystemPlatformAccessory {
     }
 
     if (mode === -1) {
-      this.platform.log.error('Error Setting security mode! (mode returned -1)');
+      this.platform.log.error(
+        'Error Setting security mode! (mode returned -1)',
+      );
     } else {
       try {
         this.eufyStation.setGuardMode(mode);
@@ -198,10 +219,7 @@ export class SecuritySystemPlatformAccessory {
           value,
         );
       } catch (error) {
-        this.platform.log.error(
-          'Error Setting security mode!',
-          error,
-        );
+        this.platform.log.error('Error Setting security mode!', error);
       }
     }
     callback(null);
