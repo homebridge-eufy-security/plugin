@@ -1,14 +1,10 @@
-import {
-  Service,
-  PlatformAccessory,
-} from 'homebridge';
-
+import { Service, PlatformAccessory } from 'homebridge';
 
 import { EufySecurityPlatform } from './platform';
 
 // import { HttpService, LocalLookupService, DeviceClientService, CommandType } from 'eufy-node-client';
 
-import { EntrySensor, EufySecurity } from 'eufy-security-client';
+import { Device, EntrySensor, EufySecurity } from 'eufy-security-client';
 
 /**
  * Platform Accessory
@@ -49,14 +45,21 @@ export class SecurityEntrySensorAccessory {
 
     // create handlers for required characteristics
     this.service
-      .getCharacteristic(
-        this.platform.Characteristic.ContactSensorState,
-      )
+      .getCharacteristic(this.platform.Characteristic.ContactSensorState)
       .on('get', this.handleSecuritySystemCurrentStateGet.bind(this));
 
+    this.eufyDevice.on('open', (device: Device, state: boolean) =>
+      this.onDeviceOpenPushNotification(device, state),
+    );
   }
 
-  async getCurrentStatus() { 
+  private onDeviceOpenPushNotification(device: Device, state: boolean): void {
+    this.service
+      .getCharacteristic(this.platform.Characteristic.ContactSensorState)
+      .updateValue(state);
+  }
+
+  async getCurrentStatus() {
     await this.platform.refreshData(this.client);
     const isSensorOpen = this.eufyDevice.isSensorOpen();
     return isSensorOpen.value;
@@ -74,5 +77,4 @@ export class SecurityEntrySensorAccessory {
 
     callback(null, currentValue);
   }
-
 }
