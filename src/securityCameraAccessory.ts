@@ -1,13 +1,10 @@
-import {
-  Service,
-  PlatformAccessory,
-} from 'homebridge';
+import { Service, PlatformAccessory } from 'homebridge';
 
 import { EufySecurityPlatform } from './platform';
 
 // import { HttpService, LocalLookupService, DeviceClientService, CommandType } from 'eufy-node-client';
 
-import { Camera } from 'eufy-security-client';
+import { Camera, Device } from 'eufy-security-client';
 
 /**
  * Platform Accessory
@@ -47,11 +44,23 @@ export class SecurityCameraAccessory {
 
     // create handlers for required characteristics
     this.service
-      .getCharacteristic(
-        this.platform.Characteristic.MotionDetected,
-      )
+      .getCharacteristic(this.platform.Characteristic.MotionDetected)
       .on('get', this.handleSecuritySystemCurrentStateGet.bind(this));
 
+    this.eufyDevice.on('motion detected', (device: Device, state: boolean) =>
+      this.onDeviceMotionDetectedPushNotification(device, state),
+    );
+  }
+
+  private onDeviceMotionDetectedPushNotification(
+    device: Device,
+    state: boolean,
+  ): void {
+    this.service
+      .getCharacteristic(
+        this.platform.Characteristic.SecuritySystemCurrentState,
+      )
+      .updateValue(state);
   }
 
   async getCurrentStatus() {
@@ -72,5 +81,4 @@ export class SecurityCameraAccessory {
 
     callback(null, currentValue);
   }
-
 }
