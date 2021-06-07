@@ -104,9 +104,7 @@ export class SecurityCameraAccessory {
     open: boolean,
   ): void {
     this.service
-      .getCharacteristic(
-        this.platform.Characteristic.MotionDetected,
-      )
+      .getCharacteristic(this.platform.Characteristic.MotionDetected)
       .updateValue(open);
   }
 }
