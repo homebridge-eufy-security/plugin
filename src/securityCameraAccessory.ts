@@ -51,9 +51,10 @@ export class SecurityCameraAccessory {
       this.onDeviceMotionDetectedPushNotification(device, state),
     );
 
-    this.service =
-      this.accessory.getService(this.platform.Service.BatteryService) ||
-      this.accessory.addService(this.platform.Service.BatteryService);
+    this.accessory
+      .addService(this.platform.Service.BatteryService)
+      .getCharacteristic(this.platform.Characteristic.BatteryLevel)
+      .on('get', this.handleBatteryLevelGet.bind(this));
 
     // create handlers for required characteristics
     this.service
@@ -104,9 +105,7 @@ export class SecurityCameraAccessory {
     open: boolean,
   ): void {
     this.service
-      .getCharacteristic(
-        this.platform.Characteristic.MotionDetected,
-      )
+      .getCharacteristic(this.platform.Characteristic.MotionDetected)
       .updateValue(open);
   }
 }
