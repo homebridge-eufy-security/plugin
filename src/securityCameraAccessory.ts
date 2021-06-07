@@ -7,7 +7,7 @@ import { EufySecurityPlatform } from './platform';
 
 // import { HttpService, LocalLookupService, DeviceClientService, CommandType } from 'eufy-node-client';
 
-import { Camera } from 'eufy-security-client';
+import { EufySecurity, Device, Camera } from 'eufy-security-client';
 
 /**
  * Platform Accessory
@@ -21,6 +21,7 @@ export class SecurityCameraAccessory {
     private readonly platform: EufySecurityPlatform,
     private readonly accessory: PlatformAccessory,
     private eufyDevice: Camera,
+    private client: EufySecurity,
   ) {
     this.platform.log.debug('Constructed Switch');
     // set accessory information
@@ -52,11 +53,19 @@ export class SecurityCameraAccessory {
       )
       .on('get', this.handleSecuritySystemCurrentStateGet.bind(this));
 
+    this.eufyDevice.on(
+      'motion detected',
+      (device: Device, open: boolean) =>
+        this.onDeviceMotionDetectedPushNotification(
+          device,
+          open,
+        ),
+    );
   }
 
   async getCurrentStatus() {
+    await this.platform.refreshData(this.client);
     const isMotionDetected = this.eufyDevice.isMotionDetected();
-
     return isMotionDetected as boolean;
   }
 
@@ -71,6 +80,17 @@ export class SecurityCameraAccessory {
     this.platform.log.debug('Handle Current System state:  -- ', currentValue);
 
     callback(null, currentValue);
+  }
+
+  private onDeviceMotionDetectedPushNotification(
+    device: Device,
+    open: boolean,
+  ): void {
+    this.service
+      .getCharacteristic(
+        this.platform.Characteristic.MotionDetected,
+      )
+      .updateValue(open);
   }
 
 }
