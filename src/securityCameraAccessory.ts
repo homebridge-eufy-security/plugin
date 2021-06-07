@@ -13,6 +13,7 @@ import { Camera, Device } from 'eufy-security-client';
  */
 export class SecurityCameraAccessory {
   private service: Service;
+  private batteryService: Service;
 
   constructor(
     private readonly platform: EufySecurityPlatform,
@@ -51,13 +52,18 @@ export class SecurityCameraAccessory {
       this.onDeviceMotionDetectedPushNotification(device, state),
     );
 
-    this.accessory
-      .addService(this.platform.Service.BatteryService)
-      .getCharacteristic(this.platform.Characteristic.BatteryLevel)
-      .on('get', this.handleBatteryLevelGet.bind(this));
+    this.batteryService =
+      this.accessory.getService(this.platform.Service.BatteryService) ||
+      this.accessory.addService(this.platform.Service.BatteryService);
 
-    // create handlers for required characteristics
-    this.service
+    // set the Battery service characteristics
+    this.batteryService.setCharacteristic(
+      this.platform.Characteristic.Name,
+      accessory.displayName,
+    );
+
+    // create handlers for required characteristics of Battery service
+    this.batteryService
       .getCharacteristic(this.platform.Characteristic.BatteryLevel)
       .on('get', this.handleBatteryLevelGet.bind(this));
   }
