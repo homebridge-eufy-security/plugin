@@ -132,28 +132,41 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
 
     this.log.debug('Found ' + eufyDevices.length + ' devices.');
 
-    const hubsAndDevices: Array<Device | Station> = [];
-
+    const devices: Array<DeviceContainer> = [];
 
     for (const device of eufyDevices) {
       this.log.debug('Found device ' + device.getName());
-      hubsAndDevices.push(device);
+      const deviceContainer: DeviceContainer = {
+        deviceIdentifier: {
+          uniqueId: device.getSerial(),
+          displayName: device.getName(),
+          type: device.getDeviceType(),
+        } as DeviceIdentifier,
+        eufyDevice: device,
+      };
+      devices.push(deviceContainer);
     }
 
     for (const hub of eufyHubs) {
       this.log.debug('Found device ' + hub.getName());
-      hubsAndDevices.push(hub);
+      const deviceContainer: DeviceContainer = {
+        deviceIdentifier: {
+          uniqueId: hub.getSerial(),
+          displayName: hub.getName(),
+          type: hub.getDeviceType(),
+        } as DeviceIdentifier,
+        eufyDevice: hub,
+      };
+      devices.push(deviceContainer);
     }
 
     // loop over the discovered devices and register each one if it has not already been registered
-    for (const device of hubsAndDevices) {
-      const uniqueId = device.getSerial();
-      const displayName = device.getName();
-      const type = device.getDeviceType();
+    for (const device of devices) {
+
       // generate a unique id for the accessory this should be generated from
       // something globally unique, but constant, for example, the device serial
       // number or MAC address
-      const uuid = this.api.hap.uuid.generate(uniqueId);
+      const uuid = this.api.hap.uuid.generate(device.deviceIdentifier.uniqueId);
 
       // see if an accessory with the same uuid has already been registered and restored from
       // the cached devices we stored in the `configureAccessory` method above
@@ -171,7 +184,14 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
 
           // create the accessory handler for the restored accessory
           // this is imported from `platformAccessory.ts`
-          if(this.register_accessory(existingAccessory, type, device, this.config)) {
+          if(
+            this.register_accessory(
+              existingAccessory, 
+              device.deviceIdentifier.type, 
+              device.eufyDevice, 
+              this.config
+            )
+          ) {
             this.log.info(
               'Restoring existing accessory from cache:',
               existingAccessory.displayName,
@@ -196,16 +216,26 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
         // the accessory does not yet exist, so we need to create it
 
         // create a new accessory
-        const accessory = new this.api.platformAccessory(displayName, uuid);
+        const accessory = new this.api.platformAccessory(
+          device.deviceIdentifier.displayName, 
+          uuid,
+        );
 
         // store a copy of the device object in the `accessory.context`
         // the `context` property can be used to store any data about the accessory you may need
-        accessory.context.device = device;
+        accessory.context.device = device.deviceIdentifier;
 
         // create the accessory handler for the newly create accessory
         // this is imported from `platformAccessory.ts`
-        if(this.register_accessory(accessory, type, device, this.config)) {
-          this.log.error('Adding new accessory:', displayName);
+        if(
+          this.register_accessory(
+            accessory, 
+            device.deviceIdentifier.type, 
+            device.eufyDevice, 
+            this.config
+          )
+        ) {
+          this.log.error('Adding new accessory:', device.deviceIdentifier.displayName);
 
           // link the accessory to your platform
           this.api.registerPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [
@@ -217,7 +247,12 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
     }
   }
 
-  private register_accessory(accessory: PlatformAccessory, type: number, device, config: EufySecurityPlatformConfig) {
+  private register_accessory(
+    accessory: PlatformAccessory, 
+    type: number, 
+    device, 
+    config: EufySecurityPlatformConfig,
+  ) {
     switch (type) {
       case DeviceType.STATION:
         new SecuritySystemPlatformAccessory(
@@ -268,8 +303,10 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
         break;
       default:
         this.log.info(
-          'This accessory is not compatible with this plugin:', accessory.displayName, 
-          'Type:', type,
+          'This accessory is not compatible with this plugin:', 
+          accessory.displayName, 
+          'Type:', 
+          type,
         );
         return false;
     }
