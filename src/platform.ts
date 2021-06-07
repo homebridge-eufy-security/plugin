@@ -76,9 +76,6 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
   ) {
     this.config = config as EufySecurityPlatformConfig;
 
-    this.log.debug('this.api.user.storagePath ' + this.api.user.storagePath);
-    this.log.debug('this.api.user.persistPath ' + this.api.user.persistPath);
-
     this.eufyConfig = {
       username: this.config.username,
       password: this.config.password,
