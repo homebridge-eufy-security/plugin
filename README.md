@@ -15,5 +15,6 @@ Enter Eufy username and password in the configuration for HomeBridge. At this ti
 | Eufy Device   | Supported Functions   | HomeKit                               |
 | ------------- | --------------------- | ------------------------------------- |
 | HomeBase      | Can change guard mode | Shows as a security system in HomeKit |
+| Camera        | Reports motion        | Shows as Motion Sensor                |
 | Motion Sensor | Reports motion        | Shows as Motion Sensor                |
 | Entry Sensor  | Open/Close detection  | Shows as Contact Sensor               |
