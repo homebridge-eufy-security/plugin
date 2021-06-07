@@ -4,7 +4,7 @@ import { EufySecurityPlatform } from './platform';
 
 // import { HttpService, LocalLookupService, DeviceClientService, CommandType } from 'eufy-node-client';
 
-import { Device, EntrySensor, EufySecurity } from 'eufy-security-client';
+import { EufySecurity, Device, EntrySensor } from 'eufy-security-client';
 
 /**
  * Platform Accessory
@@ -45,21 +45,23 @@ export class SecurityEntrySensorAccessory {
 
     // create handlers for required characteristics
     this.service
-      .getCharacteristic(this.platform.Characteristic.ContactSensorState)
+      .getCharacteristic(
+        this.platform.Characteristic.ContactSensorState,
+      )
       .on('get', this.handleSecuritySystemCurrentStateGet.bind(this));
 
-    this.eufyDevice.on('open', (device: Device, state: boolean) =>
-      this.onDeviceOpenPushNotification(device, state),
+    this.eufyDevice.on(
+      'open',
+      (device: Device, open: boolean) =>
+        this.onDeviceOpenPushNotification(
+          device,
+          open,
+        ),
     );
+
   }
 
-  private onDeviceOpenPushNotification(device: Device, state: boolean): void {
-    this.service
-      .getCharacteristic(this.platform.Characteristic.ContactSensorState)
-      .updateValue(state);
-  }
-
-  async getCurrentStatus() {
+  async getCurrentStatus() { 
     await this.platform.refreshData(this.client);
     const isSensorOpen = this.eufyDevice.isSensorOpen();
     return isSensorOpen.value;
@@ -77,4 +79,16 @@ export class SecurityEntrySensorAccessory {
 
     callback(null, currentValue);
   }
+
+  private onDeviceOpenPushNotification(
+    device: Device,
+    open: boolean,
+  ): void {
+    this.service
+      .getCharacteristic(
+        this.platform.Characteristic.ContactSensorState,
+      )
+      .updateValue(open);
+  }
+
 }

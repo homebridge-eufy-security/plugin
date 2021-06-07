@@ -80,17 +80,6 @@ export class SecurityCameraAccessory {
     return batteryLevel.value as number;
   }
 
-  private onDeviceMotionDetectedPushNotification(
-    device: Device,
-    state: boolean,
-  ): void {
-    this.service
-      .getCharacteristic(
-        this.platform.Characteristic.SecuritySystemCurrentState,
-      )
-      .updateValue(state);
-  }
-
   async getCurrentStatus() {
     const isMotionDetected = this.eufyDevice.isMotionDetected();
 
@@ -108,5 +97,16 @@ export class SecurityCameraAccessory {
     this.platform.log.debug('Handle Current System state:  -- ', currentValue);
 
     callback(null, currentValue);
+  }
+
+  private onDeviceMotionDetectedPushNotification(
+    device: Device,
+    open: boolean,
+  ): void {
+    this.service
+      .getCharacteristic(
+        this.platform.Characteristic.MotionDetected,
+      )
+      .updateValue(open);
   }
 }
