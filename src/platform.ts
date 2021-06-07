@@ -232,6 +232,7 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
           this,
           accessory,
           device as MotionSensor,
+          this.eufyClient as EufySecurity,
         );
         break;
       case DeviceType.CAMERA:
@@ -254,6 +255,7 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
           this,
           accessory,
           device as Camera,
+          this.eufyClient as EufySecurity,
         );
         break;
       case DeviceType.SENSOR:

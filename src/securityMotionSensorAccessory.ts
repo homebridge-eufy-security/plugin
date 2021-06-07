@@ -8,7 +8,7 @@ import { EufySecurityPlatform } from './platform';
 
 // import { HttpService, LocalLookupService, DeviceClientService, CommandType } from 'eufy-node-client';
 
-import { MotionSensor } from 'eufy-security-client';
+import { EufySecurity, Device, MotionSensor } from 'eufy-security-client';
 
 /**
  * Platform Accessory
@@ -22,6 +22,7 @@ export class SecurityMotionSensorAccessory {
     private readonly platform: EufySecurityPlatform,
     private readonly accessory: PlatformAccessory,
     private eufyDevice: MotionSensor,
+    private client: EufySecurity,
   ) {
     this.platform.log.debug('Constructed Switch');
     // set accessory information
@@ -53,9 +54,18 @@ export class SecurityMotionSensorAccessory {
       )
       .on('get', this.handleSecuritySystemCurrentStateGet.bind(this));
 
+    this.eufyDevice.on(
+      'motion detected',
+      (device: Device, open: boolean) =>
+        this.onDeviceMotionDetectedPushNotification(
+          device,
+          open,
+        ),
+    );
   }
 
-  async getCurrentStatus() {    
+  async getCurrentStatus() {
+    await this.platform.refreshData(this.client);
     const isMotionDetected = this.eufyDevice.isMotionDetected();
     return isMotionDetected as boolean;
   }
@@ -71,6 +81,17 @@ export class SecurityMotionSensorAccessory {
     this.platform.log.debug('Handle Current System state:  -- ', currentValue);
 
     callback(null, currentValue);
+  }
+
+  private onDeviceMotionDetectedPushNotification(
+    device: Device,
+    open: boolean,
+  ): void {
+    this.service
+      .getCharacteristic(
+        this.platform.Characteristic.MotionDetected,
+      )
+      .updateValue(open);
   }
 
 }
