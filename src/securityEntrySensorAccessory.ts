@@ -8,7 +8,7 @@ import { EufySecurityPlatform } from './platform';
 
 // import { HttpService, LocalLookupService, DeviceClientService, CommandType } from 'eufy-node-client';
 
-import { EntrySensor, EufySecurity } from 'eufy-security-client';
+import { EufySecurity, Device, EntrySensor } from 'eufy-security-client';
 
 /**
  * Platform Accessory
@@ -54,6 +54,15 @@ export class SecurityEntrySensorAccessory {
       )
       .on('get', this.handleSecuritySystemCurrentStateGet.bind(this));
 
+    this.eufyDevice.on(
+      'open',
+      (device: Device, open: boolean) =>
+        this.onDeviceOpenPushNotification(
+          device,
+          open,
+        ),
+    );
+
   }
 
   async getCurrentStatus() { 
@@ -73,6 +82,17 @@ export class SecurityEntrySensorAccessory {
     this.platform.log.debug('Handle Current System state:  -- ', currentValue);
 
     callback(null, currentValue);
+  }
+
+  private onDeviceOpenPushNotification(
+    device: Device,
+    open: boolean,
+  ): void {
+    this.service
+      .getCharacteristic(
+        this.platform.Characteristic.ContactSensorState,
+      )
+      .updateValue(open);
   }
 
 }
