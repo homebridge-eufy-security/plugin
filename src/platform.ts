@@ -189,7 +189,7 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
               existingAccessory, 
               device.deviceIdentifier.type, 
               device.eufyDevice, 
-              this.config
+              this.config,
             )
           ) {
             this.log.info(
@@ -232,7 +232,7 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
             accessory, 
             device.deviceIdentifier.type, 
             device.eufyDevice, 
-            this.config
+            this.config,
           )
         ) {
           this.log.error('Adding new accessory:', device.deviceIdentifier.displayName);
