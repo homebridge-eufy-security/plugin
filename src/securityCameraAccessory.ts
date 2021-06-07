@@ -50,6 +50,34 @@ export class SecurityCameraAccessory {
     this.eufyDevice.on('motion detected', (device: Device, state: boolean) =>
       this.onDeviceMotionDetectedPushNotification(device, state),
     );
+
+    this.service =
+      this.accessory.getService(this.platform.Service.BatteryService) ||
+      this.accessory.addService(this.platform.Service.BatteryService);
+
+    // create handlers for required characteristics
+    this.service
+      .getCharacteristic(this.platform.Characteristic.BatteryLevel)
+      .on('get', this.handleBatteryLevelGet.bind(this));
+  }
+
+  /**
+   * Handle requests to get the current value of the "Status Low Battery" characteristic
+   */
+  async handleBatteryLevelGet(callback) {
+    this.platform.log.debug('Triggered GET BatteryLevel');
+
+    // set this to a valid value for SecuritySystemCurrentState
+    const currentValue = await this.getCurrentBatteryLevel();
+    this.platform.log.debug('Handle Current System state:  -- ', currentValue);
+
+    callback(null, currentValue);
+  }
+
+  async getCurrentBatteryLevel() {
+    const batteryLevel = this.eufyDevice.getBatteryValue();
+
+    return batteryLevel.value as number;
   }
 
   private onDeviceMotionDetectedPushNotification(
