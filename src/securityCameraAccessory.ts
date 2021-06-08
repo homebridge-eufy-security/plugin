@@ -1,13 +1,10 @@
-import {
-  Service,
-  PlatformAccessory,
-} from 'homebridge';
+import { Service, PlatformAccessory } from 'homebridge';
 
 import { EufySecurityPlatform } from './platform';
 
 // import { HttpService, LocalLookupService, DeviceClientService, CommandType } from 'eufy-node-client';
 
-import { EufySecurity, Device, Camera } from 'eufy-security-client';
+import { Camera, Device } from 'eufy-security-client';
 
 /**
  * Platform Accessory
@@ -16,12 +13,12 @@ import { EufySecurity, Device, Camera } from 'eufy-security-client';
  */
 export class SecurityCameraAccessory {
   private service: Service;
+  private batteryService: Service;
 
   constructor(
     private readonly platform: EufySecurityPlatform,
     private readonly accessory: PlatformAccessory,
     private eufyDevice: Camera,
-    private client: EufySecurity,
   ) {
     this.platform.log.debug('Constructed Switch');
     // set accessory information
@@ -48,24 +45,51 @@ export class SecurityCameraAccessory {
 
     // create handlers for required characteristics
     this.service
-      .getCharacteristic(
-        this.platform.Characteristic.MotionDetected,
-      )
+      .getCharacteristic(this.platform.Characteristic.MotionDetected)
       .on('get', this.handleSecuritySystemCurrentStateGet.bind(this));
 
-    this.eufyDevice.on(
-      'motion detected',
-      (device: Device, open: boolean) =>
-        this.onDeviceMotionDetectedPushNotification(
-          device,
-          open,
-        ),
+    this.eufyDevice.on('motion detected', (device: Device, state: boolean) =>
+      this.onDeviceMotionDetectedPushNotification(device, state),
     );
+
+    this.batteryService =
+      this.accessory.getService(this.platform.Service.BatteryService) ||
+      this.accessory.addService(this.platform.Service.BatteryService);
+
+    // set the Battery service characteristics
+    this.batteryService.setCharacteristic(
+      this.platform.Characteristic.Name,
+      accessory.displayName,
+    );
+
+    // create handlers for required characteristics of Battery service
+    this.batteryService
+      .getCharacteristic(this.platform.Characteristic.BatteryLevel)
+      .on('get', this.handleBatteryLevelGet.bind(this));
+  }
+
+  /**
+   * Handle requests to get the current value of the "Status Low Battery" characteristic
+   */
+  async handleBatteryLevelGet(callback) {
+    this.platform.log.debug('Triggered GET BatteryLevel');
+
+    // set this to a valid value for SecuritySystemCurrentState
+    const currentValue = await this.getCurrentBatteryLevel();
+    this.platform.log.debug('Handle Current System state:  -- ', currentValue);
+
+    callback(null, currentValue);
+  }
+
+  async getCurrentBatteryLevel() {
+    const batteryLevel = this.eufyDevice.getBatteryValue();
+
+    return batteryLevel.value as number;
   }
 
   async getCurrentStatus() {
-    await this.platform.refreshData(this.client);
     const isMotionDetected = this.eufyDevice.isMotionDetected();
+
     return isMotionDetected as boolean;
   }
 
@@ -87,10 +111,7 @@ export class SecurityCameraAccessory {
     open: boolean,
   ): void {
     this.service
-      .getCharacteristic(
-        this.platform.Characteristic.MotionDetected,
-      )
+      .getCharacteristic(this.platform.Characteristic.MotionDetected)
       .updateValue(open);
   }
-
 }
