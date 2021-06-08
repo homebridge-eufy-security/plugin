@@ -2,9 +2,9 @@
 
 This repo is a work in progress and is not finished. I will be working on getting this done whenever I have time.
 
-![npm (scoped)](https://img.shields.io/npm/v/@samemory/homebridge-eufy-security-control?style=flat-square)
+![npm](https://img.shields.io/npm/v/homebridge-eufy-security?style=flat-square)
 
-https://www.npmjs.com/package/@samemory/homebridge-eufy-security-control
+https://www.npmjs.com/package/homebridge-eufy-security
 
 This project uses the eufy-security-client made by Bropat: https://github.com/bropat/eufy-security-client
 
