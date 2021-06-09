@@ -20,18 +20,22 @@ export class SecurityCameraAccessory {
     private readonly accessory: PlatformAccessory,
     private eufyDevice: Camera,
   ) {
-    this.platform.log.debug('Constructed Switch');
+    this.platform.log.debug('Constructed Camera');
     // set accessory information
     this.accessory
       .getService(this.platform.Service.AccessoryInformation)!
       .setCharacteristic(this.platform.Characteristic.Manufacturer, 'Eufy')
       .setCharacteristic(
         this.platform.Characteristic.Model,
-        'Security Mode Control',
+        eufyDevice.getModel(),
       )
       .setCharacteristic(
         this.platform.Characteristic.SerialNumber,
         eufyDevice.getSerial(),
+      )
+      .setCharacteristic(
+        this.platform.Characteristic.FirmwareRevision,
+        eufyDevice.getSoftwareVersion(),
       );
 
     this.service =
@@ -76,7 +80,7 @@ export class SecurityCameraAccessory {
 
     // set this to a valid value for SecuritySystemCurrentState
     const currentValue = await this.getCurrentBatteryLevel();
-    this.platform.log.debug('Handle Current System state:  -- ', currentValue);
+    this.platform.log.debug('Handle Current battery level:  -- ', currentValue);
 
     callback(null, currentValue);
   }

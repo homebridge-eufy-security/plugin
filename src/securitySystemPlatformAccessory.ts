@@ -17,7 +17,7 @@ export class SecuritySystemPlatformAccessory {
     private eufyStation: Station,
     private config: EufySecurityPlatformConfig,
   ) {
-    this.platform.log.debug('Constructed Switch');
+    this.platform.log.debug('Constructed SecuritySystem');
     // set accessory information
     this.accessory
       .getService(this.platform.Service.AccessoryInformation)!
