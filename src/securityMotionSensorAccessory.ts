@@ -56,22 +56,11 @@ export class SecurityMotionSensorAccessory {
     );
   }
 
-  async getCurrentStatus() {
-    const isMotionDetected = this.eufyDevice.isMotionDetected();
-    return isMotionDetected as boolean;
-  }
-
   /**
    * Handle requests to get the current value of the 'Security System Current State' characteristic
    */
   async handleSecuritySystemCurrentStateGet(callback) {
-    this.platform.log.debug('Triggered GET SecuritySystemCurrentState');
-
-    // set this to a valid value for SecuritySystemCurrentState
-    const currentValue = await this.getCurrentStatus();
-    this.platform.log.debug('Handle Current System state:  -- ', currentValue);
-
-    callback(null, currentValue);
+    callback(null, null);
   }
 
   private onDeviceMotionDetectedPushNotification(
