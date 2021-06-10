@@ -15,6 +15,7 @@ import { SecurityEntrySensorAccessory } from './securityEntrySensorAccessory';
 import { SecurityMotionSensorAccessory } from './securityMotionSensorAccessory';
 import { SecurityCameraAccessory } from './securityCameraAccessory';
 import { SecurityDoorbellCameraAccessory } from './securityDoorbellCameraAccessory';
+import { SecurityKeypadAccessory } from './securityKeypadAccessory';
 
 import {
   EufySecurity,
@@ -26,6 +27,7 @@ import {
   MotionSensor,
   Camera,
   DoorbellCamera,
+  Keypad,
 } from 'eufy-security-client';
 // import { throws } from 'assert';
 import bunyan from 'bunyan';
@@ -287,6 +289,9 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
         break;
       case DeviceType.SENSOR:
         new SecurityEntrySensorAccessory(this, accessory, device as EntrySensor);
+        break;
+      case DeviceType.KEYPAD:
+        new SecurityKeypadAccessory(this, accessory, device as Keypad);
         break;
       default:
         this.log.info(

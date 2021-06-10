@@ -26,7 +26,7 @@ export class SecurityCameraAccessory {
       .setCharacteristic(this.platform.Characteristic.Manufacturer, 'Eufy')
       .setCharacteristic(
         this.platform.Characteristic.Model,
-        'Camera',
+        eufyDevice.getModel(),
       )
       .setCharacteristic(
         this.platform.Characteristic.SerialNumber,
