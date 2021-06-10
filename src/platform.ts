@@ -1,4 +1,5 @@
 import {
+  HAP,
   API,
   DynamicPlatformPlugin,
   Logger,
@@ -14,6 +15,7 @@ import { SecuritySystemPlatformAccessory } from './securitySystemPlatformAccesso
 import { SecurityEntrySensorAccessory } from './securityEntrySensorAccessory';
 import { SecurityMotionSensorAccessory } from './securityMotionSensorAccessory';
 import { SecurityCameraAccessory } from './securityCameraAccessory';
+import { SecurityDoorbellCameraAccessory } from './securityDoorbellCameraAccessory';
 
 import {
   EufySecurity,
@@ -24,6 +26,7 @@ import {
   EntrySensor,
   MotionSensor,
   Camera,
+  DoorbellCamera,
 } from 'eufy-security-client';
 // import { throws } from 'assert';
 import bunyan from 'bunyan';
@@ -59,8 +62,7 @@ export interface EufySecurityPlatformConfig extends PlatformConfig {
 
 export class EufySecurityPlatform implements DynamicPlatformPlugin {
   public readonly Service: typeof Service = this.api.hap.Service;
-  public readonly Characteristic: typeof Characteristic =
-    this.api.hap.Characteristic;
+  public readonly Characteristic: typeof Characteristic = this.api.hap.Characteristic;
 
   private eufyClient: EufySecurity;
 
@@ -81,6 +83,7 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
       password: this.config.password,
       country: 'US',
       language: 'en',
+      persistentDir: api.user.storagePath(),
       p2pConnectionSetup: 0,
       pollingIntervalMinutes: this.config.pollingIntervalMinutes ?? 10,
       eventDurationSeconds: 10,
@@ -260,38 +263,32 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
           config,
         );
         break;
-      case DeviceType.MOTION_SENSOR:
-        new SecurityMotionSensorAccessory(
-          this,
-          accessory,
-          device as MotionSensor,
-        );
-        break;
-      case DeviceType.CAMERA:
-      case DeviceType.CAMERA2:
-      case DeviceType.CAMERA2C:
-      case DeviceType.CAMERA2C_PRO:
-      case DeviceType.CAMERA2_PRO:
-      case DeviceType.CAMERA_E:
+      // case DeviceType.MOTION_SENSOR:
+      //   new SecurityMotionSensorAccessory(this, accessory, device as MotionSensor);
+      //   break;
+      // case DeviceType.CAMERA:
+      // case DeviceType.CAMERA2:
+      // case DeviceType.CAMERA2C:
+      // case DeviceType.CAMERA2C_PRO:
+      // case DeviceType.CAMERA2_PRO:
+      // case DeviceType.CAMERA_E:
+      // case DeviceType.FLOODLIGHT:
+      // case DeviceType.INDOOR_CAMERA:
+      // case DeviceType.INDOOR_CAMERA_1080:
+      // case DeviceType.INDOOR_PT_CAMERA:
+      // case DeviceType.INDOOR_PT_CAMERA_1080:
+      // case DeviceType.SOLO_CAMERA:
+      // case DeviceType.SOLO_CAMERA_PRO:
+      //   new SecurityCameraAccessory(this, accessory, device as Camera);
+      //   break;
       case DeviceType.DOORBELL:
       case DeviceType.BATTERY_DOORBELL:
       case DeviceType.BATTERY_DOORBELL_2:
-      case DeviceType.FLOODLIGHT:
-      case DeviceType.INDOOR_CAMERA:
-      case DeviceType.INDOOR_CAMERA_1080:
-      case DeviceType.INDOOR_PT_CAMERA:
-      case DeviceType.INDOOR_PT_CAMERA_1080:
-      case DeviceType.SOLO_CAMERA:
-      case DeviceType.SOLO_CAMERA_PRO:
-        new SecurityCameraAccessory(this, accessory, device as Camera);
+        new SecurityDoorbellCameraAccessory(this, accessory, device as DoorbellCamera);
         break;
-      case DeviceType.SENSOR:
-        new SecurityEntrySensorAccessory(
-          this,
-          accessory,
-          device as EntrySensor,
-        );
-        break;
+      // case DeviceType.SENSOR:
+      //   new SecurityEntrySensorAccessory(this, accessory, device as EntrySensor);
+      //   break;
       default:
         this.log.info(
           'This accessory is not compatible with this plugin:',

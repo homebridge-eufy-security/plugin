@@ -4,21 +4,22 @@ import { EufySecurityPlatform } from './platform';
 
 // import { HttpService, LocalLookupService, DeviceClientService, CommandType } from 'eufy-node-client';
 
-import { Camera, Device } from 'eufy-security-client';
+import { DoorbellCamera, Device } from 'eufy-security-client';
 
 /**
  * Platform Accessory
  * An instance of this class is created for each accessory your platform registers
  * Each accessory may expose multiple services of different service types.
  */
-export class SecurityCameraAccessory {
+export class SecurityDoorbellCameraAccessory {
   private service: Service;
 
   constructor(
     private readonly platform: EufySecurityPlatform,
     private readonly accessory: PlatformAccessory,
-    private eufyDevice: Camera,
+    private eufyDevice: DoorbellCamera,
   ) {
+
     this.platform.log.debug('Constructed Switch');
     // set accessory information
     this.accessory
@@ -26,7 +27,7 @@ export class SecurityCameraAccessory {
       .setCharacteristic(this.platform.Characteristic.Manufacturer, 'Eufy')
       .setCharacteristic(
         this.platform.Characteristic.Model,
-        'Camera',
+        'DoorbellCamera',
       )
       .setCharacteristic(
         this.platform.Characteristic.SerialNumber,
@@ -38,8 +39,8 @@ export class SecurityCameraAccessory {
       );
 
     this.service =
-      this.accessory.getService(this.platform.Service.MotionSensor) ||
-      this.accessory.addService(this.platform.Service.MotionSensor);
+      this.accessory.getService(this.platform.Service.Doorbell) ||
+      this.accessory.addService(this.platform.Service.Doorbell);
 
     this.service.setCharacteristic(
       this.platform.Characteristic.Name,
@@ -48,11 +49,11 @@ export class SecurityCameraAccessory {
 
     // create handlers for required characteristics
     this.service
-      .getCharacteristic(this.platform.Characteristic.MotionDetected)
+      .getCharacteristic(this.platform.Characteristic.ProgrammableSwitchEvent)
       .on('get', this.handleSecuritySystemCurrentStateGet.bind(this));
 
-    this.eufyDevice.on('motion detected', (device: Device, state: boolean) =>
-      this.onDeviceMotionDetectedPushNotification(device, state),
+    this.eufyDevice.on('rings', (device: Device, state: boolean) =>
+      this.onDeviceRingsPushNotification(),
     );
 
     if(this.eufyDevice.hasBattery()) {
@@ -88,29 +89,20 @@ export class SecurityCameraAccessory {
 
   async getCurrentBatteryLevel() {
     const batteryLevel = this.eufyDevice.getBatteryValue();
-
     return batteryLevel.value as number;
   }
 
-  async getCurrentStatus() {
-    const isMotionDetected = this.eufyDevice.isMotionDetected();
-
-    return isMotionDetected as boolean;
-  }
-
   /**
-   * Handle requests to get the current value of the 'Security System Current State' characteristic
+   * Nothing to do
    */
   async handleSecuritySystemCurrentStateGet(callback) {
     callback(null, null);
   }
 
-  private onDeviceMotionDetectedPushNotification(
-    device: Device,
-    open: boolean,
-  ): void {
+  private onDeviceRingsPushNotification(): void {
+    this.platform.log.debug('DoorBell ringing');
     this.service
-      .getCharacteristic(this.platform.Characteristic.MotionDetected)
-      .updateValue(open);
+      .getCharacteristic(this.platform.Characteristic.ProgrammableSwitchEvent)
+      .updateValue(this.platform.Characteristic.ProgrammableSwitchEvent.SINGLE_PRESS);
   }
 }

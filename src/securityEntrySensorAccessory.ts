@@ -26,11 +26,15 @@ export class SecurityEntrySensorAccessory {
       .setCharacteristic(this.platform.Characteristic.Manufacturer, 'Eufy')
       .setCharacteristic(
         this.platform.Characteristic.Model,
-        eufyDevice.getModel(),
+        'ContactSensor',
       )
       .setCharacteristic(
         this.platform.Characteristic.SerialNumber,
         eufyDevice.getSerial(),
+      )
+      .setCharacteristic(
+        this.platform.Characteristic.FirmwareRevision,
+        eufyDevice.getSoftwareVersion(),
       );
 
     this.service =

@@ -26,11 +26,15 @@ export class SecurityMotionSensorAccessory {
       .setCharacteristic(this.platform.Characteristic.Manufacturer, 'Eufy')
       .setCharacteristic(
         this.platform.Characteristic.Model,
-        'Security Mode Control',
+        'MotionSensor',
       )
       .setCharacteristic(
         this.platform.Characteristic.SerialNumber,
         eufyDevice.getSerial(),
+      )
+      .setCharacteristic(
+        this.platform.Characteristic.FirmwareRevision,
+        eufyDevice.getSoftwareVersion(),
       );
 
     this.service =
