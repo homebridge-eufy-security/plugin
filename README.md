@@ -24,6 +24,7 @@ Recommendation: Create a second Eufy account and add it as a guest account from 
 | Camera        | Reports motion        | Shows as Motion Sensor                |
 | Motion Sensor | Reports motion        | Shows as Motion Sensor                |
 | Entry Sensor  | Open/Close detection  | Shows as Contact Sensor               |
+| Keypad        | Battery low level     | Shows as Switch                       |
 
 ## Roadmap
 
