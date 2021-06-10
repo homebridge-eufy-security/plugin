@@ -14,6 +14,7 @@ import { SecuritySystemPlatformAccessory } from './securitySystemPlatformAccesso
 import { SecurityEntrySensorAccessory } from './securityEntrySensorAccessory';
 import { SecurityMotionSensorAccessory } from './securityMotionSensorAccessory';
 import { SecurityCameraAccessory } from './securityCameraAccessory';
+import { SecurityDoorbellCameraAccessory } from './securityDoorbellCameraAccessory';
 import { SecurityKeypadAccessory } from './securityKeypadAccessory';
 
 import {
@@ -25,6 +26,7 @@ import {
   EntrySensor,
   MotionSensor,
   Camera,
+  DoorbellCamera,
   Keypad,
 } from 'eufy-security-client';
 // import { throws } from 'assert';
@@ -61,8 +63,7 @@ export interface EufySecurityPlatformConfig extends PlatformConfig {
 
 export class EufySecurityPlatform implements DynamicPlatformPlugin {
   public readonly Service: typeof Service = this.api.hap.Service;
-  public readonly Characteristic: typeof Characteristic =
-    this.api.hap.Characteristic;
+  public readonly Characteristic: typeof Characteristic = this.api.hap.Characteristic;
 
   private eufyClient: EufySecurity;
 
@@ -83,6 +84,7 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
       password: this.config.password,
       country: 'US',
       language: 'en',
+      persistentDir: api.user.storagePath(),
       p2pConnectionSetup: 0,
       pollingIntervalMinutes: this.config.pollingIntervalMinutes ?? 10,
       eventDurationSeconds: 10,
@@ -263,11 +265,7 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
         );
         break;
       case DeviceType.MOTION_SENSOR:
-        new SecurityMotionSensorAccessory(
-          this,
-          accessory,
-          device as MotionSensor,
-        );
+        new SecurityMotionSensorAccessory(this, accessory, device as MotionSensor);
         break;
       case DeviceType.CAMERA:
       case DeviceType.CAMERA2:
@@ -275,9 +273,6 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
       case DeviceType.CAMERA2C_PRO:
       case DeviceType.CAMERA2_PRO:
       case DeviceType.CAMERA_E:
-      case DeviceType.DOORBELL:
-      case DeviceType.BATTERY_DOORBELL:
-      case DeviceType.BATTERY_DOORBELL_2:
       case DeviceType.FLOODLIGHT:
       case DeviceType.INDOOR_CAMERA:
       case DeviceType.INDOOR_CAMERA_1080:
@@ -287,12 +282,13 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
       case DeviceType.SOLO_CAMERA_PRO:
         new SecurityCameraAccessory(this, accessory, device as Camera);
         break;
+      case DeviceType.DOORBELL:
+      case DeviceType.BATTERY_DOORBELL:
+      case DeviceType.BATTERY_DOORBELL_2:
+        new SecurityDoorbellCameraAccessory(this, accessory, device as DoorbellCamera);
+        break;
       case DeviceType.SENSOR:
-        new SecurityEntrySensorAccessory(
-          this,
-          accessory,
-          device as EntrySensor,
-        );
+        new SecurityEntrySensorAccessory(this, accessory, device as EntrySensor);
         break;
       case DeviceType.KEYPAD:
         new SecurityKeypadAccessory(this, accessory, device as Keypad);
