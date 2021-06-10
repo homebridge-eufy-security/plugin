@@ -74,9 +74,21 @@ export class SecuritySystemPlatformAccessory {
   ): void {
     const homekitGuardMode = this.convertStatusCodeToHomekit(guardMode);
     if (homekitGuardMode) {
+      this.platform.log.debug(
+        'Received StationGuardModePushNotification - guardmode ' +
+          guardMode +
+          ' homekitGuardMode ' +
+          homekitGuardMode,
+      );
       this.service
         .getCharacteristic(
           this.platform.Characteristic.SecuritySystemCurrentState,
+        )
+        .updateValue(homekitGuardMode);
+
+      this.service
+        .getCharacteristic(
+          this.platform.Characteristic.SecuritySystemTargetState,
         )
         .updateValue(homekitGuardMode);
     }
