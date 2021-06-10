@@ -20,7 +20,7 @@ export class SecurityDoorbellCameraAccessory {
     private eufyDevice: DoorbellCamera,
   ) {
 
-    this.platform.log.debug('Constructed Switch');
+    this.platform.log.debug('Constructed Doorbell');
     // set accessory information
     this.accessory
       .getService(this.platform.Service.AccessoryInformation)!
@@ -82,7 +82,7 @@ export class SecurityDoorbellCameraAccessory {
 
     // set this to a valid value for SecuritySystemCurrentState
     const currentValue = await this.getCurrentBatteryLevel();
-    this.platform.log.debug('Handle Current System state:  -- ', currentValue);
+    this.platform.log.debug('Handle Current battery level:  -- ', currentValue);
 
     callback(null, currentValue);
   }
