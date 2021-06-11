@@ -1,5 +1,12 @@
 # Change Log
 
+## 0.1.3 (06-11-2021)
+
+### Changes
+
+* Improvements to the doorbell functionality. 
+
+
 ## 0.1.2 (06-11-2021)
 
 ### Changes
