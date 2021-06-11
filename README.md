@@ -30,7 +30,7 @@ Recommendation: Create a second Eufy account and add it as a guest account from 
 ## Roadmap
 
 - Add 2FA
-- Add Doorbell support
+- Add more Doorbell support
 - Add support for turning cameras on/off
 
 Feel free to contribute to this plugin by opening a PR!
@@ -40,3 +40,14 @@ Feel free to contribute to this plugin by opening a PR!
 Please open a GitHub issue.
 
 This is a side project for me so I will do my best to look at issues when I can.
+
+## Supporting
+
+If you appreciate this plugin and want to support me, you can do it here:
+
+[![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/S6S24XCVJ)
+
+Also consider supporting the other contributors:
+
+* **[schliemann](https://github.com/schliemann)**
+* [**lenoxys**](https://github.com/lenoxys)
