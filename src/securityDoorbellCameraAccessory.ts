@@ -4,7 +4,7 @@ import { EufySecurityPlatform } from './platform';
 
 // import { HttpService, LocalLookupService, DeviceClientService, CommandType } from 'eufy-node-client';
 
-import { DoorbellCamera, Device } from 'eufy-security-client';
+import { DoorbellCamera, Device, DeviceType } from 'eufy-security-client';
 
 /**
  * Platform Accessory
@@ -19,7 +19,6 @@ export class SecurityDoorbellCameraAccessory {
     private readonly accessory: PlatformAccessory,
     private eufyDevice: DoorbellCamera,
   ) {
-
     this.platform.log.debug('Constructed Doorbell');
     // set accessory information
     this.accessory
@@ -27,7 +26,7 @@ export class SecurityDoorbellCameraAccessory {
       .setCharacteristic(this.platform.Characteristic.Manufacturer, 'Eufy')
       .setCharacteristic(
         this.platform.Characteristic.Model,
-        'DoorbellCamera',
+        DeviceType[eufyDevice.getDeviceType()],
       )
       .setCharacteristic(
         this.platform.Characteristic.SerialNumber,
@@ -36,6 +35,10 @@ export class SecurityDoorbellCameraAccessory {
       .setCharacteristic(
         this.platform.Characteristic.FirmwareRevision,
         eufyDevice.getSoftwareVersion(),
+      )
+      .setCharacteristic(
+        this.platform.Characteristic.HardwareRevision,
+        eufyDevice.getHardwareVersion(),
       );
 
     this.service =

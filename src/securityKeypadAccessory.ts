@@ -4,7 +4,7 @@ import { EufySecurityPlatform } from './platform';
 
 // import { HttpService, LocalLookupService, DeviceClientService, CommandType } from 'eufy-node-client';
 
-import { Keypad, Device } from 'eufy-security-client';
+import { Keypad, Device, DeviceType } from 'eufy-security-client';
 
 /**
  * Platform Accessory
@@ -27,7 +27,7 @@ export class SecurityKeypadAccessory {
       .setCharacteristic(this.platform.Characteristic.Manufacturer, 'Eufy')
       .setCharacteristic(
         this.platform.Characteristic.Model,
-        eufyDevice.getModel(),
+        DeviceType[eufyDevice.getDeviceType()],
       )
       .setCharacteristic(
         this.platform.Characteristic.SerialNumber,
@@ -36,6 +36,10 @@ export class SecurityKeypadAccessory {
       .setCharacteristic(
         this.platform.Characteristic.FirmwareRevision,
         eufyDevice.getSoftwareVersion(),
+      )
+      .setCharacteristic(
+        this.platform.Characteristic.HardwareRevision,
+        eufyDevice.getHardwareVersion(),
       );
 
     this.service =
