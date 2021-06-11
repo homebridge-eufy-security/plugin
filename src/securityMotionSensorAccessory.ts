@@ -4,7 +4,7 @@ import { EufySecurityPlatform } from './platform';
 
 // import { HttpService, LocalLookupService, DeviceClientService, CommandType } from 'eufy-node-client';
 
-import { Device, MotionSensor } from 'eufy-security-client';
+import { Device, MotionSensor, DeviceType } from 'eufy-security-client';
 
 /**
  * Platform Accessory
@@ -26,7 +26,7 @@ export class SecurityMotionSensorAccessory {
       .setCharacteristic(this.platform.Characteristic.Manufacturer, 'Eufy')
       .setCharacteristic(
         this.platform.Characteristic.Model,
-        'MotionSensor',
+        DeviceType[eufyDevice.getDeviceType()],
       )
       .setCharacteristic(
         this.platform.Characteristic.SerialNumber,
@@ -35,6 +35,10 @@ export class SecurityMotionSensorAccessory {
       .setCharacteristic(
         this.platform.Characteristic.FirmwareRevision,
         eufyDevice.getSoftwareVersion(),
+      )
+      .setCharacteristic(
+        this.platform.Characteristic.HardwareRevision,
+        eufyDevice.getHardwareVersion(),
       );
 
     this.service =
@@ -49,18 +53,28 @@ export class SecurityMotionSensorAccessory {
     // create handlers for required characteristics
     this.service
       .getCharacteristic(this.platform.Characteristic.MotionDetected)
-      .on('get', this.handleSecuritySystemCurrentStateGet.bind(this));
+      .on('get', this.handleMotionDetectedGet.bind(this));
 
     this.eufyDevice.on('motion detected', (device: Device, open: boolean) =>
       this.onDeviceMotionDetectedPushNotification(device, open),
     );
   }
 
+  async isMotionDetected() {
+    const isMotionDetected = this.eufyDevice.isMotionDetected();
+    return isMotionDetected as boolean;
+  }
+
   /**
    * Handle requests to get the current value of the 'Security System Current State' characteristic
    */
-  async handleSecuritySystemCurrentStateGet(callback) {
-    callback(null, null);
+  async handleMotionDetectedGet(callback) {
+    this.platform.log.info(this.accessory.displayName, 'Triggered GET MotionDetected');
+
+    const currentValue = await this.isMotionDetected();
+    this.platform.log.info(this.accessory.displayName, 'Handle Motion Sensor:  -- ', currentValue);
+
+    callback(null, currentValue as boolean);
   }
 
   private onDeviceMotionDetectedPushNotification(

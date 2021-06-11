@@ -4,7 +4,7 @@ import { EufySecurityPlatform } from './platform';
 
 // import { HttpService, LocalLookupService, DeviceClientService, CommandType } from 'eufy-node-client';
 
-import { EufySecurity, Device, EntrySensor } from 'eufy-security-client';
+import { Device, EntrySensor, DeviceType } from 'eufy-security-client';
 
 /**
  * Platform Accessory
@@ -26,7 +26,7 @@ export class SecurityEntrySensorAccessory {
       .setCharacteristic(this.platform.Characteristic.Manufacturer, 'Eufy')
       .setCharacteristic(
         this.platform.Characteristic.Model,
-        'ContactSensor',
+        DeviceType[eufyDevice.getDeviceType()],
       )
       .setCharacteristic(
         this.platform.Characteristic.SerialNumber,
@@ -35,6 +35,10 @@ export class SecurityEntrySensorAccessory {
       .setCharacteristic(
         this.platform.Characteristic.FirmwareRevision,
         eufyDevice.getSoftwareVersion(),
+      )
+      .setCharacteristic(
+        this.platform.Characteristic.HardwareRevision,
+        eufyDevice.getHardwareVersion(),
       );
 
     this.service =
