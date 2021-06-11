@@ -135,6 +135,7 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
     const eufyDevices = await this.eufyClient.getDevices();
 
     this.log.debug('Found ' + eufyDevices.length + ' devices.');
+    this.log.debug('Found ' + eufyHubs.length + ' hubs.');
 
     const devices: Array<DeviceContainer> = [];
 
@@ -152,6 +153,7 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
     }
 
     for (const hub of eufyHubs) {
+      this.log.debug('Found hub ' + hub.getName());
       const deviceContainer: DeviceContainer = {
         deviceIdentifier: {
           uniqueId: hub.getSerial(),
