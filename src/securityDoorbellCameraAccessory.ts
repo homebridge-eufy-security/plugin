@@ -39,21 +39,64 @@ export class SecurityDoorbellCameraAccessory {
       );
 
     this.service =
-      this.accessory.getService(this.platform.Service.Doorbell) ||
-      this.accessory.addService(this.platform.Service.Doorbell);
+      this.accessory.getService(this.platform.Service.CameraOperatingMode) ||
+      this.accessory.addService(this.platform.Service.CameraOperatingMode);
 
     this.service.setCharacteristic(
       this.platform.Characteristic.Name,
       accessory.displayName,
     );
 
-    // create handlers for required characteristics
     this.service
-      .getCharacteristic(this.platform.Characteristic.ProgrammableSwitchEvent)
-      .on('get', this.handleSecuritySystemCurrentStateGet.bind(this));
+      .getCharacteristic(this.platform.Characteristic.EventSnapshotsActive)
+      .on('get', this.handleEventSnapshotsActiveGet.bind(this));
+    this.service
+      .getCharacteristic(this.platform.Characteristic.EventSnapshotsActive)
+      .on('set', this.handleEventSnapshotsActiveSet.bind(this));
 
+    this.service
+      .getCharacteristic(this.platform.Characteristic.HomeKitCameraActive)
+      .on('get', this.handleHomeKitCameraActiveGet.bind(this));
+    this.service
+      .getCharacteristic(this.platform.Characteristic.HomeKitCameraActive)
+      .on('set', this.handleHomeKitCameraActiveSet.bind(this));
+
+    const doorbellService =
+    this.accessory.getService(this.platform.Service.Doorbell) ||
+    this.accessory.addService(this.platform.Service.Doorbell);
+
+    // set the Battery service characteristics
+    doorbellService.setCharacteristic(
+      this.platform.Characteristic.Name,
+      accessory.displayName,
+    );
+
+    // create handlers for required characteristics of Battery service
+    doorbellService
+      .getCharacteristic(this.platform.Characteristic.ProgrammableSwitchEvent)
+      .on('get', this.handleProgrammableSwitchEventGet.bind(this));
+  
     this.eufyDevice.on('rings', (device: Device, state: boolean) =>
       this.onDeviceRingsPushNotification(),
+    );
+
+    const MotionService =
+    this.accessory.getService(this.platform.Service.MotionSensor) ||
+    this.accessory.addService(this.platform.Service.MotionSensor);
+
+    // set the Battery service characteristics
+    MotionService.setCharacteristic(
+      this.platform.Characteristic.Name,
+      accessory.displayName,
+    );
+
+    // create handlers for required characteristics of Battery service
+    MotionService
+      .getCharacteristic(this.platform.Characteristic.MotionDetected)
+      .on('get', this.handleMotionDetectedGet.bind(this));
+
+    this.eufyDevice.on('motion detected', (device: Device, open: boolean) =>
+      this.onDeviceMotionDetectedPushNotification(device, open),
     );
 
     if(this.eufyDevice.hasBattery()) {
@@ -74,6 +117,41 @@ export class SecurityDoorbellCameraAccessory {
     }
   }
 
+  handleEventSnapshotsActiveGet(callback) {
+    this.platform.log.debug('Triggered GET EventSnapshotsActive');
+
+    // set this to a valid value for EventSnapshotsActive
+    const currentValue = this.platform.Characteristic.EventSnapshotsActive.DISABLE;
+
+    callback(null, currentValue);
+  }
+
+  /**
+   * Handle requests to set the "Event Snapshots Active" characteristic
+   */
+  handleEventSnapshotsActiveSet(value) {
+    this.platform.log.debug('Triggered SET EventSnapshotsActive:', value);
+  }
+
+  /**
+   * Handle requests to get the current value of the "HomeKit Camera Active" characteristic
+   */
+  handleHomeKitCameraActiveGet(callback) {
+    this.platform.log.debug('Triggered GET HomeKitCameraActive');
+
+    // set this to a valid value for HomeKitCameraActive
+    const currentValue = this.platform.Characteristic.HomeKitCameraActive.OFF;
+
+    callback(null, currentValue);
+  }
+
+  /**
+   * Handle requests to set the "HomeKit Camera Active" characteristic
+   */
+  handleHomeKitCameraActiveSet(value) {
+    this.platform.log.debug('Triggered SET HomeKitCameraActive:', value);
+  }
+
   /**
    * Handle requests to get the current value of the "Status Low Battery" characteristic
    */
@@ -92,10 +170,7 @@ export class SecurityDoorbellCameraAccessory {
     return batteryLevel.value as number;
   }
 
-  /**
-   * Nothing to do
-   */
-  async handleSecuritySystemCurrentStateGet(callback) {
+  async handleProgrammableSwitchEventGet(callback) {
     callback(null, null);
   }
 
@@ -104,5 +179,32 @@ export class SecurityDoorbellCameraAccessory {
     this.service
       .getCharacteristic(this.platform.Characteristic.ProgrammableSwitchEvent)
       .updateValue(this.platform.Characteristic.ProgrammableSwitchEvent.SINGLE_PRESS);
+  }
+
+  async isMotionDetected() {
+    await this.platform.refreshData(this.platform.eufyClient);
+    const isMotionDetected = this.eufyDevice.isMotionDetected();
+    return isMotionDetected as boolean;
+  }
+
+  /**
+   * Handle requests to get the current value of the 'Security System Current State' characteristic
+   */
+  async handleMotionDetectedGet(callback) {
+    this.platform.log.info('Triggered GET MotionDetected');
+
+    const currentValue = await this.isMotionDetected();
+    this.platform.log.info('Handle Current System state:  -- ', currentValue);
+
+    callback(null, currentValue);
+  }
+
+  private onDeviceMotionDetectedPushNotification(
+    device: Device,
+    open: boolean,
+  ): void {
+    this.service
+      .getCharacteristic(this.platform.Characteristic.MotionDetected)
+      .updateValue(open);
   }
 }
