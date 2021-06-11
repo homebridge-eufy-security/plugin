@@ -49,7 +49,7 @@ export class SecurityCameraAccessory {
     // create handlers for required characteristics
     this.service
       .getCharacteristic(this.platform.Characteristic.MotionDetected)
-      .on('get', this.handleSecuritySystemCurrentStateGet.bind(this));
+      .on('get', this.handleMotionDetectedGet.bind(this));
 
     this.eufyDevice.on('motion detected', (device: Device, state: boolean) =>
       this.onDeviceMotionDetectedPushNotification(device, state),
@@ -92,17 +92,21 @@ export class SecurityCameraAccessory {
     return batteryLevel.value as number;
   }
 
-  async getCurrentStatus() {
+  async isMotionDetected() {
     const isMotionDetected = this.eufyDevice.isMotionDetected();
-
     return isMotionDetected as boolean;
   }
 
   /**
    * Handle requests to get the current value of the 'Security System Current State' characteristic
    */
-  async handleSecuritySystemCurrentStateGet(callback) {
-    callback(null, null);
+  async handleMotionDetectedGet(callback) {
+    this.platform.log.info(this.accessory.displayName, 'Triggered GET MotionDetected');
+
+    const currentValue = await this.isMotionDetected();
+    this.platform.log.info(this.accessory.displayName, 'Handle Motion Sensor:  -- ', currentValue);
+
+    callback(null, currentValue as boolean);
   }
 
   private onDeviceMotionDetectedPushNotification(

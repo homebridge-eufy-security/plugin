@@ -182,7 +182,6 @@ export class SecurityDoorbellCameraAccessory {
   }
 
   async isMotionDetected() {
-    await this.platform.refreshData(this.platform.eufyClient);
     const isMotionDetected = this.eufyDevice.isMotionDetected();
     return isMotionDetected as boolean;
   }
@@ -191,12 +190,12 @@ export class SecurityDoorbellCameraAccessory {
    * Handle requests to get the current value of the 'Security System Current State' characteristic
    */
   async handleMotionDetectedGet(callback) {
-    this.platform.log.info('Triggered GET MotionDetected');
+    this.platform.log.info(this.accessory.displayName, 'Triggered GET MotionDetected');
 
     const currentValue = await this.isMotionDetected();
-    this.platform.log.info('Handle Current System state:  -- ', currentValue);
+    this.platform.log.info(this.accessory.displayName, 'Handle Motion Sensor:  -- ', currentValue);
 
-    callback(null, currentValue);
+    callback(null, currentValue as boolean);
   }
 
   private onDeviceMotionDetectedPushNotification(
