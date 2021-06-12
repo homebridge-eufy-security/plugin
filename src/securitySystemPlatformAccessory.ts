@@ -17,7 +17,7 @@ export class SecuritySystemPlatformAccessory {
     private eufyStation: Station,
     private config: EufySecurityPlatformConfig,
   ) {
-    this.platform.log.debug('Constructed SecuritySystem');
+    this.platform.log.debug(this.accessory.displayName, 'Constructed SecuritySystem');
     // set accessory information
     this.accessory
       .getService(this.platform.Service.AccessoryInformation)!
@@ -165,11 +165,11 @@ export class SecuritySystemPlatformAccessory {
    * Handle requests to get the current value of the 'Security System Current State' characteristic
    */
   async handleSecuritySystemCurrentStateGet(callback) {
-    this.platform.log.debug('Triggered GET SecuritySystemCurrentState');
+    this.platform.log.debug(this.accessory.displayName, 'Triggered GET SecuritySystemCurrentState');
 
     // set this to a valid value for SecuritySystemCurrentState
     const currentValue = await this.getCurrentStatus();
-    this.platform.log.debug('Handle Current System state:  -- ', currentValue);
+    this.platform.log.debug(this.accessory.displayName, 'Handle Current System state:  -- ', currentValue);
 
     callback(null, currentValue);
   }
@@ -178,7 +178,7 @@ export class SecuritySystemPlatformAccessory {
    * Handle requests to get the current value of the 'Security System Target State' characteristic
    */
   async handleSecuritySystemTargetStateGet(callback) {
-    this.platform.log.debug('Triggered GET SecuritySystemTargetState');
+    this.platform.log.debug(this.accessory.displayName, 'Triggered GET SecuritySystemTargetState');
 
     // set this to a valid value for SecuritySystemTargetState
     const currentValue = await this.getCurrentStatus();

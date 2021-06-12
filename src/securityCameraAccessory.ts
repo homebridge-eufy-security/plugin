@@ -19,7 +19,7 @@ export class SecurityCameraAccessory {
     private readonly accessory: PlatformAccessory,
     private eufyDevice: Camera,
   ) {
-    this.platform.log.debug('Constructed Camera');
+    this.platform.log.debug(this.accessory.displayName, 'Constructed Camera');
     // set accessory information
     this.accessory
       .getService(this.platform.Service.AccessoryInformation)!
@@ -60,6 +60,8 @@ export class SecurityCameraAccessory {
     );
 
     if(this.eufyDevice.hasBattery()) {
+      this.platform.log.debug(this.accessory.displayName, 'has a battery, so append batteryService characteristic to him.');
+
       const batteryService =
       this.accessory.getService(this.platform.Service.BatteryService) ||
       this.accessory.addService(this.platform.Service.BatteryService);
@@ -81,11 +83,11 @@ export class SecurityCameraAccessory {
    * Handle requests to get the current value of the "Status Low Battery" characteristic
    */
   async handleBatteryLevelGet(callback) {
-    this.platform.log.debug('Triggered GET BatteryLevel');
+    this.platform.log.debug(this.accessory.displayName, 'Triggered GET BatteryLevel');
 
     // set this to a valid value for SecuritySystemCurrentState
     const currentValue = await this.getCurrentBatteryLevel();
-    this.platform.log.debug('Handle Current battery level:  -- ', currentValue);
+    this.platform.log.debug(this.accessory.displayName, 'Handle Current battery level:  -- ', currentValue);
 
     callback(null, currentValue);
   }

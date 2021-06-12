@@ -19,7 +19,7 @@ export class SecurityMotionSensorAccessory {
     private readonly accessory: PlatformAccessory,
     private eufyDevice: MotionSensor,
   ) {
-    this.platform.log.debug('Constructed Motion Sensor');
+    this.platform.log.debug(this.accessory.displayName, 'Constructed Motion Sensor');
     // set accessory information
     this.accessory
       .getService(this.platform.Service.AccessoryInformation)!

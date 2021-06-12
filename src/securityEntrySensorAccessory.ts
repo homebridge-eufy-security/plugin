@@ -19,7 +19,7 @@ export class SecurityEntrySensorAccessory {
     private readonly accessory: PlatformAccessory,
     private eufyDevice: EntrySensor,
   ) {
-    this.platform.log.debug('Constructed Entry Sensor');
+    this.platform.log.debug(this.accessory.displayName, 'Constructed Entry Sensor');
     // set accessory information
     this.accessory
       .getService(this.platform.Service.AccessoryInformation)!
@@ -69,11 +69,11 @@ export class SecurityEntrySensorAccessory {
    * Handle requests to get the current value of the 'Security System Current State' characteristic
    */
   async handleSecuritySystemCurrentStateGet(callback) {
-    this.platform.log.debug('Triggered GET SecuritySystemCurrentState');
+    this.platform.log.debug(this.accessory.displayName, 'Triggered GET SecuritySystemCurrentState');
 
     // set this to a valid value for SecuritySystemCurrentState
     const currentValue = await this.getCurrentStatus();
-    this.platform.log.debug('Handle Current System state:  -- ', currentValue);
+    this.platform.log.debug(this.accessory.displayName, 'Handle Current System state:  -- ', currentValue);
 
     callback(null, currentValue);
   }

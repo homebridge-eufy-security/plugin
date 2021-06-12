@@ -20,7 +20,7 @@ export class SecurityKeypadAccessory {
     private readonly accessory: PlatformAccessory,
     private eufyDevice: Keypad,
   ) {
-    this.platform.log.debug('Constructed Switch');
+    this.platform.log.debug(this.accessory.displayName, 'Constructed Switch');
     // set accessory information
     this.accessory
       .getService(this.platform.Service.AccessoryInformation)!
@@ -87,7 +87,7 @@ export class SecurityKeypadAccessory {
    * Handle requests to get the current value of the 'Security System Current State' characteristic
    */
   async handleStatusLowBatteryCurrentStateGet(callback) {
-    this.platform.log.debug('Triggered GET StatusLowBatteryCurrentState');
+    this.platform.log.debug(this.accessory.displayName, 'Triggered GET StatusLowBatteryCurrentState');
 
     // set this to a valid value for SecuritySystemCurrentState
     const currentValue = await this.getIsBatteryLowStatus();
@@ -109,7 +109,7 @@ export class SecurityKeypadAccessory {
    * Handle requests to get the current value of the "Active" characteristic
    */
   async handleOnGet(callback) {
-    this.platform.log.debug('Triggered GET Active');
+    this.platform.log.debug(this.accessory.displayName, 'Triggered GET Active');
 
     const currentDeviceState = await this.getCurrentDeviceState();
 
