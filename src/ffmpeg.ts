@@ -1,7 +1,7 @@
 import { ChildProcess, spawn } from 'child_process';
 import { StreamRequestCallback, Logger } from 'homebridge';
 import { Writable } from 'stream';
-import { EufyCameraStreamingDelegate } from './new-streaming-delegate';
+import { EufyCameraStreamingDelegate } from './streamingDelegate';
 
 export class FfmpegProcess {
   private readonly process: ChildProcess;
