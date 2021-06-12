@@ -19,7 +19,7 @@ export class SecurityDoorbellCameraAccessory {
     private readonly accessory: PlatformAccessory,
     private eufyDevice: DoorbellCamera,
   ) {
-    this.platform.log.debug('Constructed Doorbell');
+    this.platform.log.debug(this.accessory.displayName, 'Constructed Doorbell');
     // set accessory information
     this.accessory
       .getService(this.platform.Service.AccessoryInformation)!
@@ -103,6 +103,8 @@ export class SecurityDoorbellCameraAccessory {
     );
 
     if(this.eufyDevice.hasBattery()) {
+      this.platform.log.debug(this.accessory.displayName, 'has a battery, so append batteryService characteristic to him.');
+
       const batteryService =
       this.accessory.getService(this.platform.Service.BatteryService) ||
       this.accessory.addService(this.platform.Service.BatteryService);
@@ -121,7 +123,7 @@ export class SecurityDoorbellCameraAccessory {
   }
 
   handleEventSnapshotsActiveGet(callback) {
-    this.platform.log.debug('Triggered GET EventSnapshotsActive');
+    this.platform.log.debug(this.accessory.displayName, 'Triggered GET EventSnapshotsActive');
 
     // set this to a valid value for EventSnapshotsActive
     const currentValue = this.platform.Characteristic.EventSnapshotsActive.DISABLE;
@@ -133,14 +135,14 @@ export class SecurityDoorbellCameraAccessory {
    * Handle requests to set the "Event Snapshots Active" characteristic
    */
   handleEventSnapshotsActiveSet(value) {
-    this.platform.log.debug('Triggered SET EventSnapshotsActive:', value);
+    this.platform.log.debug(this.accessory.displayName, 'Triggered SET EventSnapshotsActive:', value);
   }
 
   /**
    * Handle requests to get the current value of the "HomeKit Camera Active" characteristic
    */
   handleHomeKitCameraActiveGet(callback) {
-    this.platform.log.debug('Triggered GET HomeKitCameraActive');
+    this.platform.log.debug(this.accessory.displayName, 'Triggered GET HomeKitCameraActive');
 
     // set this to a valid value for HomeKitCameraActive
     const currentValue = this.platform.Characteristic.HomeKitCameraActive.OFF;
@@ -152,18 +154,18 @@ export class SecurityDoorbellCameraAccessory {
    * Handle requests to set the "HomeKit Camera Active" characteristic
    */
   handleHomeKitCameraActiveSet(value) {
-    this.platform.log.debug('Triggered SET HomeKitCameraActive:', value);
+    this.platform.log.debug(this.accessory.displayName, 'Triggered SET HomeKitCameraActive:', value);
   }
 
   /**
    * Handle requests to get the current value of the "Status Low Battery" characteristic
    */
   async handleBatteryLevelGet(callback) {
-    this.platform.log.debug('Triggered GET BatteryLevel');
+    this.platform.log.debug(this.accessory.displayName, 'Triggered GET BatteryLevel');
 
     // set this to a valid value for SecuritySystemCurrentState
     const currentValue = await this.getCurrentBatteryLevel();
-    this.platform.log.debug('Handle Current battery level:  -- ', currentValue);
+    this.platform.log.debug(this.accessory.displayName, 'Handle Current battery level:  -- ', currentValue);
 
     callback(null, currentValue);
   }
@@ -178,7 +180,7 @@ export class SecurityDoorbellCameraAccessory {
   }
 
   private onDeviceRingsPushNotification(): void {
-    this.platform.log.debug('DoorBell ringing');
+    this.platform.log.debug(this.accessory.displayName, 'DoorBell ringing');
     this.service
       .getCharacteristic(this.platform.Characteristic.ProgrammableSwitchEvent)
       .updateValue(this.platform.Characteristic.ProgrammableSwitchEvent.SINGLE_PRESS);
