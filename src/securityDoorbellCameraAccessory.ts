@@ -4,7 +4,8 @@ import { EufySecurityPlatform } from './platform';
 
 // import { HttpService, LocalLookupService, DeviceClientService, CommandType } from 'eufy-node-client';
 
-import { DoorbellCamera, Device, DeviceType } from 'eufy-security-client';
+import { DoorbellCamera, Device, DeviceType, Camera } from 'eufy-security-client';
+import { EufyCameraStreamingDelegate } from './streamingDelegate';
 
 /**
  * Platform Accessory
@@ -120,6 +121,13 @@ export class SecurityDoorbellCameraAccessory {
         .getCharacteristic(this.platform.Characteristic.BatteryLevel)
         .on('get', this.handleBatteryLevelGet.bind(this));
     }
+
+    doorbellService.setPrimaryService(true);
+
+    //video stream (work in progress, not tested)
+    const delegate = new EufyCameraStreamingDelegate(this.platform, this.eufyDevice);
+    accessory.configureController(delegate.controller);
+
   }
 
   handleEventSnapshotsActiveGet(callback) {
@@ -211,4 +219,8 @@ export class SecurityDoorbellCameraAccessory {
       .getCharacteristic(this.platform.Characteristic.MotionDetected)
       .updateValue(open);
   }
+
+
+
+
 }
