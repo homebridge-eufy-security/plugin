@@ -22,7 +22,7 @@ import {
 import { spawn } from 'child_process';
 import { createSocket, Socket } from 'dgram';
 import ffmpegPath from 'ffmpeg-for-homebridge';
-import { DoorbellCamera } from 'eufy-security-client';
+import { Camera } from 'eufy-security-client';
 import { EufySecurityPlatform } from './platform';
 import getPort from 'get-port';
 import os from 'os';
@@ -68,7 +68,7 @@ export class EufyCameraStreamingDelegate implements CameraStreamingDelegate {
     private readonly videoProcessor: string;
     private readonly interfaceName?: string;
     private readonly platform: EufySecurityPlatform;
-    private readonly device: DoorbellCamera;
+    private readonly device: Camera;
   
     readonly controller: CameraController;
   
@@ -80,7 +80,7 @@ export class EufyCameraStreamingDelegate implements CameraStreamingDelegate {
     ongoingSessions: Record<string, ActiveSession> = {};
     timeouts: Record<string, NodeJS.Timeout> = {};
   
-    constructor(platform: EufySecurityPlatform, device: DoorbellCamera) {
+    constructor(platform: EufySecurityPlatform, device: Camera) {
       this.log = platform.log;
       this.hap = platform.api.hap;
       this.platform = platform;

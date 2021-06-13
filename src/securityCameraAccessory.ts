@@ -5,6 +5,7 @@ import { EufySecurityPlatform } from './platform';
 // import { HttpService, LocalLookupService, DeviceClientService, CommandType } from 'eufy-node-client';
 
 import { Camera, Device, DeviceType } from 'eufy-security-client';
+import { EufyCameraStreamingDelegate } from './streamingDelegate';
 
 /**
  * Platform Accessory
@@ -42,21 +43,45 @@ export class SecurityCameraAccessory {
       );
 
     this.service =
-      this.accessory.getService(this.platform.Service.MotionSensor) ||
-      this.accessory.addService(this.platform.Service.MotionSensor);
+      this.accessory.getService(this.platform.Service.CameraOperatingMode) ||
+      this.accessory.addService(this.platform.Service.CameraOperatingMode);
 
     this.service.setCharacteristic(
       this.platform.Characteristic.Name,
       accessory.displayName,
     );
 
-    // create handlers for required characteristics
     this.service
+      .getCharacteristic(this.platform.Characteristic.EventSnapshotsActive)
+      .on('get', this.handleEventSnapshotsActiveGet.bind(this));
+    this.service
+      .getCharacteristic(this.platform.Characteristic.EventSnapshotsActive)
+      .on('set', this.handleEventSnapshotsActiveSet.bind(this));
+
+    this.service
+      .getCharacteristic(this.platform.Characteristic.HomeKitCameraActive)
+      .on('get', this.handleHomeKitCameraActiveGet.bind(this));
+    this.service
+      .getCharacteristic(this.platform.Characteristic.HomeKitCameraActive)
+      .on('set', this.handleHomeKitCameraActiveSet.bind(this));
+
+    const MotionService =
+    this.accessory.getService(this.platform.Service.MotionSensor) ||
+    this.accessory.addService(this.platform.Service.MotionSensor);
+
+    // set the Battery service characteristics
+    MotionService.setCharacteristic(
+      this.platform.Characteristic.Name,
+      accessory.displayName,
+    );
+
+    // create handlers for required characteristics of Battery service
+    MotionService
       .getCharacteristic(this.platform.Characteristic.MotionDetected)
       .on('get', this.handleMotionDetectedGet.bind(this));
 
-    this.eufyDevice.on('motion detected', (device: Device, state: boolean) =>
-      this.onDeviceMotionDetectedPushNotification(device, state),
+    this.eufyDevice.on('motion detected', (device: Device, open: boolean) =>
+      this.onDeviceMotionDetectedPushNotification(device, open),
     );
 
     if(this.eufyDevice.hasBattery()) {
@@ -77,6 +102,45 @@ export class SecurityCameraAccessory {
         .getCharacteristic(this.platform.Characteristic.BatteryLevel)
         .on('get', this.handleBatteryLevelGet.bind(this));
     }
+
+    //video stream (work in progress, not tested)
+    const delegate = new EufyCameraStreamingDelegate(this.platform, this.eufyDevice);
+    accessory.configureController(delegate.controller);
+  }
+
+  handleEventSnapshotsActiveGet(callback) {
+    this.platform.log.debug(this.accessory.displayName, 'Triggered GET EventSnapshotsActive');
+
+    // set this to a valid value for EventSnapshotsActive
+    const currentValue = this.platform.Characteristic.EventSnapshotsActive.DISABLE;
+
+    callback(null, currentValue);
+  }
+
+  /**
+   * Handle requests to set the "Event Snapshots Active" characteristic
+   */
+  handleEventSnapshotsActiveSet(value) {
+    this.platform.log.debug(this.accessory.displayName, 'Triggered SET EventSnapshotsActive:', value);
+  }
+
+  /**
+   * Handle requests to get the current value of the "HomeKit Camera Active" characteristic
+   */
+  handleHomeKitCameraActiveGet(callback) {
+    this.platform.log.debug(this.accessory.displayName, 'Triggered GET HomeKitCameraActive');
+
+    // set this to a valid value for HomeKitCameraActive
+    const currentValue = this.platform.Characteristic.HomeKitCameraActive.OFF;
+
+    callback(null, currentValue);
+  }
+
+  /**
+   * Handle requests to set the "HomeKit Camera Active" characteristic
+   */
+  handleHomeKitCameraActiveSet(value) {
+    this.platform.log.debug(this.accessory.displayName, 'Triggered SET HomeKitCameraActive:', value);
   }
 
   /**
