@@ -29,7 +29,7 @@ The doorbell support is still a work in progress and needs more testing. Please 
 | Eufy Device   | Supported Functions             | HomeKit                               |
 | ------------- | ------------------------------- | ------------------------------------- |
 | HomeBase      | Can change guard mode           | Shows as a security system in HomeKit |
-| Camera        | Reports motion On/Off           | Shows as Motion Sensor                |
+| Cameras        | Reports motion, On/Off switch           | Shows as Motion Sensor and switch                |
 | Motion Sensor | Reports motion                  | Shows as Motion Sensor                |
 | Entry Sensor  | Open/Close detection            | Shows as Contact Sensor               |
 | Doorbell      | Livestream, Ringing Notification | Shows as Doorbell                     |
@@ -38,7 +38,7 @@ The doorbell support is still a work in progress and needs more testing. Please 
 ## Roadmap
 
 -   Add 2FA
--   Add support for turning cameras on/off
+-   Expand doorbell features
 
 Feel free to contribute to this plugin by opening a PR!
 

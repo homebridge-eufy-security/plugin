@@ -1,5 +1,12 @@
 # Change Log
 
+## 0.2.1 (06-14-2021)
+
+### Changes
+
+-   Added switch to turn cameras on/off using a switch.
+-   Added logging for the doorbell to help solve issues.
+
 ## 0.2.0 (06-12-2021)
 
 ### Changes
