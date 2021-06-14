@@ -125,9 +125,6 @@ export class SecurityDoorbellCameraAccessory {
     doorbellService.setPrimaryService(true);
 
     //video stream (work in progress)
-    if(!this.eufyDevice.isRTSPStreamEnabled()) {
-      this.platform.log.error('Doorbell RTSP streaming is not enabled! Video streaming may not work');
-    }
   
     const delegate = new EufyCameraStreamingDelegate(this.platform, this.eufyDevice);
     accessory.configureController(delegate.controller);
