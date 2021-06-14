@@ -327,4 +327,8 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
       }, this.eufyConfig.pollingIntervalMinutes * 60 * 1000);
     }
   }
+
+  public getStationById(id: string){
+    return this.eufyClient.getStation(id);
+  }
 }
