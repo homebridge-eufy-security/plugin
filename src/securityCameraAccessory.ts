@@ -87,6 +87,8 @@ export class SecurityCameraAccessory {
     this.switchService.getCharacteristic(this.platform.Characteristic.On)
       .on('get', this.handleOnGet.bind(this))
       .on('set', this.handleOnSet.bind(this));
+
+    this.switchService.setPrimaryService(true);
   }
 
   /**
