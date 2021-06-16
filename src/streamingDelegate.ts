@@ -208,6 +208,7 @@ export class EufyCameraStreamingDelegate implements CameraStreamingDelegate {
     
       //   let ffmpegArgs = this.videoConfig.stillImageSource || this.videoConfig.source;
       let ffmpegArgs = `-i ${this.device.getLastCameraImageURL()}`;
+      this.log.debug('Thumbnail URL: ', ffmpegArgs);
   
       ffmpegArgs += // Still
             ' -frames:v 1' +
@@ -278,6 +279,8 @@ export class EufyCameraStreamingDelegate implements CameraStreamingDelegate {
       const audioSSRC = this.hap.CameraController.generateSynchronisationSource();
   
       const ipv6 = request.addressVersion === 'ipv6';
+
+
   
       let currentAddress: string;
       try {
@@ -342,6 +345,7 @@ export class EufyCameraStreamingDelegate implements CameraStreamingDelegate {
       callback: StreamRequestCallback,
     ): Promise<void> {
       const url = await this.device.startStream();
+      this.log.debug('Doorbell stream URL: ', url);
 
       const sessionInfo = this.pendingSessions[request.sessionID];
       const vcodec = 'libx264';

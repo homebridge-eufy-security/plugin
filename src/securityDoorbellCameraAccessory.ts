@@ -124,7 +124,8 @@ export class SecurityDoorbellCameraAccessory {
 
     doorbellService.setPrimaryService(true);
 
-    //video stream (work in progress, not tested)
+    //video stream (work in progress)
+  
     const delegate = new EufyCameraStreamingDelegate(this.platform, this.eufyDevice);
     accessory.configureController(delegate.controller);
 

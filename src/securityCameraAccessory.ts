@@ -4,8 +4,7 @@ import { EufySecurityPlatform } from './platform';
 
 // import { HttpService, LocalLookupService, DeviceClientService, CommandType } from 'eufy-node-client';
 
-import { Camera, Device, DeviceType } from 'eufy-security-client';
-import { EufyCameraStreamingDelegate } from './streamingDelegate';
+import { Camera, Device, DeviceType, Station } from 'eufy-security-client';
 
 /**
  * Platform Accessory
@@ -14,6 +13,7 @@ import { EufyCameraStreamingDelegate } from './streamingDelegate';
  */
 export class SecurityCameraAccessory {
   private service: Service;
+  private switchService: Service;
 
   constructor(
     private readonly platform: EufySecurityPlatform,
@@ -103,44 +103,14 @@ export class SecurityCameraAccessory {
         .on('get', this.handleBatteryLevelGet.bind(this));
     }
 
-    //video stream (work in progress, not tested)
-    const delegate = new EufyCameraStreamingDelegate(this.platform, this.eufyDevice);
-    accessory.configureController(delegate.controller);
-  }
-
-  handleEventSnapshotsActiveGet(callback) {
-    this.platform.log.debug(this.accessory.displayName, 'Triggered GET EventSnapshotsActive');
-
-    // set this to a valid value for EventSnapshotsActive
-    const currentValue = this.platform.Characteristic.EventSnapshotsActive.DISABLE;
-
-    callback(null, currentValue);
-  }
-
-  /**
-   * Handle requests to set the "Event Snapshots Active" characteristic
-   */
-  handleEventSnapshotsActiveSet(value) {
-    this.platform.log.debug(this.accessory.displayName, 'Triggered SET EventSnapshotsActive:', value);
-  }
-
-  /**
-   * Handle requests to get the current value of the "HomeKit Camera Active" characteristic
-   */
-  handleHomeKitCameraActiveGet(callback) {
-    this.platform.log.debug(this.accessory.displayName, 'Triggered GET HomeKitCameraActive');
-
-    // set this to a valid value for HomeKitCameraActive
-    const currentValue = this.platform.Characteristic.HomeKitCameraActive.OFF;
-
-    callback(null, currentValue);
-  }
-
-  /**
-   * Handle requests to set the "HomeKit Camera Active" characteristic
-   */
-  handleHomeKitCameraActiveSet(value) {
-    this.platform.log.debug(this.accessory.displayName, 'Triggered SET HomeKitCameraActive:', value);
+    // create a new Switch service
+    this.switchService = this.accessory.getService(this.platform.Service.Switch) ||
+        this.accessory.addService(this.platform.Service.Switch);
+    
+    // create handlers for required characteristics
+    this.switchService.getCharacteristic(this.platform.Characteristic.On)
+      .on('get', this.handleOnGet.bind(this))
+      .on('set', this.handleOnSet.bind(this));
   }
 
   /**
@@ -186,5 +156,42 @@ export class SecurityCameraAccessory {
     this.service
       .getCharacteristic(this.platform.Characteristic.MotionDetected)
       .updateValue(open);
+  }
+
+  /**
+   * Handle requests to get the current value of the "On" characteristic
+   */
+  async handleOnGet(callback) {
+    this.platform.log.debug(this.accessory.displayName, 'Triggered GET On');
+    
+    // set this to a valid value for On
+    const currentValue = this.eufyDevice.isEnabled().value;
+    
+    this.platform.log.info(this.accessory.displayName, 'Handle Switch:  -- ', currentValue);
+
+    /*
+     * The callback function should be called to return the value
+     * The first argument in the function should be null unless and error occured
+     * The second argument in the function should be the current value of the characteristic
+     * This is just an example so we will return the value from `this.isOn` which is where we stored the value in the set handler
+     */
+    callback(null, currentValue);
+  }
+    
+  /**
+       * Handle requests to set the "On" characteristic
+       */
+  async handleOnSet(value, callback) {
+    this.platform.log.debug(this.accessory.displayName, 'Triggered SET On: ' + value);
+
+    const station = this.platform.getStationById(this.eufyDevice.getStationSerial());
+        
+    station.enableDevice(this.eufyDevice, value);
+
+    /*
+     * The callback function should be called to return the value
+     * The first argument in the function should be null unless and error occured
+     */
+    callback(null);
   }
 }
