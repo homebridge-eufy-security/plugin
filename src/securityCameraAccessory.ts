@@ -43,40 +43,16 @@ export class SecurityCameraAccessory {
       );
 
     this.service =
-      this.accessory.getService(this.platform.Service.CameraOperatingMode) ||
-      this.accessory.addService(this.platform.Service.CameraOperatingMode);
+      this.accessory.getService(this.platform.Service.MotionSensor) ||
+      this.accessory.addService(this.platform.Service.MotionSensor);
 
     this.service.setCharacteristic(
       this.platform.Characteristic.Name,
       accessory.displayName,
     );
 
-    this.service
-      .getCharacteristic(this.platform.Characteristic.EventSnapshotsActive)
-      .on('get', this.handleEventSnapshotsActiveGet.bind(this));
-    this.service
-      .getCharacteristic(this.platform.Characteristic.EventSnapshotsActive)
-      .on('set', this.handleEventSnapshotsActiveSet.bind(this));
-
-    this.service
-      .getCharacteristic(this.platform.Characteristic.HomeKitCameraActive)
-      .on('get', this.handleHomeKitCameraActiveGet.bind(this));
-    this.service
-      .getCharacteristic(this.platform.Characteristic.HomeKitCameraActive)
-      .on('set', this.handleHomeKitCameraActiveSet.bind(this));
-
-    const MotionService =
-    this.accessory.getService(this.platform.Service.MotionSensor) ||
-    this.accessory.addService(this.platform.Service.MotionSensor);
-
-    // set the Battery service characteristics
-    MotionService.setCharacteristic(
-      this.platform.Characteristic.Name,
-      accessory.displayName,
-    );
-
     // create handlers for required characteristics of Battery service
-    MotionService
+    this.service
       .getCharacteristic(this.platform.Characteristic.MotionDetected)
       .on('get', this.handleMotionDetectedGet.bind(this));
 
