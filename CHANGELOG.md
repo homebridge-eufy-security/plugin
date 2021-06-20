@@ -1,5 +1,13 @@
 # Change Log
 
+## 0.2.3 (06-20-2021)
+
+### Changes
+
+-   Fixed doorbell ringing notification
+-   Added switch to enable/disable motion detection for Cameras (not doorbell)
+-   Better logging for debugging the doorbell
+
 ## 0.2.2 (06-14-2021)
 
 ### Changes
