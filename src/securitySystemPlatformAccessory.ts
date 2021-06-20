@@ -1,7 +1,7 @@
 import { Service, PlatformAccessory, PlatformConfig } from 'homebridge';
 
 import { EufySecurityPlatform, EufySecurityPlatformConfig } from './platform';
-import { EufySecurity, Station } from 'eufy-security-client';
+import { Station, PropertyValue } from 'eufy-security-client';
 
 /**
  * Platform Accessory
@@ -56,6 +56,8 @@ export class SecuritySystemPlatformAccessory {
       .on('get', this.handleSecuritySystemTargetStateGet.bind(this))
       .on('set', this.handleSecuritySystemTargetStateSet.bind(this));
 
+    this.eufyStation.connect();
+
     this.eufyStation.on(
       'guard mode',
       (station: Station, guardMode: number, currentMode: number) =>
@@ -65,6 +67,15 @@ export class SecuritySystemPlatformAccessory {
           currentMode,
         ),
     );
+
+    if(this.config.enableDetailedLogging) {
+      this.eufyStation.on('raw property changed', (device: Station, type: number, value: string, modified: number) =>
+        this.handleRawPropertyChange(device, type, value, modified),
+      );
+      this.eufyStation.on('property changed', (device: Station, name: string, value: PropertyValue) =>
+        this.handlePropertyChange(device, name, value),
+      );
+    }
   }
 
   private onStationGuardModePushNotification(
@@ -152,6 +163,8 @@ export class SecuritySystemPlatformAccessory {
         return this.convertMode(4);
       case 5:
         return this.convertMode(5);
+      case 6: // 6 is triggered  when disabled  by Keypad
+        return this.convertMode(63);
       case 47:
         return this.convertMode(47);
       case 63:
@@ -184,6 +197,32 @@ export class SecuritySystemPlatformAccessory {
     const currentValue = await this.getCurrentStatus();
 
     callback(null, currentValue);
+  }
+
+  private handleRawPropertyChange(
+    device: Station, 
+    type: number, 
+    value: string, 
+    modified: number,
+  ): void {
+    this.platform.log.debug(
+      'Handle Station Raw Property Changes:  -- ',
+      type, 
+      value, 
+      modified,
+    );
+  }
+
+  private handlePropertyChange(
+    device: Station, 
+    name: string, 
+    value: PropertyValue,
+  ): void {
+    this.platform.log.debug(
+      'Handle Station Property Changes:  -- ',
+      name, 
+      value,
+    );
   }
 
   /**

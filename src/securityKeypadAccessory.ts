@@ -4,7 +4,7 @@ import { EufySecurityPlatform } from './platform';
 
 // import { HttpService, LocalLookupService, DeviceClientService, CommandType } from 'eufy-node-client';
 
-import { Keypad, Device, DeviceType } from 'eufy-security-client';
+import { Keypad, Device, DeviceType, PropertyValue } from 'eufy-security-client';
 
 /**
  * Platform Accessory
@@ -51,6 +51,15 @@ export class SecurityKeypadAccessory {
       accessory.displayName,
     );
 
+    if(this.platform.config.enableDetailedLogging) {
+      this.eufyDevice.on('raw property changed', (device: Device, type: number, value: string, modified: number) =>
+        this.handleRawPropertyChange(device, type, value, modified),
+      );
+      this.eufyDevice.on('property changed', (device: Device, name: string, value: PropertyValue) =>
+        this.handlePropertyChange(device, name, value),
+      );
+    }
+
     // create handlers for required characteristics
     this.service
       .getCharacteristic(this.platform.Characteristic.On)
@@ -81,6 +90,32 @@ export class SecurityKeypadAccessory {
     const isBatteryLow = this.eufyDevice.isBatteryLow();
 
     return isBatteryLow.value as number;
+  }
+
+  private handleRawPropertyChange(
+    device: Device, 
+    type: number, 
+    value: string, 
+    modified: number,
+  ): void {
+    this.platform.log.debug(
+      'Handle Keypad Raw Property Changes:  -- ',
+      type, 
+      value, 
+      modified,
+    );
+  }
+
+  private handlePropertyChange(
+    device: Device, 
+    name: string, 
+    value: PropertyValue,
+  ): void {
+    this.platform.log.debug(
+      'Handle Keypad Property Changes:  -- ',
+      name, 
+      value,
+    );
   }
 
   /**

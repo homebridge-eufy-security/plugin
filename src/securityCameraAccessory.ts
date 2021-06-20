@@ -4,7 +4,7 @@ import { EufySecurityPlatform } from './platform';
 
 // import { HttpService, LocalLookupService, DeviceClientService, CommandType } from 'eufy-node-client';
 
-import { Camera, Device, DeviceType, Station } from 'eufy-security-client';
+import { Camera, Device, DeviceType, PropertyValue } from 'eufy-security-client';
 
 /**
  * Platform Accessory
@@ -50,16 +50,16 @@ export class SecurityCameraAccessory {
       accessory.displayName,
     );
 
-    // create handlers for required characteristics
+    // create handlers for required characteristics of Motion Sensor
     this.service
       .getCharacteristic(this.platform.Characteristic.MotionDetected)
       .on('get', this.handleMotionDetectedGet.bind(this));
 
-    this.eufyDevice.on('motion detected', (device: Device, state: boolean) =>
-      this.onDeviceMotionDetectedPushNotification(device, state),
+    this.eufyDevice.on('motion detected', (device: Device, open: boolean) =>
+      this.onDeviceMotionDetectedPushNotification(device, open),
     );
 
-    if(this.eufyDevice.hasBattery()) {
+    if(this.eufyDevice.hasBattery && this.eufyDevice.hasBattery()) {
       this.platform.log.debug(this.accessory.displayName, 'has a battery, so append batteryService characteristic to him.');
 
       const batteryService =
@@ -94,6 +94,41 @@ export class SecurityCameraAccessory {
     switchMotionService.getCharacteristic(this.platform.Characteristic.On)
       .on('get', this.handleMotionOnGet.bind(this))
       .on('set', this.handleMotionOnSet.bind(this));
+
+    if(this.platform.config.enableDetailedLogging) {
+      this.eufyDevice.on('raw property changed', (device: Device, type: number, value: string, modified: number) =>
+        this.handleRawPropertyChange(device, type, value, modified),
+      );
+      this.eufyDevice.on('property changed', (device: Device, name: string, value: PropertyValue) =>
+        this.handlePropertyChange(device, name, value),
+      );
+    }
+  }
+
+  private handleRawPropertyChange(
+    device: Device, 
+    type: number, 
+    value: string, 
+    modified: number,
+  ): void {
+    this.platform.log.debug(
+      'Handle Camera Raw Property Changes:  -- ',
+      type, 
+      value, 
+      modified,
+    );
+  }
+
+  private handlePropertyChange(
+    device: Device, 
+    name: string, 
+    value: PropertyValue,
+  ): void {
+    this.platform.log.debug(
+      'Handle Camera Property Changes:  -- ',
+      name, 
+      value,
+    );
   }
 
   /**
@@ -124,10 +159,10 @@ export class SecurityCameraAccessory {
    * Handle requests to get the current value of the 'Security System Current State' characteristic
    */
   async handleMotionDetectedGet(callback) {
-    this.platform.log.info(this.accessory.displayName, 'Triggered GET MotionDetected');
+    this.platform.log.debug(this.accessory.displayName, 'Triggered GET MotionDetected');
 
     const currentValue = await this.isMotionDetected();
-    this.platform.log.info(this.accessory.displayName, 'Handle Motion Sensor:  -- ', currentValue);
+    this.platform.log.debug(this.accessory.displayName, 'Handle Motion Sensor:  -- ', currentValue);
 
     callback(null, currentValue as boolean);
   }
@@ -150,7 +185,7 @@ export class SecurityCameraAccessory {
     // set this to a valid value for On
     const currentValue = this.eufyDevice.isEnabled().value;
     
-    this.platform.log.info(this.accessory.displayName, 'Handle Switch:  -- ', currentValue);
+    this.platform.log.debug(this.accessory.displayName, 'Handle Switch:  -- ', currentValue);
 
     /*
      * The callback function should be called to return the value
@@ -187,7 +222,7 @@ export class SecurityCameraAccessory {
     // set this to a valid value for On
     const currentValue = this.eufyDevice.isMotionDetectionEnabled().value;
       
-    this.platform.log.info(this.accessory.displayName, 'Handle Switch:  -- ', currentValue);
+    this.platform.log.debug(this.accessory.displayName, 'Handle Switch:  -- ', currentValue);
   
     /*
        * The callback function should be called to return the value

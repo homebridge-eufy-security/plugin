@@ -4,7 +4,7 @@ import { EufySecurityPlatform } from './platform';
 
 // import { HttpService, LocalLookupService, DeviceClientService, CommandType } from 'eufy-node-client';
 
-import { DoorbellCamera, Device, DeviceType, Camera } from 'eufy-security-client';
+import { DoorbellCamera, Device, DeviceType, PropertyValue } from 'eufy-security-client';
 import { EufyCameraStreamingDelegate } from './streamingDelegate';
 
 /**
@@ -14,6 +14,7 @@ import { EufyCameraStreamingDelegate } from './streamingDelegate';
  */
 export class SecurityDoorbellCameraAccessory {
   private service: Service;
+  private doorbellService: Service;
 
   constructor(
     private readonly platform: EufySecurityPlatform,
@@ -65,18 +66,18 @@ export class SecurityDoorbellCameraAccessory {
       .getCharacteristic(this.platform.Characteristic.HomeKitCameraActive)
       .on('set', this.handleHomeKitCameraActiveSet.bind(this));
 
-    const doorbellService =
+    this.doorbellService =
     this.accessory.getService(this.platform.Service.Doorbell) ||
     this.accessory.addService(this.platform.Service.Doorbell);
 
     // set the Battery service characteristics
-    doorbellService.setCharacteristic(
+    this.doorbellService.setCharacteristic(
       this.platform.Characteristic.Name,
       accessory.displayName,
     );
 
     // create handlers for required characteristics of Battery service
-    doorbellService
+    this.doorbellService
       .getCharacteristic(this.platform.Characteristic.ProgrammableSwitchEvent)
       .on('get', this.handleProgrammableSwitchEventGet.bind(this));
   
@@ -103,7 +104,7 @@ export class SecurityDoorbellCameraAccessory {
       this.onDeviceMotionDetectedPushNotification(device, open),
     );
 
-    if(this.eufyDevice.hasBattery()) {
+    if(this.eufyDevice.hasBattery && this.eufyDevice.hasBattery()) {
       this.platform.log.debug(this.accessory.displayName, 'has a battery, so append batteryService characteristic to him.');
 
       const batteryService =
@@ -122,13 +123,48 @@ export class SecurityDoorbellCameraAccessory {
         .on('get', this.handleBatteryLevelGet.bind(this));
     }
 
-    doorbellService.setPrimaryService(true);
+    this.doorbellService.setPrimaryService(true);
 
     //video stream (work in progress)
   
     const delegate = new EufyCameraStreamingDelegate(this.platform, this.eufyDevice);
     accessory.configureController(delegate.controller);
 
+    if(this.platform.config.enableDetailedLogging) {
+      this.eufyDevice.on('raw property changed', (device: Device, type: number, value: string, modified: number) =>
+        this.handleRawPropertyChange(device, type, value, modified),
+      );
+      this.eufyDevice.on('property changed', (device: Device, name: string, value: PropertyValue) =>
+        this.handlePropertyChange(device, name, value),
+      );
+    }
+
+  }
+
+  private handleRawPropertyChange(
+    device: Device, 
+    type: number, 
+    value: string, 
+    modified: number,
+  ): void {
+    this.platform.log.info(
+      'Handle DoorBell Raw Property Changes:  -- ',
+      type, 
+      value, 
+      modified,
+    );
+  }
+
+  private handlePropertyChange(
+    device: Device, 
+    name: string, 
+    value: PropertyValue,
+  ): void {
+    this.platform.log.info(
+      'Handle DoorBell Property Changes:  -- ',
+      name, 
+      value,
+    );
   }
 
   handleEventSnapshotsActiveGet(callback) {
@@ -190,7 +226,7 @@ export class SecurityDoorbellCameraAccessory {
 
   private onDeviceRingsPushNotification(): void {
     this.platform.log.debug(this.accessory.displayName, 'DoorBell ringing');
-    this.service
+    this.doorbellService
       .getCharacteristic(this.platform.Characteristic.ProgrammableSwitchEvent)
       .updateValue(this.platform.Characteristic.ProgrammableSwitchEvent.SINGLE_PRESS);
   }
@@ -204,10 +240,10 @@ export class SecurityDoorbellCameraAccessory {
    * Handle requests to get the current value of the 'Security System Current State' characteristic
    */
   async handleMotionDetectedGet(callback) {
-    this.platform.log.info(this.accessory.displayName, 'Triggered GET MotionDetected');
+    this.platform.log.debug(this.accessory.displayName, 'Triggered GET MotionDetected');
 
     const currentValue = await this.isMotionDetected();
-    this.platform.log.info(this.accessory.displayName, 'Handle Motion Sensor:  -- ', currentValue);
+    this.platform.log.debug(this.accessory.displayName, 'Handle Motion Sensor:  -- ', currentValue);
 
     callback(null, currentValue as boolean);
   }
