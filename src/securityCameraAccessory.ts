@@ -112,7 +112,7 @@ export class SecurityCameraAccessory {
     modified: number,
   ): void {
     this.platform.log.debug(
-      'Handle Keypad Raw Property Changes:  -- ',
+      'Handle Camera Raw Property Changes:  -- ',
       type, 
       value, 
       modified,
@@ -125,7 +125,7 @@ export class SecurityCameraAccessory {
     value: PropertyValue,
   ): void {
     this.platform.log.debug(
-      'Handle Keypad Property Changes:  -- ',
+      'Handle Camera Property Changes:  -- ',
       name, 
       value,
     );

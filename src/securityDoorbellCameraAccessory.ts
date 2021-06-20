@@ -129,6 +129,9 @@ export class SecurityDoorbellCameraAccessory {
     const delegate = new EufyCameraStreamingDelegate(this.platform, this.eufyDevice);
     accessory.configureController(delegate.controller);
 
+
+    this.platform.log.info('Debug Mode : ', this.platform.config.enableDetailedLogging);
+
     if(this.platform.config.enableDetailedLogging) {
       this.eufyDevice.on('raw property changed', (device: Device, type: number, value: string, modified: number) =>
         this.handleRawPropertyChange(device, type, value, modified),
@@ -146,8 +149,8 @@ export class SecurityDoorbellCameraAccessory {
     value: string, 
     modified: number,
   ): void {
-    this.platform.log.debug(
-      'Handle Keypad Raw Property Changes:  -- ',
+    this.platform.log.info(
+      'Handle DoorBell Raw Property Changes:  -- ',
       type, 
       value, 
       modified,
@@ -159,8 +162,8 @@ export class SecurityDoorbellCameraAccessory {
     name: string, 
     value: PropertyValue,
   ): void {
-    this.platform.log.debug(
-      'Handle Keypad Property Changes:  -- ',
+    this.platform.log.info(
+      'Handle DoorBell Property Changes:  -- ',
       name, 
       value,
     );
