@@ -23,8 +23,8 @@
         "required": false
       },
       "enableDetailedLogging": {
-        "title": "Enable Detailed Logging? (True/False)",
-        "type": "string",
+        "title": "Enable Detailed Logging?",
+        "type": "boolean",
         "required": false
       }, 
       "pollingIntervalMinutes": {
