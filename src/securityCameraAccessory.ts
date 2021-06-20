@@ -124,10 +124,10 @@ export class SecurityCameraAccessory {
    * Handle requests to get the current value of the 'Security System Current State' characteristic
    */
   async handleMotionDetectedGet(callback) {
-    this.platform.log.info(this.accessory.displayName, 'Triggered GET MotionDetected');
+    this.platform.log.debug(this.accessory.displayName, 'Triggered GET MotionDetected');
 
     const currentValue = await this.isMotionDetected();
-    this.platform.log.info(this.accessory.displayName, 'Handle Motion Sensor:  -- ', currentValue);
+    this.platform.log.debug(this.accessory.displayName, 'Handle Motion Sensor:  -- ', currentValue);
 
     callback(null, currentValue as boolean);
   }
@@ -150,7 +150,7 @@ export class SecurityCameraAccessory {
     // set this to a valid value for On
     const currentValue = this.eufyDevice.isEnabled().value;
     
-    this.platform.log.info(this.accessory.displayName, 'Handle Switch:  -- ', currentValue);
+    this.platform.log.debug(this.accessory.displayName, 'Handle Switch:  -- ', currentValue);
 
     /*
      * The callback function should be called to return the value
@@ -187,7 +187,7 @@ export class SecurityCameraAccessory {
     // set this to a valid value for On
     const currentValue = this.eufyDevice.isMotionDetectionEnabled().value;
       
-    this.platform.log.info(this.accessory.displayName, 'Handle Switch:  -- ', currentValue);
+    this.platform.log.debug(this.accessory.displayName, 'Handle Switch:  -- ', currentValue);
   
     /*
        * The callback function should be called to return the value
