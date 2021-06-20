@@ -57,4 +57,4 @@ If you appreciate this plugin and want to support me, you can do it here:
 Also consider supporting the other contributors:
 
 -   **[schliemann](https://github.com/schliemann)**
--   [**lenoxys**](https://github.com/lenoxys) - https://www.patreon.com/lenoxys
+-   [**lenoxys**](https://github.com/lenoxys)
