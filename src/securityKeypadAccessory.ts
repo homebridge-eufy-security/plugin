@@ -51,13 +51,14 @@ export class SecurityKeypadAccessory {
       accessory.displayName,
     );
 
-    // this.eufyDevice.on('raw property changed', (device: Device, type: number, value: string, modified: number) =>
-    //   this.handleRawPropertyChange(device, type, value, modified),
-    // );
-
-    this.eufyDevice.on('property changed', (device: Device, name: string, value: PropertyValue) =>
-      this.handlePropertyChange(device, name, value),
-    );
+    if(this.platform.config.enableDetailedLogging) {
+      this.eufyDevice.on('raw property changed', (device: Device, type: number, value: string, modified: number) =>
+        this.handleRawPropertyChange(device, type, value, modified),
+      );
+      this.eufyDevice.on('property changed', (device: Device, name: string, value: PropertyValue) =>
+        this.handlePropertyChange(device, name, value),
+      );
+    }
 
     // create handlers for required characteristics
     this.service

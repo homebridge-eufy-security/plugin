@@ -4,7 +4,7 @@ import { EufySecurityPlatform } from './platform';
 
 // import { HttpService, LocalLookupService, DeviceClientService, CommandType } from 'eufy-node-client';
 
-import { Camera, Device, DeviceType, Station } from 'eufy-security-client';
+import { Camera, Device, DeviceType, PropertyValue } from 'eufy-security-client';
 
 /**
  * Platform Accessory
@@ -94,6 +94,41 @@ export class SecurityCameraAccessory {
     switchMotionService.getCharacteristic(this.platform.Characteristic.On)
       .on('get', this.handleMotionOnGet.bind(this))
       .on('set', this.handleMotionOnSet.bind(this));
+
+    if(this.platform.config.enableDetailedLogging) {
+      this.eufyDevice.on('raw property changed', (device: Device, type: number, value: string, modified: number) =>
+        this.handleRawPropertyChange(device, type, value, modified),
+      );
+      this.eufyDevice.on('property changed', (device: Device, name: string, value: PropertyValue) =>
+        this.handlePropertyChange(device, name, value),
+      );
+    }
+  }
+
+  private handleRawPropertyChange(
+    device: Device, 
+    type: number, 
+    value: string, 
+    modified: number,
+  ): void {
+    this.platform.log.debug(
+      'Handle Keypad Raw Property Changes:  -- ',
+      type, 
+      value, 
+      modified,
+    );
+  }
+
+  private handlePropertyChange(
+    device: Device, 
+    name: string, 
+    value: PropertyValue,
+  ): void {
+    this.platform.log.debug(
+      'Handle Keypad Property Changes:  -- ',
+      name, 
+      value,
+    );
   }
 
   /**

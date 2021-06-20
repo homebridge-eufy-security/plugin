@@ -69,7 +69,7 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
 
   // this is used to track restored cached accessories
   public readonly accessories: PlatformAccessory[] = [];
-  private config: EufySecurityPlatformConfig;
+  public config: EufySecurityPlatformConfig;
   private eufyConfig: EufySecurityConfig;
 
   constructor(

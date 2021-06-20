@@ -68,13 +68,14 @@ export class SecuritySystemPlatformAccessory {
         ),
     );
 
-    // this.eufyStation.on('raw property changed', (device: Station, type: number, value: string, modified: number) =>
-    //   this.handleRawPropertyChange(device, type, value, modified),
-    // );
-
-    this.eufyStation.on('property changed', (device: Station, name: string, value: PropertyValue) =>
-      this.handlePropertyChange(device, name, value),
-    );
+    if(this.config.enableDetailedLogging) {
+      this.eufyStation.on('raw property changed', (device: Station, type: number, value: string, modified: number) =>
+        this.handleRawPropertyChange(device, type, value, modified),
+      );
+      this.eufyStation.on('property changed', (device: Station, name: string, value: PropertyValue) =>
+        this.handlePropertyChange(device, name, value),
+      );
+    }
   }
 
   private onStationGuardModePushNotification(
