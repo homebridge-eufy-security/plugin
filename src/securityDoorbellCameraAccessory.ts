@@ -105,6 +105,14 @@ export class SecurityDoorbellCameraAccessory {
       this.onDeviceMotionDetectedPushNotification(device, open),
     );
 
+    this.eufyDevice.on('person detected', (device: Device, open: boolean) =>
+      this.onDeviceMotionDetectedPushNotification(device, open),
+    );
+
+    this.eufyDevice.on('pet detected', (device: Device, open: boolean) =>
+      this.onDeviceMotionDetectedPushNotification(device, open),
+    );
+
     if(this.eufyDevice.hasBattery && this.eufyDevice.hasBattery()) {
       this.platform.log.debug(this.accessory.displayName, 'has a battery, so append batteryService characteristic to him.');
 
@@ -253,12 +261,10 @@ export class SecurityDoorbellCameraAccessory {
     device: Device,
     open: boolean,
   ): void {
+    this.platform.log.info(this.accessory.displayName, 'Handle Motion Sensor:  -- ', open);
     this.MotionService
       .getCharacteristic(this.platform.Characteristic.MotionDetected)
       .updateValue(open);
   }
-
-
-
 
 }
