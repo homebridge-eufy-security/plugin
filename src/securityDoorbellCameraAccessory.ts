@@ -15,6 +15,7 @@ import { EufyCameraStreamingDelegate } from './streamingDelegate';
 export class SecurityDoorbellCameraAccessory {
   private service: Service;
   private doorbellService: Service;
+  private MotionService: Service;
 
   constructor(
     private readonly platform: EufySecurityPlatform,
@@ -67,8 +68,8 @@ export class SecurityDoorbellCameraAccessory {
       .on('set', this.handleHomeKitCameraActiveSet.bind(this));
 
     this.doorbellService =
-    this.accessory.getService(this.platform.Service.Doorbell) ||
-    this.accessory.addService(this.platform.Service.Doorbell);
+      this.accessory.getService(this.platform.Service.Doorbell) ||
+      this.accessory.addService(this.platform.Service.Doorbell);
 
     // set the Battery service characteristics
     this.doorbellService.setCharacteristic(
@@ -85,18 +86,18 @@ export class SecurityDoorbellCameraAccessory {
       this.onDeviceRingsPushNotification(),
     );
 
-    const MotionService =
+    this.MotionService =
     this.accessory.getService(this.platform.Service.MotionSensor) ||
     this.accessory.addService(this.platform.Service.MotionSensor);
 
     // set the Battery service characteristics
-    MotionService.setCharacteristic(
+    this.MotionService.setCharacteristic(
       this.platform.Characteristic.Name,
       accessory.displayName,
     );
 
     // create handlers for required characteristics of Battery service
-    MotionService
+    this.MotionService
       .getCharacteristic(this.platform.Characteristic.MotionDetected)
       .on('get', this.handleMotionDetectedGet.bind(this));
 
@@ -252,7 +253,7 @@ export class SecurityDoorbellCameraAccessory {
     device: Device,
     open: boolean,
   ): void {
-    this.service
+    this.MotionService
       .getCharacteristic(this.platform.Characteristic.MotionDetected)
       .updateValue(open);
   }

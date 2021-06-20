@@ -1,7 +1,7 @@
 import { Service, PlatformAccessory, PlatformConfig } from 'homebridge';
 
 import { EufySecurityPlatform, EufySecurityPlatformConfig } from './platform';
-import { Station, PropertyValue } from 'eufy-security-client';
+import { Station, PropertyValue, P2PConnectionType } from 'eufy-security-client';
 
 /**
  * Platform Accessory
@@ -55,8 +55,6 @@ export class SecuritySystemPlatformAccessory {
       .getCharacteristic(this.platform.Characteristic.SecuritySystemTargetState)
       .on('get', this.handleSecuritySystemTargetStateGet.bind(this))
       .on('set', this.handleSecuritySystemTargetStateSet.bind(this));
-
-    this.eufyStation.connect();
 
     this.eufyStation.on(
       'guard mode',
