@@ -261,7 +261,7 @@ export class SecurityDoorbellCameraAccessory {
     device: Device,
     open: boolean,
   ): void {
-    this.platform.log.info(this.accessory.displayName, 'Handle Motion Sensor:  -- ', open);
+    this.platform.log.debug(this.accessory.displayName, 'Handle Motion Sensor:  -- ', open);
     this.MotionService
       .getCharacteristic(this.platform.Characteristic.MotionDetected)
       .updateValue(open);
