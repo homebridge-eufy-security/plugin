@@ -103,7 +103,7 @@ export class SecurityDoorbellCameraAccessory {
       this.onDeviceMotionDetectedPushNotification(device, open),
     );
 
-    if(this.eufyDevice.hasBattery()) {
+    if(this.eufyDevice.hasBattery && this.eufyDevice.hasBattery()) {
       this.platform.log.debug(this.accessory.displayName, 'has a battery, so append batteryService characteristic to him.');
 
       const batteryService =

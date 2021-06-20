@@ -50,7 +50,7 @@ export class SecurityCameraAccessory {
       accessory.displayName,
     );
 
-    // create handlers for required characteristics of Battery service
+    // create handlers for required characteristics of Motion Sensor
     this.service
       .getCharacteristic(this.platform.Characteristic.MotionDetected)
       .on('get', this.handleMotionDetectedGet.bind(this));
@@ -59,7 +59,7 @@ export class SecurityCameraAccessory {
       this.onDeviceMotionDetectedPushNotification(device, open),
     );
 
-    if(this.eufyDevice.hasBattery()) {
+    if(this.eufyDevice.hasBattery && this.eufyDevice.hasBattery()) {
       this.platform.log.debug(this.accessory.displayName, 'has a battery, so append batteryService characteristic to him.');
 
       const batteryService =
