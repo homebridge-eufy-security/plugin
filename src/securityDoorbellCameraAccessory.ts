@@ -14,6 +14,7 @@ import { EufyCameraStreamingDelegate } from './streamingDelegate';
  */
 export class SecurityDoorbellCameraAccessory {
   private service: Service;
+  private doorbellService: Service;
 
   constructor(
     private readonly platform: EufySecurityPlatform,
@@ -65,18 +66,18 @@ export class SecurityDoorbellCameraAccessory {
       .getCharacteristic(this.platform.Characteristic.HomeKitCameraActive)
       .on('set', this.handleHomeKitCameraActiveSet.bind(this));
 
-    const doorbellService =
+    this.doorbellService =
     this.accessory.getService(this.platform.Service.Doorbell) ||
     this.accessory.addService(this.platform.Service.Doorbell);
 
     // set the Battery service characteristics
-    doorbellService.setCharacteristic(
+    this.doorbellService.setCharacteristic(
       this.platform.Characteristic.Name,
       accessory.displayName,
     );
 
     // create handlers for required characteristics of Battery service
-    doorbellService
+    this.doorbellService
       .getCharacteristic(this.platform.Characteristic.ProgrammableSwitchEvent)
       .on('get', this.handleProgrammableSwitchEventGet.bind(this));
   
@@ -122,15 +123,12 @@ export class SecurityDoorbellCameraAccessory {
         .on('get', this.handleBatteryLevelGet.bind(this));
     }
 
-    doorbellService.setPrimaryService(true);
+    this.doorbellService.setPrimaryService(true);
 
     //video stream (work in progress)
   
     const delegate = new EufyCameraStreamingDelegate(this.platform, this.eufyDevice);
     accessory.configureController(delegate.controller);
-
-
-    this.platform.log.info('Debug Mode : ', this.platform.config.enableDetailedLogging);
 
     if(this.platform.config.enableDetailedLogging) {
       this.eufyDevice.on('raw property changed', (device: Device, type: number, value: string, modified: number) =>
@@ -228,7 +226,7 @@ export class SecurityDoorbellCameraAccessory {
 
   private onDeviceRingsPushNotification(): void {
     this.platform.log.debug(this.accessory.displayName, 'DoorBell ringing');
-    this.service
+    this.doorbellService
       .getCharacteristic(this.platform.Characteristic.ProgrammableSwitchEvent)
       .updateValue(this.platform.Characteristic.ProgrammableSwitchEvent.SINGLE_PRESS);
   }
