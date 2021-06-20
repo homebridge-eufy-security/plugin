@@ -202,25 +202,25 @@ export class SecuritySystemPlatformAccessory {
     device: Station, 
     type: number, 
     value: string, 
-    modified: number
+    modified: number,
   ): void {
     this.platform.log.debug(
       'Handle Station Raw Property Changes:  -- ',
       type, 
       value, 
-      modified
+      modified,
     );
   }
 
   private handlePropertyChange(
     device: Station, 
     name: string, 
-    value: PropertyValue
+    value: PropertyValue,
   ): void {
     this.platform.log.debug(
       'Handle Station Property Changes:  -- ',
       name, 
-      value
+      value,
     );
   }
 

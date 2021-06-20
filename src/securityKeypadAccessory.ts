@@ -95,25 +95,25 @@ export class SecurityKeypadAccessory {
     device: Device, 
     type: number, 
     value: string, 
-    modified: number
+    modified: number,
   ): void {
     this.platform.log.debug(
       'Handle Keypad Raw Property Changes:  -- ',
       type, 
       value, 
-      modified
+      modified,
     );
   }
 
   private handlePropertyChange(
     device: Device, 
     name: string, 
-    value: PropertyValue
+    value: PropertyValue,
   ): void {
     this.platform.log.debug(
       'Handle Keypad Property Changes:  -- ',
       name, 
-      value
+      value,
     );
   }
 
