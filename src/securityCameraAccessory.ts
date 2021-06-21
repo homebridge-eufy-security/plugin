@@ -79,21 +79,27 @@ export class SecurityCameraAccessory {
     }
 
     // create a new Switch service
-    const switchEnabledService = this.accessory.getService('Enabled') ||
-        this.accessory.addService(this.platform.Service.Switch, 'Enabled', 'enabled');
+    const switchEnabledService = 
+      this.accessory.getService(this.platform.Service.Switch) ||
+      this.accessory.addService(this.platform.Service.Switch, 'Enabled', 'enabled');
     
     // create handlers for required characteristics
     switchEnabledService.getCharacteristic(this.platform.Characteristic.On)
       .on('get', this.handleOnGet.bind(this))
       .on('set', this.handleOnSet.bind(this));
 
-    const switchMotionService = this.accessory.getService('Motion') ||
-     this.accessory.addService(this.platform.Service.Switch, 'Motion', 'motion');
+    if(this.eufyDevice.isIndoorCamera && !this.eufyDevice.isIndoorCamera()) {
 
-    // create handlers for required characteristics
-    switchMotionService.getCharacteristic(this.platform.Characteristic.On)
-      .on('get', this.handleMotionOnGet.bind(this))
-      .on('set', this.handleMotionOnSet.bind(this));
+      const switchMotionService =
+        this.accessory.getService(this.platform.Service.Switch) ||
+        this.accessory.addService(this.platform.Service.Switch, 'Motion', 'motion');
+
+      // create handlers for required characteristics
+      switchMotionService.getCharacteristic(this.platform.Characteristic.On)
+        .on('get', this.handleMotionOnGet.bind(this))
+        .on('set', this.handleMotionOnSet.bind(this));
+    
+    }
 
     if(this.platform.config.enableDetailedLogging) {
       this.eufyDevice.on('raw property changed', (device: Device, type: number, value: string, modified: number) =>

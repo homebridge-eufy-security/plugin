@@ -1,6 +1,8 @@
 import { Service, PlatformAccessory, PlatformConfig } from 'homebridge';
 
-import { EufySecurityPlatform, EufySecurityPlatformConfig } from './platform';
+import { EufySecurityPlatformConfig } from './config';
+
+import { EufySecurityPlatform } from './platform';
 import { Station, PropertyValue } from 'eufy-security-client';
 
 /**
@@ -55,8 +57,6 @@ export class SecuritySystemPlatformAccessory {
       .getCharacteristic(this.platform.Characteristic.SecuritySystemTargetState)
       .on('get', this.handleSecuritySystemTargetStateGet.bind(this))
       .on('set', this.handleSecuritySystemTargetStateSet.bind(this));
-
-    this.eufyStation.connect();
 
     this.eufyStation.on(
       'guard mode',
@@ -125,6 +125,7 @@ export class SecuritySystemPlatformAccessory {
       { hk: 1, eufy: this.config.hkAway ?? 0 },
       { hk: 2, eufy: this.config.hkNight ?? 3 },
       { hk: 3, eufy: this.config.hkOff ?? 63 },
+      { hk: 3, eufy: this.config.hkDisarmed ?? 6 },
     ];
     const modeObj = modes.filter((m) => {
       return m.eufy === eufyMode;
@@ -164,7 +165,7 @@ export class SecuritySystemPlatformAccessory {
       case 5:
         return this.convertMode(5);
       case 6: // 6 is triggered  when disabled  by Keypad
-        return this.convertMode(63);
+        return this.convertMode(6);
       case 47:
         return this.convertMode(47);
       case 63:
