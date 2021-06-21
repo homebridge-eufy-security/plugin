@@ -207,8 +207,8 @@ export class EufyCameraStreamingDelegate implements CameraStreamingDelegate {
       // get device info
     
       //   let ffmpegArgs = this.videoConfig.stillImageSource || this.videoConfig.source;
-      let ffmpegArgs = `-i ${this.device.getLastCameraImageURL()}`;
-      this.log.debug('Thumbnail URL: ', ffmpegArgs);
+      let ffmpegArgs = `-i ${this.device.getLastCameraImageURL().value}`;
+      this.log.info('Thumbnail URL: ', ffmpegArgs);
   
       ffmpegArgs += // Still
             ' -frames:v 1' +
