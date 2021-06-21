@@ -78,17 +78,17 @@ export class SecurityCameraAccessory {
         .on('get', this.handleBatteryLevelGet.bind(this));
     }
 
-    if(this.eufyDevice.isIndoorCamera && !this.eufyDevice.isIndoorCamera()) {
+    // create a new Switch service
+    const switchEnabledService = 
+      this.accessory.getService(this.platform.Service.Switch) ||
+      this.accessory.addService(this.platform.Service.Switch, 'Enabled', 'enabled');
+    
+    // create handlers for required characteristics
+    switchEnabledService.getCharacteristic(this.platform.Characteristic.On)
+      .on('get', this.handleOnGet.bind(this))
+      .on('set', this.handleOnSet.bind(this));
 
-      // create a new Switch service
-      const switchEnabledService = 
-        this.accessory.getService(this.platform.Service.Switch) ||
-        this.accessory.addService(this.platform.Service.Switch, 'Enabled', 'enabled');
-      
-      // create handlers for required characteristics
-      switchEnabledService.getCharacteristic(this.platform.Characteristic.On)
-        .on('get', this.handleOnGet.bind(this))
-        .on('set', this.handleOnSet.bind(this));
+    if(this.eufyDevice.isMotionDetectionEnabled) {
 
       const switchMotionService =
         this.accessory.getService(this.platform.Service.Switch) ||
