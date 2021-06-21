@@ -183,7 +183,7 @@ export class SecurityCameraAccessory {
     this.platform.log.debug(this.accessory.displayName, 'Triggered GET On');
     
     // set this to a valid value for On
-    const currentValue = this.eufyDevice.isEnabled();
+    const currentValue = this.eufyDevice.isEnabled().value;
     
     this.platform.log.debug(this.accessory.displayName, 'Handle Switch:  -- ', currentValue);
 

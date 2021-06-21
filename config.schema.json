@@ -95,6 +95,23 @@
           {"title": "Disarmed", "enum": [63]}
         ],
         "required": false
+      },
+      "hkDisarmed": {
+        "title": "HomeKit Off",
+        "type": "number",
+        "default": 6,
+        "oneOf": [
+          {"title": "Home", "enum": [1]},
+          {"title": "Away", "enum": [0]},
+          {"title": "Schedule", "enum": [2]},
+          {"title": "Custom 1", "enum": [3]},
+          {"title": "Custom 2", "enum": [4]},
+          {"title": "Custom 3", "enum": [5]},
+          {"title": "Geofencing", "enum": [47]},
+          {"title": "Desactivated", "enum": [6]},
+          {"title": "Disarmed", "enum": [63]}
+        ],
+        "required": false
       }
     }
   },
