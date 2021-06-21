@@ -88,7 +88,7 @@ export class SecurityCameraAccessory {
       .on('get', this.handleOnGet.bind(this))
       .on('set', this.handleOnSet.bind(this));
 
-    if(this.eufyDevice.isMotionDetectionEnabled) {
+    if(this.eufyDevice.isIndoorCamera && !this.eufyDevice.isIndoorCamera()) {
 
       const switchMotionService =
         this.accessory.getService(this.platform.Service.Switch) ||
