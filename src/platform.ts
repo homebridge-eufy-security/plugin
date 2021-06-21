@@ -109,9 +109,8 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
     this.log.debug('discoveringDevices');
     this.log.debug(this.eufyConfig.username);
     this.log.debug(this.eufyConfig.password);
-    this.log.debug(this.config.verifycode);
     await this.eufyClient
-      .connect(this.config.verifycode)
+      .connect()
       .catch((e) => this.log.error('Error authenticating Eufy : ', e));
     this.log.debug('EufyClient connected ' + this.eufyClient.isConnected());
 
