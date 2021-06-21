@@ -1,6 +1,8 @@
 import { Service, PlatformAccessory, PlatformConfig } from 'homebridge';
 
-import { EufySecurityPlatform, EufySecurityPlatformConfig } from './platform';
+import { EufySecurityPlatformConfig } from './config';
+
+import { EufySecurityPlatform } from './platform';
 import { Station, PropertyValue } from 'eufy-security-client';
 
 /**

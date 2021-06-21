@@ -17,6 +17,12 @@
         "required": true,
         "discription": "Eufy password"
       },
+      "verifycode": {
+        "title": "Eufy VerifyCode (2FA)",
+        "type": "string",
+        "required": false,
+        "discription": "Eufy verifycode"
+      },
       "ipAddress": {
         "title": "Local IP Address (Homebase)",
         "type": "string",
@@ -126,6 +132,10 @@
         "username",
         {
           "key": "password",
+          "type": "password"
+        },
+        {
+          "key": "verifycode",
           "type": "password"
         }
       ]

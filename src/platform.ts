@@ -10,6 +10,8 @@ import {
 
 import { PLATFORM_NAME, PLUGIN_NAME } from './settings';
 
+import { EufySecurityPlatformConfig } from './config';
+
 import { SecuritySystemPlatformAccessory } from './securitySystemPlatformAccessory';
 import { SecurityEntrySensorAccessory } from './securityEntrySensorAccessory';
 import { SecurityMotionSensorAccessory } from './securityMotionSensorAccessory';
@@ -42,24 +44,6 @@ interface DeviceIdentifier {
 interface DeviceContainer {
   deviceIdentifier: DeviceIdentifier;
   eufyDevice: Device | Station;
-}
-
-/**
- * HomebridgePlatform
- * This class is the main constructor for your plugin, this is where you should
- * parse the user config and discover/register accessories with Homebridge.
- */
-export interface EufySecurityPlatformConfig extends PlatformConfig {
-  username: string;
-  password: string;
-  ipAddress: string;
-  enableDetailedLogging: boolean;
-  pollingIntervalMinutes: number;
-  hkHome: number;
-  hkAway: number;
-  hkNight: number;
-  hkOff: number;
-  hkDisarmed: number;
 }
 
 export class EufySecurityPlatform implements DynamicPlatformPlugin {
@@ -125,8 +109,9 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
     this.log.debug('discoveringDevices');
     this.log.debug(this.eufyConfig.username);
     this.log.debug(this.eufyConfig.password);
+    this.log.debug(this.config.verifycode);
     await this.eufyClient
-      .connect()
+      .connect(this.config.verifycode)
       .catch((e) => this.log.error('Error authenticating Eufy : ', e));
     this.log.debug('EufyClient connected ' + this.eufyClient.isConnected());
 
