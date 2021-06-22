@@ -68,6 +68,15 @@ export class SecuritySystemPlatformAccessory {
         ),
     );
 
+    this.eufyStation.on(
+      'alarm mode',
+      (station: Station, alarm_type: number) =>
+        this.onStationAlarmTriggeredPushNotification(
+          station,
+          alarm_type,
+        ),
+    );
+
     if(this.config.enableDetailedLogging) {
       this.eufyStation.on('raw property changed', (device: Station, type: number, value: string, modified: number) =>
         this.handleRawPropertyChange(device, type, value, modified),
@@ -103,6 +112,23 @@ export class SecuritySystemPlatformAccessory {
         )
         .updateValue(homekitGuardMode);
     }
+  }
+  
+  private onStationAlarmTriggeredPushNotification(
+    station: Station,
+    alarm_type: number,
+  ): void {
+      if (alarm_type) {
+          // (alarm_type ==  3) // Alarm triggered by camera
+          // (alarm_type == 6) // Alarm triggered by contact sensor
+          // (alarm_type == 8) // Alarm triggered by motion sensor
+          // (alarm_type == 15) // Alarm off by Keypad
+          // (alarm_type == 16) // Alarm off by Eufy App
+          this.platform.log.warn('Received StationAlarmTriggeredPushNotification - alarm_type: ' + alarm_type);
+          this.service
+              .getCharacteristic(this.platform.Characteristic.SecuritySystemCurrentState)
+              .updateValue(4); // Characteristic.SecuritySystemCurrentState.ALARM_TRIGGERED
+      }
   }
 
   async getCurrentStatus() {
