@@ -126,8 +126,8 @@ export class SecuritySystemPlatformAccessory {
       // (alarm_type == 16) // Alarm off by Eufy App
       this.platform.log.warn('Received StationAlarmTriggeredPushNotification - alarm_type: ' + alarm_type);
       this.service
-          .getCharacteristic(this.platform.Characteristic.SecuritySystemCurrentState)
-          .updateValue(4); // Characteristic.SecuritySystemCurrentState.ALARM_TRIGGERED
+        .getCharacteristic(this.platform.Characteristic.SecuritySystemCurrentState)
+        .updateValue(4); // Characteristic.SecuritySystemCurrentState.ALARM_TRIGGERED
     }
   }
 
