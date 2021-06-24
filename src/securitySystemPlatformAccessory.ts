@@ -133,7 +133,7 @@ export class SecuritySystemPlatformAccessory {
         this.service
           .getCharacteristic(this.platform.Characteristic.SecuritySystemCurrentState)
           .updateValue(4); // Characteristic.SecuritySystemCurrentState.ALARM_TRIGGERED
-      break;
+        break;
       case 15: // Alarm off by Keypad
       case 16: // Alarm off by Eufy App
       case 17: // Alarm off by HomeBase button
@@ -142,10 +142,10 @@ export class SecuritySystemPlatformAccessory {
         this.service
           .getCharacteristic(this.platform.Characteristic.SecuritySystemCurrentState)
           .updateValue(this.guardMode); // Back to normal
-      break;
+        break;
       default:
         this.platform.log.warn('Received StationAlarmTriggeredPushNotification - ALARM UNKNOWN - alarm_type: ' + alarm_type);
-      break;
+        break;
     }
   }
 
