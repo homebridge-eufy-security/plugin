@@ -97,15 +97,15 @@ export class SecurityCameraAccessory {
 
     if(this.eufyDevice.isIndoorCamera && !this.eufyDevice.isIndoorCamera()) {
 
-    this.switchMotionService =
-      this.accessory.getService('Motion') ||
-      this.accessory.addService(this.platform.Service.Switch, 'Motion', 'motion');
+      this.switchMotionService =
+        this.accessory.getService('Motion') ||
+        this.accessory.addService(this.platform.Service.Switch, 'Motion', 'motion');
 
-    // create handlers for required characteristics
-    this.switchMotionService.getCharacteristic(this.platform.Characteristic.On)
-      .on('get', this.handleMotionOnGet.bind(this))
-      .on('set', this.handleMotionOnSet.bind(this));
-    
+      // create handlers for required characteristics
+      this.switchMotionService.getCharacteristic(this.platform.Characteristic.On)
+        .on('get', this.handleMotionOnGet.bind(this))
+        .on('set', this.handleMotionOnSet.bind(this));
+      
     }
 
     if(this.platform.config.enableDetailedLogging) {
