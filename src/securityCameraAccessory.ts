@@ -13,12 +13,19 @@ import { Camera, Device, DeviceType, PropertyValue } from 'eufy-security-client'
  */
 export class SecurityCameraAccessory {
   private service: Service;
+  private switchEnabledService: Service;
+  private switchMotionService: Service;
 
   constructor(
     private readonly platform: EufySecurityPlatform,
     private readonly accessory: PlatformAccessory,
     private eufyDevice: Camera,
   ) {
+
+    this.service = {} as Service;
+    this.switchEnabledService = {} as Service;
+    this.switchMotionService = {} as Service;
+
     this.platform.log.debug(this.accessory.displayName, 'Constructed Camera');
     // set accessory information
     this.accessory
@@ -79,26 +86,26 @@ export class SecurityCameraAccessory {
     }
 
     // create a new Switch service
-    const switchEnabledService = 
-      this.accessory.getService(this.platform.Service.Switch) ||
+    this.switchEnabledService = 
+      this.accessory.getService('Enabled') ||
       this.accessory.addService(this.platform.Service.Switch, 'Enabled', 'enabled');
     
     // create handlers for required characteristics
-    switchEnabledService.getCharacteristic(this.platform.Characteristic.On)
+    this.switchEnabledService.getCharacteristic(this.platform.Characteristic.On)
       .on('get', this.handleOnGet.bind(this))
       .on('set', this.handleOnSet.bind(this));
 
     if(this.eufyDevice.isIndoorCamera && !this.eufyDevice.isIndoorCamera()) {
 
-      const switchMotionService =
-        this.accessory.getService(this.platform.Service.Switch) ||
+      this.switchMotionService =
+        this.accessory.getService('Motion') ||
         this.accessory.addService(this.platform.Service.Switch, 'Motion', 'motion');
 
       // create handlers for required characteristics
-      switchMotionService.getCharacteristic(this.platform.Characteristic.On)
+      this.switchMotionService.getCharacteristic(this.platform.Characteristic.On)
         .on('get', this.handleMotionOnGet.bind(this))
         .on('set', this.handleMotionOnSet.bind(this));
-    
+      
     }
 
     if(this.platform.config.enableDetailedLogging) {
@@ -188,17 +195,10 @@ export class SecurityCameraAccessory {
   async handleOnGet(callback) {
     this.platform.log.debug(this.accessory.displayName, 'Triggered GET On');
     
-    // set this to a valid value for On
     const currentValue = this.eufyDevice.isEnabled().value;
     
     this.platform.log.debug(this.accessory.displayName, 'Handle Switch:  -- ', currentValue);
 
-    /*
-     * The callback function should be called to return the value
-     * The first argument in the function should be null unless and error occured
-     * The second argument in the function should be the current value of the characteristic
-     * This is just an example so we will return the value from `this.isOn` which is where we stored the value in the set handler
-     */
     callback(null, currentValue);
   }
     
@@ -212,10 +212,6 @@ export class SecurityCameraAccessory {
         
     station.enableDevice(this.eufyDevice, value);
 
-    /*
-     * The callback function should be called to return the value
-     * The first argument in the function should be null unless and error occured
-     */
     callback(null);
   }
 
@@ -224,18 +220,11 @@ export class SecurityCameraAccessory {
    */
   async handleMotionOnGet(callback) {
     this.platform.log.debug(this.accessory.displayName, 'Triggered GET On');
-      
-    // set this to a valid value for On
-    const currentValue = this.eufyDevice.isMotionDetectionEnabled().value;
+
+    const currentValue = await this.eufyDevice.isMotionDetectionEnabled().value;
       
     this.platform.log.debug(this.accessory.displayName, 'Handle Switch:  -- ', currentValue);
   
-    /*
-       * The callback function should be called to return the value
-       * The first argument in the function should be null unless and error occured
-       * The second argument in the function should be the current value of the characteristic
-       * This is just an example so we will return the value from `this.isOn` which is where we stored the value in the set handler
-       */
     callback(null, currentValue);
   }
       
@@ -248,11 +237,7 @@ export class SecurityCameraAccessory {
     const station = this.platform.getStationById(this.eufyDevice.getStationSerial());
           
     station.setMotionDetection(this.eufyDevice, value);
-  
-    /*
-       * The callback function should be called to return the value
-       * The first argument in the function should be null unless and error occured
-       */
+
     callback(null);
   }
 }
