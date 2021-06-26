@@ -12,6 +12,8 @@ import { Station, PropertyValue } from 'eufy-security-client';
  */
 export class SecuritySystemPlatformAccessory {
   private service: Service;
+  private alarm_triggered: boolean;
+  private guardMode: number;
 
   constructor(
     private readonly platform: EufySecurityPlatform,
@@ -21,6 +23,10 @@ export class SecuritySystemPlatformAccessory {
   ) {
     this.platform.log.debug(this.accessory.displayName, 'Constructed SecuritySystem');
     // set accessory information
+
+    this.alarm_triggered = false;
+    this.guardMode = 0;
+
     this.accessory
       .getService(this.platform.Service.AccessoryInformation)!
       .setCharacteristic(this.platform.Characteristic.Manufacturer, 'Eufy')
@@ -48,9 +54,7 @@ export class SecuritySystemPlatformAccessory {
 
     // create handlers for required characteristics
     this.service
-      .getCharacteristic(
-        this.platform.Characteristic.SecuritySystemCurrentState,
-      )
+      .getCharacteristic(this.platform.Characteristic.SecuritySystemCurrentState)
       .on('get', this.handleSecuritySystemCurrentStateGet.bind(this));
 
     this.service
@@ -65,6 +69,15 @@ export class SecuritySystemPlatformAccessory {
           station,
           guardMode,
           currentMode,
+        ),
+    );
+
+    this.eufyStation.on(
+      'alarm mode',
+      (station: Station, alarm_type: number) =>
+        this.onStationAlarmTriggeredPushNotification(
+          station,
+          alarm_type,
         ),
     );
 
@@ -104,6 +117,38 @@ export class SecuritySystemPlatformAccessory {
         .updateValue(homekitGuardMode);
     }
   }
+  
+  private onStationAlarmTriggeredPushNotification(
+    station: Station,
+    alarm_type: number,
+  ): void {
+    switch (alarm_type) {
+      // case 3: // Alarm triggered by camera
+      // case 6: // Alarm triggered by contact sensor
+      // case 8: // Alarm triggered by motion sensor
+      //   this.platform.log.warn('Received StationAlarmTriggeredPushNotification - ALARM TRIGGERED - alarm_type: ' + alarm_type);
+      //   this.alarm_triggered = true;
+      //   this.service
+      //     .getCharacteristic(this.platform.Characteristic.SecuritySystemCurrentState)
+      //     .updateValue(4); // Characteristic.SecuritySystemCurrentState.ALARM_TRIGGERED
+      //   break;
+      // case 15: // Alarm off by Keypad
+      // case 16: // Alarm off by Eufy App
+      // case 17: // Alarm off by HomeBase button
+      //   this.platform.log.warn('Received StationAlarmTriggeredPushNotification - ALARM OFF - alarm_type: ' + alarm_type);
+      //   this.alarm_triggered = false;
+      //   this.service
+      //     .getCharacteristic(this.platform.Characteristic.SecuritySystemCurrentState)
+      //     .updateValue(this.guardMode); // Back to normal
+      //   break;
+      default:
+        this.platform.log.warn('Received StationAlarmTriggeredPushNotification - ALARM UNKNOWN - alarm_type: ' + alarm_type);
+        this.service
+          .getCharacteristic(this.platform.Characteristic.StatusFault)
+          .updateValue(this.platform.Characteristic.StatusFault.GENERAL_FAULT);
+        break;
+    }
+  }
 
   async getCurrentStatus() {
     this.platform.log.debug(
@@ -116,7 +161,9 @@ export class SecuritySystemPlatformAccessory {
 
     this.platform.log.info('Eufy Guard Mode: ', guardMode);
 
-    return this.convertStatusCodeToHomekit(guardMode.value as number);
+    this.guardMode = (this.alarm_triggered) ? 4 : guardMode.value as number;
+
+    return this.convertStatusCodeToHomekit(this.guardMode as number);
   }
 
   convertMode(eufyMode: number) {
@@ -146,10 +193,11 @@ export class SecuritySystemPlatformAccessory {
     //     63: 'DISARMED'
     //-----------------------
     //---HomeKit Modes-------
-    //     0: 'AWAY',
-    //     1: 'HOME',
-    //     2: 'NIGHT',
-    //     3: 'OFF',
+    //     0: 'STAY_ARM',
+    //     1: 'AWAY_ARM',
+    //     2: 'NIGHT_ARM',
+    //     3: 'DISARMED',
+    //     4: 'ALARM_TRIGGERED',
     //-----------------------
     switch (code) {
       case 0: //Eufy mode
@@ -183,9 +231,10 @@ export class SecuritySystemPlatformAccessory {
 
     // set this to a valid value for SecuritySystemCurrentState
     const currentValue = await this.getCurrentStatus();
+
     this.platform.log.debug(this.accessory.displayName, 'Handle Current System state:  -- ', currentValue);
 
-    callback(null, currentValue);
+    callback(null, (this.alarm_triggered) ? 4 : currentValue);
   }
 
   /**
@@ -206,7 +255,7 @@ export class SecuritySystemPlatformAccessory {
     value: string, 
     modified: number,
   ): void {
-    this.platform.log.debug(
+    this.platform.log.info(
       'Handle Station Raw Property Changes:  -- ',
       type, 
       value, 
@@ -219,7 +268,7 @@ export class SecuritySystemPlatformAccessory {
     name: string, 
     value: PropertyValue,
   ): void {
-    this.platform.log.debug(
+    this.platform.log.info(
       'Handle Station Property Changes:  -- ',
       name, 
       value,

@@ -32,7 +32,7 @@
   ],
   "dependencies": {
     "bunyan": "^1.8.15",
-    "eufy-security-client": "^0.8.3",
+    "eufy-security-client": "file:eufy-security-client",
     "ffmpeg-for-homebridge": "0.0.9",
     "get-port": "^5.1.1",
     "systeminformation": "^5.7.6"
