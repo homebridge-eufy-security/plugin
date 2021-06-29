@@ -4,6 +4,7 @@ import { EufySecurityPlatform } from './platform';
 
 // import { HttpService, LocalLookupService, DeviceClientService, CommandType } from 'eufy-node-client';
 
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore  
 import { Camera, Device, DeviceType, PropertyValue } from 'eufy-security-client';
 
