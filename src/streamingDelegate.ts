@@ -22,6 +22,7 @@ import {
 import { spawn } from 'child_process';
 import { createSocket, Socket } from 'dgram';
 import ffmpegPath from 'ffmpeg-for-homebridge';
+// @ts-ignore  
 import { Camera } from 'eufy-security-client';
 import { EufySecurityPlatform } from './platform';
 import getPort from 'get-port';

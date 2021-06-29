@@ -4,6 +4,7 @@ import { EufySecurityPlatform } from './platform';
 
 // import { HttpService, LocalLookupService, DeviceClientService, CommandType } from 'eufy-node-client';
 
+// @ts-ignore  
 import { Device, EntrySensor, DeviceType } from 'eufy-security-client';
 
 /**
