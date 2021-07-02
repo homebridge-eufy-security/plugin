@@ -123,24 +123,24 @@ export class SecuritySystemPlatformAccessory {
     alarm_type: number,
   ): void {
     switch (alarm_type) {
-      // case 3: // Alarm triggered by camera
-      // case 6: // Alarm triggered by contact sensor
-      // case 8: // Alarm triggered by motion sensor
-      //   this.platform.log.warn('Received StationAlarmTriggeredPushNotification - ALARM TRIGGERED - alarm_type: ' + alarm_type);
-      //   this.alarm_triggered = true;
-      //   this.service
-      //     .getCharacteristic(this.platform.Characteristic.SecuritySystemCurrentState)
-      //     .updateValue(4); // Characteristic.SecuritySystemCurrentState.ALARM_TRIGGERED
-      //   break;
-      // case 15: // Alarm off by Keypad
-      // case 16: // Alarm off by Eufy App
-      // case 17: // Alarm off by HomeBase button
-      //   this.platform.log.warn('Received StationAlarmTriggeredPushNotification - ALARM OFF - alarm_type: ' + alarm_type);
-      //   this.alarm_triggered = false;
-      //   this.service
-      //     .getCharacteristic(this.platform.Characteristic.SecuritySystemCurrentState)
-      //     .updateValue(this.guardMode); // Back to normal
-      //   break;
+      case 3: // Alarm triggered by camera
+      case 6: // Alarm triggered by contact sensor
+      case 8: // Alarm triggered by motion sensor
+        this.platform.log.warn('Received StationAlarmTriggeredPushNotification - ALARM TRIGGERED - alarm_type: ' + alarm_type);
+        this.alarm_triggered = true;
+        this.service
+          .getCharacteristic(this.platform.Characteristic.SecuritySystemCurrentState)
+          .updateValue(4); // Characteristic.SecuritySystemCurrentState.ALARM_TRIGGERED
+        break;
+      case 15: // Alarm off by Keypad
+      case 16: // Alarm off by Eufy App
+      case 17: // Alarm off by HomeBase button
+        this.platform.log.warn('Received StationAlarmTriggeredPushNotification - ALARM OFF - alarm_type: ' + alarm_type);
+        this.alarm_triggered = false;
+        this.service
+          .getCharacteristic(this.platform.Characteristic.SecuritySystemCurrentState)
+          .updateValue(this.guardMode); // Back to normal
+        break;
       default:
         this.platform.log.warn('Received StationAlarmTriggeredPushNotification - ALARM UNKNOWN - alarm_type: ' + alarm_type);
         this.service
