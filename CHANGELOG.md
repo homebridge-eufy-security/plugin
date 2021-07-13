@@ -1,5 +1,12 @@
 # Change Log
 
+## 0.2.5 (06-26-2021)
+
+### Changes
+
+-   Improvements to handing alarm events
+-   Other small bug fixes
+
 ## 0.2.4 (06-21-2021)
 
 ### Changes

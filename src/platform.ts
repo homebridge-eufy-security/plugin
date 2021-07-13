@@ -19,6 +19,7 @@ import { SecurityCameraAccessory } from './securityCameraAccessory';
 import { SecurityDoorbellCameraAccessory } from './securityDoorbellCameraAccessory';
 import { SecurityKeypadAccessory } from './securityKeypadAccessory';
 
+ 
 import {
   EufySecurity,
   EufySecurityConfig,
@@ -30,6 +31,8 @@ import {
   Camera,
   DoorbellCamera,
   Keypad,
+  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+  // @ts-ignore 
 } from 'eufy-security-client';
 // import { throws } from 'assert';
 import bunyan from 'bunyan';

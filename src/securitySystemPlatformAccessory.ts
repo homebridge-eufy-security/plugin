@@ -3,6 +3,8 @@ import { Service, PlatformAccessory, PlatformConfig } from 'homebridge';
 import { EufySecurityPlatformConfig } from './config';
 
 import { EufySecurityPlatform } from './platform';
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore  
 import { Station, PropertyValue } from 'eufy-security-client';
 
 /**
