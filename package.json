@@ -31,7 +31,7 @@
     "security-system"
   ],
   "dependencies": {
-    "@lenoxys/eufy-security-client": "^0.8.3",
+    "@lenoxys/eufy-security-client": "^0.8.4",
     "bunyan": "^1.8.15",
     "ffmpeg-for-homebridge": "0.0.9",
     "get-port": "^5.1.1",
@@ -53,7 +53,7 @@
     "rules": {
       "ban-ts-comment": 0
     }
- },
+  },
   "homepage": "https://github.com/samemory/homebridge-eufy-security#readme",
   "author": "Sam Emory"
 }
