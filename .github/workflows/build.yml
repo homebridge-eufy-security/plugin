@@ -19,9 +19,6 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
           
-      - name: Install dep for eufy-security-client
-        run: cd eufy-security-client/ && npm install
-          
       - name: Back to main dir
         run: cd ../
 
