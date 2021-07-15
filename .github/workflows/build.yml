@@ -18,6 +18,9 @@ jobs:
         uses: actions/setup-node@v1
         with:
           node-version: ${{ matrix.node-version }}
+          
+      - name: Back to main dir
+        run: cd ../
 
       - name: Install dependencies
         run: npm install
