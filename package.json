@@ -1,15 +1,15 @@
 {
   "displayName": "Homebridge Eufy Security",
-  "name": "@lenoxys/homebridge-eufy-security",
+  "name": "homebridge-eufy-security",
   "version": "0.2.9",
   "description": "Control Eufy Security from homebridge.",
   "license": "Apache-2.0",
   "repository": {
     "type": "git",
-    "url": "git://github.com/lenoxys/homebridge-eufy-security.git"
+    "url": "git://github.com/samemory/homebridge-eufy-security.git"
   },
   "bugs": {
-    "url": "https://github.com/lenoxys/homebridge-eufy-security/issues"
+    "url": "https://github.com/samemory/homebridge-eufy-security/issues"
   },
   "engines": {
     "node": ">=10.17.0",
@@ -54,6 +54,6 @@
       "ban-ts-comment": 0
     }
   },
-  "homepage": "https://github.com/lenoxys/homebridge-eufy-security#readme",
-  "author": "Lenoxys"
+  "homepage": "https://github.com/samemory/homebridge-eufy-security#readme",
+  "author": "Sam Emory"
 }
