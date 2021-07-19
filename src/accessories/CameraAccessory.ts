@@ -1,19 +1,20 @@
 import { Service, PlatformAccessory } from 'homebridge';
 
-import { EufySecurityPlatform } from './platform';
+import { EufySecurityPlatform } from '../platform';
 
 // import { HttpService, LocalLookupService, DeviceClientService, CommandType } from 'eufy-node-client';
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore  
 import { Camera, Device, DeviceType, PropertyValue } from 'eufy-security-client';
+import { EufyCameraStreamingDelegate } from './streamingDelegate';
 
 /**
  * Platform Accessory
  * An instance of this class is created for each accessory your platform registers
  * Each accessory may expose multiple services of different service types.
  */
-export class SecurityCameraAccessory {
+export class CameraAccessory {
   private service: Service;
   private switchEnabledService: Service;
   private switchMotionService: Service;
