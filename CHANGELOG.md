@@ -1,5 +1,12 @@
 # Change Log
 
+## 0.2.10 (07-19-2021)
+
+### Changes
+
+-   Improvements to handing alarm events
+-   Many other improvements that were in the dev npm version
+
 ## 0.2.5 (06-26-2021)
 
 ### Changes
