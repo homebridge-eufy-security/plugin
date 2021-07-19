@@ -23,7 +23,7 @@ export class StationAccessory {
     private eufyStation: Station,
     private config: EufySecurityPlatformConfig,
   ) {
-    this.platform.log.debug(this.accessory.displayName, 'Constructed SecuritySystem');
+    this.platform.log.debug(this.accessory.displayName, 'Constructed Station');
     // set accessory information
 
     this.alarm_triggered = false;

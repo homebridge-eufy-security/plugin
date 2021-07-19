@@ -22,7 +22,7 @@ export class KeypadAccessory {
     private readonly accessory: PlatformAccessory,
     private eufyDevice: Keypad,
   ) {
-    this.platform.log.debug(this.accessory.displayName, 'Constructed Switch');
+    this.platform.log.debug(this.accessory.displayName, 'Constructed Keypad');
     // set accessory information
     this.accessory
       .getService(this.platform.Service.AccessoryInformation)!
