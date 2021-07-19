@@ -1,6 +1,6 @@
 import { Service, PlatformAccessory } from 'homebridge';
 
-import { EufySecurityPlatform } from './platform';
+import { EufySecurityPlatform } from '../platform';
 
 // import { HttpService, LocalLookupService, DeviceClientService, CommandType } from 'eufy-node-client';
 
@@ -14,7 +14,7 @@ import { EufyCameraStreamingDelegate } from './streamingDelegate';
  * An instance of this class is created for each accessory your platform registers
  * Each accessory may expose multiple services of different service types.
  */
-export class SecurityDoorbellCameraAccessory {
+export class DoorbellCameraAccessory {
   private service: Service;
   private doorbellService: Service;
   private MotionService: Service;

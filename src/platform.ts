@@ -12,12 +12,12 @@ import { PLATFORM_NAME, PLUGIN_NAME } from './settings';
 
 import { EufySecurityPlatformConfig } from './config';
 
-import { SecuritySystemPlatformAccessory } from './securitySystemPlatformAccessory';
-import { SecurityEntrySensorAccessory } from './securityEntrySensorAccessory';
-import { SecurityMotionSensorAccessory } from './securityMotionSensorAccessory';
-import { SecurityCameraAccessory } from './securityCameraAccessory';
-import { SecurityDoorbellCameraAccessory } from './securityDoorbellCameraAccessory';
-import { SecurityKeypadAccessory } from './securityKeypadAccessory';
+import { StationAccessory } from './accessories/StationAccessory';
+import { EntrySensorAccessory } from './accessories/EntrySensorAccessory';
+import { MotionSensorAccessory } from './accessories/MotionSensorAccessory';
+import { CameraAccessory } from './accessories/CameraAccessory';
+import { DoorbellCameraAccessory } from './accessories/DoorbellCameraAccessory';
+import { KeypadAccessory } from './accessories/KeypadAccessory';
 
  
 import {
@@ -247,7 +247,7 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
   ) {
     switch (type) {
       case DeviceType.STATION:
-        new SecuritySystemPlatformAccessory(
+        new StationAccessory(
           this,
           accessory,
           device as Station,
@@ -255,7 +255,7 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
         );
         break;
       case DeviceType.MOTION_SENSOR:
-        new SecurityMotionSensorAccessory(this, accessory, device as MotionSensor);
+        new MotionSensorAccessory(this, accessory, device as MotionSensor);
         break;
       case DeviceType.CAMERA:
       case DeviceType.CAMERA2:
@@ -270,18 +270,18 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
       case DeviceType.INDOOR_PT_CAMERA_1080:
       case DeviceType.SOLO_CAMERA:
       case DeviceType.SOLO_CAMERA_PRO:
-        new SecurityCameraAccessory(this, accessory, device as Camera);
+        new CameraAccessory(this, accessory, device as Camera);
         break;
       case DeviceType.DOORBELL:
       case DeviceType.BATTERY_DOORBELL:
       case DeviceType.BATTERY_DOORBELL_2:
-        new SecurityDoorbellCameraAccessory(this, accessory, device as DoorbellCamera);
+        new DoorbellCameraAccessory(this, accessory, device as DoorbellCamera);
         break;
       case DeviceType.SENSOR:
-        new SecurityEntrySensorAccessory(this, accessory, device as EntrySensor);
+        new EntrySensorAccessory(this, accessory, device as EntrySensor);
         break;
       case DeviceType.KEYPAD:
-        new SecurityKeypadAccessory(this, accessory, device as Keypad);
+        new KeypadAccessory(this, accessory, device as Keypad);
         break;
       default:
         this.log.info(
