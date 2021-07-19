@@ -493,7 +493,7 @@ export class EufyCameraStreamingDelegate implements CameraStreamingDelegate {
           );
           this.controller.forceStopStreamingSession(request.sessionID);
           this.stopStream(request.sessionID);
-        }, request.video.rtcp_interval * 2 * 1000);
+        }, request.video.rtcp_interval * 5 * 1000);
       });
       activeSession.socket.bind(
         sessionInfo.videoReturnPort,
