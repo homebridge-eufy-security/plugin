@@ -1,6 +1,6 @@
 import { Service, PlatformAccessory } from 'homebridge';
 
-import { EufySecurityPlatform } from './platform';
+import { EufySecurityPlatform } from '../platform';
 
 // import { HttpService, LocalLookupService, DeviceClientService, CommandType } from 'eufy-node-client';
 
@@ -13,7 +13,7 @@ import { Keypad, Device, DeviceType, PropertyValue } from 'eufy-security-client'
  * An instance of this class is created for each accessory your platform registers
  * Each accessory may expose multiple services of different service types.
  */
-export class SecurityKeypadAccessory {
+export class KeypadAccessory {
   private service: Service;
   private batteryService: Service;
 
@@ -22,7 +22,7 @@ export class SecurityKeypadAccessory {
     private readonly accessory: PlatformAccessory,
     private eufyDevice: Keypad,
   ) {
-    this.platform.log.debug(this.accessory.displayName, 'Constructed Switch');
+    this.platform.log.debug(this.accessory.displayName, 'Constructed Keypad');
     // set accessory information
     this.accessory
       .getService(this.platform.Service.AccessoryInformation)!

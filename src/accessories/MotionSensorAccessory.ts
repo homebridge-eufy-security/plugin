@@ -1,6 +1,6 @@
 import { Service, PlatformAccessory } from 'homebridge';
 
-import { EufySecurityPlatform } from './platform';
+import { EufySecurityPlatform } from '../platform';
 
 // import { HttpService, LocalLookupService, DeviceClientService, CommandType } from 'eufy-node-client';
 
@@ -13,7 +13,7 @@ import { Device, MotionSensor, DeviceType } from 'eufy-security-client';
  * An instance of this class is created for each accessory your platform registers
  * Each accessory may expose multiple services of different service types.
  */
-export class SecurityMotionSensorAccessory {
+export class MotionSensorAccessory {
   private service: Service;
 
   constructor(

@@ -25,7 +25,7 @@ import ffmpegPath from 'ffmpeg-for-homebridge';
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore  
 import { Camera } from 'eufy-security-client';
-import { EufySecurityPlatform } from './platform';
+import { EufySecurityPlatform } from '../platform';
 import getPort from 'get-port';
 import os from 'os';
 import { networkInterfaceDefault } from 'systeminformation';
@@ -493,7 +493,7 @@ export class EufyCameraStreamingDelegate implements CameraStreamingDelegate {
           );
           this.controller.forceStopStreamingSession(request.sessionID);
           this.stopStream(request.sessionID);
-        }, request.video.rtcp_interval * 2 * 1000);
+        }, request.video.rtcp_interval * 5 * 1000);
       });
       activeSession.socket.bind(
         sessionInfo.videoReturnPort,

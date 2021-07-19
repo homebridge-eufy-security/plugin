@@ -1,18 +1,18 @@
 import { Service, PlatformAccessory, PlatformConfig } from 'homebridge';
 
-import { EufySecurityPlatformConfig } from './config';
+import { EufySecurityPlatformConfig } from '../config';
 
-import { EufySecurityPlatform } from './platform';
+import { EufySecurityPlatform } from '../platform';
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore  
-import { Station, PropertyValue } from 'eufy-security-client';
+import { Station, PropertyValue, AlarmEvent } from 'eufy-security-client';
 
 /**
  * Platform Accessory
  * An instance of this class is created for each accessory your platform registers
  * Each accessory may expose multiple services of different service types.
  */
-export class SecuritySystemPlatformAccessory {
+export class StationAccessory {
   private service: Service;
   private alarm_triggered: boolean;
   private guardMode: number;
@@ -23,7 +23,7 @@ export class SecuritySystemPlatformAccessory {
     private eufyStation: Station,
     private config: EufySecurityPlatformConfig,
   ) {
-    this.platform.log.debug(this.accessory.displayName, 'Constructed SecuritySystem');
+    this.platform.log.debug(this.accessory.displayName, 'Constructed Station');
     // set accessory information
 
     this.alarm_triggered = false;
@@ -66,20 +66,28 @@ export class SecuritySystemPlatformAccessory {
 
     this.eufyStation.on(
       'guard mode',
-      (station: Station, guardMode: number, currentMode: number) =>
+      (station: Station, guardMode: number) =>
         this.onStationGuardModePushNotification(
           station,
           guardMode,
+        ),
+    );
+
+    this.eufyStation.on(
+      'current mode',
+      (station: Station, currentMode: number) =>
+        this.onStationCurrentModePushNotification(
+          station,
           currentMode,
         ),
     );
 
     this.eufyStation.on(
-      'alarm mode',
-      (station: Station, alarm_type: number) =>
-        this.onStationAlarmTriggeredPushNotification(
+      'alarm event',
+      (station: Station, alarmEvent: AlarmEvent) =>
+        this.onStationAlarmEventPushNotification(
           station,
-          alarm_type,
+          alarmEvent,
         ),
     );
 
@@ -96,21 +104,15 @@ export class SecuritySystemPlatformAccessory {
   private onStationGuardModePushNotification(
     station: Station,
     guardMode: number,
-    currentMode: number,
   ): void {
     const homekitGuardMode = this.convertStatusCodeToHomekit(guardMode);
     if (homekitGuardMode) {
-      this.platform.log.debug(
-        'Received StationGuardModePushNotification - guardmode ' +
+      this.platform.log.info(
+        'Received onStationGuardModePushNotification - guardmode ' +
           guardMode +
           ' homekitGuardMode ' +
           homekitGuardMode,
       );
-      this.service
-        .getCharacteristic(
-          this.platform.Characteristic.SecuritySystemCurrentState,
-        )
-        .updateValue(homekitGuardMode);
 
       this.service
         .getCharacteristic(
@@ -119,32 +121,56 @@ export class SecuritySystemPlatformAccessory {
         .updateValue(homekitGuardMode);
     }
   }
-  
-  private onStationAlarmTriggeredPushNotification(
+
+  private onStationCurrentModePushNotification(
     station: Station,
-    alarm_type: number,
+    currentMode: number,
   ): void {
-    switch (alarm_type) {
-      // case 3: // Alarm triggered by camera
-      // case 6: // Alarm triggered by contact sensor
-      // case 8: // Alarm triggered by motion sensor
-      //   this.platform.log.warn('Received StationAlarmTriggeredPushNotification - ALARM TRIGGERED - alarm_type: ' + alarm_type);
-      //   this.alarm_triggered = true;
-      //   this.service
-      //     .getCharacteristic(this.platform.Characteristic.SecuritySystemCurrentState)
-      //     .updateValue(4); // Characteristic.SecuritySystemCurrentState.ALARM_TRIGGERED
-      //   break;
-      // case 15: // Alarm off by Keypad
-      // case 16: // Alarm off by Eufy App
-      // case 17: // Alarm off by HomeBase button
-      //   this.platform.log.warn('Received StationAlarmTriggeredPushNotification - ALARM OFF - alarm_type: ' + alarm_type);
-      //   this.alarm_triggered = false;
-      //   this.service
-      //     .getCharacteristic(this.platform.Characteristic.SecuritySystemCurrentState)
-      //     .updateValue(this.guardMode); // Back to normal
-      //   break;
+    const homekitCurrentMode = this.convertStatusCodeToHomekit(currentMode);
+    if (homekitCurrentMode) {
+      this.platform.log.info(
+        'Received onStationCurrentModePushNotification - currentMode ' +
+        currentMode +
+          ' homekitCurrentMode ' +
+          homekitCurrentMode,
+      );
+      
+      this.service
+        .getCharacteristic(
+          this.platform.Characteristic.SecuritySystemCurrentState,
+        )
+        .updateValue(homekitCurrentMode);
+    }
+  }
+  
+  private onStationAlarmEventPushNotification(
+    station: Station,
+    alarmEvent: AlarmEvent,
+  ): void {
+    switch (alarmEvent) {
+      case 2: // Alarm triggered by GSENSOR
+      case 3: // Alarm triggered by PIR
+      case 6: // Alarm triggered by DOOR
+      case 7: // Alarm triggered by CAMERA_PIR
+      case 8: // Alarm triggered by MOTION_SENSOR
+      case 9: // Alarm triggered by CAMERA_GSENSOR
+        this.platform.log.warn('Received onStationAlarmEventPushNotification - ALARM TRIGGERED - alarmEvent: ' + alarmEvent);
+        this.alarm_triggered = true;
+        this.service
+          .getCharacteristic(this.platform.Characteristic.SecuritySystemCurrentState)
+          .updateValue(4); // Characteristic.SecuritySystemCurrentState.ALARM_TRIGGERED
+        break;
+      case 15: // Alarm off by Keypad
+      case 16: // Alarm off by Eufy App
+      case 17: // Alarm off by HomeBase button
+        this.platform.log.warn('Received onStationAlarmEventPushNotification - ALARM OFF - alarmEvent: ' + alarmEvent);
+        this.alarm_triggered = false;
+        this.service
+          .getCharacteristic(this.platform.Characteristic.SecuritySystemCurrentState)
+          .updateValue(this.guardMode); // Back to normal
+        break;
       default:
-        this.platform.log.warn('Received StationAlarmTriggeredPushNotification - ALARM UNKNOWN - alarm_type: ' + alarm_type);
+        this.platform.log.warn('Received onStationAlarmEventPushNotification - ALARM UNKNOWN - alarmEvent: ' + alarmEvent);
         this.service
           .getCharacteristic(this.platform.Characteristic.StatusFault)
           .updateValue(this.platform.Characteristic.StatusFault.GENERAL_FAULT);
@@ -161,7 +187,7 @@ export class SecuritySystemPlatformAccessory {
 
     const guardMode = this.eufyStation.getGuardMode();
 
-    this.platform.log.info('Eufy Guard Mode: ', guardMode);
+    this.platform.log.debug('Eufy Guard Mode: ', guardMode);
 
     this.guardMode = (this.alarm_triggered) ? 4 : guardMode.value as number;
 

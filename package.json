@@ -1,7 +1,7 @@
 {
   "displayName": "Homebridge Eufy Security",
   "name": "homebridge-eufy-security",
-  "version": "0.2.5",
+  "version": "0.2.10",
   "description": "Control Eufy Security from homebridge.",
   "license": "Apache-2.0",
   "repository": {
@@ -32,7 +32,7 @@
   ],
   "dependencies": {
     "bunyan": "^1.8.15",
-    "eufy-security-client": "file:eufy-security-client",
+    "eufy-security-client": "^0.9.1",
     "ffmpeg-for-homebridge": "0.0.9",
     "get-port": "^5.1.1",
     "systeminformation": "^5.7.6"
@@ -53,7 +53,7 @@
     "rules": {
       "ban-ts-comment": 0
     }
- },
+  },
   "homepage": "https://github.com/samemory/homebridge-eufy-security#readme",
   "author": "Sam Emory"
 }
