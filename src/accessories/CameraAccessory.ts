@@ -69,12 +69,20 @@ export class CameraAccessory {
       this.onDeviceMotionDetectedPushNotification(device, open),
     );
 
+    this.eufyDevice.on('person detected', (device: Device, open: boolean) =>
+      this.onDeviceMotionDetectedPushNotification(device, open),
+    );
+
+    this.eufyDevice.on('pet detected', (device: Device, open: boolean) =>
+      this.onDeviceMotionDetectedPushNotification(device, open),
+    );
+
     if(this.eufyDevice.hasBattery && this.eufyDevice.hasBattery()) {
       this.platform.log.debug(this.accessory.displayName, 'has a battery, so append batteryService characteristic to him.');
 
       const batteryService =
-      this.accessory.getService(this.platform.Service.BatteryService) ||
-      this.accessory.addService(this.platform.Service.BatteryService);
+      this.accessory.getService(this.platform.Service.Battery) ||
+      this.accessory.addService(this.platform.Service.Battery);
 
       // set the Battery service characteristics
       batteryService.setCharacteristic(
