@@ -130,15 +130,15 @@ export class MotionSensorAccessory {
 
     // set this to a valid value for SecuritySystemCurrentState
     const currentValue = await this.getCurrentBatteryLevel();
-    this.platform.log.debug(this.accessory.displayName, 'Handle Current battery level:  -- ', currentValue);
+    this.platform.log.info(this.accessory.displayName, 'Handle Current battery level:  -- ', currentValue);
 
     callback(null, currentValue);
   }
 
   async getCurrentBatteryLevel() {
-    const batteryLevel = this.eufyDevice.isBatteryLow();
+    const batteryLevel = (this.eufyDevice.isBatteryLow()) ? 100 : 0;
 
-    return batteryLevel.value as number;
+    return batteryLevel as number;
   }
 
   private handleRawPropertyChange(
