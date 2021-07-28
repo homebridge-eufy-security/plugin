@@ -100,15 +100,19 @@ export class CameraAccessory {
         .on('get', this.handleBatteryLevelGet.bind(this));
     }
 
-    // create a new Switch service
-    this.switchEnabledService = 
-      this.accessory.getService('Enabled') ||
-      this.accessory.addService(this.platform.Service.Switch, 'Enabled', 'enabled');
-    
-    // create handlers for required characteristics
-    this.switchEnabledService.getCharacteristic(this.platform.Characteristic.On)
-      .on('get', this.handleOnGet.bind(this))
-      .on('set', this.handleOnSet.bind(this));
+    if(this.eufyDevice.isEnabled && !this.eufyDevice.isEnabled()) {
+
+      // create a new Switch service
+      this.switchEnabledService = 
+        this.accessory.getService('Enabled') ||
+        this.accessory.addService(this.platform.Service.Switch, 'Enabled', 'enabled');
+      
+      // create handlers for required characteristics
+      this.switchEnabledService.getCharacteristic(this.platform.Characteristic.On)
+        .on('get', this.handleOnGet.bind(this))
+        .on('set', this.handleOnSet.bind(this));
+
+    }
 
     if(this.eufyDevice.isIndoorCamera && !this.eufyDevice.isIndoorCamera()) {
 
