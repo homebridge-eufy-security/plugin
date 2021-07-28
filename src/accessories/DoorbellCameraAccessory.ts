@@ -18,6 +18,7 @@ export class DoorbellCameraAccessory {
   private service: Service;
   private doorbellService: Service;
   private MotionService: Service;
+  private motion_triggered: boolean;
 
   constructor(
     private readonly platform: EufySecurityPlatform,
@@ -25,6 +26,9 @@ export class DoorbellCameraAccessory {
     private eufyDevice: DoorbellCamera,
   ) {
     this.platform.log.debug(this.accessory.displayName, 'Constructed Doorbell');
+
+    this.motion_triggered = false;
+
     // set accessory information
     this.accessory
       .getService(this.platform.Service.AccessoryInformation)!
@@ -103,16 +107,16 @@ export class DoorbellCameraAccessory {
       .getCharacteristic(this.platform.Characteristic.MotionDetected)
       .on('get', this.handleMotionDetectedGet.bind(this));
 
-    this.eufyDevice.on('motion detected', (device: Device, open: boolean) =>
-      this.onDeviceMotionDetectedPushNotification(device, open),
+    this.eufyDevice.on('motion detected', (device: Device, motion: boolean) =>
+      this.onDeviceMotionDetectedPushNotification(device, motion),
     );
 
-    this.eufyDevice.on('person detected', (device: Device, open: boolean) =>
-      this.onDeviceMotionDetectedPushNotification(device, open),
+    this.eufyDevice.on('person detected', (device: Device, motion: boolean) =>
+      this.onDeviceMotionDetectedPushNotification(device, motion),
     );
 
-    this.eufyDevice.on('pet detected', (device: Device, open: boolean) =>
-      this.onDeviceMotionDetectedPushNotification(device, open),
+    this.eufyDevice.on('pet detected', (device: Device, motion: boolean) =>
+      this.onDeviceMotionDetectedPushNotification(device, motion),
     );
 
     if(this.eufyDevice.hasBattery && this.eufyDevice.hasBattery()) {
@@ -254,19 +258,21 @@ export class DoorbellCameraAccessory {
     this.platform.log.debug(this.accessory.displayName, 'Triggered GET MotionDetected');
 
     const currentValue = await this.isMotionDetected();
-    this.platform.log.debug(this.accessory.displayName, 'Handle Motion Sensor:  -- ', currentValue);
+    this.platform.log.debug(this.accessory.displayName, 'Handle DoorBell motion:  -- ', currentValue);
 
     callback(null, currentValue as boolean);
   }
 
   private onDeviceMotionDetectedPushNotification(
     device: Device,
-    open: boolean,
+    motion: boolean,
   ): void {
-    this.platform.log.debug(this.accessory.displayName, 'Handle Motion Sensor:  -- ', open);
+    this.platform.log.debug(this.accessory.displayName, 'Handle DoorBell motion:  -- ', motion);
+    this.motion_triggered = (this.motion_triggered) ? false : true;
+    this.platform.log.debug(this.accessory.displayName, 'Handle DoorBell motion:  -- ', this.motion_triggered);
     this.MotionService
       .getCharacteristic(this.platform.Characteristic.MotionDetected)
-      .updateValue(open);
+      .updateValue(this.motion_triggered);
   }
 
 }

@@ -1,5 +1,17 @@
 # Change Log
 
+## 0.2.13 (07-26-2021)
+
+### Changes
+
+-   Motion Sensor Fix, trigger when motion is detected
+
+## 0.2.12 (07-25-2021)
+
+### Changes
+
+-   Improvements to the motion sensor trigger
+
 ## 0.2.11 (07-19-2021)
 
 ### Changes

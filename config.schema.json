@@ -26,6 +26,12 @@
         "title": "Enable Detailed Logging?",
         "type": "boolean",
         "required": false
+      },
+      "enableCamera": {
+        "title": "Camera device seen as Camera",
+        "description": "Camera seen as Motion Sensor by default, enable this setting to transform as Camera",
+        "type": "boolean",
+        "required": false
       }, 
       "pollingIntervalMinutes": {
         "title": "Polling Interval (in minutes) ",
@@ -44,7 +50,6 @@
           {"title": "Custom 2", "enum": [4]},
           {"title": "Custom 3", "enum": [5]},
           {"title": "Geofencing", "enum": [47]},
-          {"title": "Desactivated", "enum": [6]},
           {"title": "Disarmed", "enum": [63]}
         ],
         "required": false
@@ -77,7 +82,6 @@
           {"title": "Custom 2", "enum": [4]},
           {"title": "Custom 3", "enum": [5]},
           {"title": "Geofencing", "enum": [47]},
-          {"title": "Desactivated", "enum": [6]},
           {"title": "Disarmed", "enum": [63]}
         ],
         "required": false
@@ -94,7 +98,6 @@
           {"title": "Custom 2", "enum": [4]},
           {"title": "Custom 3", "enum": [5]},
           {"title": "Geofencing", "enum": [47]},
-          {"title": "Desactivated", "enum": [6]},
           {"title": "Disarmed", "enum": [63]}
         ],
         "required": false
@@ -111,7 +114,6 @@
           {"title": "Custom 2", "enum": [4]},
           {"title": "Custom 3", "enum": [5]},
           {"title": "Geofencing", "enum": [47]},
-          {"title": "Desactivated", "enum": [6]},
           {"title": "Disarmed", "enum": [63]}
         ],
         "required": false
@@ -155,6 +157,7 @@
       "items": [
         "ipAddress",
         "enableDetailedLogging",
+        "enableCamera",
         "pollingIntervalMinutes"
         ]
     }
