@@ -111,7 +111,6 @@
           {"title": "Custom 2", "enum": [4]},
           {"title": "Custom 3", "enum": [5]},
           {"title": "Geofencing", "enum": [47]},
-          {"title": "Desactivated", "enum": [6]},
           {"title": "Disarmed", "enum": [63]}
         ],
         "required": false
