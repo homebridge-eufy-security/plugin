@@ -18,6 +18,7 @@ export class CameraAccessory {
   private service: Service;
   private switchEnabledService: Service;
   private switchMotionService: Service;
+  private motion_triggered: boolean;
 
   constructor(
     private readonly platform: EufySecurityPlatform,
@@ -30,6 +31,9 @@ export class CameraAccessory {
     this.switchMotionService = {} as Service;
 
     this.platform.log.debug(this.accessory.displayName, 'Constructed Camera');
+
+    this.motion_triggered = false;
+
     // set accessory information
     this.accessory
       .getService(this.platform.Service.AccessoryInformation)!
@@ -195,9 +199,12 @@ export class CameraAccessory {
     device: Device,
     motion: boolean,
   ): void {
+    this.platform.log.debug(this.accessory.displayName, 'Handle DoorBell motion:  -- ', motion);
+    this.motion_triggered = (this.motion_triggered) ? false : true;
+    this.platform.log.debug(this.accessory.displayName, 'Handle DoorBell motion:  -- ', this.motion_triggered);
     this.service
       .getCharacteristic(this.platform.Characteristic.MotionDetected)
-      .updateValue(motion);
+      .updateValue(this.motion_triggered);
   }
 
   /**
