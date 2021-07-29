@@ -1,9 +1,10 @@
 name: NPM Publish
 
-on: push
-  branches:
-  - master
-
+on: 
+  push:
+    branches:
+    - master
+    
 jobs:
   publish:
     runs-on: ubuntu-latest
@@ -18,4 +19,3 @@ jobs:
         with:
           token: ${{ secrets.NPM_TOKEN }}
           access: public
-
