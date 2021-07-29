@@ -1,6 +1,8 @@
 name: NPM Publish
 
 on: push
+  branches:
+  - master
 
 jobs:
   publish:
@@ -16,4 +18,4 @@ jobs:
         with:
           token: ${{ secrets.NPM_TOKEN }}
           access: public
-          tag: dev
+
