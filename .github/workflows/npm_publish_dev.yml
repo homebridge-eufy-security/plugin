@@ -6,6 +6,18 @@ on:
     - dev
     
 jobs:
+  version:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - run: git config --global user.name 'lenoxys'
+      - run: git config --global user.email 'github@secugrator.com'
+      - run: npm version patch -m "[DEV] %s"
+      - run: git push
+
   publish:
     runs-on: ubuntu-latest
     steps:
