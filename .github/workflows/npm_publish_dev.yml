@@ -1,9 +1,9 @@
-name: NPM Publish
+name: NPM Publish DEV
 
 on: 
   push:
     branches:
-    - master
+    - dev
     
 jobs:
 
@@ -44,7 +44,7 @@ jobs:
 
       - run: git config --global user.name '[Github Bot]'
       - run: git config --global user.email '<>'
-      - run: npm version minor -m "[RELEASE] %s"
+      - run: npm version patch -m "[DEV] %s"
       - run: git push
 
   publish:
@@ -61,3 +61,4 @@ jobs:
         with:
           token: ${{ secrets.NPM_TOKEN }}
           access: public
+          tag: dev
