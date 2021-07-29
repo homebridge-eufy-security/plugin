@@ -42,8 +42,8 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
 
-      - run: git config --global user.name 'lenoxys'
-      - run: git config --global user.email 'github@secugrator.com'
+      - run: git config --global user.name '[Github Bot]'
+      - run: git config --global user.email '<>'
       - run: npm version patch -m "[DEV] %s"
       - run: git push
 
