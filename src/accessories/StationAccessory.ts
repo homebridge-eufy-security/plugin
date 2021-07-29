@@ -107,7 +107,7 @@ export class StationAccessory {
   ): void {
     const homekitGuardMode = this.convertStatusCodeToHomekit(guardMode);
     if (homekitGuardMode) {
-      this.platform.log.info(
+      this.platform.log.debug(
         'Received onStationGuardModePushNotification - guardmode ' +
           guardMode +
           ' homekitGuardMode ' +
@@ -128,7 +128,7 @@ export class StationAccessory {
   ): void {
     const homekitCurrentMode = this.convertStatusCodeToHomekit(currentMode);
     if (homekitCurrentMode) {
-      this.platform.log.info(
+      this.platform.log.debug(
         'Received onStationCurrentModePushNotification - currentMode ' +
         currentMode +
           ' homekitCurrentMode ' +

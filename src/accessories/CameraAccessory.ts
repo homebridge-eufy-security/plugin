@@ -43,7 +43,7 @@ export class CameraAccessory extends DeviceAccessory {
     this.motion_triggered = false;
 
     if(this.platform.config.enableCamera) {
-      this.platform.log.info(this.accessory.displayName, 'has a camera');
+      this.platform.log.debug(this.accessory.displayName, 'has a camera');
       this.service = this.cameraFunction(accessory);
       this.MotionService = this.motionFunction(accessory);
 
@@ -53,7 +53,7 @@ export class CameraAccessory extends DeviceAccessory {
       accessory.configureController(delegate.controller);
 
     } else {
-      this.platform.log.info(this.accessory.displayName, 'has a motion sensor.');
+      this.platform.log.debug(this.accessory.displayName, 'has a motion sensor.');
       this.service = this.motionFunction(accessory);
     }
 
