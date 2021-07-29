@@ -1,6 +1,7 @@
 import { Service, PlatformAccessory } from 'homebridge';
 
 import { EufySecurityPlatform } from '../platform';
+import { DeviceAccessory } from './Device';
 
 // import { HttpService, LocalLookupService, DeviceClientService, CommandType } from 'eufy-node-client';
 
@@ -13,36 +14,23 @@ import { Keypad, Device, DeviceType, PropertyValue } from 'eufy-security-client'
  * An instance of this class is created for each accessory your platform registers
  * Each accessory may expose multiple services of different service types.
  */
-export class KeypadAccessory {
-  private service: Service;
-  private batteryService: Service;
+export class KeypadAccessory extends DeviceAccessory {
+
+  protected service: Service;
+  protected Keypad: Keypad;
+
+  protected batteryService: Service;
 
   constructor(
-    private readonly platform: EufySecurityPlatform,
-    private readonly accessory: PlatformAccessory,
-    private eufyDevice: Keypad,
+    platform: EufySecurityPlatform,
+    accessory: PlatformAccessory,
+    eufyDevice: Keypad,
   ) {
+    super(platform, accessory, eufyDevice);
+    this.Keypad = eufyDevice;
+
     this.platform.log.debug(this.accessory.displayName, 'Constructed Keypad');
     // set accessory information
-    this.accessory
-      .getService(this.platform.Service.AccessoryInformation)!
-      .setCharacteristic(this.platform.Characteristic.Manufacturer, 'Eufy')
-      .setCharacteristic(
-        this.platform.Characteristic.Model,
-        DeviceType[eufyDevice.getDeviceType()],
-      )
-      .setCharacteristic(
-        this.platform.Characteristic.SerialNumber,
-        eufyDevice.getSerial(),
-      )
-      .setCharacteristic(
-        this.platform.Characteristic.FirmwareRevision,
-        eufyDevice.getSoftwareVersion(),
-      )
-      .setCharacteristic(
-        this.platform.Characteristic.HardwareRevision,
-        eufyDevice.getHardwareVersion(),
-      );
 
     this.service =
       this.accessory.getService(this.platform.Service.Switch) ||
@@ -52,15 +40,6 @@ export class KeypadAccessory {
       this.platform.Characteristic.Name,
       accessory.displayName,
     );
-
-    if(this.platform.config.enableDetailedLogging) {
-      this.eufyDevice.on('raw property changed', (device: Device, type: number, value: string, modified: number) =>
-        this.handleRawPropertyChange(device, type, value, modified),
-      );
-      this.eufyDevice.on('property changed', (device: Device, name: string, value: PropertyValue) =>
-        this.handlePropertyChange(device, name, value),
-      );
-    }
 
     // create handlers for required characteristics
     this.service
@@ -89,35 +68,9 @@ export class KeypadAccessory {
   }
 
   async getIsBatteryLowStatus() {
-    const isBatteryLow = this.eufyDevice.isBatteryLow();
+    const isBatteryLow = this.Keypad.isBatteryLow();
 
     return isBatteryLow.value as number;
-  }
-
-  private handleRawPropertyChange(
-    device: Device, 
-    type: number, 
-    value: string, 
-    modified: number,
-  ): void {
-    this.platform.log.debug(
-      'Handle Keypad Raw Property Changes:  -- ',
-      type, 
-      value, 
-      modified,
-    );
-  }
-
-  private handlePropertyChange(
-    device: Device, 
-    name: string, 
-    value: PropertyValue,
-  ): void {
-    this.platform.log.debug(
-      'Handle Keypad Property Changes:  -- ',
-      name, 
-      value,
-    );
   }
 
   /**
@@ -137,7 +90,7 @@ export class KeypadAccessory {
   }
 
   async getCurrentDeviceState() {
-    const state = this.eufyDevice.getState();
+    const state = this.Keypad.getState();
 
     return state.value as number;
   }

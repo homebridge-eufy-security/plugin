@@ -1,6 +1,7 @@
 import { Service, PlatformAccessory } from 'homebridge';
 
 import { EufySecurityPlatform } from '../platform';
+import { DeviceAccessory } from './Device';
 
 // import { HttpService, LocalLookupService, DeviceClientService, CommandType } from 'eufy-node-client';
 
@@ -13,35 +14,20 @@ import { Device, EntrySensor, DeviceType } from 'eufy-security-client';
  * An instance of this class is created for each accessory your platform registers
  * Each accessory may expose multiple services of different service types.
  */
-export class EntrySensorAccessory {
-  private service: Service;
+export class EntrySensorAccessory extends DeviceAccessory {
+  
+  protected service: Service;
+  protected EntrySensor: EntrySensor;
 
   constructor(
-    private readonly platform: EufySecurityPlatform,
-    private readonly accessory: PlatformAccessory,
-    private eufyDevice: EntrySensor,
+    platform: EufySecurityPlatform,
+    accessory: PlatformAccessory,
+    eufyDevice: EntrySensor,
   ) {
+    super(platform, accessory, eufyDevice);
+    this.EntrySensor = eufyDevice;
+    
     this.platform.log.debug(this.accessory.displayName, 'Constructed Entry Sensor');
-    // set accessory information
-    this.accessory
-      .getService(this.platform.Service.AccessoryInformation)!
-      .setCharacteristic(this.platform.Characteristic.Manufacturer, 'Eufy')
-      .setCharacteristic(
-        this.platform.Characteristic.Model,
-        DeviceType[eufyDevice.getDeviceType()],
-      )
-      .setCharacteristic(
-        this.platform.Characteristic.SerialNumber,
-        eufyDevice.getSerial(),
-      )
-      .setCharacteristic(
-        this.platform.Characteristic.FirmwareRevision,
-        eufyDevice.getSoftwareVersion(),
-      )
-      .setCharacteristic(
-        this.platform.Characteristic.HardwareRevision,
-        eufyDevice.getHardwareVersion(),
-      );
 
     this.service =
       this.accessory.getService(this.platform.Service.ContactSensor) ||
@@ -49,7 +35,7 @@ export class EntrySensorAccessory {
 
     this.service.setCharacteristic(
       this.platform.Characteristic.Name,
-      accessory.displayName,
+      this.accessory.displayName,
     );
 
     // create handlers for required characteristics
@@ -57,13 +43,13 @@ export class EntrySensorAccessory {
       .getCharacteristic(this.platform.Characteristic.ContactSensorState)
       .on('get', this.handleSecuritySystemCurrentStateGet.bind(this));
 
-    this.eufyDevice.on('open', (device: Device, open: boolean) =>
+    this.EntrySensor.on('open', (device: Device, open: boolean) =>
       this.onDeviceOpenPushNotification(device, open),
     );
   }
 
   async getCurrentStatus() {
-    const isSensorOpen = this.eufyDevice.isSensorOpen();
+    const isSensorOpen = this.EntrySensor.isSensorOpen();
     return isSensorOpen.value;
   }
 

@@ -284,7 +284,7 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
         new KeypadAccessory(this, accessory, device as Keypad);
         break;
       default:
-        this.log.info(
+        this.log.warn(
           'This accessory is not compatible with this plugin:',
           accessory.displayName,
           'Type:',

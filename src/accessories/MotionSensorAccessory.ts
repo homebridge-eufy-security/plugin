@@ -1,6 +1,7 @@
 import { Service, PlatformAccessory } from 'homebridge';
 
 import { EufySecurityPlatform } from '../platform';
+import { DeviceAccessory } from './Device';
 
 // import { HttpService, LocalLookupService, DeviceClientService, CommandType } from 'eufy-node-client';
 
@@ -13,39 +14,25 @@ import { Device, MotionSensor, PropertyValue, DeviceType } from 'eufy-security-c
  * An instance of this class is created for each accessory your platform registers
  * Each accessory may expose multiple services of different service types.
  */
-export class MotionSensorAccessory {
-  private service: Service;
-  private motion_triggered: boolean;
+export class MotionSensorAccessory extends DeviceAccessory {
+
+  protected service: Service;
+  protected MotionSensor: MotionSensor;
+
+  protected motion_triggered: boolean;
 
   constructor(
-    private readonly platform: EufySecurityPlatform,
-    private readonly accessory: PlatformAccessory,
-    private eufyDevice: MotionSensor,
+    platform: EufySecurityPlatform,
+    accessory: PlatformAccessory,
+    eufyDevice: MotionSensor,
   ) {
+    super(platform, accessory, eufyDevice);
+
     this.platform.log.debug(this.accessory.displayName, 'Constructed Motion Sensor');
 
+    this.MotionSensor = eufyDevice;
+    
     this.motion_triggered = false;
-
-    // set accessory information
-    this.accessory
-      .getService(this.platform.Service.AccessoryInformation)!
-      .setCharacteristic(this.platform.Characteristic.Manufacturer, 'Eufy')
-      .setCharacteristic(
-        this.platform.Characteristic.Model,
-        DeviceType[eufyDevice.getDeviceType()],
-      )
-      .setCharacteristic(
-        this.platform.Characteristic.SerialNumber,
-        eufyDevice.getSerial(),
-      )
-      .setCharacteristic(
-        this.platform.Characteristic.FirmwareRevision,
-        eufyDevice.getSoftwareVersion(),
-      )
-      .setCharacteristic(
-        this.platform.Characteristic.HardwareRevision,
-        eufyDevice.getHardwareVersion(),
-      );
 
     this.service =
       this.accessory.getService(this.platform.Service.MotionSensor) ||
@@ -65,7 +52,7 @@ export class MotionSensorAccessory {
       this.onDeviceMotionDetectedPushNotification(device, motion),
     );
 
-    if(this.eufyDevice.isBatteryLow && this.eufyDevice.isBatteryLow()) {
+    if(this.MotionSensor.isBatteryLow && this.MotionSensor.isBatteryLow()) {
       this.platform.log.debug(this.accessory.displayName, 'has a battery, so append batteryService characteristic to him.');
 
       const batteryService =
@@ -83,19 +70,10 @@ export class MotionSensorAccessory {
         .getCharacteristic(this.platform.Characteristic.BatteryLevel)
         .on('get', this.handleBatteryLevelGet.bind(this));
     }
-
-    if(this.platform.config.enableDetailedLogging) {
-      this.eufyDevice.on('raw property changed', (device: Device, type: number, value: string, modified: number) =>
-        this.handleRawPropertyChange(device, type, value, modified),
-      );
-      this.eufyDevice.on('property changed', (device: Device, name: string, value: PropertyValue) =>
-        this.handlePropertyChange(device, name, value),
-      );
-    }
   }
 
   async isMotionDetected() {
-    const isMotionDetected = this.eufyDevice.isMotionDetected();
+    const isMotionDetected = this.MotionSensor.isMotionDetected();
     return isMotionDetected as boolean;
   }
 
@@ -136,34 +114,8 @@ export class MotionSensorAccessory {
   }
 
   async getCurrentBatteryLevel() {
-    const batteryLevel = (this.eufyDevice.isBatteryLow()) ? 100 : 0;
+    const batteryLevel = (this.MotionSensor.isBatteryLow()) ? 100 : 0;
 
     return batteryLevel as number;
-  }
-
-  private handleRawPropertyChange(
-    device: Device, 
-    type: number, 
-    value: string, 
-    modified: number,
-  ): void {
-    this.platform.log.info(
-      'Handle MotionSensor Raw Property Changes:  -- ',
-      type, 
-      value, 
-      modified,
-    );
-  }
-
-  private handlePropertyChange(
-    device: Device, 
-    name: string, 
-    value: PropertyValue,
-  ): void {
-    this.platform.log.info(
-      'Handle MotionSensor Property Changes:  -- ',
-      name, 
-      value,
-    );
   }
 }
