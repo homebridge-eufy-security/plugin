@@ -1,6 +1,7 @@
 import { Service, PlatformAccessory } from 'homebridge';
 
 import { EufySecurityPlatform } from '../platform';
+import { DeviceAccessory } from './Device';
 
 // import { HttpService, LocalLookupService, DeviceClientService, CommandType } from 'eufy-node-client';
 
@@ -14,18 +15,23 @@ import { EufyCameraStreamingDelegate } from './streamingDelegate';
  * An instance of this class is created for each accessory your platform registers
  * Each accessory may expose multiple services of different service types.
  */
-export class CameraAccessory {
-  private service: Service;
+export class CameraAccessory extends DeviceAccessory {
+
+  protected service: Service;
+  protected Camera: Camera;
+
   private MotionService: Service;
   private switchEnabledService: Service;
   private switchMotionService: Service;
   private motion_triggered: boolean;
 
   constructor(
-    private readonly platform: EufySecurityPlatform,
-    private readonly accessory: PlatformAccessory,
-    private eufyDevice: Camera,
+    platform: EufySecurityPlatform,
+    accessory: PlatformAccessory,
+    eufyDevice: Camera,
   ) {
+    super(platform, accessory, eufyDevice);
+    this.Camera = eufyDevice;
 
     this.service = {} as Service;
     this.MotionService = {} as Service;
@@ -36,29 +42,6 @@ export class CameraAccessory {
 
     this.motion_triggered = false;
 
-    // set accessory information
-    this.accessory
-      .getService(this.platform.Service.AccessoryInformation)!
-      .setCharacteristic(this.platform.Characteristic.Manufacturer, 'Eufy')
-      .setCharacteristic(
-        this.platform.Characteristic.Model,
-        DeviceType[eufyDevice.getDeviceType()],
-      )
-      .setCharacteristic(
-        this.platform.Characteristic.SerialNumber,
-        eufyDevice.getSerial(),
-      )
-      .setCharacteristic(
-        this.platform.Characteristic.FirmwareRevision,
-        eufyDevice.getSoftwareVersion(),
-      )
-      .setCharacteristic(
-        this.platform.Characteristic.HardwareRevision,
-        eufyDevice.getHardwareVersion(),
-      );
-
-
-
     if(this.platform.config.enableCamera) {
       this.platform.log.info(this.accessory.displayName, 'has a camera');
       this.service = this.cameraFunction(accessory);
@@ -66,7 +49,7 @@ export class CameraAccessory {
 
       //video stream (work in progress)
     
-      const delegate = new EufyCameraStreamingDelegate(this.platform, this.eufyDevice);
+      const delegate = new EufyCameraStreamingDelegate(this.platform, this.Camera);
       accessory.configureController(delegate.controller);
 
     } else {
@@ -74,7 +57,7 @@ export class CameraAccessory {
       this.service = this.motionFunction(accessory);
     }
 
-    if(this.eufyDevice.hasBattery && this.eufyDevice.hasBattery()) {
+    if(this.Camera.hasBattery && this.Camera.hasBattery()) {
       this.platform.log.debug(this.accessory.displayName, 'has a battery, so append batteryService characteristic to him.');
 
       const batteryService =
@@ -93,7 +76,7 @@ export class CameraAccessory {
         .on('get', this.handleBatteryLevelGet.bind(this));
     }
 
-    if(this.eufyDevice.isEnabled && !this.eufyDevice.isEnabled()) {
+    if(this.Camera.isEnabled && !this.Camera.isEnabled()) {
 
       // create a new Switch service
       this.switchEnabledService = 
@@ -107,7 +90,7 @@ export class CameraAccessory {
 
     }
 
-    if(this.eufyDevice.isIndoorCamera && !this.eufyDevice.isIndoorCamera()) {
+    if(this.Camera.isIndoorCamera && !this.Camera.isIndoorCamera()) {
 
       this.switchMotionService =
         this.accessory.getService('Motion') ||
@@ -118,15 +101,6 @@ export class CameraAccessory {
         .on('get', this.handleMotionOnGet.bind(this))
         .on('set', this.handleMotionOnSet.bind(this));
       
-    }
-
-    if(this.platform.config.enableDetailedLogging) {
-      this.eufyDevice.on('raw property changed', (device: Device, type: number, value: string, modified: number) =>
-        this.handleRawPropertyChange(device, type, value, modified),
-      );
-      this.eufyDevice.on('property changed', (device: Device, name: string, value: PropertyValue) =>
-        this.handlePropertyChange(device, name, value),
-      );
     }
   }
 
@@ -211,46 +185,19 @@ export class CameraAccessory {
       .getCharacteristic(this.platform.Characteristic.MotionDetected)
       .on('get', this.handleMotionDetectedGet.bind(this));
 
-    this.eufyDevice.on('motion detected', (device: Device, motion: boolean) =>
+    this.Camera.on('motion detected', (device: Device, motion: boolean) =>
       this.onDeviceMotionDetectedPushNotification(device, motion),
     );
 
-    this.eufyDevice.on('person detected', (device: Device, motion: boolean) =>
+    this.Camera.on('person detected', (device: Device, motion: boolean) =>
       this.onDeviceMotionDetectedPushNotification(device, motion),
     );
 
-    this.eufyDevice.on('pet detected', (device: Device, motion: boolean) =>
+    this.Camera.on('pet detected', (device: Device, motion: boolean) =>
       this.onDeviceMotionDetectedPushNotification(device, motion),
     );
 
     return service as Service;
-  }
-
-
-  private handleRawPropertyChange(
-    device: Device, 
-    type: number, 
-    value: string, 
-    modified: number,
-  ): void {
-    this.platform.log.info(
-      'Handle Camera Raw Property Changes:  -- ',
-      type, 
-      value, 
-      modified,
-    );
-  }
-
-  private handlePropertyChange(
-    device: Device, 
-    name: string, 
-    value: PropertyValue,
-  ): void {
-    this.platform.log.info(
-      'Handle Camera Property Changes:  -- ',
-      name, 
-      value,
-    );
   }
 
   /**
@@ -267,13 +214,13 @@ export class CameraAccessory {
   }
 
   async getCurrentBatteryLevel() {
-    const batteryLevel = this.eufyDevice.getBatteryValue();
+    const batteryLevel = this.Camera.getBatteryValue();
 
     return batteryLevel.value as number;
   }
 
   async isMotionDetected() {
-    const isMotionDetected = this.eufyDevice.isMotionDetected();
+    const isMotionDetected = this.Camera.isMotionDetected();
     return isMotionDetected as boolean;
   }
 
@@ -307,7 +254,7 @@ export class CameraAccessory {
   async handleOnGet(callback) {
     this.platform.log.debug(this.accessory.displayName, 'Triggered GET On');
     
-    const currentValue = this.eufyDevice.isEnabled().value;
+    const currentValue = this.Camera.isEnabled().value;
     
     this.platform.log.debug(this.accessory.displayName, 'Handle Switch:  -- ', currentValue);
 
@@ -320,9 +267,9 @@ export class CameraAccessory {
   async handleOnSet(value, callback) {
     this.platform.log.debug(this.accessory.displayName, 'Triggered SET On: ' + value);
 
-    const station = this.platform.getStationById(this.eufyDevice.getStationSerial());
+    const station = this.platform.getStationById(this.Camera.getStationSerial());
         
-    station.enableDevice(this.eufyDevice, value);
+    station.enableDevice(this.Camera, value);
 
     callback(null);
   }
@@ -333,7 +280,7 @@ export class CameraAccessory {
   async handleMotionOnGet(callback) {
     this.platform.log.debug(this.accessory.displayName, 'Triggered GET On');
 
-    const currentValue = await this.eufyDevice.isMotionDetectionEnabled().value;
+    const currentValue = await this.Camera.isMotionDetectionEnabled().value;
       
     this.platform.log.debug(this.accessory.displayName, 'Handle Switch:  -- ', currentValue);
   
@@ -346,9 +293,9 @@ export class CameraAccessory {
   async handleMotionOnSet(value, callback) {
     this.platform.log.debug(this.accessory.displayName, 'Triggered SET On: ' + value);
   
-    const station = this.platform.getStationById(this.eufyDevice.getStationSerial());
+    const station = this.platform.getStationById(this.Camera.getStationSerial());
           
-    station.setMotionDetection(this.eufyDevice, value);
+    station.setMotionDetection(this.Camera, value);
 
     callback(null);
   }

@@ -1,6 +1,7 @@
 import { Service, PlatformAccessory } from 'homebridge';
 
 import { EufySecurityPlatform } from '../platform';
+import { DeviceAccessory } from './Device';
 
 // import { HttpService, LocalLookupService, DeviceClientService, CommandType } from 'eufy-node-client';
 
@@ -14,41 +15,26 @@ import { EufyCameraStreamingDelegate } from './streamingDelegate';
  * An instance of this class is created for each accessory your platform registers
  * Each accessory may expose multiple services of different service types.
  */
-export class DoorbellCameraAccessory {
-  private service: Service;
+export class DoorbellCameraAccessory extends DeviceAccessory {
+
+  protected service: Service;
+  protected DoorbellCamera: DoorbellCamera;
+
   private doorbellService: Service;
   private MotionService: Service;
   private motion_triggered: boolean;
 
   constructor(
-    private readonly platform: EufySecurityPlatform,
-    private readonly accessory: PlatformAccessory,
-    private eufyDevice: DoorbellCamera,
+    platform: EufySecurityPlatform,
+    accessory: PlatformAccessory,
+    eufyDevice: DoorbellCamera,
   ) {
+    super(platform, accessory, eufyDevice);
+    this.DoorbellCamera = eufyDevice;
+
     this.platform.log.debug(this.accessory.displayName, 'Constructed Doorbell');
 
     this.motion_triggered = false;
-
-    // set accessory information
-    this.accessory
-      .getService(this.platform.Service.AccessoryInformation)!
-      .setCharacteristic(this.platform.Characteristic.Manufacturer, 'Eufy')
-      .setCharacteristic(
-        this.platform.Characteristic.Model,
-        DeviceType[eufyDevice.getDeviceType()],
-      )
-      .setCharacteristic(
-        this.platform.Characteristic.SerialNumber,
-        eufyDevice.getSerial(),
-      )
-      .setCharacteristic(
-        this.platform.Characteristic.FirmwareRevision,
-        eufyDevice.getSoftwareVersion(),
-      )
-      .setCharacteristic(
-        this.platform.Characteristic.HardwareRevision,
-        eufyDevice.getHardwareVersion(),
-      );
 
     this.service =
       this.accessory.getService(this.platform.Service.CameraOperatingMode) ||
@@ -88,7 +74,7 @@ export class DoorbellCameraAccessory {
       .getCharacteristic(this.platform.Characteristic.ProgrammableSwitchEvent)
       .on('get', this.handleProgrammableSwitchEventGet.bind(this));
   
-    this.eufyDevice.on('rings', (device: Device, state: boolean) =>
+    this.DoorbellCamera.on('rings', (device: Device, state: boolean) =>
       this.onDeviceRingsPushNotification(),
     );
 
@@ -107,19 +93,19 @@ export class DoorbellCameraAccessory {
       .getCharacteristic(this.platform.Characteristic.MotionDetected)
       .on('get', this.handleMotionDetectedGet.bind(this));
 
-    this.eufyDevice.on('motion detected', (device: Device, motion: boolean) =>
+    this.DoorbellCamera.on('motion detected', (device: Device, motion: boolean) =>
       this.onDeviceMotionDetectedPushNotification(device, motion),
     );
 
-    this.eufyDevice.on('person detected', (device: Device, motion: boolean) =>
+    this.DoorbellCamera.on('person detected', (device: Device, motion: boolean) =>
       this.onDeviceMotionDetectedPushNotification(device, motion),
     );
 
-    this.eufyDevice.on('pet detected', (device: Device, motion: boolean) =>
+    this.DoorbellCamera.on('pet detected', (device: Device, motion: boolean) =>
       this.onDeviceMotionDetectedPushNotification(device, motion),
     );
 
-    if(this.eufyDevice.hasBattery && this.eufyDevice.hasBattery()) {
+    if(this.DoorbellCamera.hasBattery && this.DoorbellCamera.hasBattery()) {
       this.platform.log.debug(this.accessory.displayName, 'has a battery, so append batteryService characteristic to him.');
 
       const batteryService =
@@ -142,44 +128,9 @@ export class DoorbellCameraAccessory {
 
     //video stream (work in progress)
   
-    const delegate = new EufyCameraStreamingDelegate(this.platform, this.eufyDevice);
+    const delegate = new EufyCameraStreamingDelegate(this.platform, this.DoorbellCamera);
     accessory.configureController(delegate.controller);
 
-    if(this.platform.config.enableDetailedLogging) {
-      this.eufyDevice.on('raw property changed', (device: Device, type: number, value: string, modified: number) =>
-        this.handleRawPropertyChange(device, type, value, modified),
-      );
-      this.eufyDevice.on('property changed', (device: Device, name: string, value: PropertyValue) =>
-        this.handlePropertyChange(device, name, value),
-      );
-    }
-
-  }
-
-  private handleRawPropertyChange(
-    device: Device, 
-    type: number, 
-    value: string, 
-    modified: number,
-  ): void {
-    this.platform.log.info(
-      'Handle DoorBell Raw Property Changes:  -- ',
-      type, 
-      value, 
-      modified,
-    );
-  }
-
-  private handlePropertyChange(
-    device: Device, 
-    name: string, 
-    value: PropertyValue,
-  ): void {
-    this.platform.log.info(
-      'Handle DoorBell Property Changes:  -- ',
-      name, 
-      value,
-    );
   }
 
   handleEventSnapshotsActiveGet(callback) {
@@ -231,7 +182,7 @@ export class DoorbellCameraAccessory {
   }
 
   async getCurrentBatteryLevel() {
-    const batteryLevel = this.eufyDevice.getBatteryValue();
+    const batteryLevel = this.DoorbellCamera.getBatteryValue();
     return batteryLevel.value as number;
   }
 
@@ -247,7 +198,7 @@ export class DoorbellCameraAccessory {
   }
 
   async isMotionDetected() {
-    const isMotionDetected = this.eufyDevice.isMotionDetected();
+    const isMotionDetected = this.DoorbellCamera.isMotionDetected();
     return isMotionDetected as boolean;
   }
 
