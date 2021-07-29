@@ -1,13 +1,19 @@
-name: run npm-version pipeline
-on: push
+name: Version Increment
+
+on:
+  push:
+    branches:
+      - dev
+
 jobs:
-  build:
+  version:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@master
-        
-      - name: 'change version'
-        uses: reedyuk/npm-version@1.1.1
+      - uses: actions/checkout@v2
         with:
-          git-tag-version: 'true'
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - run: git config --global user.name 'lenoxys'
+      - run: git config --global user.email 'github@secugrator.com'
+      - run: npm version patch -m "[DEV] %s"
+      - run: git push
