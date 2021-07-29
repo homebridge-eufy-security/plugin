@@ -94,7 +94,7 @@ export class MotionSensorAccessory extends DeviceAccessory {
     motion: boolean,
   ): void {
     this.motion_triggered = (this.motion_triggered) ? false : true;
-    this.platform.log.info(this.accessory.displayName, 'Handle Motion Sensor:  -- ', this.motion_triggered);
+    this.platform.log.debug(this.accessory.displayName, 'Handle Motion Sensor:  -- ', this.motion_triggered);
     this.service
       .getCharacteristic(this.platform.Characteristic.MotionDetected)
       .updateValue(this.motion_triggered);
@@ -108,7 +108,7 @@ export class MotionSensorAccessory extends DeviceAccessory {
 
     // set this to a valid value for SecuritySystemCurrentState
     const currentValue = await this.getCurrentBatteryLevel();
-    this.platform.log.info(this.accessory.displayName, 'Handle Current battery level:  -- ', currentValue);
+    this.platform.log.debug(this.accessory.displayName, 'Handle Current battery level:  -- ', currentValue);
 
     callback(null, currentValue);
   }

@@ -102,7 +102,7 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
    * It should be used to setup event handlers for characteristics and update respective values.
    */
   configureAccessory(accessory: PlatformAccessory) {
-    this.log.info('Loading accessory from cache:', accessory.displayName);
+    this.log.debug('Loading accessory from cache:', accessory.displayName);
 
     // add the restored accessory to the accessories cache so we can track if it has already been registered
     this.accessories.push(accessory);
@@ -183,7 +183,7 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
               this.config,
             )
           ) {
-            this.log.info(
+            this.log.debug(
               'Restoring existing accessory from cache:',
               existingAccessory.displayName,
             );
@@ -197,7 +197,7 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
           this.api.unregisterPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [
             existingAccessory,
           ]);
-          this.log.info(
+          this.log.debug(
             'Removing existing accessory from cache:',
             existingAccessory.displayName,
           );
