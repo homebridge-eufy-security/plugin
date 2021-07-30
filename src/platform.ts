@@ -81,10 +81,7 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
     } as EufySecurityConfig;
 
     if (this.config.enableDetailedLogging >= 1) {
-      this.log = bunyan.createLogger({
-        name: 'eufyLog',
-        formatter: "pretty",
-      });
+      this.log = bunyan.createLogger({name: 'eufyLog'});
       this.log.level('debug');
       this.log.info('Eufy Security Plugin: enableDetailedLogging on');
     } else {
