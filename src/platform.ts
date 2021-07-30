@@ -88,7 +88,7 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
       this.log = hblog;
     }
 
-    this.eufyClient = (this.config.enableDetailedLogging == 2)
+    this.eufyClient = (this.config.enableDetailedLogging === 2)
       ? new EufySecurity(this.eufyConfig, this.log)
       : new EufySecurity(this.eufyConfig);
 
