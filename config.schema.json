@@ -24,8 +24,15 @@
       },
       "enableDetailedLogging": {
         "title": "Enable Detailed Logging?",
-        "type": "boolean",
-        "required": false
+        "type": "number",
+        "default": 0,
+        "oneOf": [
+          {"title": "Normal", "enum": [0]},
+          {"title": "Debug", "enum": [1]},
+          {"title": "Insane", "enum": [2]}
+        ],
+        "description": "Becarefull Debug and Insane may contain credential and personnal information which could be use to login into your Eufy Account",
+        "required": true
       },
       "enableCamera": {
         "title": "Camera device seen as Camera",
@@ -128,10 +135,6 @@
         "username",
         {
           "key": "password",
-          "type": "password"
-        },
-        {
-          "key": "verifycode",
           "type": "password"
         }
       ]

@@ -64,7 +64,7 @@ import { FfmpegProcess } from './ffmpeg';
   
 export class EufyCameraStreamingDelegate implements CameraStreamingDelegate {
     private readonly hap: HAP;
-    private readonly log: Logger;
+    private readonly log;
     private readonly cameraName: string;
     // private readonly videoConfig: VideoConfig;
     private readonly videoProcessor: string;
