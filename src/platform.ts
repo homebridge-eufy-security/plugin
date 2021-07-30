@@ -19,7 +19,7 @@ import { CameraAccessory } from './accessories/CameraAccessory';
 import { DoorbellCameraAccessory } from './accessories/DoorbellCameraAccessory';
 import { KeypadAccessory } from './accessories/KeypadAccessory';
 
- 
+
 import {
   EufySecurity,
   EufySecurityConfig,
@@ -36,7 +36,7 @@ import {
 } from 'eufy-security-client';
 // import { throws } from 'assert';
 import bunyan from 'bunyan';
-const eufyLog = bunyan.createLogger({ name: 'eufyLog' });
+
 
 interface DeviceIdentifier {
   uniqueId: string;
@@ -57,11 +57,13 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
 
   // this is used to track restored cached accessories
   public readonly accessories: PlatformAccessory[] = [];
-  public config: EufySecurityPlatformConfig;
+  public readonly config: EufySecurityPlatformConfig;
   private eufyConfig: EufySecurityConfig;
 
+  public log;
+
   constructor(
-    public readonly log: Logger,
+    public readonly hblog: Logger,
     config: PlatformConfig,
     public readonly api: API,
   ) {
@@ -78,13 +80,21 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
       eventDurationSeconds: 10,
     } as EufySecurityConfig;
 
-    this.log.debug('Finished initializing platform:', this.config.name);
-    this.log.debug(
-      'enableDetailedLogging: ' + this.config.enableDetailedLogging,
-    );
-    this.eufyClient = !this.config.enableDetailedLogging
-      ? new EufySecurity(this.eufyConfig)
-      : new EufySecurity(this.eufyConfig, eufyLog);
+    if (this.config.enableDetailedLogging >= 1) {
+      this.log = bunyan.createLogger({name: 'eufyLog'});
+      this.log.level('debug');
+      this.log.info('Eufy Security Plugin: enableDetailedLogging on');
+    } else {
+      this.log = hblog;
+    }
+
+    this.eufyClient = (this.config.enableDetailedLogging == 2)
+      ? new EufySecurity(this.eufyConfig, this.log)
+      : new EufySecurity(this.eufyConfig);
+
+    if (this.config.enableDetailedLogging >= 1) {
+      this.log.level('debug');
+    }
 
     // When this event is fired it means Homebridge has restored all cached accessories from disk.
     // Dynamic Platform plugins should only register new accessories after this event was fired,
@@ -95,6 +105,8 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
       // run the method to discover / register your devices as accessories
       await this.discoverDevices();
     });
+
+    this.log.info('Finished initializing Eufy Security Platform');
   }
 
   /**
@@ -110,8 +122,7 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
 
   async discoverDevices() {
     this.log.debug('discoveringDevices');
-    this.log.debug(this.eufyConfig.username);
-    this.log.debug(this.eufyConfig.password);
+    
     await this.eufyClient
       .connect()
       .catch((e) => this.log.error('Error authenticating Eufy : ', e));
@@ -120,15 +131,38 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
     await this.refreshData(this.eufyClient);
 
     const eufyHubs = await this.eufyClient.getStations();
-    const eufyDevices = await this.eufyClient.getDevices();
-
-    this.log.debug('Found ' + eufyDevices.length + ' devices.');
     this.log.debug('Found ' + eufyHubs.length + ' hubs.');
 
     const devices: Array<DeviceContainer> = [];
 
+    for (const hub of eufyHubs) {
+      this.log.debug(
+        'Found hub',
+        hub.getSerial(),
+        hub.getName(),
+        hub.getDeviceType(),
+      );
+      const deviceContainer: DeviceContainer = {
+        deviceIdentifier: {
+          uniqueId: hub.getSerial(),
+          displayName: hub.getName(),
+          type: hub.getDeviceType(),
+        } as DeviceIdentifier,
+        eufyDevice: hub,
+      };
+      devices.push(deviceContainer);
+    }
+
+    const eufyDevices = await this.eufyClient.getDevices();
+    this.log.debug('Found ' + eufyDevices.length + ' devices.');
+
     for (const device of eufyDevices) {
-      this.log.debug('Found device ' + device.getName());
+      this.log.debug(
+        'Found device',
+        device.getSerial(),
+        device.getName(),
+        device.getDeviceType(),
+      );
       const deviceContainer: DeviceContainer = {
         deviceIdentifier: {
           uniqueId: device.getSerial(),
@@ -140,18 +174,6 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
       devices.push(deviceContainer);
     }
 
-    for (const hub of eufyHubs) {
-      this.log.debug('Found hub ' + hub.getName());
-      const deviceContainer: DeviceContainer = {
-        deviceIdentifier: {
-          uniqueId: hub.getSerial(),
-          displayName: hub.getName(),
-          type: hub.getDeviceType(),
-        } as DeviceIdentifier,
-        eufyDevice: hub,
-      };
-      devices.push(deviceContainer);
-    }
 
     // loop over the discovered devices and register each one if it has not already been registered
     for (const device of devices) {
@@ -180,7 +202,6 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
               existingAccessory,
               device.deviceIdentifier.type,
               device.eufyDevice,
-              this.config,
             )
           ) {
             this.log.debug(
@@ -222,7 +243,6 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
             accessory,
             device.deviceIdentifier.type,
             device.eufyDevice,
-            this.config,
           )
         ) {
           this.log.error(
@@ -243,16 +263,10 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
     accessory: PlatformAccessory,
     type: number,
     device,
-    config: EufySecurityPlatformConfig,
   ) {
     switch (type) {
       case DeviceType.STATION:
-        new StationAccessory(
-          this,
-          accessory,
-          device as Station,
-          config,
-        );
+        new StationAccessory(this, accessory, device as Station);
         break;
       case DeviceType.MOTION_SENSOR:
         new MotionSensorAccessory(this, accessory, device as MotionSensor);
@@ -316,7 +330,7 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
     }
   }
 
-  public getStationById(id: string){
+  public getStationById(id: string) {
     return this.eufyClient.getStation(id);
   }
 }

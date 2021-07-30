@@ -21,7 +21,6 @@ export class StationAccessory {
     private readonly platform: EufySecurityPlatform,
     private readonly accessory: PlatformAccessory,
     private eufyStation: Station,
-    private config: EufySecurityPlatformConfig,
   ) {
     this.platform.log.debug(this.accessory.displayName, 'Constructed Station');
     // set accessory information
@@ -91,7 +90,7 @@ export class StationAccessory {
         ),
     );
 
-    if(this.config.enableDetailedLogging) {
+    if(this.platform.config.enableDetailedLogging) {
       this.eufyStation.on('raw property changed', (device: Station, type: number, value: string, modified: number) =>
         this.handleRawPropertyChange(device, type, value, modified),
       );
@@ -196,11 +195,11 @@ export class StationAccessory {
 
   convertMode(eufyMode: number) {
     const modes = [
-      { hk: 0, eufy: this.config.hkHome ?? 1 },
-      { hk: 1, eufy: this.config.hkAway ?? 0 },
-      { hk: 2, eufy: this.config.hkNight ?? 3 },
-      { hk: 3, eufy: this.config.hkOff ?? 63 },
-      { hk: 3, eufy: this.config.hkDisarmed ?? 6 },
+      { hk: 0, eufy: this.platform.config.hkHome ?? 1 },
+      { hk: 1, eufy: this.platform.config.hkAway ?? 0 },
+      { hk: 2, eufy: this.platform.config.hkNight ?? 3 },
+      { hk: 3, eufy: this.platform.config.hkOff ?? 63 },
+      { hk: 3, eufy: this.platform.config.hkDisarmed ?? 6 },
     ];
     const modeObj = modes.filter((m) => {
       return m.eufy === eufyMode;
@@ -321,16 +320,16 @@ export class StationAccessory {
     let mode = -1;
     switch (value) {
       case 0: //homekit HOME
-        mode = this.config.hkHome ?? 1; //eufy home
+        mode = this.platform.config.hkHome ?? 1; //eufy home
         break;
       case 1: //homekit AWAY
-        mode = this.config.hkAway ?? 0;
+        mode = this.platform.config.hkAway ?? 0;
         break;
       case 2: //homekit NIGHT
-        mode = this.config.hkNight ?? 3;
+        mode = this.platform.config.hkNight ?? 3;
         break;
       case 3: //homekit OFF
-        mode = this.config.hkOff ?? 63;
+        mode = this.platform.config.hkOff ?? 63;
         break;
       default:
         break;
