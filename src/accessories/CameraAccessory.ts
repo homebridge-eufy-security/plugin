@@ -90,7 +90,7 @@ export class CameraAccessory extends DeviceAccessory {
 
     }
 
-    if(this.Camera.isIndoorCamera && !this.Camera.isIndoorCamera()) {
+    if(this.Camera.isMotionDetectionEnabled && !this.Camera.isMotionDetectionEnabled()) {
 
       this.switchMotionService =
         this.accessory.getService('Motion') ||
