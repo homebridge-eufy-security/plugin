@@ -1,7 +1,8 @@
 name: DEV NPM Version
 
-on: 
-  push:
+on:
+  workflow_run:
+    workflows: ["DEV Build Push"]
     branches:
     - dev
     paths-ignore:

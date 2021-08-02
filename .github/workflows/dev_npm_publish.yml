@@ -1,9 +1,8 @@
 name: DEV NPM Publish
 
-on: 
-  push:
-    branches:
-    - dev
+on:
+  workflow_run:
+    workflows: ["DEV NPM Version"]
     paths-ignore:
       - '.github/**'
     
