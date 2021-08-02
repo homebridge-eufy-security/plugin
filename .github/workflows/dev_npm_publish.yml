@@ -3,8 +3,6 @@ name: DEV NPM Publish
 on:
   workflow_run:
     workflows: ["DEV NPM Version"]
-    paths-ignore:
-      - '.github/**'
     
 jobs:
 

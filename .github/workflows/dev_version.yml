@@ -3,10 +3,6 @@ name: DEV NPM Version
 on:
   workflow_run:
     workflows: ["DEV Build Push"]
-    branches:
-    - dev
-    paths-ignore:
-      - '.github/**'
     
 jobs:
 
