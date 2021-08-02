@@ -1,4 +1,4 @@
-name: NPM Publish DEV
+name: DEV NPM Publish
 
 on: 
   push:
