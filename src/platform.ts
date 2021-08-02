@@ -294,7 +294,7 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
         break;
       default:
         this.log.warn(
-          'This accessory is not compatible with this plugin:',
+          'This accessory is not compatible with Eufy Security plugin:',
           accessory.displayName,
           'Type:',
           type,
