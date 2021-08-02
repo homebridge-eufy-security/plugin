@@ -1,11 +1,10 @@
-name: DEV NPM Publish
+name: DEV_NPM_Publish
 
 on:
   workflow_run:
-    workflows: ["DEV NPM Version"]
+    workflows: ["DEV_NPM_Version"]
     branches: [dev]
-    types: 
-      - completed
+    types: [completed]
     
 jobs:
 
