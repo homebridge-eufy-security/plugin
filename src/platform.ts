@@ -140,7 +140,8 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
         'Found hub',
         hub.getSerial(),
         hub.getName(),
-        hub.getDeviceType(),
+        DeviceType[hub.getDeviceType()],
+        hub.getLANIPAddress(),
       );
       const deviceContainer: DeviceContainer = {
         deviceIdentifier: {
@@ -161,7 +162,7 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
         'Found device',
         device.getSerial(),
         device.getName(),
-        device.getDeviceType(),
+        DeviceType[device.getDeviceType()],
       );
       const deviceContainer: DeviceContainer = {
         deviceIdentifier: {
