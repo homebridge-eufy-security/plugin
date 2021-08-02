@@ -92,10 +92,6 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
       ? new EufySecurity(this.eufyConfig, this.log)
       : new EufySecurity(this.eufyConfig);
 
-    if (this.config.enableDetailedLogging >= 1) {
-      this.log.level('debug');
-    }
-
     // When this event is fired it means Homebridge has restored all cached accessories from disk.
     // Dynamic Platform plugins should only register new accessories after this event was fired,
     // in order to ensure they weren't added to homebridge already. This event can also be used
