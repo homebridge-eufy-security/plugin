@@ -17,11 +17,6 @@
         "required": true,
         "discription": "Eufy password"
       },
-      "ipAddress": {
-        "title": "Local IP Address (Homebase)",
-        "type": "string",
-        "required": false
-      },
       "enableDetailedLogging": {
         "title": "Enable Detailed Logging?",
         "type": "number",
@@ -158,7 +153,6 @@
       "expandable": true,
       "expanded": false,
       "items": [
-        "ipAddress",
         "enableDetailedLogging",
         "enableCamera",
         "pollingIntervalMinutes"
