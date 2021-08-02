@@ -283,6 +283,8 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
       case DeviceType.INDOOR_CAMERA_1080:
       case DeviceType.INDOOR_PT_CAMERA:
       case DeviceType.INDOOR_PT_CAMERA_1080:
+      case DeviceType.SOLO_CAMERA:
+      case DeviceType.SOLO_CAMERA_PRO:
         new CameraAccessory(this, accessory, device as Camera);
         break;
       case DeviceType.DOORBELL:
