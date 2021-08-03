@@ -12,11 +12,13 @@ jobs:
     runs-on: ubuntu-latest
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
     steps:
-      - uses: actions/checkout@v2
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Checkout 
+        uses: actions/checkout@v2
+          with:
+            ref: ${{ github.event.workflow_run.head_branch }}
+            token: ${{ secrets.GITHUB_TOKEN }}
 
-      - run: git config --global user.name '[Github Bot]'
+      - run: git config --global user.name '[Workflow]'
       - run: git config --global user.email '<>'
       - run: npm version patch -m "[DEV] %s"
       - run: git push
