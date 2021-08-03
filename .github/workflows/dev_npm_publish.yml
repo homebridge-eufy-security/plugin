@@ -13,6 +13,8 @@ jobs:
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
     steps:
       - uses: actions/checkout@v2
+        with:
+          ref: 'dev'
       - uses: actions/setup-node@v2
         with:
           node-version: 14
