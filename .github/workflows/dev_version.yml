@@ -15,7 +15,7 @@ jobs:
       - name: Checkout 
         uses: actions/checkout@v2
           with:
-            ref: ${{ github.event.workflow_run.head_branch }}
+            ref: dev
             token: ${{ secrets.GITHUB_TOKEN }}
 
       - run: git config --global user.name '[Workflow]'
