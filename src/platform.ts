@@ -81,7 +81,7 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
     } as EufySecurityConfig;
 
     if (this.config.enableDetailedLogging >= 1) {
-      this.log = bunyan.createLogger({name: 'eufyLog'});
+      this.log = bunyan.createLogger({ name: 'eufyLog' });
       this.log.level('debug');
       this.log.info('Eufy Security Plugin: enableDetailedLogging on');
     } else {
@@ -118,7 +118,7 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
 
   async discoverDevices() {
     this.log.debug('discoveringDevices');
-    
+
     await this.eufyClient
       .connect()
       .catch((e) => this.log.error('Error authenticating Eufy : ', e));
@@ -139,6 +139,12 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
         DeviceType[hub.getDeviceType()],
         hub.getLANIPAddress(),
       );
+
+      if (hub.getDeviceType() !== DeviceType.STATION) {
+        this.log.debug('This device is not a station hubs.');
+        continue;
+      }
+
       const deviceContainer: DeviceContainer = {
         deviceIdentifier: {
           uniqueId: hub.getSerial(),
@@ -174,6 +180,7 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
 
     // loop over the discovered devices and register each one if it has not already been registered
     for (const device of devices) {
+
       // generate a unique id for the accessory this should be generated from
       // something globally unique, but constant, for example, the device serial
       // number or MAC address
