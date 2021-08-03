@@ -122,3 +122,5 @@ dist
 
 .npmrc
 .history
+
+.github/workflows/
