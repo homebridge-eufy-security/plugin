@@ -2,10 +2,10 @@ name: DEV_NPM_Publish
 
 on:
   workflow_run:
-    workflows: ["DEV_NPM_Version"]
+    workflows: ["DEV_NPM_Build_Version"]
     branches: [dev]
     types: [completed]
-    
+
 jobs:
 
   publish:
