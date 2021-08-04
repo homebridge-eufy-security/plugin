@@ -50,7 +50,7 @@ export class SmartLockAccessory extends DeviceAccessory {
       .on('set', this.handleLockTargetStateSet.bind(this));
 
     this.SmartLock.on('locked', (device: Device, open: boolean) =>
-      this.onDeviceOpenPushNotification(device, open),
+      this.onDeviceLockPushNotification(device, open),
     );
 
     // this.eufyDevice.on('motion detected', (device: Device, motion: boolean) =>
@@ -123,7 +123,7 @@ export class SmartLockAccessory extends DeviceAccessory {
     }
   }
 
-  private onDeviceOpenPushNotification(
+  private onDeviceLockPushNotification(
     device: Device,
     lockStatus: boolean,
   ): void {
