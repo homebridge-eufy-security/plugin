@@ -94,7 +94,7 @@ export class SmartLockAccessory extends DeviceAccessory {
 
   getLockStatus(current = true) {
     const lockStatus = (this.SmartLock.isLocked());
-    return this.convertlockStatusCode(lockStatus, current);
+    return this.convertlockStatusCode(lockStatus.value, current);
   }
 
   convertlockStatusCode(lockStatus, current = true) {
@@ -132,7 +132,7 @@ export class SmartLockAccessory extends DeviceAccessory {
 
     this.service
       .getCharacteristic(this.platform.Characteristic.LockCurrentState)
-      .updateValue(this.convertlockStatusCode(lockStatus.value));
+      .updateValue(this.convertlockStatusCode(lockStatus));
   }
 
   /**
