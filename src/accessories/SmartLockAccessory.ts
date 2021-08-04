@@ -49,8 +49,8 @@ export class SmartLockAccessory extends DeviceAccessory {
       .on('get', this.handleLockTargetStateGet.bind(this))
       .on('set', this.handleLockTargetStateSet.bind(this));
 
-    this.SmartLock.on('locked', (device: Device, open: boolean) =>
-      this.onDeviceLockPushNotification(device, open),
+    this.SmartLock.on('locked', (device: Device, lock: boolean) =>
+      this.onDeviceLockPushNotification(device, lock),
     );
 
     if (this.SmartLock.hasBattery && this.SmartLock.hasBattery()) {
@@ -109,9 +109,9 @@ export class SmartLockAccessory extends DeviceAccessory {
     const characteristic = (current) ? this.platform.Characteristic.LockCurrentState : this.platform.Characteristic.LockTargetState;
 
     switch (lockStatus) {
-      case 3:
+      case true:
         return characteristic.SECURED;
-      case 4:
+      case false:
         return characteristic.UNSECURED;
       default:
         this.platform.log.warn(this.accessory.displayName, 'Something wrong on the lockstatus feedback');
