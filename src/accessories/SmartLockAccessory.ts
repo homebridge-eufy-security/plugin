@@ -81,33 +81,27 @@ export class SmartLockAccessory extends DeviceAccessory {
    * Handle requests to get the current value of the 'Security System Current State' characteristic
    */
   async handleLockCurrentStateGet(callback) {
-    this.platform.log.debug('Triggered GET LockCurrentState');
-
-    // set this to a valid value for LockCurrentState
-    const lockStatus = this.getLockStatus() ? this.platform.Characteristic.LockCurrentState.SECURED : this.platform.Characteristic.LockCurrentState.UNSECURED;
-
+    const lockStatus = this.getLockStatus();
+    this.platform.log.debug(this.accessory.displayName, 'Triggered GET LockCurrentState', lockStatus);
     callback(null, lockStatus as number);
   }
 
   async handleLockTargetStateGet(callback) {
-    this.platform.log.debug('Triggered GET LockTargetState');
-
-    // set this to a valid value for LockTargetState
-    const lockStatus = this.getLockStatus() ? this.platform.Characteristic.LockTargetState.SECURED : this.platform.Characteristic.LockTargetState.UNSECURED;
-
+    const lockStatus = this.getLockStatus(false);
+    this.platform.log.debug(this.accessory.displayName, 'Triggered GET LockTargetState', lockStatus);
     callback(null, lockStatus as number);
   }
 
   async handleLockTargetStateSet(callback) {
-    this.platform.log.warn('Open/Close trigger from homekit is not implemented');
+    this.platform.log.warn(this.accessory.displayName, 'Open/Close trigger from homekit is not implemented');
   }
 
-  async getLockStatus() {
+  getLockStatus(current = true) {
     const lockStatus = (this.SmartLock.isLocked());
-    return this.convertlockStatusCode(lockStatus);
+    return this.convertlockStatusCode(lockStatus, current);
   }
 
-  convertlockStatusCode(lockStatus) {
+  convertlockStatusCode(lockStatus, current = true) {
     // 1: "1",
     // 2: "2",
     // 3: "UNLOCKED",
@@ -115,14 +109,17 @@ export class SmartLockAccessory extends DeviceAccessory {
     // 5: "MECHANICAL_ANOMALY",
     // 6: "6",
     // 7: "7",
+
+    const characteristic = (current) ? this.platform.Characteristic.LockCurrentState : this.platform.Characteristic.LockTargetState;
+
     switch (lockStatus) {
       case 3:
-        return this.platform.Characteristic.LockTargetState.SECURED;
+        return characteristic.SECURED;
       case 4:
-        return this.platform.Characteristic.LockTargetState.UNSECURED;
+        return characteristic.UNSECURED;
       default:
         this.platform.log.warn(this.accessory.displayName, 'Something wrong on the lockstatus feedback');
-        return this.platform.Characteristic.LockTargetState.UNSECURED;
+        return characteristic.UNSECURED;
     }
   }
 
@@ -134,7 +131,7 @@ export class SmartLockAccessory extends DeviceAccessory {
     this.platform.log.debug(this.accessory.displayName, 'Handle Lock Status:  -- ', lockStatus);
 
     this.service
-      .getCharacteristic(this.platform.Characteristic.MotionDetected)
+      .getCharacteristic(this.platform.Characteristic.LockCurrentState)
       .updateValue(this.convertlockStatusCode(lockStatus));
   }
 
