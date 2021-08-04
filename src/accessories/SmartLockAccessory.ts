@@ -106,12 +106,16 @@ export class SmartLockAccessory extends DeviceAccessory {
     // 6: "6",
     // 7: "7",
 
+    this.platform.log.warn(this.accessory.displayName, 'LockStatus', lockStatus);
+
     const characteristic = (current) ? this.platform.Characteristic.LockCurrentState : this.platform.Characteristic.LockTargetState;
 
     switch (lockStatus) {
       case true:
+      case 4:
         return characteristic.SECURED;
       case false:
+      case 3:
         return characteristic.UNSECURED;
       default:
         this.platform.log.warn(this.accessory.displayName, 'Something wrong on the lockstatus feedback');
