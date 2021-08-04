@@ -41,13 +41,17 @@ export class SmartLockAccessory extends DeviceAccessory {
 
     // create handlers for required characteristics
     this.service
-    .getCharacteristic(this.platform.Characteristic.LockCurrentState)
-    .on('get', this.handleLockCurrentStateGet.bind(this));
+      .getCharacteristic(this.platform.Characteristic.LockCurrentState)
+      .on('get', this.handleLockCurrentStateGet.bind(this));
 
     this.service
       .getCharacteristic(this.platform.Characteristic.LockTargetState)
       .on('get', this.handleLockTargetStateGet.bind(this))
       .on('set', this.handleLockTargetStateSet.bind(this));
+
+    this.SmartLock.on('locked', (device: Device, open: boolean) =>
+      this.onDeviceOpenPushNotification(device, open),
+    );
 
     // this.eufyDevice.on('motion detected', (device: Device, motion: boolean) =>
     //   this.onDeviceMotionDetectedPushNotification(device, motion),
@@ -100,20 +104,38 @@ export class SmartLockAccessory extends DeviceAccessory {
 
   async getLockStatus() {
     const lockStatus = (this.SmartLock.isLocked());
-    return (lockStatus) ? true : false as boolean;
+    return this.convertlockStatusCode(lockStatus);
   }
 
-  private onDeviceLockPushNotification(
+  convertlockStatusCode(lockStatus) {
+    // 1: "1",
+    // 2: "2",
+    // 3: "UNLOCKED",
+    // 4: "LOCKED",
+    // 5: "MECHANICAL_ANOMALY",
+    // 6: "6",
+    // 7: "7",
+    switch (lockStatus) {
+      case 3:
+        return this.platform.Characteristic.LockTargetState.SECURED;
+      case 4:
+        return this.platform.Characteristic.LockTargetState.UNSECURED;
+      default:
+        this.platform.log.warn(this.accessory.displayName, 'Something wrong on the lockstatus feedback');
+        return this.platform.Characteristic.LockTargetState.UNSECURED;
+    }
+  }
+
+  private onDeviceOpenPushNotification(
     device: Device,
-    motion: boolean,
+    lockStatus: boolean,
   ): void {
 
-    const lockStatus = this.getLockStatus() ? this.platform.Characteristic.LockTargetState.SECURED : this.platform.Characteristic.LockTargetState.UNSECURED;
     this.platform.log.debug(this.accessory.displayName, 'Handle Lock Status:  -- ', lockStatus);
 
     this.service
       .getCharacteristic(this.platform.Characteristic.MotionDetected)
-      .updateValue(lockStatus);
+      .updateValue(this.convertlockStatusCode(lockStatus));
   }
 
   /**
