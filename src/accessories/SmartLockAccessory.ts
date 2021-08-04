@@ -125,7 +125,7 @@ export class SmartLockAccessory extends DeviceAccessory {
 
   private onDeviceLockPushNotification(
     device: Device,
-    lockStatus: Object,
+    lockStatus: boolean,
   ): void {
 
     this.platform.log.debug(this.accessory.displayName, 'Handle Lock Status:  -- ', lockStatus);
