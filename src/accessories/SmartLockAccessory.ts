@@ -41,13 +41,17 @@ export class SmartLockAccessory extends DeviceAccessory {
 
     // create handlers for required characteristics
     this.service
-    .getCharacteristic(this.platform.Characteristic.LockCurrentState)
-    .on('get', this.handleLockCurrentStateGet.bind(this));
+      .getCharacteristic(this.platform.Characteristic.LockCurrentState)
+      .on('get', this.handleLockCurrentStateGet.bind(this));
 
     this.service
       .getCharacteristic(this.platform.Characteristic.LockTargetState)
       .on('get', this.handleLockTargetStateGet.bind(this))
       .on('set', this.handleLockTargetStateSet.bind(this));
+
+    this.SmartLock.on('locked', (device: Device, open: boolean) =>
+      this.onDeviceLockPushNotification(device, open),
+    );
 
     // this.eufyDevice.on('motion detected', (device: Device, motion: boolean) =>
     //   this.onDeviceMotionDetectedPushNotification(device, motion),
@@ -77,43 +81,58 @@ export class SmartLockAccessory extends DeviceAccessory {
    * Handle requests to get the current value of the 'Security System Current State' characteristic
    */
   async handleLockCurrentStateGet(callback) {
-    this.platform.log.debug('Triggered GET LockCurrentState');
-
-    // set this to a valid value for LockCurrentState
-    const lockStatus = this.getLockStatus() ? this.platform.Characteristic.LockCurrentState.SECURED : this.platform.Characteristic.LockCurrentState.UNSECURED;
-
+    const lockStatus = this.getLockStatus();
+    this.platform.log.debug(this.accessory.displayName, 'Triggered GET LockCurrentState', lockStatus);
     callback(null, lockStatus as number);
   }
 
   async handleLockTargetStateGet(callback) {
-    this.platform.log.debug('Triggered GET LockTargetState');
-
-    // set this to a valid value for LockTargetState
-    const lockStatus = this.getLockStatus() ? this.platform.Characteristic.LockTargetState.SECURED : this.platform.Characteristic.LockTargetState.UNSECURED;
-
+    const lockStatus = this.getLockStatus(false);
+    this.platform.log.debug(this.accessory.displayName, 'Triggered GET LockTargetState', lockStatus);
     callback(null, lockStatus as number);
   }
 
   async handleLockTargetStateSet(callback) {
-    this.platform.log.warn('Open/Close trigger from homekit is not implemented');
+    this.platform.log.warn(this.accessory.displayName, 'Open/Close trigger from homekit is not implemented');
   }
 
-  async getLockStatus() {
+  getLockStatus(current = true) {
     const lockStatus = (this.SmartLock.isLocked());
-    return (lockStatus) ? true : false as boolean;
+    return this.convertlockStatusCode(lockStatus, current);
+  }
+
+  convertlockStatusCode(lockStatus, current = true) {
+    // 1: "1",
+    // 2: "2",
+    // 3: "UNLOCKED",
+    // 4: "LOCKED",
+    // 5: "MECHANICAL_ANOMALY",
+    // 6: "6",
+    // 7: "7",
+
+    const characteristic = (current) ? this.platform.Characteristic.LockCurrentState : this.platform.Characteristic.LockTargetState;
+
+    switch (lockStatus) {
+      case 3:
+        return characteristic.SECURED;
+      case 4:
+        return characteristic.UNSECURED;
+      default:
+        this.platform.log.warn(this.accessory.displayName, 'Something wrong on the lockstatus feedback');
+        return characteristic.UNSECURED;
+    }
   }
 
   private onDeviceLockPushNotification(
     device: Device,
-    motion: boolean,
+    lockStatus: boolean,
   ): void {
 
-    const lockStatus = this.getLockStatus() ? this.platform.Characteristic.LockTargetState.SECURED : this.platform.Characteristic.LockTargetState.UNSECURED;
     this.platform.log.debug(this.accessory.displayName, 'Handle Lock Status:  -- ', lockStatus);
 
     this.service
-      .getCharacteristic(this.platform.Characteristic.MotionDetected)
-      .updateValue(lockStatus);
+      .getCharacteristic(this.platform.Characteristic.LockCurrentState)
+      .updateValue(this.convertlockStatusCode(lockStatus));
   }
 
   /**
