@@ -18,6 +18,7 @@ import { MotionSensorAccessory } from './accessories/MotionSensorAccessory';
 import { CameraAccessory } from './accessories/CameraAccessory';
 import { DoorbellCameraAccessory } from './accessories/DoorbellCameraAccessory';
 import { KeypadAccessory } from './accessories/KeypadAccessory';
+import { SmartLockAccessory } from './accessories/SmartLockAccessory';
 
 
 import {
@@ -31,6 +32,7 @@ import {
   Camera,
   DoorbellCamera,
   Keypad,
+  Lock,
   // eslint-disable-next-line @typescript-eslint/ban-ts-comment
   // @ts-ignore 
 } from 'eufy-security-client';
@@ -298,6 +300,12 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
         break;
       case DeviceType.KEYPAD:
         new KeypadAccessory(this, accessory, device as Keypad);
+        break;
+      case DeviceType.LOCK_BASIC:
+      case DeviceType.LOCK_ADVANCED:
+      case DeviceType.LOCK_BASIC_NO_FINGER:
+      case DeviceType.LOCK_ADVANCED_NO_FINGER:
+        new SmartLockAccessory(this, accessory, device as Lock);
         break;
       default:
         this.log.warn(
