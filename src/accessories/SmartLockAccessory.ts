@@ -106,7 +106,7 @@ export class SmartLockAccessory extends DeviceAccessory {
     // 6: "6",
     // 7: "7",
 
-    this.platform.log.warn(this.accessory.displayName, 'LockStatus', lockStatus);
+    this.platform.log.debug(this.accessory.displayName, 'LockStatus', lockStatus);
 
     const characteristic = (current) ? this.platform.Characteristic.LockCurrentState : this.platform.Characteristic.LockTargetState;
 
@@ -132,7 +132,7 @@ export class SmartLockAccessory extends DeviceAccessory {
 
     this.service
       .getCharacteristic(this.platform.Characteristic.LockCurrentState)
-      .updateValue(this.convertlockStatusCode(lockStatus));
+      .updateValue(this.convertlockStatusCode(lockStatus.value));
   }
 
   /**
