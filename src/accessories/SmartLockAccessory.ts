@@ -53,10 +53,6 @@ export class SmartLockAccessory extends DeviceAccessory {
       this.onDeviceLockPushNotification(device, open),
     );
 
-    // this.eufyDevice.on('motion detected', (device: Device, motion: boolean) =>
-    //   this.onDeviceMotionDetectedPushNotification(device, motion),
-    // );
-
     if (this.SmartLock.hasBattery && this.SmartLock.hasBattery()) {
       this.platform.log.debug(this.accessory.displayName, 'has a battery, so append batteryService characteristic to him.');
 
