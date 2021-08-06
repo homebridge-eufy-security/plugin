@@ -31,6 +31,7 @@
     "security-system"
   ],
   "dependencies": {
+    "@homebridge/plugin-ui-utils": "0.0.4",
     "bunyan": "^1.8.15",
     "eufy-security-client": "^0.9.4",
     "ffmpeg-for-homebridge": "0.0.9",
