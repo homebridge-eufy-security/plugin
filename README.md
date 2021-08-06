@@ -18,7 +18,7 @@ Recommendation: Create a second Eufy account and add it as a guest account from 
 -   Optional settings: You can change the default mapping of the security modes. Currently HomeKit only has the following modes and they cannot be renamed:
     -   Home, Away, Night, Off
 
-## Doorbell
+## Camera / Doorbell
 To use the livestream feature of the doorbell, you must install ffmpeg as well
 `npm i ffmpeg-for-homebridge`
 
