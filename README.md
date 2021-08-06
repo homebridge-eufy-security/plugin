@@ -26,21 +26,33 @@ The doorbell support is still a work in progress and needs more testing. Please 
 
 ## Current Support
 
-| Eufy Device   | Supported Functions             | HomeKit                               |
-| ------------- | ------------------------------- | ------------------------------------- |
-| HomeBase      | Can change guard mode           | Shows as a security system in HomeKit |
-| Cameras        | Reports motion, On/Off switch           | Shows as Motion Sensor and switch                |
-| Motion Sensor | Reports motion                  | Shows as Motion Sensor                |
-| Entry Sensor  | Open/Close detection            | Shows as Contact Sensor               |
-| Doorbell      | Livestream, Ringing Notification | Shows as Doorbell                     |
-| Keypad        | Battery low level               | Shows as Switch                       |
+| Eufy Device   | Supported Functions             | HomeKit                               | Battery Level | 
+| ------------- | ------------------------------- | ------------------------------------- | ------------- |
+| HomeBase      | Can change guard mode           | Shows as a security system in HomeKit | Not Applicable |
+| Cameras        | Livestream, Reports motion, On/Off switch           | Shows as Motion Sensor and switch                | Yes, for battery camera |
+| Motion Sensor | Reports motion                  | Shows as Motion Sensor                | Yes |
+| Entry Sensor  | Open/Close detection            | Shows as Contact Sensor               | Yes basic level (100 or 10) |
+| Doorbell      | Livestream, Ringing Notification | Shows as Doorbell                     | Yes, for battery Doorbell |
+| Keypad        | X               | Shows as Switch                       | Yes basic level (100 or 10) |
+| Lock          | Lock/Unlock status (can't operate)  | Shows as Lock                       | Yes |
 
 ## Roadmap
 
 -   Add 2FA
--   Expand doorbell features
 
 Feel free to contribute to this plugin by opening a PR!
+
+## Livestream
+
+We got the stream from the cloud. We still struggling to get the stream from the hub itself which could save seconds.
+
+Actually here what happend :
+
+Camera/Doorbell => Eufy Hub => Eufy Cloud => Homebridge with Eufy plugin => Apple Device
+
+When we will be able to fetch the stream from the hub we won't be blocked by the ISP capacity at least when you're at home :
+
+Camera/Doorbell => Eufy Hub => Homebridge with Eufy plugin => Apple Device
 
 ## Issues
 
