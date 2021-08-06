@@ -1,0 +1,463 @@
+<style>
+    .hidden {
+        display: none;
+    }
+
+    .divTable {
+        display: table;
+        width: 100%;
+    }
+
+    .divTableRow {
+        display: table-row;
+    }
+
+    .divTableHeading {
+        background-color: #0b6288;
+        display: table-header-group;
+    }
+
+    .divTableCell,
+    .divTableHead {
+        border: 1px solid #eee;
+        display: table-cell;
+        padding: 3px 10px;
+    }
+
+    .divTableHeading {
+        background-color: #0b6288;
+        display: table-header-group;
+        color: #fff;
+        font-weight: bold;
+    }
+
+    .divTableFoot {
+        background-color: #EEE;
+        display: table-footer-group;
+        font-weight: bold;
+    }
+
+    .divTableBody {
+        display: table-row-group;
+    }
+</style>
+
+<div class="card card-body">
+
+    <!-- shown when setup is complete or the plugin is already configured -->
+    <div id="setupComplete" style="display:none;">
+        <form id="configForm">
+            <div class="form-group">
+                <label for="usernameInput">Eufy Username</label>
+                <input type="text" class="form-control" id="usernameInput" />
+            </div>
+            <div class="form-group">
+                <label for="passwordInput">Eufy Password</label>
+                <input type="password" class="form-control" id="passwordInput" />
+            </div>
+            <a id="startOver" class="btn btn-success">Resend Token</a>
+            <hr>
+
+            <div class="custom-control custom-checkbox form-group">
+                <input type="checkbox" class="custom-control-input" id="enableCamera" />
+                <label class="custom-control-label" for="enableCamera">Livestream from Camera device</label>
+                <small id="help" class="form-text text-muted">Camera seen as Motion Sensor by default, enable this
+                    setting to transform as Camera</small>
+            </div>
+
+            <div class="schema-form-fieldset form-group">
+                <h4 id="advanced" style="cursor: pointer"><i class="fas fa-chevron-right"></i>&nbsp;Advanced Settings
+                </h4>
+                <p>Don't change these, unless you understand what you're doing.</p>
+                <div id="expandable" class="hidden">
+                    <div class="form-group">
+                        <label for="pollingIntervalMinutes">Polling Interval (in minutes)</label>
+                        <input type="range" class="custom-range" id="pollingIntervalMinutes" min="0" max="30" value="5"
+                            step="1" />
+                        <span id="pollingValue">5 minutes</span>
+                        <small id="help" class="form-text text-muted">Time in minutes between each status polling of the
+                            devices
+                            (set to 0 for no polling)</small>
+                    </div>
+                    <hr>
+                    <div class="form-group">
+                        <label for="enableDetailedLogging"><strong>Debug</strong></label>
+                        <select class="form-control" id="enableDetailedLogging">
+                            <option value="0">Normal</option>
+                            <option value="1">Debug</option>
+                            <option value="2">Insane</option>
+                        </select>
+                        <small id="help" class="form-text text-muted"></small>
+                    </div>
+                    <hr>
+                    <div class="form-group">
+                        <label for="hkHome">HomeKit Home</label>
+                        <select class="form-control" id="hkHome">
+                            <option value="1">Eufy Home</option>
+                            <option value="0">Eufy Away</option>
+                            <option value="2">Eufy Schedule</option>
+                            <option value="3">Eufy Custom 1</option>
+                            <option value="4">Eufy Custom 2</option>
+                            <option value="5">Eufy Custom 3</option>
+                            <option value="47">Eufy Geofencing</option>
+                            <option value="63">Eufy Disarmed</option>
+                        </select>
+                        <small id="help" class="form-text text-muted">Change how each mode in the HomeKit security
+                            system is mapped to the modes in the Eufy App</small>
+                    </div>
+                    <div class="form-group">
+                        <label for="hkAway">HomeKit Away</label>
+                        <select class="form-control" id="hkAway">
+                            <option value="1">Eufy Home</option>
+                            <option value="0">Eufy Away</option>
+                            <option value="2">Eufy Schedule</option>
+                            <option value="3">Eufy Custom 1</option>
+                            <option value="4">Eufy Custom 2</option>
+                            <option value="5">Eufy Custom 3</option>
+                            <option value="47">Eufy Geofencing</option>
+                            <option value="63">Eufy Disarmed</option>
+                        </select>
+                        <small id="help" class="form-text text-muted">Change how each mode in the HomeKit security
+                            system is mapped to the modes in the Eufy App</small>
+                    </div>
+                    <div class="form-group">
+                        <label for="hkNight">HomeKit Night</label>
+                        <select class="form-control" id="hkNight">
+                            <option value="1">Eufy Home</option>
+                            <option value="0">Eufy Away</option>
+                            <option value="2">Eufy Schedule</option>
+                            <option value="3">Eufy Custom 1</option>
+                            <option value="4">Eufy Custom 2</option>
+                            <option value="5">Eufy Custom 3</option>
+                            <option value="47">Eufy Geofencing</option>
+                            <option value="63">Eufy Disarmed</option>
+                        </select>
+                        <small id="help" class="form-text text-muted">Change how each mode in the HomeKit security
+                            system is mapped to the modes in the Eufy App</small>
+                    </div>
+                    <div class="form-group">
+                        <label for="hkOff">HomeKit Off</label>
+                        <select class="form-control" id="hkOff">
+                            <option value="1">Eufy Home</option>
+                            <option value="0">Eufy Away</option>
+                            <option value="2">Eufy Schedule</option>
+                            <option value="3">Eufy Custom 1</option>
+                            <option value="4">Eufy Custom 2</option>
+                            <option value="5">Eufy Custom 3</option>
+                            <option value="47">Eufy Geofencing</option>
+                            <option value="63">Eufy Disarmed</option>
+                        </select>
+                        <small id="help" class="form-text text-muted">Change how each mode in the HomeKit security
+                            system is mapped to the modes in the Eufy App</small>
+                    </div>
+                    <div class="form-group">
+                        <label for="hkDisarmed">HomeKit Disarmed</label>
+                        <select class="form-control" id="hkDisarmed">
+                            <option value="1">Eufy Home</option>
+                            <option value="0">Eufy Away</option>
+                            <option value="2">Eufy Schedule</option>
+                            <option value="3">Eufy Custom 1</option>
+                            <option value="4">Eufy Custom 2</option>
+                            <option value="5">Eufy Custom 3</option>
+                            <option value="47">Eufy Geofencing</option>
+                            <option value="63">Eufy Disarmed</option>
+                        </select>
+                        <small id="help" class="form-text text-muted">Change how each mode in the HomeKit security
+                            system is mapped to the modes in the Eufy App</small>
+                    </div>
+
+                </div>
+
+            </div>
+        </form>
+    </div>
+
+    <!-- shown when the plugin is not configured -->
+    <div id="setupRequired" style="display:none;">
+        <center><img src="homebridge-eufy-security.png" width="40%" /></center>
+        <br />
+        <br />
+        <h3>Welcome to HomeBridge Eufy Security Plugin</h3>
+        <hr>
+        <div id="step1">
+            <div class="form-group">
+                <label for="usernameInput1">Eufy Username</label>
+                <input type="text" class="form-control" id="usernameInput1" aria-describedby="usernameHelp"
+                    required /><small id="usernameHelp" class="form-text text-muted">Please enter your eufy
+                    username.</small>
+                <label for="passwordInput1">Eufy Password</label>
+                <input type="password" class="form-control" id="passwordInput1" aria-describedby="passwordHelp"
+                    required /><small id="passwordHelp" class="form-text text-muted">Please
+                    enter your eufy
+                    password.</small>
+            </div>
+            <div class="text-center">
+                <a id="skip" class="btn btn-elegant">Skip</a>
+                <button id="step1Submit" type="submit" class="btn btn-primary">Next</button>
+            </div>
+        </div>
+
+        <div id="step2" style="display:none;">
+            <div class="form-group">
+                <label for="otpInput">OTP Code</label>
+                <input type="text" class="form-control" id="otpInput" aria-describedby="otpHelp" />
+                <small id="otpHelp" class="form-text text-muted">Please enter the OTP password received at your
+                    email.</small>
+            </div>
+            <div class="text-center">
+                <a id="skip2" class="btn btn-elegant">Skip</a>
+                <button id="step2Submit" type="submit" class="btn btn-primary">Next</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="step3" style="display:none;">
+        <div class="form-group">
+            <div id="stations"></div>
+        </div>
+        <div class="text-center">
+            <h5>Please confirm by clicking on the Save button</h5>
+        </div>
+    </div>
+</div>
+
+</div>
+
+<script>
+    var pluginConfig = {
+        platform: 'EufySecurity',
+    };
+
+    function updateFormFromConfig() {
+        // populate the form
+        document.getElementById('usernameInput').value = pluginConfig.username;
+        document.getElementById('passwordInput').value = pluginConfig.password;
+        document.getElementById('usernameInput1').value = pluginConfig.username;
+        document.getElementById('passwordInput1').value = pluginConfig.password;
+        document.getElementById('enableCamera').checked = pluginConfig.enableCamera;
+        document.getElementById('pollingIntervalMinutes').value = !pluginConfig.pollingIntervalMinutes && pluginConfig.pollingIntervalMinutes !== 0 ? 30 : pluginConfig.pollingIntervalMinutes;
+        document.getElementById('hkHome').value = pluginConfig.hkHome || "1";
+        document.getElementById('hkAway').value = pluginConfig.hkAway || "0";
+        document.getElementById('hkNight').value = pluginConfig.hkNight || "3";
+        document.getElementById('hkOff').value = pluginConfig.hkOff || "63";
+        document.getElementById('hkDisarmed').value = pluginConfig.hkDisarmed || "63";
+        document.getElementById('enableDetailedLogging').value = pluginConfig.enableDetailedLogging;
+        homebridge.fixScrollHeight();
+    }
+
+    function updateConfigFromForm() {
+        pluginConfig.username = document.getElementById('usernameInput').value;
+        pluginConfig.password = document.getElementById('passwordInput').value;
+        pluginConfig.enableCamera = document.getElementById('enableCamera').checked;
+        pluginConfig.pollingIntervalMinutes = parseInt(document.getElementById('pollingIntervalMinutes').value);
+        pluginConfig.hkHome = document.getElementById('hkHome').value;
+        pluginConfig.hkAway = document.getElementById('hkAway').value;
+        pluginConfig.hkNight = document.getElementById('hkNight').value;
+        pluginConfig.hkOff = document.getElementById('hkOff').value;
+        pluginConfig.hkDisarmed = document.getElementById('hkDisarmed').value;
+        pluginConfig.enableDetailedLogging = document.getElementById('enableDetailedLogging').value;
+    }
+
+    function showHideTokenButton() {
+        const usernameInput = document.getElementById('usernameInput').value;
+        const passwordInput = document.getElementById('passwordInput').value;
+        document.getElementById('startOver').style.display = (!usernameInput || !passwordInput) ? 'inline-block' : 'none';
+    }
+
+    function adjustPollingValue() {
+        const pollingValue = document.getElementById('pollingIntervalMinutes').value;
+        document.getElementById('pollingValue').innerHTML = pollingValue + ' minutes';
+    }
+    function list_stations_devices(stations) {
+        pluginConfig.username = document.getElementById('usernameInput1').value;
+        pluginConfig.password = document.getElementById('passwordInput1').value;
+
+        const s_div = document.getElementById('stations');
+
+        const t1 = document.createElement("div");
+        t1.setAttribute('class', 'divTable');
+
+        const h1 = document.createElement("div");
+        h1.setAttribute('class', 'divTableHeading');
+
+        var r1 = document.createElement("div");
+        r1.setAttribute('class', 'divTableRow');
+        r1.innerHTML = `
+                    <div class="divTableCell">Name</div>
+                    <div class="divTableCell">Serial Number</div>
+                    <div class="divTableCell">Type</div>
+                `;
+        h1.appendChild(r1);
+        t1.appendChild(h1);
+
+        const b1 = document.createElement("div");
+        b1.setAttribute('class', 'divTableBody');
+
+        stations.forEach(function (item) {
+            var r1 = document.createElement("div");
+            r1.setAttribute('class', 'divTableRow');
+            r1.innerHTML = `
+                    <div class="divTableCell">${item.displayName}</div>
+                    <div class="divTableCell">${item.uniqueId}</div>
+                    <div class="divTableCell">${item.type}</div>
+                `;
+            b1.appendChild(r1);
+
+            item.devices.forEach(function (item) {
+                var r1 = document.createElement("div");
+                r1.setAttribute('class', 'divTableRow');
+                r1.innerHTML = `
+                    <div class="divTableCell">|--&nbsp;${item.displayName}</div>
+                    <div class="divTableCell">${item.uniqueId}</div>
+                    <div class="divTableCell">${item.type}</div>
+                `;
+                b1.appendChild(r1);
+            });
+        });
+
+        t1.appendChild(b1);
+        s_div.appendChild(t1);
+    }
+
+    (async () => {
+        // get the plugin config blocks (this returns an array)
+        const pluginConfigBlocks = await homebridge.getPluginConfig();
+
+        if (!pluginConfigBlocks.length || !pluginConfigBlocks[0].username || !pluginConfigBlocks[0].password) {
+            document.getElementById('setupRequired').style.display = 'block';
+            if (pluginConfigBlocks[0])
+                pluginConfig = pluginConfigBlocks[0];
+            updateFormFromConfig();
+        } else {
+            pluginConfig = pluginConfigBlocks[0];
+            updateFormFromConfig();
+            document.getElementById('setupComplete').style.display = 'block';
+        }
+        adjustPollingValue()
+        //showHideTokenButton()
+    })();
+
+    // watch for changes to the config form
+    document.getElementById('configForm').addEventListener('change', () => {
+        // extract the values from the form - stored in var pluginConfig.
+        updateConfigFromForm();
+        adjustPollingValue()
+
+        // send the current value to the UI.
+        homebridge.updatePluginConfig([pluginConfig]);
+    });
+
+
+    document.getElementById('pollingIntervalMinutes').addEventListener('input', adjustPollingValue);
+    document.getElementById('usernameInput').addEventListener('input', showHideTokenButton);
+    document.getElementById('passwordInput').addEventListener('input', showHideTokenButton);
+
+
+    // step 1 submit handler
+    document.getElementById('advanced').addEventListener('click', async (e) => {
+        const expandable = document.getElementById('expandable');
+
+        if (expandable.classList.contains('hidden')) {
+            expandable.classList.remove('hidden')
+            e.target.getElementsByTagName('i')[0].classList.remove('fa-chevron-right')
+            e.target.getElementsByTagName('i')[0].classList.add('fa-chevron-down')
+        } else {
+            expandable.classList.add('hidden')
+            e.target.getElementsByTagName('i')[0].classList.add('fa-chevron-right')
+            e.target.getElementsByTagName('i')[0].classList.remove('fa-chevron-down')
+        }
+    });
+
+
+    // skip
+    document.getElementById('skip').addEventListener('click', async () => {
+        document.getElementById('step2').style.display = 'none';
+        document.getElementById('setupRequired').style.display = 'none';
+        document.getElementById('setupComplete').style.display = 'block';
+    });
+
+
+    // skip2
+    document.getElementById('skip2').addEventListener('click', async () => {
+        document.getElementById('step2').style.display = 'none';
+        document.getElementById('setupRequired').style.display = 'none';
+        document.getElementById('setupComplete').style.display = 'block';
+    });
+
+    // startOver
+    document.getElementById('startOver').addEventListener('click', async () => {
+        document.getElementById('setupRequired').style.display = 'block';
+        document.getElementById('step2').style.display = 'none';
+        document.getElementById('setupComplete').style.display = 'none';
+    });
+
+    // step 1 submit handler
+    document.getElementById('step1Submit').addEventListener('click', async () => {
+        const usernameValue = document.getElementById('usernameInput').value;
+        const passwordValue = document.getElementById('passwordInput').value;
+
+        if (!usernameValue || !passwordValue) {
+            homebridge.toast.error('Please enter your username and password.', 'Error');
+            return;
+        }
+
+        document.getElementById('step1Submit').setAttribute('disabled', 'disabled');
+
+        try {
+            homebridge.showSpinner()
+            const response = await homebridge.request('/request-otp', { username: usernameValue, password: passwordValue });
+            homebridge.hideSpinner()
+            if (response.result == 0) {
+                homebridge.toast.error("Wrong username or password");
+                return;
+            }
+            document.getElementById('step1').style.display = 'none';
+            if (response.result == 1)
+                document.getElementById('step2').style.display = 'block';
+            if (response.result == 2) {
+                document.getElementById('step3').style.display = 'block';
+                list_stations_devices(response.stations);
+            }
+        } catch (e) {
+            homebridge.hideSpinner()
+            homebridge.toast.error(e.message, 'Error');
+        }
+
+        document.getElementById('step1Submit').removeAttribute('disabled');
+    });
+
+    // step 2 submit handler
+    document.getElementById('step2Submit').addEventListener('click', async () => {
+        const otpValue = document.getElementById('otpInput').value;
+
+        if (!otpValue) {
+            homebridge.toast.error('Please enter a valid OTP code.', 'Error');
+            return;
+        }
+
+        document.getElementById('step2Submit').setAttribute('disabled', 'disabled');
+
+        try {
+            homebridge.showSpinner()
+            const response = await homebridge.request('/check-otp', { code: otpValue });
+            document.getElementById('step2').style.display = 'none';
+
+            homebridge.hideSpinner()
+            if (response.result == 0) {
+                homebridge.toast.error("Wrong OTP");
+                document.getElementById('step1').style.display = 'block';
+            }
+            if (response.result == 2) {
+                document.getElementById('step3').style.display = 'block';
+                list_stations_devices(response.stations);
+            }
+
+        } catch (e) {
+            homebridge.hideSpinner()
+            homebridge.toast.error(e.error || e.message, 'Error');
+        }
+
+        document.getElementById('step2Submit').removeAttribute('disabled');
+    });
+
+</script>
