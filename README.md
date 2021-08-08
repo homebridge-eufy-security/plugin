@@ -38,8 +38,6 @@ The doorbell support is still a work in progress and needs more testing. Please 
 
 ## Roadmap
 
--   Add 2FA
-
 Feel free to contribute to this plugin by opening a PR!
 
 ## Livestream
