@@ -250,12 +250,12 @@
         pluginConfig.password = document.getElementById('passwordInput').value;
         pluginConfig.enableCamera = document.getElementById('enableCamera').checked;
         pluginConfig.pollingIntervalMinutes = parseInt(document.getElementById('pollingIntervalMinutes').value);
-        pluginConfig.hkHome = document.getElementById('hkHome').value;
-        pluginConfig.hkAway = document.getElementById('hkAway').value;
-        pluginConfig.hkNight = document.getElementById('hkNight').value;
-        pluginConfig.hkOff = document.getElementById('hkOff').value;
-        pluginConfig.hkDisarmed = document.getElementById('hkDisarmed').value;
-        pluginConfig.enableDetailedLogging = document.getElementById('enableDetailedLogging').value;
+        pluginConfig.hkHome = parseInt(document.getElementById('hkHome').value);
+        pluginConfig.hkAway = parseInt(document.getElementById('hkAway').value);
+        pluginConfig.hkNight = parseInt(document.getElementById('hkNight').value);
+        pluginConfig.hkOff = parseInt(document.getElementById('hkOff').value);
+        pluginConfig.hkDisarmed = parseInt(document.getElementById('hkDisarmed').value);
+        pluginConfig.enableDetailedLogging = parseInt(document.getElementById('enableDetailedLogging').value);
     }
 
     function showHideTokenButton() {
