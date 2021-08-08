@@ -198,8 +198,7 @@ export class StationAccessory {
       { hk: 0, eufy: this.platform.config.hkHome ?? 1 },
       { hk: 1, eufy: this.platform.config.hkAway ?? 0 },
       { hk: 2, eufy: this.platform.config.hkNight ?? 3 },
-      { hk: 3, eufy: this.platform.config.hkOff ?? 63 },
-      { hk: 3, eufy: this.platform.config.hkDisarmed ?? 6 },
+      { hk: 3, eufy: this.platform.config.hkOff ?? 6 },
     ];
     const modeObj = modes.filter((m) => {
       return m.eufy === eufyMode;

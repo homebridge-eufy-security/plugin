@@ -154,22 +154,6 @@
                         <small id="help" class="form-text text-muted">Change how each mode in the HomeKit security
                             system is mapped to the modes in the Eufy App</small>
                     </div>
-                    <div class="form-group">
-                        <label for="hkDisarmed">HomeKit Disarmed</label>
-                        <select class="form-control" id="hkDisarmed">
-                            <option value="1">Eufy Home</option>
-                            <option value="0">Eufy Away</option>
-                            <option value="2">Eufy Schedule</option>
-                            <option value="3">Eufy Custom 1</option>
-                            <option value="4">Eufy Custom 2</option>
-                            <option value="5">Eufy Custom 3</option>
-                            <option value="47">Eufy Geofencing</option>
-                            <option value="6">Eufy Off</option>
-                            <option value="63">Eufy Disarmed</option>
-                        </select>
-                        <small id="help" class="form-text text-muted">Change how each mode in the HomeKit security
-                            system is mapped to the modes in the Eufy App</small>
-                    </div>
 
                 </div>
 
@@ -244,8 +228,7 @@
         document.getElementById('hkHome').value = pluginConfig.hkHome || "1";
         document.getElementById('hkAway').value = pluginConfig.hkAway || "0";
         document.getElementById('hkNight').value = pluginConfig.hkNight || "3";
-        document.getElementById('hkOff').value = pluginConfig.hkOff || "63";
-        document.getElementById('hkDisarmed').value = pluginConfig.hkDisarmed || "63";
+        document.getElementById('hkOff').value = pluginConfig.hkOff || "6";
         document.getElementById('enableDetailedLogging').value = pluginConfig.enableDetailedLogging;
         homebridge.fixScrollHeight();
     }
@@ -259,7 +242,6 @@
         pluginConfig.hkAway = parseInt(document.getElementById('hkAway').value);
         pluginConfig.hkNight = parseInt(document.getElementById('hkNight').value);
         pluginConfig.hkOff = parseInt(document.getElementById('hkOff').value);
-        pluginConfig.hkDisarmed = parseInt(document.getElementById('hkDisarmed').value);
         pluginConfig.enableDetailedLogging = parseInt(document.getElementById('enableDetailedLogging').value);
     }
 

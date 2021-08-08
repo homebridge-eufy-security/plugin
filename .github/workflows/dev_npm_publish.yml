@@ -6,7 +6,8 @@ on:
     - dev
     paths-ignore:
       - '.github/**'
-    
+      - '**.md'
+
 jobs:
 
   build:
