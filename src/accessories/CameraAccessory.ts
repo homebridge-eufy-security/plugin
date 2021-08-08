@@ -19,11 +19,11 @@ export class CameraAccessory extends DeviceAccessory {
 
   protected service: Service;
   protected Camera: Camera;
+  protected MotionService: Service;
+  protected motion_triggered: boolean;
 
-  private MotionService: Service;
   private switchEnabledService: Service;
   private switchMotionService: Service;
-  private motion_triggered: boolean;
 
   constructor(
     platform: EufySecurityPlatform,
@@ -42,7 +42,7 @@ export class CameraAccessory extends DeviceAccessory {
 
     this.motion_triggered = false;
 
-    if (this.platform.config.enableCamera) {
+    if (this.platform.config.enableCamera || this.Camera.isDoorbell()) {
       this.platform.log.debug(this.accessory.displayName, 'has a camera');
       this.service = this.cameraFunction(accessory);
       this.MotionService = this.motionFunction(accessory);
