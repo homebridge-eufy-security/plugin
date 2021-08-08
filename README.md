@@ -58,3 +58,6 @@ Also consider supporting the other contributors:
 
 -   **[schliemann](https://github.com/schliemann)**
 -   **[lenoxys](https://github.com/lenoxys)**
+
+
+Big thanks to @bropat who made this possible. Please consider buying a coffee for him over here: https://ko-fi.com/bropat
