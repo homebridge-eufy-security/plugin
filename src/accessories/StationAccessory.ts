@@ -90,7 +90,7 @@ export class StationAccessory {
         ),
     );
 
-    if(this.platform.config.enableDetailedLogging) {
+    if (this.platform.config.enableDetailedLogging) {
       this.eufyStation.on('raw property changed', (device: Station, type: number, value: string, modified: number) =>
         this.handleRawPropertyChange(device, type, value, modified),
       );
@@ -104,13 +104,13 @@ export class StationAccessory {
     station: Station,
     guardMode: number,
   ): void {
-    const homekitGuardMode = this.convertStatusCodeToHomekit(guardMode);
+    const homekitGuardMode = this.convertEufytoHK(guardMode);
     if (homekitGuardMode) {
       this.platform.log.debug(
         'Received onStationGuardModePushNotification - guardmode ' +
-          guardMode +
-          ' homekitGuardMode ' +
-          homekitGuardMode,
+        guardMode +
+        ' homekitGuardMode ' +
+        homekitGuardMode,
       );
 
       this.service
@@ -125,15 +125,15 @@ export class StationAccessory {
     station: Station,
     currentMode: number,
   ): void {
-    const homekitCurrentMode = this.convertStatusCodeToHomekit(currentMode);
+    const homekitCurrentMode = this.convertEufytoHK(currentMode);
     if (homekitCurrentMode) {
       this.platform.log.debug(
         'Received onStationCurrentModePushNotification - currentMode ' +
         currentMode +
-          ' homekitCurrentMode ' +
-          homekitCurrentMode,
+        ' homekitCurrentMode ' +
+        homekitCurrentMode,
       );
-      
+
       this.service
         .getCharacteristic(
           this.platform.Characteristic.SecuritySystemCurrentState,
@@ -141,7 +141,7 @@ export class StationAccessory {
         .updateValue(homekitCurrentMode);
     }
   }
-  
+
   private onStationAlarmEventPushNotification(
     station: Station,
     alarmEvent: AlarmEvent,
@@ -185,68 +185,46 @@ export class StationAccessory {
     );
 
     const guardMode = this.eufyStation.getGuardMode();
-
     this.platform.log.debug('Eufy Guard Mode: ', guardMode);
-
     this.guardMode = (this.alarm_triggered) ? 4 : guardMode.value as number;
 
-    return this.convertStatusCodeToHomekit(this.guardMode as number);
+    return this.convertEufytoHK(this.guardMode as number);
   }
 
-  convertMode(eufyMode: number) {
+  async getTargetStatus() {
+    this.platform.log.debug(
+      this.eufyStation.isConnected()
+        ? 'Connected to Eufy API'
+        : 'Not connected to Eufy API',
+    );
+
+    const guardMode = this.eufyStation.getGuardMode();
+    this.platform.log.debug('Eufy Guard Mode: ', guardMode);
+
+    return this.convertEufytoHK(this.guardMode as number);
+  }
+
+  mappingHKEufy() {
     const modes = [
       { hk: 0, eufy: this.platform.config.hkHome ?? 1 },
       { hk: 1, eufy: this.platform.config.hkAway ?? 0 },
       { hk: 2, eufy: this.platform.config.hkNight ?? 3 },
-      { hk: 3, eufy: this.platform.config.hkOff ?? 6 },
+      { hk: 3, eufy: this.platform.config.hkOff ?? 63 },
     ];
-    const modeObj = modes.filter((m) => {
-      return m.eufy === eufyMode;
-    });
 
-    return modeObj[0] ? modeObj[0].hk : eufyMode;
+    //modes.push({ hk: 3, eufy: ((modes.filter((m) => { return m.eufy === 6; })[0]) ? 63 : 6) });
+
+    return modes;
   }
 
-  convertStatusCodeToHomekit(code: number) {
-    //---Eufy Modes--------
-    //     0: 'AWAY',
-    //     1: 'HOME',
-    //     2: 'SCHEDULE',
-    //     3: 'CUSTOM1',
-    //     4: 'CUSTOM2',
-    //     5: 'CUSTOM3',
-    //     47: 'GEO',
-    //     63: 'DISARMED'
-    //-----------------------
-    //---HomeKit Modes-------
-    //     0: 'STAY_ARM',
-    //     1: 'AWAY_ARM',
-    //     2: 'NIGHT_ARM',
-    //     3: 'DISARMED',
-    //     4: 'ALARM_TRIGGERED',
-    //-----------------------
-    switch (code) {
-      case 0: //Eufy mode
-        return this.convertMode(0);
-      case 1:
-        return this.convertMode(1);
-      case 2:
-        return this.convertMode(2);
-      case 3:
-        return this.convertMode(3);
-      case 4:
-        return this.convertMode(4);
-      case 5:
-        return this.convertMode(5);
-      case 6: // 6 is triggered  when disabled  by Keypad
-        return this.convertMode(6);
-      case 47:
-        return this.convertMode(47);
-      case 63:
-        return this.convertMode(63);
-      default:
-        break;
-    }
+  convertHKtoEufy(hkMode: number) {
+    const modeObj = this.mappingHKEufy().filter((m) => { return m.hk === hkMode; });
+    return modeObj[0] ? modeObj[0].eufy : hkMode;
+  }
+
+  convertEufytoHK(eufyMode: number) {
+    const modeObj = this.mappingHKEufy().filter((m) => { return m.eufy === eufyMode; });
+    return modeObj[0] ? modeObj[0].hk : eufyMode;
   }
 
   /**
@@ -270,33 +248,33 @@ export class StationAccessory {
     this.platform.log.debug(this.accessory.displayName, 'Triggered GET SecuritySystemTargetState');
 
     // set this to a valid value for SecuritySystemTargetState
-    const currentValue = await this.getCurrentStatus();
+    const currentValue = await this.getTargetStatus();
 
     callback(null, currentValue);
   }
 
   private handleRawPropertyChange(
-    device: Station, 
-    type: number, 
-    value: string, 
+    device: Station,
+    type: number,
+    value: string,
     modified: number,
   ): void {
     this.platform.log.info(
       'Handle Station Raw Property Changes:  -- ',
-      type, 
-      value, 
+      type,
+      value,
       modified,
     );
   }
 
   private handlePropertyChange(
-    device: Station, 
-    name: string, 
+    device: Station,
+    name: string,
     value: PropertyValue,
   ): void {
     this.platform.log.info(
       'Handle Station Property Changes:  -- ',
-      name, 
+      name,
       value,
     );
   }
@@ -305,50 +283,20 @@ export class StationAccessory {
    * Handle requests to set the 'Security System Target State' characteristic
    */
   handleSecuritySystemTargetStateSet(value, callback) {
-    //   states: {
-    //     0: 'AWAY',
-    //     1: 'HOME',
-    //     2: 'SCHEDULE',
-    //     3: 'CUSTOM1',
-    //     4: 'CUSTOM2',
-    //     5: 'CUSTOM3',
-    //     47: 'GEO',
-    //     63: 'DISARMED'
-    // }
 
-    let mode = -1;
-    switch (value) {
-      case 0: //homekit HOME
-        mode = this.platform.config.hkHome ?? 1; //eufy home
-        break;
-      case 1: //homekit AWAY
-        mode = this.platform.config.hkAway ?? 0;
-        break;
-      case 2: //homekit NIGHT
-        mode = this.platform.config.hkNight ?? 3;
-        break;
-      case 3: //homekit OFF
-        mode = this.platform.config.hkOff ?? 63;
-        break;
-      default:
-        break;
-    }
+    const mode = this.convertHKtoEufy(value);
 
-    if (mode === -1) {
-      this.platform.log.error(
-        'Error Setting security mode! (mode returned -1)',
+    try {
+      this.guardMode = mode;
+      this.eufyStation.setGuardMode(mode);
+      this.service.updateCharacteristic(
+        this.platform.Characteristic.SecuritySystemCurrentState,
+        value,
       );
-    } else {
-      try {
-        this.eufyStation.setGuardMode(mode);
-        this.service.updateCharacteristic(
-          this.platform.Characteristic.SecuritySystemCurrentState,
-          value,
-        );
-      } catch (error) {
-        this.platform.log.error('Error Setting security mode!', error);
-      }
+    } catch (error) {
+      this.platform.log.error('Error Setting security mode!', error);
     }
+
     callback(null);
   }
 }

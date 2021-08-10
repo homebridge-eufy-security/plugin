@@ -47,7 +47,6 @@ export abstract class DeviceAccessory {
         this.handlePropertyChange(device, name, value),
       );
     }
-
   }
 
   private handleRawPropertyChange(
