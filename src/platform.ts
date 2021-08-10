@@ -90,6 +90,8 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
       this.log = hblog;
     }
 
+    this.config.hkOff = (this.config.hkOff === 6) ? 63 : this.config.hkOff; // Removing the ability to set Off(6) waiting Bropat feedback bropat/eufy-security-client#27
+
     this.eufyClient = (this.config.enableDetailedLogging === 2)
       ? new EufySecurity(this.eufyConfig, this.log)
       : new EufySecurity(this.eufyConfig);

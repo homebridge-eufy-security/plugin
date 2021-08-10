@@ -48,7 +48,7 @@ export class MotionSensorAccessory extends DeviceAccessory {
       .getCharacteristic(this.platform.Characteristic.MotionDetected)
       .on('get', this.handleMotionDetectedGet.bind(this));
 
-    this.eufyDevice.on('motion detected', (device: Device, motion: boolean) =>
+    this.MotionSensor.on('motion detected', (device: Device, motion: boolean) =>
       this.onDeviceMotionDetectedPushNotification(device, motion),
     );
 
@@ -67,8 +67,8 @@ export class MotionSensorAccessory extends DeviceAccessory {
 
       // create handlers for required characteristics of Battery service
       batteryService
-        .getCharacteristic(this.platform.Characteristic.BatteryLevel)
-        .on('get', this.handleBatteryLevelGet.bind(this));
+        .getCharacteristic(this.platform.Characteristic.StatusLowBattery)
+        .on('get', this.handleStatusLowBatteryGet.bind(this));
     }
   }
 
@@ -103,18 +103,20 @@ export class MotionSensorAccessory extends DeviceAccessory {
   /**
    * Handle requests to get the current value of the "Status Low Battery" characteristic
    */
-  async handleBatteryLevelGet(callback) {
+  async handleStatusLowBatteryGet(callback) {
     this.platform.log.debug(this.accessory.displayName, 'Triggered GET BatteryLevel');
 
     // set this to a valid value for SecuritySystemCurrentState
-    const currentValue = await this.getCurrentBatteryLevel();
+    const currentValue = await this.getStatusLowBattery();
+    
     this.platform.log.debug(this.accessory.displayName, 'Handle Current battery level:  -- ', currentValue);
 
     callback(null, currentValue);
   }
 
-  async getCurrentBatteryLevel() {
-    const batteryLevel = (this.MotionSensor.isBatteryLow()) ? 100 : 0;
+  async getStatusLowBattery() {
+    const char = this.platform.Characteristic.StatusLowBattery;
+    const batteryLevel = (this.MotionSensor.isBatteryLow()) ? char.BATTERY_LEVEL_NORMAL : char.BATTERY_LEVEL_LOW;
 
     return batteryLevel as number;
   }

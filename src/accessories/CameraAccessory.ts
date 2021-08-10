@@ -57,7 +57,7 @@ export class CameraAccessory extends DeviceAccessory {
       this.service = this.motionFunction(accessory);
     }
 
-    if (this.Camera.hasBattery && this.Camera.hasBattery()) {
+    if (typeof this.Camera.hasBattery === 'function') {
       this.platform.log.debug(this.accessory.displayName, 'has a battery, so append batteryService characteristic to him.');
 
       const batteryService =
@@ -74,13 +74,15 @@ export class CameraAccessory extends DeviceAccessory {
       batteryService
         .getCharacteristic(this.platform.Characteristic.BatteryLevel)
         .on('get', this.handleBatteryLevelGet.bind(this));
+    } else {
+      this.platform.log.debug(this.accessory.displayName, 'Looks like not compatible with hasBattery');
     }
 
-    if (this.Camera.isEnabled && !this.Camera.isEnabled()) {
+    if (typeof this.Camera.isEnabled === 'function') {
 
       this.switchEnabledService =
         this.accessory.getService('Enabled') ||
-        this.accessory.addService(this.platform.Service.Switch, 'Enabled', 'enabled');
+        this.accessory.addService(this.platform.Service.Switch, this.accessory.displayName+' Enabled', 'enabled');
 
       this.switchEnabledService.getCharacteristic(this.platform.Characteristic.On)
         .on('get', this.handleOnGet.bind(this))
@@ -90,11 +92,11 @@ export class CameraAccessory extends DeviceAccessory {
       this.platform.log.debug(this.accessory.displayName, 'Looks like not compatible with isEnabled');
     }
 
-    if (this.Camera.isMotionDetectionEnabled && !this.Camera.isMotionDetectionEnabled()) {
+    if (typeof this.Camera.isMotionDetectionEnabled === 'function') {
 
       this.switchMotionService =
         this.accessory.getService('Motion') ||
-        this.accessory.addService(this.platform.Service.Switch, 'Motion', 'motion');
+        this.accessory.addService(this.platform.Service.Switch, this.accessory.displayName+' Motion', 'motion');
 
       this.switchMotionService.getCharacteristic(this.platform.Characteristic.On)
         .on('get', this.handleMotionOnGet.bind(this))
