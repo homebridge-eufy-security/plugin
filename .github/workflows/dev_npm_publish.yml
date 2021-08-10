@@ -50,6 +50,6 @@ jobs:
           node-version: 14
           registry-url: https://registry.npmjs.org/
       - run: npm ci
-      - run: npm publish --access public --tag dev
+      - run: npm publish --access public --tag beta
         env:
           NODE_AUTH_TOKEN: ${{secrets.npm_token}}
