@@ -38,6 +38,16 @@
       }, 
       "pollingIntervalMinutes": {
         "title": "Polling Interval (in minutes) ",
+        "type": "number",
+        "required": false
+      },
+      "ignoreStations": {
+        "title": "Ignoring stations listed here",
+        "type": "string",
+        "required": false
+      },
+      "ignoreDevices": {
+        "title": "Ignoring devices listed here",
         "type": "string",
         "required": false
       },

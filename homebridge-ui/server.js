@@ -9,6 +9,7 @@ class UiServer extends HomebridgePluginUiServer {
     this.driver;
 
     const storagePath = this.homebridgeStoragePath;
+    this.log = bunyan.createLogger({ name: 'eufyLog - Settings' });
 
     this.config = {
       country: 'US',
@@ -36,9 +37,7 @@ class UiServer extends HomebridgePluginUiServer {
     this.config['username'] = body.username;
     this.config['password'] = body.password;
 
-    const log = bunyan.createLogger({ name: 'eufyLog - Settings' });
-
-    this.driver = new EufySecurity(this.config, log);
+    this.driver = new EufySecurity(this.config, this.log);
 
     await this.driver.connect();
 
@@ -56,12 +55,6 @@ class UiServer extends HomebridgePluginUiServer {
       return { result: 0 }; // Wrong username and/or password
     }
 
-    // try {
-    //   const response = await axios.post(this.endpointUrl, data);
-    //   return response.data;
-    // } catch (e) {
-    //   throw e.response.data;
-    // }
   }
 
   async getStations() {
@@ -92,9 +85,10 @@ class UiServer extends HomebridgePluginUiServer {
         station: device.getStationSerial(),
       }
 
-      stations.find((o, i) => {
-        stations[i].devices.push(object);
-      })
+      stations.find((o, i, a) => {
+        if (o.uniqueId === object.station)
+          a[i].devices.push(object);
+      });
     }
 
     return stations;

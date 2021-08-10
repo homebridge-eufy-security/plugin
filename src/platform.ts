@@ -89,7 +89,7 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
     } else {
       this.log = hblog;
     }
-    
+
     // Removing the ability to set Off(6) waiting Bropat feedback bropat/eufy-security-client#27
     this.config.hkOff = (this.config.hkOff === 6) ? 63 : this.config.hkOff;
 
@@ -154,6 +154,11 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
         continue;
       }
 
+      if (this.config.ignoreStations.indexOf(hub.getSerial()) !== -1) {
+        this.log.debug('Device ignored');
+        continue;
+      }
+
       const deviceContainer: DeviceContainer = {
         deviceIdentifier: {
           uniqueId: hub.getSerial(),
@@ -175,6 +180,17 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
         device.getName(),
         DeviceType[device.getDeviceType()],
       );
+
+      if (this.config.ignoreStations.indexOf(device.getStationSerial()) !== -1) {
+        this.log.debug('Device ignored because station is ignored');
+        continue;
+      }
+
+      if (this.config.ignoreDevices.indexOf(device.getSerial()) !== -1) {
+        this.log.debug('Device ignored');
+        continue;
+      }
+
       const deviceContainer: DeviceContainer = {
         deviceIdentifier: {
           uniqueId: device.getSerial(),

@@ -12,6 +12,22 @@
         display: table-row;
     }
 
+    .checked {
+        color: #888;
+        text-decoration: line-through;
+        font-style: italic;
+    }
+
+    /* 
+    .checked div.divTableRow input[type="checkbox"] {
+        display: none;
+    }
+
+    .checked div.divTableRow:first-child input[type="checkbox"] {
+        display: block;
+    } */
+
+
     .divTableHeading {
         background-color: #0b6288;
         display: table-header-group;
@@ -55,8 +71,10 @@
                 <label for="passwordInput">Eufy Password</label>
                 <input type="password" class="form-control" id="passwordInput" />
             </div>
-            <a id="startOver" class="btn btn-success">Resend Token</a>
-            <hr>
+
+            <hr />
+            <a id="startOver" class="btn btn-success">Startover the wizard process</a>
+            <hr />
 
             <div class="custom-control custom-checkbox form-group">
                 <input type="checkbox" class="custom-control-input" id="enableCamera" />
@@ -154,6 +172,18 @@
                         <small id="help" class="form-text text-muted">Change how each mode in the HomeKit security
                             system is mapped to the modes in the Eufy App</small>
                     </div>
+                    <div class="form-group">
+                        <label for="ignoreStations">Ignore Stations</label>
+                        <input type="text" class="form-control" id="ignoreStations" />
+                        <small id="help" class="form-text text-muted">Ignoring stations listed here (separated by a
+                            comma)</small>
+                    </div>
+                    <div class="form-group">
+                        <label for="ignoreDevices">Ignore Devices</label>
+                        <input type="text" class="form-control" id="ignoreDevices" />
+                        <small id="help" class="form-text text-muted">Ignoring devices listed here (separated by a
+                            comma)</small>
+                    </div>
 
                 </div>
 
@@ -167,7 +197,7 @@
         <br />
         <br />
         <h3>Welcome to HomeBridge Eufy Security Plugin</h3>
-        <hr>
+        <hr />
         <div id="step1">
             <div class="form-group">
                 <label for="usernameInput1">Eufy Username</label>
@@ -205,7 +235,7 @@
             <div id="stations"></div>
         </div>
         <div class="text-center">
-            <h5>Please confirm by clicking on the Save button</h5>
+            <a id="skip3" class="btn btn-elegant">Continue</a>
         </div>
     </div>
 </div>
@@ -230,6 +260,8 @@
         document.getElementById('hkNight').value = pluginConfig.hkNight || "3";
         document.getElementById('hkOff').value = pluginConfig.hkOff || "63";
         document.getElementById('enableDetailedLogging').value = pluginConfig.enableDetailedLogging;
+        document.getElementById('ignoreStations').value = pluginConfig.ignoreStations;
+        document.getElementById('ignoreDevices').value = pluginConfig.ignoreDevices;
         homebridge.fixScrollHeight();
     }
 
@@ -243,6 +275,8 @@
         pluginConfig.hkNight = parseInt(document.getElementById('hkNight').value);
         pluginConfig.hkOff = parseInt(document.getElementById('hkOff').value);
         pluginConfig.enableDetailedLogging = parseInt(document.getElementById('enableDetailedLogging').value);
+        pluginConfig.ignoreStations = document.getElementById('ignoreStations').value;
+        pluginConfig.ignoreDevices = document.getElementById('ignoreDevices').value;
     }
 
     function showHideTokenButton() {
@@ -255,9 +289,38 @@
         const pollingValue = document.getElementById('pollingIntervalMinutes').value;
         document.getElementById('pollingValue').innerHTML = pollingValue + ' minutes';
     }
+
+    function AddOrRemoveStationsIgnoreList(item) {
+        pluginConfig.ignoreStations.indexOf(item) === -1 ? pluginConfig.ignoreStations.push(item) : pluginConfig.ignoreStations.splice(pluginConfig.ignoreStations.indexOf(item), 1);
+        document.getElementById('ignoreStations').value = pluginConfig.ignoreStations.toString();
+        homebridge.updatePluginConfig([pluginConfig]);
+    }
+
+    function AddOrRemoveDevicesIgnoreList(item) {
+        pluginConfig.ignoreDevices.indexOf(item) === -1 ? pluginConfig.ignoreDevices.push(item) : pluginConfig.ignoreDevices.splice(pluginConfig.ignoreDevices.indexOf(item), 1);
+        document.getElementById('ignoreDevices').value = pluginConfig.ignoreDevices.toString();
+        homebridge.updatePluginConfig([pluginConfig]);
+    }
+
+    function isStationsIgnored(uniqueId) {
+        const r = pluginConfig.ignoreStations.find((o, i, a) => {
+            return (uniqueId === o) ? true : false;
+        });
+        return (r) ? true : false;
+    }
+
+    function isDevicesIgnored(uniqueId) {
+        const r = pluginConfig.ignoreDevices.find((o, i, a) => {
+            return (uniqueId === o) ? true : false;
+        });
+        return (r) ? true : false;
+    }
+
     function list_stations_devices(stations) {
         pluginConfig.username = document.getElementById('usernameInput1').value;
         pluginConfig.password = document.getElementById('passwordInput1').value;
+
+        homebridge.updatePluginConfig([pluginConfig]);
 
         const s_div = document.getElementById('stations');
 
@@ -273,37 +336,79 @@
                     <div class="divTableCell">Name</div>
                     <div class="divTableCell">Serial Number</div>
                     <div class="divTableCell">Type</div>
+                    <div class="divTableCell">Ignore?</div>
                 `;
         h1.appendChild(r1);
         t1.appendChild(h1);
 
-        const b1 = document.createElement("div");
-        b1.setAttribute('class', 'divTableBody');
-
         stations.forEach(function (item) {
+
+            const checked = (isStationsIgnored(item.uniqueId)) ? ' checked' : '';
+
+            const b1 = document.createElement("div");
+            b1.setAttribute('class', 'divTableBody' + checked);
+            b1.setAttribute('id', `station_${item.uniqueId}`);
+
             var r1 = document.createElement("div");
+
             r1.setAttribute('class', 'divTableRow');
+
             r1.innerHTML = `
                     <div class="divTableCell">${item.displayName}</div>
                     <div class="divTableCell">${item.uniqueId}</div>
                     <div class="divTableCell">${item.type}</div>
+                    <div class="divTableCell"><input type="checkbox" class="ignore_stations" id="st_${item.uniqueId}" name="${item.uniqueId}"${checked} /></div>
                 `;
             b1.appendChild(r1);
 
             item.devices.forEach(function (item) {
-                var r1 = document.createElement("div");
-                r1.setAttribute('class', 'divTableRow');
-                r1.innerHTML = `
+
+                if (item.ignore) {
+                    AddOrRemoveDevicesIgnoreList(item.uniqueId);
+                }
+                var r2 = document.createElement("div");
+                const checked = (isDevicesIgnored(item.uniqueId)) ? ' checked' : '';
+                r2.setAttribute('class', 'divTableRow' + checked);
+                r2.setAttribute('id', `device_${item.uniqueId}`);
+                r2.innerHTML = `
                     <div class="divTableCell">|--&nbsp;${item.displayName}</div>
                     <div class="divTableCell">${item.uniqueId}</div>
                     <div class="divTableCell">${item.type}</div>
+                    <div class="divTableCell"><input type="checkbox" class="ignore_devices" id="dev_${item.uniqueId}" name="${item.uniqueId}"${checked} /></div>
                 `;
-                b1.appendChild(r1);
+                b1.appendChild(r2);
             });
+
+            t1.appendChild(b1);
         });
 
-        t1.appendChild(b1);
         s_div.appendChild(t1);
+
+        stations.forEach(function (item) {
+
+            document.getElementById(`st_${item.uniqueId}`).addEventListener('change', e => {
+                if (e.target.checked) {
+                    document.getElementById(`station_${item.uniqueId}`).setAttribute('class', 'divTableBody checked');
+                } else {
+                    document.getElementById(`station_${item.uniqueId}`).setAttribute('class', 'divTableBody');
+                }
+                AddOrRemoveStationsIgnoreList(item.uniqueId);
+            });
+
+            item.devices.forEach(function (item) {
+
+                document.getElementById(`dev_${item.uniqueId}`).addEventListener('change', e => {
+                    if (e.target.checked) {
+                        document.getElementById(`device_${item.uniqueId}`).setAttribute('class', 'divTableRow checked');
+
+                    } else {
+                        document.getElementById(`device_${item.uniqueId}`).setAttribute('class', 'divTableRow');
+                    }
+                    AddOrRemoveDevicesIgnoreList(item.uniqueId);
+                });
+            });
+
+        });
     }
 
     (async () => {
@@ -320,6 +425,7 @@
             updateFormFromConfig();
             document.getElementById('setupComplete').style.display = 'block';
         }
+
         adjustPollingValue()
         //showHideTokenButton()
     })();
@@ -367,6 +473,14 @@
     // skip2
     document.getElementById('skip2').addEventListener('click', async () => {
         document.getElementById('step2').style.display = 'none';
+        document.getElementById('setupRequired').style.display = 'none';
+        document.getElementById('setupComplete').style.display = 'block';
+    });
+
+
+    // skip3
+    document.getElementById('skip3').addEventListener('click', async () => {
+        document.getElementById('step3').style.display = 'none';
         document.getElementById('setupRequired').style.display = 'none';
         document.getElementById('setupComplete').style.display = 'block';
     });
