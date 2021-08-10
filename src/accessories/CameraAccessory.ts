@@ -64,12 +64,6 @@ export class CameraAccessory extends DeviceAccessory {
         this.accessory.getService(this.platform.Service.Battery) ||
         this.accessory.addService(this.platform.Service.Battery);
 
-      // set the Battery service characteristics
-      batteryService.setCharacteristic(
-        this.platform.Characteristic.Name,
-        accessory.displayName,
-      );
-
       // create handlers for required characteristics of Battery service
       batteryService
         .getCharacteristic(this.platform.Characteristic.BatteryLevel)

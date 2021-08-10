@@ -19,8 +19,6 @@ export class KeypadAccessory extends DeviceAccessory {
   protected service: Service;
   protected Keypad: Keypad;
 
-  protected batteryService: Service;
-
   constructor(
     platform: EufySecurityPlatform,
     accessory: PlatformAccessory,
@@ -47,46 +45,18 @@ export class KeypadAccessory extends DeviceAccessory {
       .on('get', this.handleOnGet.bind(this))
       .on('set', this.handleOnSet.bind(this));
 
-    this.batteryService =
-      this.accessory.getService(this.platform.Service.BatteryService) ||
-      this.accessory.addService(this.platform.Service.BatteryService);
+    if (typeof this.Keypad.isBatteryLow === 'function') {
+      this.platform.log.debug(this.accessory.displayName, 'has a battery, so append batteryService characteristic to him.');
 
-    this.batteryService
-      .setCharacteristic(
-        this.platform.Characteristic.Name,
-        accessory.displayName,
-      )
-      .setCharacteristic(
-        this.platform.Characteristic.ChargingState,
-        this.platform.Characteristic.ChargingState.ChargingState.NOT_CHARGEABLE,
-      ); //TODO: Change to CMD_KEYPAD_BATTERY_CHARGER_STATE = 1655 when implemented in eufy-security-client
+      const batteryService =
+        this.accessory.getService(this.platform.Service.Battery) ||
+        this.accessory.addService(this.platform.Service.Battery);
 
-    // create handlers for required characteristics
-    this.batteryService
-      .getCharacteristic(this.platform.Characteristic.StatusLowBattery)
-      .on('get', this.handleStatusLowBatteryCurrentStateGet.bind(this));
-  }
-
-  async getIsBatteryLowStatus() {
-    const isBatteryLow = this.Keypad.isBatteryLow();
-
-    return isBatteryLow.value as number;
-  }
-
-  /**
-   * Handle requests to get the current value of the 'Security System Current State' characteristic
-   */
-  async handleStatusLowBatteryCurrentStateGet(callback) {
-    this.platform.log.debug(this.accessory.displayName, 'Triggered GET StatusLowBatteryCurrentState');
-
-    // set this to a valid value for SecuritySystemCurrentState
-    const currentValue = await this.getIsBatteryLowStatus();
-    this.platform.log.debug(
-      'Handle Low Battery CurrentState:  -- ',
-      currentValue,
-    );
-
-    callback(null, currentValue);
+      // create handlers for required characteristics of Battery service
+      batteryService
+        .getCharacteristic(this.platform.Characteristic.StatusLowBattery)
+        .on('get', this.handleStatusLowBatteryGet.bind(this));
+    }
   }
 
   async getCurrentDeviceState() {
@@ -124,5 +94,26 @@ export class KeypadAccessory extends DeviceAccessory {
     );
 
     callback(null);
+  }
+
+  /**
+   * Handle requests to get the current value of the "Status Low Battery" characteristic
+   */
+  async handleStatusLowBatteryGet(callback) {
+    this.platform.log.debug(this.accessory.displayName, 'Triggered GET BatteryLevel');
+
+    // set this to a valid value for SecuritySystemCurrentState
+    const currentValue = await this.getStatusLowBattery();
+
+    this.platform.log.debug(this.accessory.displayName, 'Handle Current battery level:  -- ', currentValue);
+
+    callback(null, currentValue);
+  }
+
+  async getStatusLowBattery() {
+    const char = this.platform.Characteristic.StatusLowBattery;
+    const batteryLevel = (this.Keypad.isBatteryLow()) ? char.BATTERY_LEVEL_NORMAL : char.BATTERY_LEVEL_LOW;
+
+    return batteryLevel as number;
   }
 }

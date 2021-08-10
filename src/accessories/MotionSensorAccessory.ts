@@ -52,18 +52,12 @@ export class MotionSensorAccessory extends DeviceAccessory {
       this.onDeviceMotionDetectedPushNotification(device, motion),
     );
 
-    if(this.MotionSensor.isBatteryLow && this.MotionSensor.isBatteryLow()) {
+    if(typeof this.MotionSensor.isBatteryLow === 'function') {
       this.platform.log.debug(this.accessory.displayName, 'has a battery, so append batteryService characteristic to him.');
 
       const batteryService =
       this.accessory.getService(this.platform.Service.Battery) ||
       this.accessory.addService(this.platform.Service.Battery);
-
-      // set the Battery service characteristics
-      batteryService.setCharacteristic(
-        this.platform.Characteristic.Name,
-        accessory.displayName,
-      );
 
       // create handlers for required characteristics of Battery service
       batteryService
