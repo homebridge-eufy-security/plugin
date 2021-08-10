@@ -214,7 +214,6 @@ export class StationAccessory {
 
     //modes.push({ hk: 3, eufy: ((modes.filter((m) => { return m.eufy === 6; })[0]) ? 63 : 6) });
 
-    this.platform.log.debug('Eufy Mapping: ', modes);
     return modes;
   }
 
