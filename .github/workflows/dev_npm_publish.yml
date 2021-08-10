@@ -3,7 +3,7 @@ name: DEV NPM Build Version Publish
 on: 
   push:
     branches:
-    - master
+    - dev
     paths-ignore:
       - '.github/**'
       - '**.md'
@@ -35,7 +35,7 @@ jobs:
 
       - run: git config --global user.name '[Workflow]'
       - run: git config --global user.email '<>'
-      - run: npm version minor -m "[RELEASE] %s"
+      - run: npm version patch -m "[DEV] %s"
       - run: git push
 
   publish:
@@ -50,6 +50,6 @@ jobs:
           node-version: 14
           registry-url: https://registry.npmjs.org/
       - run: npm ci
-      - run: npm publish --access public
+      - run: npm publish --access public --tag dev
         env:
           NODE_AUTH_TOKEN: ${{secrets.npm_token}}
