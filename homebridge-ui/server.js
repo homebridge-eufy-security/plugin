@@ -66,7 +66,7 @@ class UiServer extends HomebridgePluginUiServer {
 
     for (const station of Eufy_stations) {
 
-      var object = {
+      const object = {
         uniqueId: station.getSerial(),
         displayName: station.getName(),
         type: DeviceType[station.getDeviceType()],
@@ -78,7 +78,7 @@ class UiServer extends HomebridgePluginUiServer {
 
     for (const device of Eufy_devices) {
 
-      var object = {
+      const object = {
         uniqueId: device.getSerial(),
         displayName: device.getName(),
         type: DeviceType[device.getDeviceType()],
