@@ -1,4 +1,4 @@
-import { Service, PlatformAccessory, PlatformConfig } from 'homebridge';
+import { Service, PlatformAccessory, CharacteristicValue } from 'homebridge';
 
 import { EufySecurityPlatformConfig } from '../config';
 
@@ -16,6 +16,7 @@ export class StationAccessory {
   private service: Service;
   private alarm_triggered: boolean;
   private guardMode: number;
+  protected characteristic;
 
   constructor(
     private readonly platform: EufySecurityPlatform,
@@ -25,22 +26,24 @@ export class StationAccessory {
     this.platform.log.debug(this.accessory.displayName, 'Constructed Station');
     // set accessory information
 
+    this.characteristic = this.platform.Characteristic;
+
     this.alarm_triggered = false;
     this.guardMode = 0;
 
     this.accessory
       .getService(this.platform.Service.AccessoryInformation)!
-      .setCharacteristic(this.platform.Characteristic.Manufacturer, 'Eufy')
+      .setCharacteristic(this.characteristic.Manufacturer, 'Eufy')
       .setCharacteristic(
-        this.platform.Characteristic.Model,
+        this.characteristic.Model,
         eufyStation.getModel(),
       )
       .setCharacteristic(
-        this.platform.Characteristic.SerialNumber,
+        this.characteristic.SerialNumber,
         eufyStation.getSerial(),
       )
       .setCharacteristic(
-        this.platform.Characteristic.FirmwareRevision,
+        this.characteristic.FirmwareRevision,
         eufyStation.getSoftwareVersion(),
       );
 
@@ -49,45 +52,30 @@ export class StationAccessory {
       this.accessory.addService(this.platform.Service.SecuritySystem);
 
     this.service.setCharacteristic(
-      this.platform.Characteristic.Name,
+      this.characteristic.Name,
       accessory.displayName,
     );
 
     // create handlers for required characteristics
     this.service
-      .getCharacteristic(this.platform.Characteristic.SecuritySystemCurrentState)
-      .on('get', this.handleSecuritySystemCurrentStateGet.bind(this));
+      .getCharacteristic(this.characteristic.SecuritySystemCurrentState)
+      .onGet(this.handleSecuritySystemCurrentStateGet.bind(this));
 
     this.service
-      .getCharacteristic(this.platform.Characteristic.SecuritySystemTargetState)
-      .on('get', this.handleSecuritySystemTargetStateGet.bind(this))
-      .on('set', this.handleSecuritySystemTargetStateSet.bind(this));
+      .getCharacteristic(this.characteristic.SecuritySystemTargetState)
+      .onGet(this.handleSecuritySystemTargetStateGet.bind(this))
+      .onSet(this.handleSecuritySystemTargetStateSet.bind(this));
 
-    this.eufyStation.on(
-      'guard mode',
-      (station: Station, guardMode: number) =>
-        this.onStationGuardModePushNotification(
-          station,
-          guardMode,
-        ),
+    this.eufyStation.on('guard mode', (station: Station, guardMode: number) =>
+      this.onStationGuardModePushNotification(station, guardMode),
     );
 
-    this.eufyStation.on(
-      'current mode',
-      (station: Station, currentMode: number) =>
-        this.onStationCurrentModePushNotification(
-          station,
-          currentMode,
-        ),
+    this.eufyStation.on('current mode', (station: Station, currentMode: number) =>
+      this.onStationCurrentModePushNotification(station, currentMode),
     );
 
-    this.eufyStation.on(
-      'alarm event',
-      (station: Station, alarmEvent: AlarmEvent) =>
-        this.onStationAlarmEventPushNotification(
-          station,
-          alarmEvent,
-        ),
+    this.eufyStation.on('alarm event', (station: Station, alarmEvent: AlarmEvent) =>
+      this.onStationAlarmEventPushNotification(station, alarmEvent),
     );
 
     if (this.platform.config.enableDetailedLogging) {
@@ -114,9 +102,7 @@ export class StationAccessory {
       );
 
       this.service
-        .getCharacteristic(
-          this.platform.Characteristic.SecuritySystemTargetState,
-        )
+        .getCharacteristic(this.characteristic.SecuritySystemTargetState)
         .updateValue(homekitGuardMode);
     }
   }
@@ -135,9 +121,7 @@ export class StationAccessory {
       );
 
       this.service
-        .getCharacteristic(
-          this.platform.Characteristic.SecuritySystemCurrentState,
-        )
+        .getCharacteristic(this.characteristic.SecuritySystemCurrentState)
         .updateValue(homekitCurrentMode);
     }
   }
@@ -156,8 +140,8 @@ export class StationAccessory {
         this.platform.log.warn('Received onStationAlarmEventPushNotification - ALARM TRIGGERED - alarmEvent: ' + alarmEvent);
         this.alarm_triggered = true;
         this.service
-          .getCharacteristic(this.platform.Characteristic.SecuritySystemCurrentState)
-          .updateValue(4); // Characteristic.SecuritySystemCurrentState.ALARM_TRIGGERED
+          .getCharacteristic(this.characteristic.SecuritySystemCurrentState)
+          .updateValue(this.characteristic.SecuritySystemCurrentState.ALARM_TRIGGERED); // Alarm !!!
         break;
       case 15: // Alarm off by Keypad
       case 16: // Alarm off by Eufy App
@@ -165,14 +149,14 @@ export class StationAccessory {
         this.platform.log.warn('Received onStationAlarmEventPushNotification - ALARM OFF - alarmEvent: ' + alarmEvent);
         this.alarm_triggered = false;
         this.service
-          .getCharacteristic(this.platform.Characteristic.SecuritySystemCurrentState)
+          .getCharacteristic(this.characteristic.SecuritySystemCurrentState)
           .updateValue(this.guardMode); // Back to normal
         break;
       default:
         this.platform.log.warn('Received onStationAlarmEventPushNotification - ALARM UNKNOWN - alarmEvent: ' + alarmEvent);
         this.service
-          .getCharacteristic(this.platform.Characteristic.StatusFault)
-          .updateValue(this.platform.Characteristic.StatusFault.GENERAL_FAULT);
+          .getCharacteristic(this.characteristic.StatusFault)
+          .updateValue(this.characteristic.StatusFault.GENERAL_FAULT);
         break;
     }
   }
@@ -230,7 +214,7 @@ export class StationAccessory {
   /**
    * Handle requests to get the current value of the 'Security System Current State' characteristic
    */
-  async handleSecuritySystemCurrentStateGet(callback) {
+  async handleSecuritySystemCurrentStateGet(): Promise<CharacteristicValue> {
     this.platform.log.debug(this.accessory.displayName, 'Triggered GET SecuritySystemCurrentState');
 
     // set this to a valid value for SecuritySystemCurrentState
@@ -238,19 +222,19 @@ export class StationAccessory {
 
     this.platform.log.debug(this.accessory.displayName, 'Handle Current System state:  -- ', currentValue);
 
-    callback(null, (this.alarm_triggered) ? 4 : currentValue);
+    return (this.alarm_triggered) ? this.characteristic.SecuritySystemCurrentState.ALARM_TRIGGERED : currentValue;
   }
 
   /**
    * Handle requests to get the current value of the 'Security System Target State' characteristic
    */
-  async handleSecuritySystemTargetStateGet(callback) {
+  async handleSecuritySystemTargetStateGet(): Promise<CharacteristicValue> {
     this.platform.log.debug(this.accessory.displayName, 'Triggered GET SecuritySystemTargetState');
 
     // set this to a valid value for SecuritySystemTargetState
     const currentValue = await this.getTargetStatus();
 
-    callback(null, currentValue);
+    return currentValue;
   }
 
   private handleRawPropertyChange(
@@ -282,21 +266,19 @@ export class StationAccessory {
   /**
    * Handle requests to set the 'Security System Target State' characteristic
    */
-  handleSecuritySystemTargetStateSet(value, callback) {
+  handleSecuritySystemTargetStateSet(value: CharacteristicValue) {
 
-    const mode = this.convertHKtoEufy(value);
+    const mode = this.convertHKtoEufy(value as number);
 
     try {
       this.guardMode = mode;
       this.eufyStation.setGuardMode(mode);
       this.service.updateCharacteristic(
-        this.platform.Characteristic.SecuritySystemCurrentState,
+        this.characteristic.SecuritySystemCurrentState,
         value,
       );
     } catch (error) {
       this.platform.log.error('Error Setting security mode!', error);
     }
-
-    callback(null);
   }
 }

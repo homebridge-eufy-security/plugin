@@ -1,4 +1,4 @@
-import { Service, PlatformAccessory } from 'homebridge';
+import { Service, PlatformAccessory, CharacteristicValue } from 'homebridge';
 
 import { EufySecurityPlatform } from '../platform';
 import { DeviceAccessory } from './Device';
@@ -7,7 +7,7 @@ import { DeviceAccessory } from './Device';
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore  
-import { Device, EntrySensor, DeviceType } from 'eufy-security-client';
+import { Device, EntrySensor } from 'eufy-security-client';
 
 /**
  * Platform Accessory
@@ -15,7 +15,7 @@ import { Device, EntrySensor, DeviceType } from 'eufy-security-client';
  * Each accessory may expose multiple services of different service types.
  */
 export class EntrySensorAccessory extends DeviceAccessory {
-  
+
   protected service: Service;
   protected EntrySensor: EntrySensor;
 
@@ -25,9 +25,10 @@ export class EntrySensorAccessory extends DeviceAccessory {
     eufyDevice: EntrySensor,
   ) {
     super(platform, accessory, eufyDevice);
-    this.EntrySensor = eufyDevice;
-    
+
     this.platform.log.debug(this.accessory.displayName, 'Constructed Entry Sensor');
+
+    this.EntrySensor = eufyDevice;
 
     this.service =
       this.accessory.getService(this.platform.Service.ContactSensor) ||
@@ -41,45 +42,47 @@ export class EntrySensorAccessory extends DeviceAccessory {
     // create handlers for required characteristics
     this.service
       .getCharacteristic(this.platform.Characteristic.ContactSensorState)
-      .on('get', this.handleSecuritySystemCurrentStateGet.bind(this));
+      .onGet(this.handleContactSensorStateGet.bind(this));
 
     this.EntrySensor.on('open', (device: Device, open: boolean) =>
       this.onDeviceOpenPushNotification(device, open),
     );
 
-    if(typeof this.EntrySensor.isBatteryLow === 'function') {
+    if (typeof this.EntrySensor.isBatteryLow === 'function') {
       this.platform.log.debug(this.accessory.displayName, 'has a battery, so append batteryService characteristic to him.');
 
       const batteryService =
-      this.accessory.getService(this.platform.Service.Battery) ||
-      this.accessory.addService(this.platform.Service.Battery);
+        this.accessory.getService(this.platform.Service.Battery) ||
+        this.accessory.addService(this.platform.Service.Battery);
 
       // create handlers for required characteristics of Battery service
       batteryService
         .getCharacteristic(this.platform.Characteristic.StatusLowBattery)
-        .on('get', this.handleStatusLowBatteryGet.bind(this));
+        .onGet(this.handleStatusLowBatteryGet.bind(this));
     }
   }
 
-  async getCurrentStatus() {
+  getCurrentStatus() {
     const isSensorOpen = this.EntrySensor.isSensorOpen();
+    this.platform.log.debug(this.accessory.displayName, 'Handle Motion Sensor:  -- ', isSensorOpen);
     return isSensorOpen.value;
   }
 
   /**
    * Handle requests to get the current value of the 'Security System Current State' characteristic
    */
-  async handleSecuritySystemCurrentStateGet(callback) {
-    this.platform.log.debug(this.accessory.displayName, 'Triggered GET SecuritySystemCurrentState');
-
-    // set this to a valid value for SecuritySystemCurrentState
-    const currentValue = await this.getCurrentStatus();
-    this.platform.log.debug(this.accessory.displayName, 'Handle Current System state:  -- ', currentValue);
-
-    callback(null, currentValue);
+  async handleContactSensorStateGet(): Promise<CharacteristicValue> {
+    const char = this.platform.Characteristic.StatusLowBattery;
+    const currentValue = (await this.getCurrentStatus()) ? char.ContactSensorState.CONTACT_NOT_DETECTED : char.ContactSensorState.CONTACT_DETECTED;
+    this.platform.log.debug(this.accessory.displayName, 'Triggered GET handleContactSensorStateGet:', currentValue);
+    return currentValue as number;
   }
 
-  private onDeviceOpenPushNotification(device: Device, open: boolean): void {
+  private onDeviceOpenPushNotification(
+    device: Device,
+    open: boolean,
+  ): void {
+    this.platform.log.debug(this.accessory.displayName, 'Handle Motion Sensor:  -- ', open);
     this.service
       .getCharacteristic(this.platform.Characteristic.ContactSensorState)
       .updateValue(open);
@@ -88,21 +91,15 @@ export class EntrySensorAccessory extends DeviceAccessory {
   /**
    * Handle requests to get the current value of the "Status Low Battery" characteristic
    */
-  async handleStatusLowBatteryGet(callback) {
-    this.platform.log.debug(this.accessory.displayName, 'Triggered GET BatteryLevel');
-
-    // set this to a valid value for SecuritySystemCurrentState
+  async handleStatusLowBatteryGet(): Promise<CharacteristicValue> {
     const currentValue = await this.getStatusLowBattery();
-    
-    this.platform.log.debug(this.accessory.displayName, 'Handle Current battery level:  -- ', currentValue);
-
-    callback(null, currentValue);
+    this.platform.log.debug(this.accessory.displayName, 'Triggered GET StatusLowBattery:', currentValue);
+    return currentValue as number;
   }
 
   async getStatusLowBattery() {
     const char = this.platform.Characteristic.StatusLowBattery;
     const batteryLevel = (this.EntrySensor.isBatteryLow()) ? char.BATTERY_LEVEL_NORMAL : char.BATTERY_LEVEL_LOW;
-
     return batteryLevel as number;
   }
 }

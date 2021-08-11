@@ -1,4 +1,4 @@
-import { Service, PlatformAccessory } from 'homebridge';
+import { Service, PlatformAccessory, CharacteristicValue } from 'homebridge';
 
 import { EufySecurityPlatform } from '../platform';
 import { DeviceAccessory } from './Device';
@@ -42,12 +42,12 @@ export class SmartLockAccessory extends DeviceAccessory {
     // create handlers for required characteristics
     this.service
       .getCharacteristic(this.platform.Characteristic.LockCurrentState)
-      .on('get', this.handleLockCurrentStateGet.bind(this));
+      .onGet(this.handleLockCurrentStateGet.bind(this));
 
     this.service
       .getCharacteristic(this.platform.Characteristic.LockTargetState)
-      .on('get', this.handleLockTargetStateGet.bind(this))
-      .on('set', this.handleLockTargetStateSet.bind(this));
+      .onGet(this.handleLockTargetStateGet.bind(this))
+      .onSet(this.handleLockTargetStateSet.bind(this));
 
     this.SmartLock.on('locked', (device: Device, lock: boolean) =>
       this.onDeviceLockPushNotification(device, lock),
@@ -69,31 +69,31 @@ export class SmartLockAccessory extends DeviceAccessory {
       // create handlers for required characteristics of Battery service
       batteryService
         .getCharacteristic(this.platform.Characteristic.BatteryLevel)
-        .on('get', this.handleBatteryLevelGet.bind(this));
+        .onGet(this.handleBatteryLevelGet.bind(this));
     }
   }
 
   /**
    * Handle requests to get the current value of the 'Security System Current State' characteristic
    */
-  async handleLockCurrentStateGet(callback) {
+  async handleLockCurrentStateGet(): Promise<CharacteristicValue> {
     const lockStatus = this.getLockStatus();
     this.platform.log.debug(this.accessory.displayName, 'Triggered GET LockCurrentState', lockStatus);
-    callback(null, lockStatus as number);
+    return lockStatus as number;
   }
 
-  async handleLockTargetStateGet(callback) {
+  async handleLockTargetStateGet(): Promise<CharacteristicValue> {
     const lockStatus = this.getLockStatus(false);
     this.platform.log.debug(this.accessory.displayName, 'Triggered GET LockTargetState', lockStatus);
-    callback(null, lockStatus as number);
+    return lockStatus as number;
   }
 
-  async handleLockTargetStateSet(callback) {
+  async handleLockTargetStateSet() {
     this.platform.log.warn(this.accessory.displayName, 'Open/Close trigger from homekit is not implemented');
   }
 
   getLockStatus(current = true) {
-    const lockStatus = (this.SmartLock.isLocked());
+    const lockStatus = this.SmartLock.isLocked();
     return this.convertlockStatusCode(lockStatus.value, current);
   }
 
@@ -117,9 +117,11 @@ export class SmartLockAccessory extends DeviceAccessory {
       case false:
       case 3:
         return characteristic.UNSECURED;
+      // case 3:
+      //   return characteristic.JAMMED;
       default:
         this.platform.log.warn(this.accessory.displayName, 'Something wrong on the lockstatus feedback');
-        return characteristic.UNSECURED;
+        return this.platform.Characteristic.LockCurrentState.UNKNOWN;
     }
   }
 
@@ -143,13 +145,13 @@ export class SmartLockAccessory extends DeviceAccessory {
     return batteryLevel.value as number;
   }
 
-  async handleBatteryLevelGet(callback) {
+  async handleBatteryLevelGet(): Promise<CharacteristicValue> {
     this.platform.log.debug(this.accessory.displayName, 'Triggered GET BatteryLevel');
 
     // set this to a valid value for SecuritySystemCurrentState
     const currentValue = await this.getCurrentBatteryLevel();
     this.platform.log.debug(this.accessory.displayName, 'Handle Current battery level:  -- ', currentValue);
 
-    callback(null, currentValue);
+    return currentValue as number;
   }
 }

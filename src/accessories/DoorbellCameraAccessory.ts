@@ -1,13 +1,12 @@
 import { Service, PlatformAccessory } from 'homebridge';
 
 import { EufySecurityPlatform } from '../platform';
-import { DeviceAccessory } from './Device';
 
 // import { HttpService, LocalLookupService, DeviceClientService, CommandType } from 'eufy-node-client';
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore  
-import { DoorbellCamera, Device, DeviceType, PropertyValue } from 'eufy-security-client';
+import { DoorbellCamera, Device } from 'eufy-security-client';
 import { CameraAccessory } from './CameraAccessory';
 
 /**
@@ -57,18 +56,14 @@ export class DoorbellCameraAccessory extends CameraAccessory {
     // create handlers for required characteristics of Battery service
     this.doorbellService
       .getCharacteristic(this.platform.Characteristic.ProgrammableSwitchEvent)
-      .on('get', this.handleProgrammableSwitchEventGet.bind(this));
-  
+      .onGet(() => null);
+
     this.DoorbellCamera.on('rings', (device: Device, state: boolean) =>
       this.onDeviceRingsPushNotification(),
     );
 
     this.doorbellService.setPrimaryService(true);
 
-  }
-
-  async handleProgrammableSwitchEventGet(callback) {
-    callback(null, null);
   }
 
   private onDeviceRingsPushNotification(): void {

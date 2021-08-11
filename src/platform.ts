@@ -212,7 +212,7 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
       // Checking Device Type if it's not a station, it will be the same serial number we will find 
       // in Device list and it will create the same UUID
       if (device.deviceIdentifier.type !== DeviceType.STATION && device.deviceIdentifier.station) {
-        uuid = this.api.hap.uuid.generate('s_'+device.deviceIdentifier.uniqueId);
+        uuid = this.api.hap.uuid.generate('s_' + device.deviceIdentifier.uniqueId);
         this.log.debug('This device is not a station. Generating a new UUID to avoid any duplicate issue');
       }
 
@@ -236,6 +236,7 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
               existingAccessory,
               device.deviceIdentifier.type,
               device.eufyDevice,
+              device.deviceIdentifier.station,
             )
           ) {
             this.log.debug(
@@ -277,6 +278,7 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
             accessory,
             device.deviceIdentifier.type,
             device.eufyDevice,
+            device.deviceIdentifier.station,
           )
         ) {
           this.log.error(
@@ -297,11 +299,16 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
     accessory: PlatformAccessory,
     type: number,
     device,
+    station: boolean,
   ) {
+    
+    this.log.debug(accessory.displayName, 'UUID:', accessory.UUID);
+
+    if (station) {
+      new StationAccessory(this, accessory, device as Station);
+      return true;
+    }
     switch (type) {
-      case DeviceType.STATION:
-        new StationAccessory(this, accessory, device as Station);
-        break;
       case DeviceType.MOTION_SENSOR:
         new MotionSensorAccessory(this, accessory, device as MotionSensor);
         break;
