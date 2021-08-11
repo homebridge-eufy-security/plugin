@@ -243,7 +243,7 @@ export class StationAccessory {
     value: string,
     modified: number,
   ): void {
-    this.platform.log.info(
+    this.platform.log.debug(
       'Handle Station Raw Property Changes:  -- ',
       type,
       value,
@@ -256,7 +256,7 @@ export class StationAccessory {
     name: string,
     value: PropertyValue,
   ): void {
-    this.platform.log.info(
+    this.platform.log.debug(
       'Handle Station Property Changes:  -- ',
       name,
       value,
