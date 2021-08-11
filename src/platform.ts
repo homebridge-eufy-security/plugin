@@ -20,7 +20,6 @@ import { DoorbellCameraAccessory } from './accessories/DoorbellCameraAccessory';
 import { KeypadAccessory } from './accessories/KeypadAccessory';
 import { SmartLockAccessory } from './accessories/SmartLockAccessory';
 
-
 import {
   EufySecurity,
   EufySecurityConfig,
@@ -142,8 +141,11 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
     this.log.debug('EufyClient connected ' + this.eufyClient.isConnected());
 
     if (!this.eufyClient.isConnected()) {
+      this.log.console.error('Not connected can\'t continue!');
       return;
     }
+
+    this.log.debug(this.eufyClient);
 
     await this.refreshData(this.eufyClient);
 
@@ -165,6 +167,11 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
         this.log.debug('Device ignored');
         continue;
       }
+
+      // if(station.getDeviceType() !== DeviceType.STATION){
+      //   this.log.debug('Device is not a station');
+      //   continue;
+      // }
 
       const deviceContainer: DeviceContainer = {
         deviceIdentifier: {
@@ -250,7 +257,7 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
               device.deviceIdentifier.station,
             )
           ) {
-            this.log.debug(
+            this.log.info(
               'Restoring existing accessory from cache:',
               existingAccessory.displayName,
             );
@@ -264,7 +271,7 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
           this.api.unregisterPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [
             existingAccessory,
           ]);
-          this.log.debug(
+          this.log.info(
             'Removing existing accessory from cache:',
             existingAccessory.displayName,
           );
@@ -292,7 +299,7 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
             device.deviceIdentifier.station,
           )
         ) {
-          this.log.error(
+          this.log.info(
             'Adding new accessory:',
             device.deviceIdentifier.displayName,
           );
@@ -315,11 +322,10 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
 
     this.log.debug(accessory.displayName, 'UUID:', accessory.UUID);
 
-    if (station) {
-      new StationAccessory(this, accessory, device as Station);
-      return true;
-    }
     switch (type) {
+      case DeviceType.STATION:
+        new StationAccessory(this, accessory, device as Station);
+        break;
       case DeviceType.MOTION_SENSOR:
         new MotionSensorAccessory(this, accessory, device as MotionSensor);
         break;
@@ -354,6 +360,11 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
         new SmartLockAccessory(this, accessory, device as Lock);
         break;
       default:
+        if (station) {
+          this.log.warn(accessory.displayName, 'looks station but it\'s not could imply some errors', 'Type:', type);
+          new StationAccessory(this, accessory, device as Station);
+          return true;
+        }
         this.log.warn(
           'This accessory is not compatible with HomeBridge Eufy Security plugin:',
           accessory.displayName,
