@@ -259,7 +259,7 @@
         document.getElementById('hkAway').value = pluginConfig.hkAway || "0";
         document.getElementById('hkNight').value = pluginConfig.hkNight || "3";
         document.getElementById('hkOff').value = pluginConfig.hkOff || "63";
-        document.getElementById('enableDetailedLogging').value = pluginConfig.enableDetailedLogging;
+        document.getElementById('enableDetailedLogging').value = pluginConfig.enableDetailedLogging || "0";
         document.getElementById('ignoreStations').value = pluginConfig.ignoreStations;
         document.getElementById('ignoreDevices').value = pluginConfig.ignoreDevices;
         homebridge.fixScrollHeight();
@@ -290,16 +290,18 @@
         document.getElementById('pollingValue').innerHTML = pollingValue + ' minutes';
     }
 
-    function AddOrRemoveStationsIgnoreList(item) {
+    async function AddOrRemoveStationsIgnoreList(item) {
         pluginConfig.ignoreStations.indexOf(item) === -1 ? pluginConfig.ignoreStations.push(item) : pluginConfig.ignoreStations.splice(pluginConfig.ignoreStations.indexOf(item), 1);
         document.getElementById('ignoreStations').value = pluginConfig.ignoreStations.toString();
-        homebridge.updatePluginConfig([pluginConfig]);
+        await homebridge.updatePluginConfig([pluginConfig]);
+        await homebridge.savePluginConfig();
     }
 
-    function AddOrRemoveDevicesIgnoreList(item) {
+    async function AddOrRemoveDevicesIgnoreList(item) {
         pluginConfig.ignoreDevices.indexOf(item) === -1 ? pluginConfig.ignoreDevices.push(item) : pluginConfig.ignoreDevices.splice(pluginConfig.ignoreDevices.indexOf(item), 1);
         document.getElementById('ignoreDevices').value = pluginConfig.ignoreDevices.toString();
-        homebridge.updatePluginConfig([pluginConfig]);
+        await homebridge.updatePluginConfig([pluginConfig]);
+        await homebridge.savePluginConfig();
     }
 
     function isStationsIgnored(uniqueId) {
@@ -316,11 +318,12 @@
         return (r) ? true : false;
     }
 
-    function list_stations_devices(stations) {
+    async function list_stations_devices(stations) {
         pluginConfig.username = document.getElementById('usernameInput1').value;
         pluginConfig.password = document.getElementById('passwordInput1').value;
 
-        homebridge.updatePluginConfig([pluginConfig]);
+        await homebridge.updatePluginConfig([pluginConfig]);
+        await homebridge.savePluginConfig();
 
         const s_div = document.getElementById('stations');
 
@@ -386,25 +389,25 @@
 
         stations.forEach(function (item) {
 
-            document.getElementById(`st_${item.uniqueId}`).addEventListener('change', e => {
+            document.getElementById(`st_${item.uniqueId}`).addEventListener('change', async e => {
                 if (e.target.checked) {
                     document.getElementById(`station_${item.uniqueId}`).setAttribute('class', 'divTableBody checked');
                 } else {
                     document.getElementById(`station_${item.uniqueId}`).setAttribute('class', 'divTableBody');
                 }
-                AddOrRemoveStationsIgnoreList(item.uniqueId);
+                await AddOrRemoveStationsIgnoreList(item.uniqueId);
             });
 
             item.devices.forEach(function (item) {
 
-                document.getElementById(`dev_${item.uniqueId}`).addEventListener('change', e => {
+                document.getElementById(`dev_${item.uniqueId}`).addEventListener('change', async e => {
                     if (e.target.checked) {
                         document.getElementById(`device_${item.uniqueId}`).setAttribute('class', 'divTableRow checked');
 
                     } else {
                         document.getElementById(`device_${item.uniqueId}`).setAttribute('class', 'divTableRow');
                     }
-                    AddOrRemoveDevicesIgnoreList(item.uniqueId);
+                    await AddOrRemoveDevicesIgnoreList(item.uniqueId);
                 });
             });
 
@@ -414,6 +417,13 @@
     (async () => {
         // get the plugin config blocks (this returns an array)
         const pluginConfigBlocks = await homebridge.getPluginConfig();
+
+        if (!pluginConfigBlocks.length || !pluginConfigBlocks[0].ignoreStations || !pluginConfigBlocks[0].ignoreDevices) {
+            pluginConfigBlocks[0].ignoreStations = [];
+            pluginConfigBlocks[0].ignoreDevices = [];
+            await homebridge.updatePluginConfig([pluginConfigBlocks[0]]);
+            await homebridge.savePluginConfig();
+        }
 
         if (!pluginConfigBlocks.length || !pluginConfigBlocks[0].username || !pluginConfigBlocks[0].password) {
             document.getElementById('setupRequired').style.display = 'block';
@@ -431,13 +441,14 @@
     })();
 
     // watch for changes to the config form
-    document.getElementById('configForm').addEventListener('change', () => {
+    document.getElementById('configForm').addEventListener('change', async () => {
         // extract the values from the form - stored in var pluginConfig.
         updateConfigFromForm();
         adjustPollingValue()
 
         // send the current value to the UI.
-        homebridge.updatePluginConfig([pluginConfig]);
+        await homebridge.updatePluginConfig([pluginConfig]);
+        await homebridge.savePluginConfig();
     });
 
 
@@ -494,8 +505,8 @@
 
     // step 1 submit handler
     document.getElementById('step1Submit').addEventListener('click', async () => {
-        const usernameValue = document.getElementById('usernameInput').value;
-        const passwordValue = document.getElementById('passwordInput').value;
+        const usernameValue = document.getElementById('usernameInput1').value;
+        const passwordValue = document.getElementById('passwordInput1').value;
 
         if (!usernameValue || !passwordValue) {
             homebridge.toast.error('Please enter your username and password.', 'Error');
@@ -517,7 +528,7 @@
                 document.getElementById('step2').style.display = 'block';
             if (response.result == 2) {
                 document.getElementById('step3').style.display = 'block';
-                list_stations_devices(response.stations);
+                await list_stations_devices(response.stations);
             }
         } catch (e) {
             homebridge.hideSpinner()
@@ -550,7 +561,7 @@
             }
             if (response.result == 2) {
                 document.getElementById('step3').style.display = 'block';
-                list_stations_devices(response.stations);
+                await list_stations_devices(response.stations);
             }
 
         } catch (e) {
