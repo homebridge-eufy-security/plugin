@@ -53,7 +53,7 @@ export class CameraAccessory extends DeviceAccessory {
       this.service = this.motionFunction(accessory);
     }
 
-    if (typeof this.Camera.hasBattery === 'function') {
+    if (typeof this.Camera.hasBattery === 'function' && this.Camera.hasBattery()) {
       this.platform.log.debug(this.accessory.displayName, 'has a battery, so append batteryService characteristic to him.');
 
       const batteryService =
