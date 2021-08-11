@@ -215,7 +215,7 @@ export class CameraAccessory extends DeviceAccessory {
   async handleBatteryLevelGet(): Promise<CharacteristicValue> {
     const currentValue = await this.getCurrentBatteryLevel();
     this.platform.log.debug(this.accessory.displayName, 'Triggered GET BatteryLevel:', currentValue);
-    return currentValue;
+    return currentValue as number;
   }
 
   async isMotionDetected() {
