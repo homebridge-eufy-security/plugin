@@ -207,7 +207,7 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
       // generate a unique id for the accessory this should be generated from
       // something globally unique, but constant, for example, the device serial
       // number or MAC address
-      var uuid = this.api.hap.uuid.generate(device.deviceIdentifier.uniqueId);
+      let uuid = this.api.hap.uuid.generate(device.deviceIdentifier.uniqueId);
 
       // Checking Device Type if it's not a station, it will be the same serial number we will find 
       // in Device list and it will create the same UUID
@@ -301,7 +301,7 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
     device,
     station: boolean,
   ) {
-    
+
     this.log.debug(accessory.displayName, 'UUID:', accessory.UUID);
 
     if (station) {
