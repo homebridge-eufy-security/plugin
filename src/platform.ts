@@ -93,7 +93,7 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
         streams: [{
           level: (this.config.enableDetailedLogging === 2) ? 'trace' : 'debug',
           type: 'raw',
-          stream: prettyStdOut
+          stream: prettyStdOut,
         }],
       });
       this.log.info('Eufy Security Plugin: enableDetailedLogging on');
