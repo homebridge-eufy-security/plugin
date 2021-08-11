@@ -44,6 +44,7 @@ interface DeviceIdentifier {
   uniqueId: string;
   displayName: string;
   type: number;
+  station: boolean;
 }
 
 interface DeviceContainer {
@@ -135,37 +136,33 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
 
     await this.refreshData(this.eufyClient);
 
-    const eufyHubs = await this.eufyClient.getStations();
-    this.log.debug('Found ' + eufyHubs.length + ' hubs.');
+    const eufyStations = await this.eufyClient.getStations();
+    this.log.debug('Found ' + eufyStations.length + ' stations.');
 
     const devices: Array<DeviceContainer> = [];
 
-    for (const hub of eufyHubs) {
+    for (const station of eufyStations) {
       this.log.debug(
-        'Found hub',
-        hub.getSerial(),
-        hub.getName(),
-        DeviceType[hub.getDeviceType()],
-        hub.getLANIPAddress(),
+        'Found Station',
+        station.getSerial(),
+        station.getName(),
+        DeviceType[station.getDeviceType()],
+        station.getLANIPAddress(),
       );
 
-      if (hub.getDeviceType() !== DeviceType.STATION) {
-        this.log.debug('This device is not a station hubs.');
-        continue;
-      }
-
-      if (this.config.ignoreStations.indexOf(hub.getSerial()) !== -1) {
+      if (this.config.ignoreStations.indexOf(station.getSerial()) !== -1) {
         this.log.debug('Device ignored');
         continue;
       }
 
       const deviceContainer: DeviceContainer = {
         deviceIdentifier: {
-          uniqueId: hub.getSerial(),
-          displayName: hub.getName(),
-          type: hub.getDeviceType(),
+          uniqueId: station.getSerial(),
+          displayName: station.getName(),
+          type: station.getDeviceType(),
+          station: true,
         } as DeviceIdentifier,
-        eufyDevice: hub,
+        eufyDevice: station,
       };
       devices.push(deviceContainer);
     }
@@ -196,6 +193,7 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
           uniqueId: device.getSerial(),
           displayName: device.getName(),
           type: device.getDeviceType(),
+          station: false,
         } as DeviceIdentifier,
         eufyDevice: device,
       };
@@ -209,7 +207,14 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
       // generate a unique id for the accessory this should be generated from
       // something globally unique, but constant, for example, the device serial
       // number or MAC address
-      const uuid = this.api.hap.uuid.generate(device.deviceIdentifier.uniqueId);
+      let uuid = this.api.hap.uuid.generate(device.deviceIdentifier.uniqueId);
+
+      // Checking Device Type if it's not a station, it will be the same serial number we will find 
+      // in Device list and it will create the same UUID
+      if (device.deviceIdentifier.type !== DeviceType.STATION && device.deviceIdentifier.station) {
+        uuid = this.api.hap.uuid.generate('s_' + device.deviceIdentifier.uniqueId);
+        this.log.debug('This device is not a station. Generating a new UUID to avoid any duplicate issue');
+      }
 
       // see if an accessory with the same uuid has already been registered and restored from
       // the cached devices we stored in the `configureAccessory` method above
@@ -231,6 +236,7 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
               existingAccessory,
               device.deviceIdentifier.type,
               device.eufyDevice,
+              device.deviceIdentifier.station,
             )
           ) {
             this.log.debug(
@@ -272,6 +278,7 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
             accessory,
             device.deviceIdentifier.type,
             device.eufyDevice,
+            device.deviceIdentifier.station,
           )
         ) {
           this.log.error(
@@ -292,11 +299,16 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
     accessory: PlatformAccessory,
     type: number,
     device,
+    station: boolean,
   ) {
+
+    this.log.debug(accessory.displayName, 'UUID:', accessory.UUID);
+
+    if (station) {
+      new StationAccessory(this, accessory, device as Station);
+      return true;
+    }
     switch (type) {
-      case DeviceType.STATION:
-        new StationAccessory(this, accessory, device as Station);
-        break;
       case DeviceType.MOTION_SENSOR:
         new MotionSensorAccessory(this, accessory, device as MotionSensor);
         break;
