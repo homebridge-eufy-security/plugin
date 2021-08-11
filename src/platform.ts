@@ -37,8 +37,9 @@ import {
   // @ts-ignore 
 } from 'eufy-security-client';
 // import { throws } from 'assert';
-import bunyan from 'bunyan';
 
+import bunyan from 'bunyan';
+import PrettyStream from 'bunyan-prettystream';
 
 interface DeviceIdentifier {
   uniqueId: string;
@@ -84,19 +85,29 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
     } as EufySecurityConfig;
 
     if (this.config.enableDetailedLogging >= 1) {
-      this.log = bunyan.createLogger({ name: 'eufyLog' });
-      this.log.level('debug');
+      const prettyStdOut = new PrettyStream();
+      prettyStdOut.pipe(process.stdout);
+
+      this.log = bunyan.createLogger({
+        name: 'ef',
+        hostname: 'i',
+        streams: [{
+          level: (this.config.enableDetailedLogging === 2) ? 'trace' : 'debug',
+          type: 'raw',
+          stream: prettyStdOut
+        }],
+      });
       this.log.info('Eufy Security Plugin: enableDetailedLogging on');
     } else {
       this.log = hblog;
     }
 
-    // Removing the ability to set Off(6) waiting Bropat feedback bropat/eufy-security-client#27
-    this.config.hkOff = (this.config.hkOff === 6) ? 63 : this.config.hkOff;
-
     this.eufyClient = (this.config.enableDetailedLogging === 2)
       ? new EufySecurity(this.eufyConfig, this.log)
       : new EufySecurity(this.eufyConfig);
+
+    // Removing the ability to set Off(6) waiting Bropat feedback bropat/eufy-security-client#27
+    this.config.hkOff = (this.config.hkOff === 6) ? 63 : this.config.hkOff;
 
     // When this event is fired it means Homebridge has restored all cached accessories from disk.
     // Dynamic Platform plugins should only register new accessories after this event was fired,
