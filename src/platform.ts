@@ -168,11 +168,6 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
         continue;
       }
 
-      // if(station.getDeviceType() !== DeviceType.STATION){
-      //   this.log.debug('Device is not a station');
-      //   continue;
-      // }
-
       const deviceContainer: DeviceContainer = {
         deviceIdentifier: {
           uniqueId: station.getSerial(),
@@ -322,6 +317,14 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
 
     this.log.debug(accessory.displayName, 'UUID:', accessory.UUID);
 
+    if (station) {
+      if (type !== DeviceType.STATION) {
+        this.log.warn(accessory.displayName, 'looks station but it\'s not could imply some errors', 'Type:', type);
+        new StationAccessory(this, accessory, device as Station);
+        return true;
+      }
+    }
+
     switch (type) {
       case DeviceType.STATION:
         new StationAccessory(this, accessory, device as Station);
@@ -360,11 +363,6 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
         new SmartLockAccessory(this, accessory, device as Lock);
         break;
       default:
-        if (station) {
-          this.log.warn(accessory.displayName, 'looks station but it\'s not could imply some errors', 'Type:', type);
-          new StationAccessory(this, accessory, device as Station);
-          return true;
-        }
         this.log.warn(
           'This accessory is not compatible with HomeBridge Eufy Security plugin:',
           accessory.displayName,
