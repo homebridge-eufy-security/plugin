@@ -38,79 +38,102 @@ export class CameraAccessory extends DeviceAccessory {
 
     this.motion_triggered = false;
 
-    if (this.platform.config.enableCamera || this.Camera.isDoorbell()) {
-      this.platform.log.debug(this.accessory.displayName, 'has a camera');
-      this.service = this.cameraFunction(accessory);
-      this.MotionService = this.motionFunction(accessory);
+    try {
+      if (this.platform.config.enableCamera || (typeof this.Camera.isDoorbell === 'function' && this.Camera.isDoorbell())) {
+        this.platform.log.debug(this.accessory.displayName, 'has a camera');
+        try {
+          this.service = this.cameraFunction(accessory);
+          this.MotionService = this.motionFunction(accessory);
 
-      //video stream (work in progress)
+          //video stream (work in progress)
 
-      const delegate = new EufyCameraStreamingDelegate(this.platform, this.Camera);
-      accessory.configureController(delegate.controller);
-
-    } else {
-      this.platform.log.debug(this.accessory.displayName, 'has a motion sensor.');
-      this.service = this.motionFunction(accessory);
+          const delegate = new EufyCameraStreamingDelegate(this.platform, this.Camera);
+          accessory.configureController(delegate.controller);
+        } catch (Error) {
+          this.platform.log.error(this.accessory.displayName, 'raise error to check and attach livestream function.', Error);
+        }
+      } else {
+        this.platform.log.debug(this.accessory.displayName, 'has a motion sensor.');
+        try {
+          this.service = this.motionFunction(accessory);
+        } catch (Error) {
+          this.platform.log.error(this.accessory.displayName, 'raise error to check and attach motion function.', Error);
+        }
+      }
+    } catch (Error) {
+      this.platform.log.error(this.accessory.displayName, 'has a motion sensor.', Error);
     }
 
-    if (typeof this.Camera.hasBattery === 'function' && this.Camera.hasBattery()) {
-      this.platform.log.debug(this.accessory.displayName, 'has a battery, so append batteryService characteristic to him.');
+    try {
+      if (typeof this.Camera.hasBattery === 'function' && this.Camera.hasBattery()) {
+        this.platform.log.debug(this.accessory.displayName, 'raise error to check and attach livestream.');
 
-      const batteryService =
-        this.accessory.getService(this.platform.Service.Battery) ||
-        this.accessory.addService(this.platform.Service.Battery);
+        const batteryService =
+          this.accessory.getService(this.platform.Service.Battery) ||
+          this.accessory.addService(this.platform.Service.Battery);
 
-      batteryService.setCharacteristic(
-        this.platform.Characteristic.Name,
-        accessory.displayName,
-      );
+        batteryService.setCharacteristic(
+          this.platform.Characteristic.Name,
+          accessory.displayName,
+        );
 
-      // create handlers for required characteristics of Battery service
-      batteryService
-        .getCharacteristic(this.characteristic.BatteryLevel)
-        .onGet(this.handleBatteryLevelGet.bind(this));
-    } else {
-      this.platform.log.debug(this.accessory.displayName, 'Looks like not compatible with hasBattery');
+        // create handlers for required characteristics of Battery service
+        batteryService
+          .getCharacteristic(this.characteristic.BatteryLevel)
+          .onGet(this.handleBatteryLevelGet.bind(this));
+      } else {
+        this.platform.log.debug(this.accessory.displayName, 'Looks like not compatible with hasBattery');
+      }
+    } catch (Error) {
+      this.platform.log.error(this.accessory.displayName, 'raise error to check and attach a battery.', Error);
     }
+    
+    try {
+      if (typeof this.Camera.isEnabled === 'function') {
+        this.platform.log.debug(this.accessory.displayName, 'has a isEnabled, so append switchEnabledService characteristic to him.');
 
-    if (typeof this.Camera.isEnabled === 'function') {
-      this.platform.log.debug(this.accessory.displayName, 'has a isEnabled, so append switchEnabledService characteristic to him.');
+        const switchEnabledService =
+          this.accessory.getService('Enabled') ||
+          this.accessory.addService(this.platform.Service.Switch, 'Enabled', 'enabled');
 
-      const switchEnabledService =
-        this.accessory.getService('Enabled') ||
-        this.accessory.addService(this.platform.Service.Switch, 'Enabled', 'enabled');
+        switchEnabledService.setCharacteristic(
+          this.platform.Characteristic.Name,
+          accessory.displayName + ' Enabled',
+        );
 
-      switchEnabledService.setCharacteristic(
-        this.platform.Characteristic.Name,
-        accessory.displayName + ' Enabled',
-      );
+        switchEnabledService.getCharacteristic(this.characteristic.On)
+          .onGet(this.handleEnableGet.bind(this))
+          .onSet(this.handleEnableSet.bind(this));
 
-      switchEnabledService.getCharacteristic(this.characteristic.On)
-        .onGet(this.handleEnableGet.bind(this))
-        .onSet(this.handleEnableSet.bind(this));
-
-    } else {
-      this.platform.log.debug(this.accessory.displayName, 'Looks like not compatible with isEnabled');
+      } else {
+        this.platform.log.debug(this.accessory.displayName, 'Looks like not compatible with isEnabled');
+      }
+    } catch (Error) {
+      this.platform.log.error(this.accessory.displayName, 'raise error to check and attach switchEnabledService.', Error);
     }
+  
+    try {
+      if (typeof this.Camera.isMotionDetectionEnabled === 'function') {
+        this.platform.log.debug(this.accessory.displayName, 'has a isMotionDetectionEnabled, so append switchMotionService characteristic to him.');
 
-    if (typeof this.Camera.isMotionDetectionEnabled === 'function') {
-      this.platform.log.debug(this.accessory.displayName, 'has a isMotionDetectionEnabled, so append switchMotionService characteristic to him.');
+        const switchMotionService =
+          this.accessory.getService('Motion') ||
+          this.accessory.addService(this.platform.Service.Switch, 'Motion', 'motion');
 
-      const switchMotionService =
-        this.accessory.getService('Motion') ||
-        this.accessory.addService(this.platform.Service.Switch, 'Motion', 'motion');
+        switchMotionService.setCharacteristic(
+          this.platform.Characteristic.Name,
+          accessory.displayName + ' Motion',
+        );
 
-      switchMotionService.setCharacteristic(
-        this.platform.Characteristic.Name,
-        accessory.displayName + ' Motion',
-      );
+        switchMotionService.getCharacteristic(this.characteristic.On)
+          .onGet(this.handleMotionOnGet.bind(this))
+          .onSet(this.handleMotionOnSet.bind(this));
 
-      switchMotionService.getCharacteristic(this.characteristic.On)
-        .onGet(this.handleMotionOnGet.bind(this))
-        .onSet(this.handleMotionOnSet.bind(this));
-
-    } else {
-      this.platform.log.debug(this.accessory.displayName, 'Looks like not compatible with isMotionDetectionEnabled');
+      } else {
+        this.platform.log.debug(this.accessory.displayName, 'Looks like not compatible with isMotionDetectionEnabled');
+      }
+    } catch (Error) {
+      this.platform.log.error(this.accessory.displayName, 'raise error to check and attach switchMotionService.', Error);
     }
   }
 
