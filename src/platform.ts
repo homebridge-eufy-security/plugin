@@ -1,3 +1,4 @@
+/* eslint @typescript-eslint/no-var-requires: "off" */
 import {
   API,
   DynamicPlatformPlugin,
@@ -87,9 +88,11 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
       const prettyStdOut = new PrettyStream();
       prettyStdOut.pipe(process.stdout);
 
+      const plugin = require('../package.json');
+
       this.log = bunyan.createLogger({
         name: 'ef',
-        hostname: 'i',
+        hostname: 'v'+plugin.version,
         streams: [{
           level: (this.config.enableDetailedLogging === 2) ? 'trace' : 'debug',
           type: 'raw',
@@ -144,8 +147,6 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
       this.log.console.error('Not connected can\'t continue!');
       return;
     }
-
-    this.log.debug(this.eufyClient);
 
     await this.refreshData(this.eufyClient);
 
