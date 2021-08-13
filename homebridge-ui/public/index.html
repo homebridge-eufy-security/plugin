@@ -249,19 +249,20 @@
 
     function updateFormFromConfig() {
         // populate the form
-        document.getElementById('usernameInput').value = pluginConfig.username;
-        document.getElementById('passwordInput').value = pluginConfig.password;
-        document.getElementById('usernameInput1').value = pluginConfig.username;
-        document.getElementById('passwordInput1').value = pluginConfig.password;
-        document.getElementById('enableCamera').checked = pluginConfig.enableCamera;
+
+        document.getElementById('usernameInput').value = pluginConfig.username || '';
+        document.getElementById('passwordInput').value = pluginConfig.password || '';
+        document.getElementById('usernameInput1').value = pluginConfig.username || '';
+        document.getElementById('passwordInput1').value = pluginConfig.password || '';
+        document.getElementById('enableCamera').checked = pluginConfig.enableCamera || '';
         document.getElementById('pollingIntervalMinutes').value = !pluginConfig.pollingIntervalMinutes && pluginConfig.pollingIntervalMinutes !== 0 ? 30 : pluginConfig.pollingIntervalMinutes;
         document.getElementById('hkHome').value = pluginConfig.hkHome || "1";
         document.getElementById('hkAway').value = pluginConfig.hkAway || "0";
         document.getElementById('hkNight').value = pluginConfig.hkNight || "3";
         document.getElementById('hkOff').value = pluginConfig.hkOff || "63";
         document.getElementById('enableDetailedLogging').value = pluginConfig.enableDetailedLogging || "0";
-        document.getElementById('ignoreStations').value = pluginConfig.ignoreStations;
-        document.getElementById('ignoreDevices').value = pluginConfig.ignoreDevices;
+        document.getElementById('ignoreStations').value = pluginConfig.ignoreStations || '';
+        document.getElementById('ignoreDevices').value = pluginConfig.ignoreDevices || '';
         homebridge.fixScrollHeight();
     }
 
@@ -321,6 +322,11 @@
     async function list_stations_devices(stations) {
         pluginConfig.username = document.getElementById('usernameInput1').value;
         pluginConfig.password = document.getElementById('passwordInput1').value;
+        document.getElementById('usernameInput').value = document.getElementById('usernameInput1').value;
+        document.getElementById('passwordInput').value = document.getElementById('passwordInput1').value;
+
+        pluginConfig.ignoreStations = pluginConfig.ignoreStations || [];
+        pluginConfig.ignoreDevices = pluginConfig.ignoreDevices || [];
 
         await homebridge.updatePluginConfig([pluginConfig]);
         await homebridge.savePluginConfig();
@@ -417,13 +423,6 @@
     (async () => {
         // get the plugin config blocks (this returns an array)
         const pluginConfigBlocks = await homebridge.getPluginConfig();
-
-        if (!pluginConfigBlocks.length || !pluginConfigBlocks[0].ignoreStations || !pluginConfigBlocks[0].ignoreDevices) {
-            pluginConfigBlocks[0].ignoreStations = [];
-            pluginConfigBlocks[0].ignoreDevices = [];
-            await homebridge.updatePluginConfig([pluginConfigBlocks[0]]);
-            await homebridge.savePluginConfig();
-        }
 
         if (!pluginConfigBlocks.length || !pluginConfigBlocks[0].username || !pluginConfigBlocks[0].password) {
             document.getElementById('setupRequired').style.display = 'block';
