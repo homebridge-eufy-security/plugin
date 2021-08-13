@@ -89,7 +89,7 @@ export class SmartLockAccessory extends DeviceAccessory {
   }
 
   async handleLockTargetStateSet() {
-    this.platform.log.warn(this.accessory.displayName, 'Open/Close trigger from homekit is not implemented');
+    this.platform.log.warn(this.accessory.displayName, 'Open/Close trigger is not implemented');
   }
 
   getLockStatus(current = true) {
