@@ -142,7 +142,7 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
       await this.eufyClient.connect();
       this.log.debug('EufyClient connected ' + this.eufyClient.isConnected());
     } catch (e) {
-      this.log.error('Error authenticating Eufy : ', e)
+      this.log.error('Error authenticating Eufy : ', e);
     }
 
     if (!this.eufyClient.isConnected()) {
@@ -327,7 +327,11 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
 
     this.log.debug(accessory.displayName, 'UUID:', accessory.UUID);
 
-    // Under development area
+    /* Under development area
+
+    This need to be rewrite 
+
+    */
 
     if (station) {
       if (type !== DeviceType.STATION) {
