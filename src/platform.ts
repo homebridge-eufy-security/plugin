@@ -92,7 +92,7 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
 
       this.log = bunyan.createLogger({
         name: 'ef',
-        hostname: 'v'+plugin.version,
+        hostname: 'v' + plugin.version,
         streams: [{
           level: (this.config.enableDetailedLogging === 2) ? 'trace' : 'debug',
           type: 'raw',
@@ -138,10 +138,12 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
   async discoverDevices() {
     this.log.debug('discoveringDevices');
 
-    await this.eufyClient
-      .connect()
-      .catch((e) => this.log.error('Error authenticating Eufy : ', e));
-    this.log.debug('EufyClient connected ' + this.eufyClient.isConnected());
+    try {
+      await this.eufyClient.connect();
+      this.log.debug('EufyClient connected ' + this.eufyClient.isConnected());
+    } catch (e) {
+      this.log.error('Error authenticating Eufy : ', e);
+    }
 
     if (!this.eufyClient.isConnected()) {
       this.log.console.error('Not connected can\'t continue!');
@@ -149,6 +151,13 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
     }
 
     await this.refreshData(this.eufyClient);
+
+    this.eufyClient.on('push connect', () => {
+      this.log.debug('Push Connected!');
+    });
+    this.eufyClient.on('push close', () => {
+      this.log.warn('Push Closed!');
+    });
 
     const eufyStations = await this.eufyClient.getStations();
     this.log.debug('Found ' + eufyStations.length + ' stations.');
@@ -318,11 +327,28 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
 
     this.log.debug(accessory.displayName, 'UUID:', accessory.UUID);
 
+    /* Under development area
+
+    This need to be rewrite 
+
+    */
+
     if (station) {
       if (type !== DeviceType.STATION) {
-        this.log.warn(accessory.displayName, 'looks station but it\'s not could imply some errors', 'Type:', type);
-        new StationAccessory(this, accessory, device as Station);
-        return true;
+        // Allowing camera but not the lock nor doorbell for now
+        if (!(type === DeviceType.LOCK_BASIC
+          || type === DeviceType.LOCK_ADVANCED
+          || type === DeviceType.LOCK_BASIC_NO_FINGER
+          || type === DeviceType.LOCK_ADVANCED_NO_FINGER
+          || type === DeviceType.DOORBELL
+          || type === DeviceType.BATTERY_DOORBELL
+          || type === DeviceType.BATTERY_DOORBELL_2)) {
+          this.log.warn(accessory.displayName, 'looks station but it\'s not could imply some errors', 'Type:', type);
+          new StationAccessory(this, accessory, device as Station);
+          return true;
+        } else {
+          return false;
+        }
       }
     }
 

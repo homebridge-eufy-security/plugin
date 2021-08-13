@@ -58,7 +58,7 @@ export abstract class DeviceAccessory {
     value: string,
     modified: number,
   ): void {
-    this.platform.log.trace(
+    this.platform.log.debug(
       this.accessory.displayName,
       'Raw Property Changes:  -- ',
       type,
