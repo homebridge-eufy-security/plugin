@@ -146,7 +146,7 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
     }
 
     if (!this.eufyClient.isConnected()) {
-      this.log.console.error('Not connected can\'t continue!');
+      this.log.error('Not connected can\'t continue!');
       return;
     }
 

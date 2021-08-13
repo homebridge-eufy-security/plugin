@@ -12,8 +12,8 @@
     "url": "https://github.com/samemory/homebridge-eufy-security/issues"
   },
   "engines": {
-    "node": ">=10.17.0",
-    "homebridge": ">=1.0.0"
+    "node": ">=12.0.0",
+    "homebridge": ">=1.3.0"
   },
   "main": "dist/index.js",
   "scripts": {
@@ -41,21 +41,21 @@
   },
   "devDependencies": {
     "@types/bunyan": "^1.8.6",
-    "@types/node": "^14.14.6",
-    "@typescript-eslint/eslint-plugin": "^4.6.1",
-    "@typescript-eslint/parser": "^4.6.1",
+    "@types/node": "^14.14.31",
+    "@typescript-eslint/eslint-plugin": "^4.16.1",
+    "@typescript-eslint/parser": "^4.16.1",
     "eslint": "^7.27.0",
     "homebridge": "^1.3.4",
-    "nodemon": "^2.0.6",
+    "nodemon": "^2.0.7",
     "rimraf": "^3.0.2",
-    "ts-node": "^9.0.0",
-    "typescript": "^4.0.5"
+    "ts-node": "^9.1.1",
+    "typescript": "^4.2.2"
   },
   "eslintConfig": {
     "rules": {
       "ban-ts-comment": 0
     }
   },
-  "homepage": "https://github.com/samemory/homebridge-eufy-security#readme",
+  "homepage": "https://github.com/samemory/homebridge-eufy-security/wiki",
   "author": "Sam Emory"
 }
