@@ -1,54 +1,47 @@
-# Homebridge Plugin for Eufy Security
+<p align="center">
+   <a href="https://github.com/samemory/homebridge-eufy-security"><img src="./img/homebridge-eufy-security.png" width="456px"></a>
+</p>
+<span align="center">
 
-This repo is a work in progress so please treat it as a Beta. Contributions are welcome!
+# homebridge-eufy-security
 
-![npm](https://img.shields.io/npm/v/homebridge-eufy-security?style=flat-square)
+Homebridge plugin to control certain Eufy Security devices
 
-![npm](https://img.shields.io/npm/dt/homebridge-eufy-security)
+ [![npm](https://img.shields.io/npm/v/homebridge-eufy-security/latest?label=latest)](https://www.npmjs.com/package/homebridge-eufy-security)
+[![npm](https://img.shields.io/npm/v/homebridge-eufy-security/beta?label=beta)](https://github.com/samemory/homebridge-eufy-security/wiki/Beta-Version)
+ [![npm](https://img.shields.io/npm/dt/homebridge-eufy-security)](https://www.npmjs.com/package/homebridge-eufy-security)
 
-https://www.npmjs.com/package/homebridge-eufy-security
+</span>
 
-This project uses the eufy-security-client made by Bropat: https://github.com/bropat/eufy-security-client
+### Plugin Information
+
+- This plugin allows you to view and control your Eufy Security devices within HomeKit. The plugin:
+  - requires your Eufy Security credentials (we recommend to use [Family/Guest Account](https://support.eufylife.com/s/article/Share-Your-eufySecurity-Devices-With-Your-Family) dedicated to the plugin)
+  - we support Eufy Security OTP validation by email
+
+### Prerequisites
+
+- To use this plugin, you will need to already have [Homebridge](https://homebridge.io) (at least v1.3.4)  installed. Refer to the links for more information and installation instructions.
+- It is recommended to use the current LTS version of Node, currently v14, however Node v12 is also supported.
 
 ### Setup
 
-Recommendation: Create a second Eufy account and add it as a guest account from your primary account. Use the second account for HomeBridge only.
+- [Installation](./Installation)
+- [Configuration](.Configuration)
+- [Beta Version](./Beta-Version)
+- [Node Version](./Node-Version)
+- [Uninstallation](.Uninstallation)
 
--   Enter Eufy username and password in the configuration for HomeBridge. At this time, 2FA is not supported
--   Optional settings: You can change the default mapping of the security modes. Currently HomeKit only has the following modes and they cannot be renamed:
-    -   Home, Away, Night, Off
+### Features
 
-## Doorbell
-To use the livestream feature of the doorbell, you must install ffmpeg as well
-`npm i ffmpeg-for-homebridge`
+- [Supported Devices](./Supported-Devices)
 
-The doorbell support is still a work in progress and needs more testing. Please use [this](https://github.com/samemory/homebridge-eufy-security/discussions/32) discussion to share your experience.
+### Help
 
-## Current Support
+- [Support Request](https://github.com/samemory/homebridge-eufy-security/issues/new/choose)
+- [Changelog](https://github.com/samemory/homebridge-eufy-security/blob/master/CHANGELOG.md)
 
-| Eufy Device   | Supported Functions             | HomeKit                               |
-| ------------- | ------------------------------- | ------------------------------------- |
-| HomeBase      | Can change guard mode           | Shows as a security system in HomeKit |
-| Cameras        | Reports motion, On/Off switch           | Shows as Motion Sensor and switch                |
-| Motion Sensor | Reports motion                  | Shows as Motion Sensor                |
-| Entry Sensor  | Open/Close detection            | Shows as Contact Sensor               |
-| Doorbell      | Livestream, Ringing Notification | Shows as Doorbell                     |
-| Keypad        | Battery low level               | Shows as Switch                       |
-
-## Roadmap
-
--   Add 2FA
--   Expand doorbell features
-
-Feel free to contribute to this plugin by opening a PR!
-
-## Issues
-
-Please open a GitHub issue.
-
-This is a side project for me so I will do my best to look at issues when I can.
-
-## Supporting
+### Supporting
 
 If you appreciate this plugin and want to support me, you can do it here:
 
@@ -61,3 +54,8 @@ Also consider supporting the other contributors:
 
 
 Big thanks to **[bropat](https://github.com/bropat)** who made this possible. Please consider buying a coffee for him over here: https://ko-fi.com/bropat
+
+### Disclaimer
+
+- We are in no way affiliated with Eufy Security and this plugin is a personal project that we maintain in our free time.
+- Use this plugin entirely at your own risk - please see licence for more information.
