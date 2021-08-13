@@ -12,8 +12,8 @@
     "url": "https://github.com/samemory/homebridge-eufy-security/issues"
   },
   "engines": {
-    "node": ">=10.17.0",
-    "homebridge": ">=1.0.0"
+    "node": ">=12.0.0",
+    "homebridge": ">=1.3.0"
   },
   "main": "dist/index.js",
   "scripts": {
