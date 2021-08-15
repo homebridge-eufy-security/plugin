@@ -66,7 +66,7 @@ export class CameraAccessory extends DeviceAccessory {
 
     try {
       if (typeof this.Camera.hasBattery === 'function' && this.Camera.hasBattery()) {
-        this.platform.log.debug(this.accessory.displayName, 'raise error to check and attach livestream.');
+        this.platform.log.debug(this.accessory.displayName, 'has a battery, so append Battery characteristic to him.');
 
         const batteryService =
           this.accessory.getService(this.platform.Service.Battery) ||
@@ -82,7 +82,7 @@ export class CameraAccessory extends DeviceAccessory {
           .getCharacteristic(this.characteristic.BatteryLevel)
           .onGet(this.handleBatteryLevelGet.bind(this));
       } else {
-        this.platform.log.debug(this.accessory.displayName, 'Looks like not compatible with hasBattery');
+        this.platform.log.warn(this.accessory.displayName, 'Looks like not compatible with hasBattery');
       }
     } catch (Error) {
       this.platform.log.error(this.accessory.displayName, 'raise error to check and attach a battery.', Error);
@@ -106,7 +106,7 @@ export class CameraAccessory extends DeviceAccessory {
           .onSet(this.handleEnableSet.bind(this));
 
       } else {
-        this.platform.log.debug(this.accessory.displayName, 'Looks like not compatible with isEnabled');
+        this.platform.log.warn(this.accessory.displayName, 'Looks like not compatible with isEnabled');
       }
     } catch (Error) {
       this.platform.log.error(this.accessory.displayName, 'raise error to check and attach switchEnabledService.', Error);
