@@ -27,15 +27,15 @@ Homebridge plugin to control certain Eufy Security devices
 
 ### Setup
 
-- [Installation](../wiki/Installation)
-- [Configuration](../wiki/Configuration)
-- [Beta Version](../wiki/Beta-Version)
-- [Node Version](../wiki/Node-Version)
-- [Uninstallation](../wiki/Uninstallation)
+- [Installation](https://github.com/samemory/homebridge-eufy-security/wiki/Installation)
+- [Configuration](https://github.com/samemory/homebridge-eufy-security/wiki/Configuration)
+- [Beta Version](https://github.com/samemory/homebridge-eufy-security/wiki/Beta-Version)
+- [Node Version](https://github.com/samemory/homebridge-eufy-security/wiki/Node-Version)
+- [Uninstallation](https://github.com/samemory/homebridge-eufy-security/wiki/Uninstallation)
 
 ### Features
 
-- [Supported Devices](../wiki/Supported-Devices)
+- [Supported Devices](https://github.com/samemory/homebridge-eufy-security/wiki/Supported-Devices)
 
 ### Help
 
