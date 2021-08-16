@@ -27,15 +27,15 @@ Homebridge plugin to control certain Eufy Security devices
 
 ### Setup
 
-- [Installation](./wiki/Installation)
-- [Configuration](./wiki/Configuration)
-- [Beta Version](./wiki/Beta-Version)
-- [Node Version](./wiki/Node-Version)
-- [Uninstallation](./wiki/Uninstallation)
+- [Installation](../wiki/Installation)
+- [Configuration](../wiki/Configuration)
+- [Beta Version](../wiki/Beta-Version)
+- [Node Version](../wiki/Node-Version)
+- [Uninstallation](../wiki/Uninstallation)
 
 ### Features
 
-- [Supported Devices](./wiki/Supported-Devices)
+- [Supported Devices](../wiki/Supported-Devices)
 
 ### Help
 
