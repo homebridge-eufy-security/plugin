@@ -1,5 +1,29 @@
 # Change Log
 
+## BETA
+
+### Added
+-   Increase compatibility with new Eufy Camera devices
+-   New Config UI with onboarding
+-   OTP attached to an Eufy Account is supported
+-   Adding SmartLock (getting the status lock/unlock only)
+-   Hability to use Camera as a motion sensor or as a camera streaming device
+
+### Changed
+-   Upgrade to the latest bropat/eufy-security-client lib (1.1.1)
+-   Improving debug collection
+-   Code optimisation
+
+### Removed
+-   IP LAN address is no more required as config settings
+
+### Fixed
+-   Cloud Livestream on doorbell can stuck
+-   Handle duplicate when using Guest Eufy Account
+-   Updating some dep for security reason
+-   Multiple typo fix
+-   Sometimes battery status is not updated
+
 ## 0.2.13 (07-26-2021)
 
 ### Changes
