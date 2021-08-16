@@ -1,5 +1,5 @@
 <p align="center">
-   <a href="https://github.com/samemory/homebridge-eufy-security"><img src="https://raw.githubusercontent.com/wiki/samemory/homebridge-eufy-security/img/homebridge-eufy-security.png" width="456px"></a>
+   <a href="https://github.com/samemory/homebridge-eufy-security"><img src="./img/homebridge-eufy-security.png" width="456px"></a>
 </p>
 <span align="center">
 
@@ -7,9 +7,10 @@
 
 Homebridge plugin to control certain Eufy Security devices
 
- [![npm](https://img.shields.io/npm/v/homebridge-eufy-security/latest?label=latest)](https://www.npmjs.com/package/homebridge-eufy-security)
+[![npm](https://img.shields.io/npm/v/homebridge-eufy-security/latest?label=latest)](https://www.npmjs.com/package/homebridge-eufy-security)
 [![npm](https://img.shields.io/npm/v/homebridge-eufy-security/beta?label=beta)](https://github.com/samemory/homebridge-eufy-security/wiki/Beta-Version)
- [![npm](https://img.shields.io/npm/dt/homebridge-eufy-security)](https://www.npmjs.com/package/homebridge-eufy-security)
+[![npm](https://img.shields.io/npm/dt/homebridge-eufy-security)](https://www.npmjs.com/package/homebridge-eufy-security)
+[![Discord](https://img.shields.io/discord/432663330281226270?color=728ED5&logo=discord&label=hb-discord)](https://discord.com/channels/432663330281226270/876907345962229791)
 
 </span>
 
