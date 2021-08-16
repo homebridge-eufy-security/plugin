@@ -1,5 +1,5 @@
 <p align="center">
-   <a href="https://github.com/samemory/homebridge-eufy-security"><img src="./img/homebridge-eufy-security.png" width="456px"></a>
+   <a href="https://github.com/samemory/homebridge-eufy-security"><img src="https://raw.githubusercontent.com/wiki/samemory/homebridge-eufy-security/img/homebridge-eufy-security.png" width="456px"></a>
 </p>
 <span align="center">
 
