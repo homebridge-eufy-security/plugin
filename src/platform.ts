@@ -361,15 +361,26 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
         break;
       case DeviceType.CAMERA:
       case DeviceType.CAMERA2:
+      case DeviceType.CAMERA_E:
       case DeviceType.CAMERA2C:
+      case DeviceType.INDOOR_CAMERA:
+      case DeviceType.INDOOR_PT_CAMERA:
+      case DeviceType.FLOODLIGHT:
       case DeviceType.CAMERA2C_PRO:
       case DeviceType.CAMERA2_PRO:
-      case DeviceType.CAMERA_E:
-      case DeviceType.FLOODLIGHT:
-      case DeviceType.INDOOR_CAMERA:
       case DeviceType.INDOOR_CAMERA_1080:
-      case DeviceType.INDOOR_PT_CAMERA:
       case DeviceType.INDOOR_PT_CAMERA_1080:
+      case DeviceType.SOLO_CAMERA:
+      case DeviceType.SOLO_CAMERA_PRO:
+      case DeviceType.SOLO_CAMERA_SPOTLIGHT_1080:
+      case DeviceType.SOLO_CAMERA_SPOTLIGHT_2K:
+      case DeviceType.SOLO_CAMERA_SPOTLIGHT_SOLAR:
+      case DeviceType.INDOOR_OUTDOOR_CAMERA_1080P:
+      case DeviceType.INDOOR_OUTDOOR_CAMERA_1080P_NO_LIGHT:
+      case DeviceType.INDOOR_OUTDOOR_CAMERA_2K:
+      case DeviceType.FLOODLIGHT_CAMERA_8422:
+      case DeviceType.FLOODLIGHT_CAMERA_8423:
+      case DeviceType.FLOODLIGHT_CAMERA_8424:
         new CameraAccessory(this, accessory, device as Camera);
         break;
       case DeviceType.DOORBELL:
