@@ -1,6 +1,6 @@
 # Change Log
 
-## BETA
+## RELEASE CANDIDATE
 
 ### Added
 -   Increase compatibility with new Eufy Camera devices
