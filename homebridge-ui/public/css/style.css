@@ -1,0 +1,70 @@
+.hidden {
+    display: none;
+}
+
+.divTable {
+    display: table;
+    width: 100%;
+}
+
+.divTableRow {
+    display: table-row;
+}
+
+.checked {
+    color: #888;
+    text-decoration: line-through;
+    font-style: italic;
+}
+
+div.logo {
+    text-align: center;
+    margin: 0 0 5px 0;
+}
+
+image.logo {
+    width: 40%;
+    text-align: center;
+    margin: 0 auto;
+}
+
+.text-center{
+    text-align: center !important;
+}
+
+/* 
+    .checked div.divTableRow input[type="checkbox"] {
+        display: none;
+    }
+
+    .checked div.divTableRow:first-child input[type="checkbox"] {
+        display: block;
+    } */
+
+.divTableHeading {
+    background-color: #0b6288;
+    display: table-header-group;
+}
+
+.divTableCell, .divTableHead {
+    border: 1px solid #eee;
+    display: table-cell;
+    padding: 3px 10px;
+}
+
+.divTableHeading {
+    background-color: #0b6288;
+    display: table-header-group;
+    color: #fff;
+    font-weight: bold;
+}
+
+.divTableFoot {
+    background-color: #EEE;
+    display: table-footer-group;
+    font-weight: bold;
+}
+
+.divTableBody {
+    display: table-row-group;
+}
