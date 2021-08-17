@@ -1,0 +1,64 @@
+name: Release Candidate
+
+on: 
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'premajor/prerelease/major/minor/patch'
+        required: true
+        default: 'patch'
+      tag:
+        description: 'latest/rc/beta'
+        required: false
+        default: 'beta'
+      branch:
+        description: 'master/next/beta'
+        required: false
+        default: 'beta'
+        
+jobs:
+
+#   build:
+#     runs-on: ubuntu-latest
+#     strategy:
+#       matrix:
+#         node-version: [10, 12, 14]
+#     steps:
+#       - uses: actions/checkout@v2
+#         with:
+#           ref: ${{ github.event.inputs.branch }}
+#       - uses: actions/setup-node@v2
+#         with:
+#           node-version: ${{ matrix.node-version }}
+
+#       - run: npm ci
+#       - run: npm run build
+
+  version:
+    runs-on: ubuntu-latest
+#     needs: build
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          ref: ${{ github.event.inputs.branch }}
+
+      - run: git config --global user.name '[${{ github.event.inputs.tag }}]'
+      - run: git config --global user.email '<>'
+      - run: npm version ${{ github.event.inputs.version }} --preid=${{ github.event.inputs.tag }} -m "[${{ github.event.inputs.tag }}] %s"
+      - run: git push
+
+  publish:
+    runs-on: ubuntu-latest
+    needs: version
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          ref: ${{ github.event.inputs.branch }}
+      - uses: actions/setup-node@v2
+        with:
+          node-version: 14
+          registry-url: https://registry.npmjs.org/
+      - run: npm ci
+      - run: npm publish --access public --tag ${{ github.event.inputs.tag }}
+        env:
+          NODE_AUTH_TOKEN: ${{secrets.npm_token}}
