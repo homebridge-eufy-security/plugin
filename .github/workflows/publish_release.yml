@@ -30,7 +30,7 @@ jobs:
 
       - run: git config --global user.name '[Workflow]'
       - run: git config --global user.email '<>'
-      - run: npm version premajor --preid=rc -m "[RC] %s"
+      - run: npm version prerelease --preid=rc -m "[RC] %s"
       - run: git push
 
   publish:
