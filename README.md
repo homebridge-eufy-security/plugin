@@ -7,9 +7,10 @@
 
 Homebridge plugin to control certain Eufy Security devices
 
- [![npm](https://img.shields.io/npm/v/homebridge-eufy-security/latest?label=latest)](https://www.npmjs.com/package/homebridge-eufy-security)
+[![npm](https://img.shields.io/npm/v/homebridge-eufy-security/latest?label=latest)](https://www.npmjs.com/package/homebridge-eufy-security)
 [![npm](https://img.shields.io/npm/v/homebridge-eufy-security/beta?label=beta)](https://github.com/samemory/homebridge-eufy-security/wiki/Beta-Version)
- [![npm](https://img.shields.io/npm/dt/homebridge-eufy-security)](https://www.npmjs.com/package/homebridge-eufy-security)
+[![npm](https://img.shields.io/npm/dt/homebridge-eufy-security)](https://www.npmjs.com/package/homebridge-eufy-security)
+[![Discord](https://img.shields.io/discord/432663330281226270?color=728ED5&logo=discord&label=hb-discord)](https://discord.com/channels/432663330281226270/876907345962229791)
 
 </span>
 
@@ -26,15 +27,15 @@ Homebridge plugin to control certain Eufy Security devices
 
 ### Setup
 
-- [Installation](./Installation)
-- [Configuration](.Configuration)
-- [Beta Version](./Beta-Version)
-- [Node Version](./Node-Version)
-- [Uninstallation](.Uninstallation)
+- [Installation](https://github.com/samemory/homebridge-eufy-security/wiki/Installation)
+- [Configuration](https://github.com/samemory/homebridge-eufy-security/wiki/Configuration)
+- [Beta Version](https://github.com/samemory/homebridge-eufy-security/wiki/Beta-Version)
+- [Node Version](https://github.com/samemory/homebridge-eufy-security/wiki/Node-Version)
+- [Uninstallation](https://github.com/samemory/homebridge-eufy-security/wiki/Uninstallation)
 
 ### Features
 
-- [Supported Devices](./Supported-Devices)
+- [Supported Devices](https://github.com/samemory/homebridge-eufy-security/wiki/Supported-Devices)
 
 ### Help
 
