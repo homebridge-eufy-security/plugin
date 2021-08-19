@@ -46,9 +46,9 @@ jobs:
         with:
           ref: ${{ github.event.inputs.branch }}
 
-      - run: git config --global user.name '[${{ github.event.inputs.tag }}]'
+      - run: git config --global user.name '[GitHub Bot]'
       - run: git config --global user.email '<>'
-      - run: npm version ${{ github.event.inputs.version }} --preid=${{ github.event.inputs.preid }} -m "[${{ github.event.inputs.tag }}] %s"
+      - run: npm version ${{ github.event.inputs.version }} --preid=${{ github.event.inputs.preid }} -m "[${{ github.event.inputs.preid }}] %s"
       - run: git push
 
   publish:
