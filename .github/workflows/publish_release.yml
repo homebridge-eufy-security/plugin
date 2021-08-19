@@ -11,6 +11,10 @@ on:
         description: 'latest/rc/beta'
         required: true
         default: 'beta'
+      preid:
+        description: 'rc/beta'
+        required: true
+        default: 'beta'
       branch:
         description: 'master/next/beta'
         required: true
@@ -44,7 +48,7 @@ jobs:
 
       - run: git config --global user.name '[${{ github.event.inputs.tag }}]'
       - run: git config --global user.email '<>'
-      - run: npm version ${{ github.event.inputs.version }} --preid=${{ github.event.inputs.tag }} -m "[${{ github.event.inputs.tag }}] %s"
+      - run: npm version ${{ github.event.inputs.version }} --preid=${{ github.event.inputs.preid }} -m "[${{ github.event.inputs.tag }}] %s"
       - run: git push
 
   publish:
