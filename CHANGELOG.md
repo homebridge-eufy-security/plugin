@@ -23,6 +23,7 @@
 -   Updating some dep for security reason
 -   Multiple typo fix
 -   Sometimes battery status is not updated
+-   Fix push notification issue on new indoor outdoor camera device #184
 
 ## 0.2.13 (07-26-2021)
 
