@@ -10,9 +10,9 @@ on:
 
 jobs:
 
-  publish:
+  unpublish:
     runs-on: ubuntu-latest
     steps:
-      - run: npm unpublish homebridge-eufy-security@${{ github.event.inputs.version }}
+      - run: npm unpublish homebridge-eufy-security@${{ github.event.inputs.version }} --force
         env:
           NODE_AUTH_TOKEN: ${{secrets.npm_token}}
