@@ -39,6 +39,7 @@ Homebridge plugin to control certain Eufy Security devices
 
 ### Help
 
+- [Common Issues](https://github.com/samemory/homebridge-eufy-security/wiki/Common-Issues)
 - [Support Request](https://github.com/samemory/homebridge-eufy-security/issues/new/choose)
 - [Changelog](https://github.com/samemory/homebridge-eufy-security/blob/master/CHANGELOG.md)
 
