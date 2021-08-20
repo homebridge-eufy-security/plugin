@@ -10,7 +10,7 @@
 -   Hability to use Camera as a motion sensor or as a camera streaming device
 
 ### Changed
--   Upgrade to the latest bropat/eufy-security-client lib (1.1.1)
+-   Upgrade to the latest bropat/eufy-security-client lib (1.1.2)
 -   Improving debug collection
 -   Code optimisation
 
