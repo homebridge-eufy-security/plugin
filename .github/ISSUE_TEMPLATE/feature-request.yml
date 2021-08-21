@@ -3,10 +3,6 @@ description: Suggest an idea for this project
 title: "[enhancement]: "
 labels: [enhancement]
 body:
-  - type: markdown
-    attributes:
-      value: |
-        Please double check the [Common Issues](https://github.com/samemory/homebridge-eufy-security/wiki/Common-Issues) before submitting a request.
   - type: textarea
     id: feature-request
     attributes:
