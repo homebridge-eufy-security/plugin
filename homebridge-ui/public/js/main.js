@@ -89,6 +89,11 @@ async function list_stations_devices(stations) {
 
     const s_div = document.getElementById('stations');
 
+    if(!stations){
+        s_div.innerHTML = '<span style="color:red; font-weight:bold;"><h3>Error: Nothing to retreive!</h3></span>';
+        return;
+    }
+
     const t1 = document.createElement("div");
     t1.setAttribute('class', 'divTable');
 
