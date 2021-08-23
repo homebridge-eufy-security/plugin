@@ -24,6 +24,8 @@
 -   Multiple typo fix
 -   Sometimes battery status is not updated
 -   Fix push notification issue on new indoor outdoor camera device #184
+-   Fixing issue #190
+-   As @bropat notice, we need to clean function reference which will be deprecated soon (bropat/eufy-security-client#40)
 
 ## 0.2.13 (07-26-2021)
 
