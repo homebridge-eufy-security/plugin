@@ -7,7 +7,7 @@ import { DeviceAccessory } from './Device';
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore  
-import { Device, MotionSensor } from 'eufy-security-client';
+import { Device, MotionSensor, PropertyName } from 'eufy-security-client';
 
 /**
  * Platform Accessory
@@ -19,8 +19,6 @@ export class MotionSensorAccessory extends DeviceAccessory {
   protected service: Service;
   protected MotionSensor: MotionSensor;
 
-  protected motion_triggered: boolean;
-
   constructor(
     platform: EufySecurityPlatform,
     accessory: PlatformAccessory,
@@ -31,8 +29,6 @@ export class MotionSensorAccessory extends DeviceAccessory {
     this.platform.log.debug(this.accessory.displayName, 'Constructed Motion Sensor');
 
     this.MotionSensor = eufyDevice;
-    
-    this.motion_triggered = false;
 
     this.service =
       this.accessory.getService(this.platform.Service.MotionSensor) ||
@@ -40,69 +36,48 @@ export class MotionSensorAccessory extends DeviceAccessory {
 
     this.service.setCharacteristic(
       this.platform.Characteristic.Name,
-      accessory.displayName,
+      this.accessory.displayName,
     );
 
-    // create handlers for required characteristics
-    this.service
-      .getCharacteristic(this.platform.Characteristic.MotionDetected)
-      .onGet(this.handleMotionDetectedGet.bind(this));
+    try {
+      if (this.eufyDevice.hasProperty('motionDetected')) {
+        this.platform.log.debug(this.accessory.displayName, 'has a motionDetected, so append MotionDetected characteristic to him.');
 
-    this.MotionSensor.on('motion detected', (device: Device, motion: boolean) =>
-      this.onDeviceMotionDetectedPushNotification(device, motion),
-    );
+        // create handlers for required characteristics
+        this.service
+          .getCharacteristic(this.platform.Characteristic.MotionDetected)
+          .onGet(this.handleMotionDetectedGet.bind(this));
 
-    if(typeof this.MotionSensor.isBatteryLow === 'function') {
-      this.platform.log.debug(this.accessory.displayName, 'has a battery, so append batteryService characteristic to him.');
+        this.MotionSensor.on('motion detected', (device: Device, motion: boolean) =>
+          this.onDeviceMotionDetectedPushNotification(device, motion),
+        );
 
-      const batteryService =
-      this.accessory.getService(this.platform.Service.Battery) ||
-      this.accessory.addService(this.platform.Service.Battery);
-
-      // create handlers for required characteristics of Battery service
-      batteryService
-        .getCharacteristic(this.platform.Characteristic.StatusLowBattery)
-        .onGet(this.handleStatusLowBatteryGet.bind(this));
+      } else {
+        this.platform.log.warn(this.accessory.displayName, 'has no motionDetected');
+      }
+    } catch (Error) {
+      this.platform.log.error(this.accessory.displayName, 'raise error to check and attach a motionDetected.', Error);
     }
   }
 
-  isMotionDetected() {
-    const isMotionDetected = this.MotionSensor.isMotionDetected();
-    return isMotionDetected as boolean;
-  }
-
-  /**
-   * Handle requests to get the current value of the 'Security System Current State' characteristic
-   */
   async handleMotionDetectedGet(): Promise<CharacteristicValue> {
-    const currentValue = await this.isMotionDetected();
-    this.platform.log.debug(this.accessory.displayName, 'Triggered GET MotionDetected:', currentValue);
-    return currentValue as boolean;
+    try {
+      const currentValue = this.MotionSensor.getPropertyValue(PropertyName.DeviceMotionDetected);
+      this.platform.log.debug(this.accessory.displayName, 'GET DeviceMotionDetected:', currentValue);
+      return currentValue.value as boolean;
+    } catch {
+      this.platform.log.error(this.accessory.displayName, 'handleMotionDetectedGet', 'Wrong return value');
+      return false;
+    }
   }
 
   private onDeviceMotionDetectedPushNotification(
     device: Device,
     motion: boolean,
   ): void {
-    this.motion_triggered = (this.motion_triggered) ? false : true;
-    this.platform.log.debug(this.accessory.displayName, 'Handle Motion Sensor:  -- ', this.motion_triggered);
+    this.platform.log.debug(this.accessory.displayName, 'Handle Camera motion:', motion);
     this.service
-      .getCharacteristic(this.platform.Characteristic.MotionDetected)
-      .updateValue(this.motion_triggered);
-  }
-
-  /**
-   * Handle requests to get the current value of the "Status Low Battery" characteristic
-   */
-  async handleStatusLowBatteryGet(): Promise<CharacteristicValue> {
-    const currentValue = await this.getStatusLowBattery();
-    this.platform.log.debug(this.accessory.displayName, 'Triggered GET StatusLowBattery:', currentValue);
-    return currentValue as number;
-  }
-
-  async getStatusLowBattery() {
-    const char = this.platform.Characteristic.StatusLowBattery;
-    const batteryLevel = (this.MotionSensor.isBatteryLow()) ? char.BATTERY_LEVEL_NORMAL : char.BATTERY_LEVEL_LOW;
-    return batteryLevel as number;
+      .getCharacteristic(this.characteristic.MotionDetected)
+      .updateValue(motion);
   }
 }

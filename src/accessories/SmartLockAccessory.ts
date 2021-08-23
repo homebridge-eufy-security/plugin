@@ -7,7 +7,7 @@ import { DeviceAccessory } from './Device';
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore  
-import { Device, Lock, PropertyValue, DeviceType } from 'eufy-security-client';
+import { Device, Lock, PropertyName } from 'eufy-security-client';
 
 /**
  * Platform Accessory
@@ -140,18 +140,14 @@ export class SmartLockAccessory extends DeviceAccessory {
   /**
    * Handle requests to get the current value of the "Status Low Battery" characteristic
    */
-  async getCurrentBatteryLevel() {
-    const batteryLevel = this.SmartLock.getBatteryValue();
-    return batteryLevel.value as number;
-  }
-
   async handleBatteryLevelGet(): Promise<CharacteristicValue> {
-    this.platform.log.debug(this.accessory.displayName, 'Triggered GET BatteryLevel');
-
-    // set this to a valid value for SecuritySystemCurrentState
-    const currentValue = await this.getCurrentBatteryLevel();
-    this.platform.log.debug(this.accessory.displayName, 'Handle Current battery level:  -- ', currentValue);
-
-    return currentValue as number;
+    try {
+      const currentValue = this.SmartLock.getPropertyValue(PropertyName.DeviceBattery);
+      this.platform.log.debug(this.accessory.displayName, 'Triggered GET DeviceBattery:', currentValue);
+      return currentValue.value as number;
+    } catch {
+      this.platform.log.error(this.accessory.displayName, 'handleBatteryLevelGet', 'Wrong return value');
+      return 0;
+    }
   }
 }

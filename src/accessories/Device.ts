@@ -1,8 +1,8 @@
 
-import { PlatformAccessory } from 'homebridge';
+import { PlatformAccessory, CharacteristicValue } from 'homebridge';
 
 import { EufySecurityPlatform } from '../platform';
-import { Device, DeviceType, PropertyValue } from 'eufy-security-client';
+import { Device, DeviceType, PropertyName, PropertyValue } from 'eufy-security-client';
 
 export abstract class DeviceAccessory {
 
@@ -42,6 +42,38 @@ export abstract class DeviceAccessory {
         this.eufyDevice.getHardwareVersion(),
       );
 
+    try {
+      if (this.eufyDevice.hasProperty('battery') || this.eufyDevice.hasProperty('batteryLow')) {
+
+        const batteryService =
+          this.accessory.getService(this.platform.Service.Battery) ||
+          this.accessory.addService(this.platform.Service.Battery);
+
+        batteryService.setCharacteristic(
+          this.characteristic.Name,
+          accessory.displayName,
+        );
+
+        // create handlers for required characteristics of Battery service
+        if (this.eufyDevice.hasProperty('battery')) {
+          this.platform.log.debug(this.accessory.displayName, 'has a battery, so append Battery characteristic to him.');
+          batteryService
+            .getCharacteristic(this.characteristic.BatteryLevel)
+            .onGet(this.handleBatteryLevelGet.bind(this));
+        } else {
+          this.platform.log.debug(this.accessory.displayName, 'has a batteryLow, so append StatusLowBattery characteristic to him.');
+          batteryService
+            .getCharacteristic(this.characteristic.StatusLowBattery)
+            .onGet(this.handleStatusLowBatteryGet.bind(this));
+        }
+
+      } else {
+        this.platform.log.warn(this.accessory.displayName, 'has no battery');
+      }
+    } catch (Error) {
+      this.platform.log.error(this.accessory.displayName, 'raise error to check and attach a battery.', Error);
+    }
+
     if (this.platform.config.enableDetailedLogging) {
       this.eufyDevice.on('raw property changed', (device: Device, type: number, value: string, modified: number) =>
         this.handleRawPropertyChange(device, type, value, modified),
@@ -78,5 +110,33 @@ export abstract class DeviceAccessory {
       name,
       value,
     );
+  }
+
+  /**
+   * Handle requests to get the current value of the "Status Low Battery" characteristic
+   */
+  async handleStatusLowBatteryGet(): Promise<CharacteristicValue> {
+    try {
+      const currentValue = await this.eufyDevice.getPropertyValue(PropertyName.DeviceBatteryLow);
+      this.platform.log.debug(this.accessory.displayName, 'GET DeviceBatteryLow:', currentValue);
+      return currentValue.value as boolean;
+    } catch {
+      this.platform.log.error(this.accessory.displayName, 'handleStatusLowBatteryGet', 'Wrong return value');
+      return false;
+    }
+  }
+
+  /**
+   * Handle requests to get the current value of the "Battery Level" characteristic
+   */
+  async handleBatteryLevelGet(): Promise<CharacteristicValue> {
+    try {
+      const currentValue = this.eufyDevice.getPropertyValue(PropertyName.DeviceBattery);
+      this.platform.log.debug(this.accessory.displayName, 'GET DeviceBattery:', currentValue);
+      return currentValue.value as number;
+    } catch {
+      this.platform.log.error(this.accessory.displayName, 'handleBatteryLevelGet', 'Wrong return value');
+      return 0;
+    }
   }
 }

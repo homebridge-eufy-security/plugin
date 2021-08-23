@@ -1,4 +1,4 @@
-import { Service, PlatformAccessory } from 'homebridge';
+import { Service, PlatformAccessory, CharacteristicValue } from 'homebridge';
 
 import { EufySecurityPlatform } from '../platform';
 import { DeviceAccessory } from './Device';
@@ -7,7 +7,7 @@ import { DeviceAccessory } from './Device';
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore  
-import { Keypad, Device, DeviceType, PropertyValue } from 'eufy-security-client';
+import { Keypad, PropertyName } from 'eufy-security-client';
 
 /**
  * Platform Accessory
@@ -45,18 +45,6 @@ export class KeypadAccessory extends DeviceAccessory {
       .on('get', this.handleOnGet.bind(this))
       .on('set', this.handleOnSet.bind(this));
 
-    if (typeof this.Keypad.isBatteryLow === 'function') {
-      this.platform.log.debug(this.accessory.displayName, 'has a battery, so append batteryService characteristic to him.');
-
-      const batteryService =
-        this.accessory.getService(this.platform.Service.Battery) ||
-        this.accessory.addService(this.platform.Service.Battery);
-
-      // create handlers for required characteristics of Battery service
-      batteryService
-        .getCharacteristic(this.platform.Characteristic.StatusLowBattery)
-        .on('get', this.handleStatusLowBatteryGet.bind(this));
-    }
   }
 
   async getCurrentDeviceState() {
@@ -94,26 +82,5 @@ export class KeypadAccessory extends DeviceAccessory {
     );
 
     callback(null);
-  }
-
-  /**
-   * Handle requests to get the current value of the "Status Low Battery" characteristic
-   */
-  async handleStatusLowBatteryGet(callback) {
-    this.platform.log.debug(this.accessory.displayName, 'Triggered GET BatteryLevel');
-
-    // set this to a valid value for SecuritySystemCurrentState
-    const currentValue = await this.getStatusLowBattery();
-
-    this.platform.log.debug(this.accessory.displayName, 'Handle Current battery level:  -- ', currentValue);
-
-    callback(null, currentValue);
-  }
-
-  async getStatusLowBattery() {
-    const char = this.platform.Characteristic.StatusLowBattery;
-    const batteryLevel = (this.Keypad.isBatteryLow()) ? char.BATTERY_LEVEL_NORMAL : char.BATTERY_LEVEL_LOW;
-
-    return batteryLevel as number;
   }
 }

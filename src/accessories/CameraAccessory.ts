@@ -7,7 +7,7 @@ import { DeviceAccessory } from './Device';
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore  
-import { Camera, Device, PropertyName, PropertyValue } from 'eufy-security-client';
+import { Camera, Device, PropertyName } from 'eufy-security-client';
 import { EufyCameraStreamingDelegate } from './streamingDelegate';
 
 /**
@@ -20,8 +20,6 @@ export class CameraAccessory extends DeviceAccessory {
   protected service: Service;
   protected Camera: Camera;
   protected MotionService: Service;
-  protected motion_triggered: boolean;
-
 
   constructor(
     platform: EufySecurityPlatform,
@@ -35,8 +33,6 @@ export class CameraAccessory extends DeviceAccessory {
     this.MotionService = {} as Service;
 
     this.platform.log.debug(this.accessory.displayName, 'Constructed Camera');
-
-    this.motion_triggered = false;
 
     if (this.platform.config.enableCamera || (typeof this.Camera.isDoorbell === 'function' && this.Camera.isDoorbell())) {
       this.platform.log.debug(this.accessory.displayName, 'has a camera');
@@ -58,30 +54,6 @@ export class CameraAccessory extends DeviceAccessory {
       } catch (Error) {
         this.platform.log.error(this.accessory.displayName, 'raise error to check and attach motion function.', Error);
       }
-    }
-
-    try {
-      if (typeof this.Camera.hasBattery === 'function' && this.Camera.hasBattery()) {
-        this.platform.log.debug(this.accessory.displayName, 'has a battery, so append Battery characteristic to him.');
-
-        const batteryService =
-          this.accessory.getService(this.platform.Service.Battery) ||
-          this.accessory.addService(this.platform.Service.Battery);
-
-        batteryService.setCharacteristic(
-          this.platform.Characteristic.Name,
-          accessory.displayName,
-        );
-
-        // create handlers for required characteristics of Battery service
-        batteryService
-          .getCharacteristic(this.characteristic.BatteryLevel)
-          .onGet(this.handleBatteryLevelGet.bind(this));
-      } else {
-        this.platform.log.warn(this.accessory.displayName, 'Looks like not compatible with hasBattery');
-      }
-    } catch (Error) {
-      this.platform.log.error(this.accessory.displayName, 'raise error to check and attach a battery.', Error);
     }
 
     try {
@@ -203,7 +175,6 @@ export class CameraAccessory extends DeviceAccessory {
       accessory.displayName,
     );
 
-    // create handlers for required characteristics of Motion Sensor
     service
       .getCharacteristic(this.characteristic.MotionDetected)
       .onGet(this.handleMotionDetectedGet.bind(this));
@@ -223,32 +194,10 @@ export class CameraAccessory extends DeviceAccessory {
     return service as Service;
   }
 
-  /**
-   * Handle requests to get the current value of the "Status Low Battery" characteristic
-   */
-  async handleBatteryLevelGet(): Promise<CharacteristicValue> {
-    try {
-      const currentValue = this.Camera.getPropertyValue(PropertyName.DeviceBattery);
-      this.platform.log.debug(this.accessory.displayName, 'Triggered GET DeviceBattery:', currentValue);
-      return currentValue.value as number;
-    } catch {
-      this.platform.log.error(this.accessory.displayName, 'handleBatteryLevelGet', 'Wrong return value');
-      return 0;
-    }
-  }
-
-  async isMotionDetected() {
-    const isMotionDetected = this.Camera.isMotionDetected();
-    return isMotionDetected as boolean;
-  }
-
-  /**
-   * Handle requests to get the current value of the 'Security System Current State' characteristic
-   */
   async handleMotionDetectedGet(): Promise<CharacteristicValue> {
     try {
       const currentValue = this.Camera.getPropertyValue(PropertyName.DeviceMotionDetected);
-      this.platform.log.debug(this.accessory.displayName, 'Triggered GET DeviceMotionDetected:', currentValue);
+      this.platform.log.debug(this.accessory.displayName, 'GET DeviceMotionDetected:', currentValue);
       return currentValue.value as boolean;
     } catch {
       this.platform.log.error(this.accessory.displayName, 'handleMotionDetectedGet', 'Wrong return value');
@@ -266,13 +215,10 @@ export class CameraAccessory extends DeviceAccessory {
       .updateValue(motion);
   }
 
-  /**
-   * Handle requests to get the current value of the "On" characteristic
-   */
   async handleEnableGet(): Promise<CharacteristicValue> {
     try {
       const currentValue = this.Camera.getPropertyValue(PropertyName.DeviceEnabled);
-      this.platform.log.debug(this.accessory.displayName, 'Triggered GET DeviceEnabled:', currentValue);
+      this.platform.log.debug(this.accessory.displayName, 'GET DeviceEnabled:', currentValue);
       return currentValue.value as boolean;
     } catch {
       this.platform.log.error(this.accessory.displayName, 'handleEnableGet', 'Wrong return value');
@@ -280,22 +226,16 @@ export class CameraAccessory extends DeviceAccessory {
     }
   }
 
-  /**
-       * Handle requests to set the "On" characteristic
-       */
   async handleEnableSet(value: CharacteristicValue) {
-    this.platform.log.debug(this.accessory.displayName, 'Triggered SET DeviceEnabled:', value);
+    this.platform.log.debug(this.accessory.displayName, 'SET DeviceEnabled:', value);
     const station = this.platform.getStationById(this.Camera.getStationSerial());
     station.enableDevice(this.Camera, value as boolean);
   }
 
-  /**
-   * Handle requests to get the current value of the "On" characteristic
-   */
   async handleMotionOnGet(): Promise<CharacteristicValue> {
     try {
       const currentValue = await this.Camera.getPropertyValue(PropertyName.DeviceMotionDetection);
-      this.platform.log.debug(this.accessory.displayName, 'Triggered GET DeviceMotionDetection:', currentValue);
+      this.platform.log.debug(this.accessory.displayName, 'GET DeviceMotionDetection:', currentValue);
       return currentValue.value as boolean;
     } catch {
       this.platform.log.error(this.accessory.displayName, 'handleMotionOnGet', 'Wrong return value');
@@ -303,11 +243,8 @@ export class CameraAccessory extends DeviceAccessory {
     }
   }
 
-  /**
-         * Handle requests to set the "On" characteristic
-         */
   async handleMotionOnSet(value: CharacteristicValue) {
-    this.platform.log.debug(this.accessory.displayName, 'Triggered SET DeviceMotionDetection:', value);
+    this.platform.log.debug(this.accessory.displayName, 'SET DeviceMotionDetection:', value);
     const station = this.platform.getStationById(this.Camera.getStationSerial());
     station.setMotionDetection(this.Camera, value as boolean);
   }
