@@ -94,7 +94,7 @@ export class StationAccessory {
   ): void {
     const homekitGuardMode = this.convertEufytoHK(guardMode);
     if (homekitGuardMode) {
-      this.platform.log.debug(
+      this.platform.log.debug(this.accessory.displayName, 
         'Received onStationGuardModePushNotification - guardmode ' +
         guardMode +
         ' homekitGuardMode ' +
@@ -113,7 +113,7 @@ export class StationAccessory {
   ): void {
     const homekitCurrentMode = this.convertEufytoHK(currentMode);
     if (homekitCurrentMode) {
-      this.platform.log.debug(
+      this.platform.log.debug(this.accessory.displayName, 
         'Received onStationCurrentModePushNotification - currentMode ' +
         currentMode +
         ' homekitCurrentMode ' +
@@ -162,28 +162,28 @@ export class StationAccessory {
   }
 
   async getCurrentStatus() {
-    this.platform.log.debug(
+    this.platform.log.debug(this.accessory.displayName, 
       this.eufyStation.isConnected()
         ? 'Connected to Eufy API'
         : 'Not connected to Eufy API',
     );
 
     const guardMode = this.eufyStation.getGuardMode();
-    this.platform.log.debug('Eufy Guard Mode: ', guardMode);
+    this.platform.log.debug(this.accessory.displayName, 'Eufy Guard Mode: ', guardMode);
     this.guardMode = (this.alarm_triggered) ? 4 : guardMode.value as number;
 
     return this.convertEufytoHK(this.guardMode as number);
   }
 
   async getTargetStatus() {
-    this.platform.log.debug(
+    this.platform.log.debug(this.accessory.displayName, 
       this.eufyStation.isConnected()
         ? 'Connected to Eufy API'
         : 'Not connected to Eufy API',
     );
 
     const guardMode = this.eufyStation.getGuardMode();
-    this.platform.log.debug('Eufy Guard Mode: ', guardMode);
+    this.platform.log.debug(this.accessory.displayName, 'Eufy Guard Mode: ', guardMode);
 
     return this.convertEufytoHK(this.guardMode as number);
   }
@@ -215,12 +215,12 @@ export class StationAccessory {
    * Handle requests to get the current value of the 'Security System Current State' characteristic
    */
   async handleSecuritySystemCurrentStateGet(): Promise<CharacteristicValue> {
-    this.platform.log.debug(this.accessory.displayName, 'Triggered GET SecuritySystemCurrentState');
+    this.platform.log.debug(this.accessory.displayName, 'GET SecuritySystemCurrentState');
 
     // set this to a valid value for SecuritySystemCurrentState
     const currentValue = await this.getCurrentStatus();
 
-    this.platform.log.debug(this.accessory.displayName, 'Handle Current System state:  -- ', currentValue);
+    this.platform.log.debug(this.accessory.displayName, 'Handle Current System state:', currentValue);
 
     return (this.alarm_triggered) ? this.characteristic.SecuritySystemCurrentState.ALARM_TRIGGERED : currentValue;
   }
@@ -229,7 +229,7 @@ export class StationAccessory {
    * Handle requests to get the current value of the 'Security System Target State' characteristic
    */
   async handleSecuritySystemTargetStateGet(): Promise<CharacteristicValue> {
-    this.platform.log.debug(this.accessory.displayName, 'Triggered GET SecuritySystemTargetState');
+    this.platform.log.debug(this.accessory.displayName, 'GET SecuritySystemTargetState');
 
     // set this to a valid value for SecuritySystemTargetState
     const currentValue = await this.getTargetStatus();
@@ -243,8 +243,8 @@ export class StationAccessory {
     value: string,
     modified: number,
   ): void {
-    this.platform.log.debug(
-      'Handle Station Raw Property Changes:  -- ',
+    this.platform.log.debug(this.accessory.displayName, 
+      'Handle Station Raw Property Changes:',
       type,
       value,
       modified,
@@ -256,8 +256,8 @@ export class StationAccessory {
     name: string,
     value: PropertyValue,
   ): void {
-    this.platform.log.debug(
-      'Handle Station Property Changes:  -- ',
+    this.platform.log.debug(this.accessory.displayName, 
+      'Handle Station Property Changes:',
       name,
       value,
     );
