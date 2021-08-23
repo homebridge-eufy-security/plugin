@@ -52,25 +52,7 @@ export class SmartLockAccessory extends DeviceAccessory {
     this.SmartLock.on('locked', (device: Device, lock: boolean) =>
       this.onDeviceLockPushNotification(device, lock),
     );
-
-    if (this.SmartLock.hasBattery && this.SmartLock.hasBattery()) {
-      this.platform.log.debug(this.accessory.displayName, 'has a battery, so append batteryService characteristic to him.');
-
-      const batteryService =
-        this.accessory.getService(this.platform.Service.Battery) ||
-        this.accessory.addService(this.platform.Service.Battery);
-
-      // set the Battery service characteristics
-      batteryService.setCharacteristic(
-        this.platform.Characteristic.Name,
-        accessory.displayName,
-      );
-
-      // create handlers for required characteristics of Battery service
-      batteryService
-        .getCharacteristic(this.platform.Characteristic.BatteryLevel)
-        .onGet(this.handleBatteryLevelGet.bind(this));
-    }
+    
   }
 
   /**
@@ -135,19 +117,5 @@ export class SmartLockAccessory extends DeviceAccessory {
     this.service
       .getCharacteristic(this.platform.Characteristic.LockCurrentState)
       .updateValue(this.convertlockStatusCode(lockStatus));
-  }
-
-  /**
-   * Handle requests to get the current value of the "Status Low Battery" characteristic
-   */
-  async handleBatteryLevelGet(): Promise<CharacteristicValue> {
-    try {
-      const currentValue = this.SmartLock.getPropertyValue(PropertyName.DeviceBattery);
-      this.platform.log.debug(this.accessory.displayName, 'Triggered GET DeviceBattery:', currentValue);
-      return currentValue.value as number;
-    } catch {
-      this.platform.log.error(this.accessory.displayName, 'handleBatteryLevelGet', 'Wrong return value');
-      return 0;
-    }
   }
 }
