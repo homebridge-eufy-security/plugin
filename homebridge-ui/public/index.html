@@ -51,17 +51,14 @@
                             devices
                             (set to 0 for no polling)</small>
                     </div>
-                    <hr>
-                    <div class="form-group">
-                        <label for="enableDetailedLogging"><strong>Debug</strong></label>
-                        <select class="form-control" id="enableDetailedLogging">
-                            <option value="0">Normal</option>
-                            <option value="1">Debug</option>
-                            <option value="2">Insane</option>
-                        </select>
-                        <small id="help" class="form-text text-muted"></small>
+                    <hr />
+                    <div class="custom-control custom-checkbox form-group">
+                        <input type="checkbox" class="custom-control-input" id="enableDetailedLogging" />
+                        <label class="custom-control-label" for="enableDetailedLogging">Enable Debug</label>
+                        <small id="help" class="form-text text-muted">Helping plugin team to understand what's going
+                            on.</small>
                     </div>
-                    <hr>
+                    <hr />
                     <div class="form-group">
                         <label for="hkHome">HomeKit Home</label>
                         <select class="form-control" id="hkHome">
