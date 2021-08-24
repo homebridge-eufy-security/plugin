@@ -16,9 +16,7 @@ import { CameraAccessory } from './CameraAccessory';
  */
 export class DoorbellCameraAccessory extends CameraAccessory {
 
-  protected service: Service;
   protected DoorbellCamera: DoorbellCamera;
-  protected motion_triggered: boolean;
 
   private doorbellService: Service;
 
@@ -31,17 +29,6 @@ export class DoorbellCameraAccessory extends CameraAccessory {
     this.DoorbellCamera = eufyDevice;
 
     this.platform.log.debug(this.accessory.displayName, 'Constructed Doorbell');
-
-    this.motion_triggered = false;
-
-    this.service =
-      this.accessory.getService(this.platform.Service.CameraOperatingMode) ||
-      this.accessory.addService(this.platform.Service.CameraOperatingMode);
-
-    this.service.setCharacteristic(
-      this.platform.Characteristic.Name,
-      accessory.displayName,
-    );
 
     this.doorbellService =
       this.accessory.getService(this.platform.Service.Doorbell) ||
