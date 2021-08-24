@@ -26,7 +26,7 @@ class UiServer extends HomebridgePluginUiServer {
           showDate: false,
         }),
       }],
-      serializers: bunyanDebugStream.serializers
+      serializers: bunyanDebugStream.serializers,
     });
 
     this.config = {
