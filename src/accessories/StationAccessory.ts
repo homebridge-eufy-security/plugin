@@ -1,11 +1,9 @@
 import { Service, PlatformAccessory, CharacteristicValue } from 'homebridge';
 
-import { EufySecurityPlatformConfig } from '../config';
-
 import { EufySecurityPlatform } from '../platform';
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore  
-import { Station, PropertyValue, AlarmEvent } from 'eufy-security-client';
+import { Station, PropertyName, PropertyValue, AlarmEvent } from 'eufy-security-client';
 
 /**
  * Platform Accessory
@@ -15,7 +13,7 @@ import { Station, PropertyValue, AlarmEvent } from 'eufy-security-client';
 export class StationAccessory {
   private service: Service;
   private alarm_triggered: boolean;
-  private guardMode: number;
+  
   protected characteristic;
 
   constructor(
@@ -29,7 +27,6 @@ export class StationAccessory {
     this.characteristic = this.platform.Characteristic;
 
     this.alarm_triggered = false;
-    this.guardMode = 0;
 
     this.accessory
       .getService(this.platform.Service.AccessoryInformation)!
@@ -92,38 +89,22 @@ export class StationAccessory {
     station: Station,
     guardMode: number,
   ): void {
-    const homekitGuardMode = this.convertEufytoHK(guardMode);
-    if (homekitGuardMode) {
-      this.platform.log.debug(this.accessory.displayName, 
-        'Received onStationGuardModePushNotification - guardmode ' +
-        guardMode +
-        ' homekitGuardMode ' +
-        homekitGuardMode,
-      );
-
-      this.service
-        .getCharacteristic(this.characteristic.SecuritySystemTargetState)
-        .updateValue(homekitGuardMode);
-    }
+    this.platform.log.debug(this.accessory.displayName, 'ON SecurityGuardMode:', guardMode);
+    const homekitCurrentMode = this.convertEufytoHK(guardMode);
+    this.service
+      .getCharacteristic(this.characteristic.SecuritySystemTargetState)
+      .updateValue(homekitCurrentMode);
   }
 
   private onStationCurrentModePushNotification(
     station: Station,
     currentMode: number,
   ): void {
+    this.platform.log.debug(this.accessory.displayName, 'ON SecuritySystemCurrentState:', currentMode);
     const homekitCurrentMode = this.convertEufytoHK(currentMode);
-    if (homekitCurrentMode) {
-      this.platform.log.debug(this.accessory.displayName, 
-        'Received onStationCurrentModePushNotification - currentMode ' +
-        currentMode +
-        ' homekitCurrentMode ' +
-        homekitCurrentMode,
-      );
-
-      this.service
-        .getCharacteristic(this.characteristic.SecuritySystemCurrentState)
-        .updateValue(homekitCurrentMode);
-    }
+    this.service
+      .getCharacteristic(this.characteristic.SecuritySystemCurrentState)
+      .updateValue(homekitCurrentMode);
   }
 
   private onStationAlarmEventPushNotification(
@@ -137,7 +118,7 @@ export class StationAccessory {
       case 7: // Alarm triggered by CAMERA_PIR
       case 8: // Alarm triggered by MOTION_SENSOR
       case 9: // Alarm triggered by CAMERA_GSENSOR
-        this.platform.log.warn('Received onStationAlarmEventPushNotification - ALARM TRIGGERED - alarmEvent: ' + alarmEvent);
+        this.platform.log.warn('ON StationAlarmEvent - ALARM TRIGGERED - alarmEvent:', alarmEvent);
         this.alarm_triggered = true;
         this.service
           .getCharacteristic(this.characteristic.SecuritySystemCurrentState)
@@ -146,46 +127,16 @@ export class StationAccessory {
       case 15: // Alarm off by Keypad
       case 16: // Alarm off by Eufy App
       case 17: // Alarm off by HomeBase button
-        this.platform.log.warn('Received onStationAlarmEventPushNotification - ALARM OFF - alarmEvent: ' + alarmEvent);
+        this.platform.log.warn('ON StationAlarmEvent - ALARM OFF - alarmEvent:', alarmEvent);
         this.alarm_triggered = false;
-        this.service
-          .getCharacteristic(this.characteristic.SecuritySystemCurrentState)
-          .updateValue(this.guardMode); // Back to normal
         break;
       default:
-        this.platform.log.warn('Received onStationAlarmEventPushNotification - ALARM UNKNOWN - alarmEvent: ' + alarmEvent);
+        this.platform.log.warn('ON StationAlarmEvent - ALARM UNKNOWN - alarmEvent:', alarmEvent);
         this.service
           .getCharacteristic(this.characteristic.StatusFault)
           .updateValue(this.characteristic.StatusFault.GENERAL_FAULT);
         break;
     }
-  }
-
-  async getCurrentStatus() {
-    this.platform.log.debug(this.accessory.displayName, 
-      this.eufyStation.isConnected()
-        ? 'Connected to Eufy API'
-        : 'Not connected to Eufy API',
-    );
-
-    const guardMode = this.eufyStation.getGuardMode();
-    this.platform.log.debug(this.accessory.displayName, 'Eufy Guard Mode: ', guardMode);
-    this.guardMode = (this.alarm_triggered) ? 4 : guardMode.value as number;
-
-    return this.convertEufytoHK(this.guardMode as number);
-  }
-
-  async getTargetStatus() {
-    this.platform.log.debug(this.accessory.displayName, 
-      this.eufyStation.isConnected()
-        ? 'Connected to Eufy API'
-        : 'Not connected to Eufy API',
-    );
-
-    const guardMode = this.eufyStation.getGuardMode();
-    this.platform.log.debug(this.accessory.displayName, 'Eufy Guard Mode: ', guardMode);
-
-    return this.convertEufytoHK(this.guardMode as number);
   }
 
   mappingHKEufy() {
@@ -201,12 +152,12 @@ export class StationAccessory {
     return modes;
   }
 
-  convertHKtoEufy(hkMode: number) {
+  convertHKtoEufy(hkMode) {
     const modeObj = this.mappingHKEufy().filter((m) => { return m.hk === hkMode; });
     return modeObj[0] ? modeObj[0].eufy : hkMode;
   }
 
-  convertEufytoHK(eufyMode: number) {
+  convertEufytoHK(eufyMode) {
     const modeObj = this.mappingHKEufy().filter((m) => { return m.eufy === eufyMode; });
     return modeObj[0] ? modeObj[0].hk : eufyMode;
   }
@@ -215,26 +166,31 @@ export class StationAccessory {
    * Handle requests to get the current value of the 'Security System Current State' characteristic
    */
   async handleSecuritySystemCurrentStateGet(): Promise<CharacteristicValue> {
-    this.platform.log.debug(this.accessory.displayName, 'GET SecuritySystemCurrentState');
-
-    // set this to a valid value for SecuritySystemCurrentState
-    const currentValue = await this.getCurrentStatus();
-
-    this.platform.log.debug(this.accessory.displayName, 'Handle Current System state:', currentValue);
-
-    return (this.alarm_triggered) ? this.characteristic.SecuritySystemCurrentState.ALARM_TRIGGERED : currentValue;
+    if (this.alarm_triggered) {
+      return this.characteristic.SecuritySystemCurrentState.ALARM_TRIGGERED;
+    }
+    try {
+      const currentValue = this.eufyStation.getPropertyValue(PropertyName.StationCurrentMode);
+      this.platform.log.debug(this.accessory.displayName, 'GET StationCurrentMode:', currentValue);
+      return this.convertEufytoHK(currentValue.value) as number;
+    } catch {
+      this.platform.log.error(this.accessory.displayName, 'handleSecuritySystemCurrentStateGet', 'Wrong return value');
+      return false;
+    }
   }
 
   /**
    * Handle requests to get the current value of the 'Security System Target State' characteristic
    */
-  async handleSecuritySystemTargetStateGet(): Promise<CharacteristicValue> {
-    this.platform.log.debug(this.accessory.displayName, 'GET SecuritySystemTargetState');
-
-    // set this to a valid value for SecuritySystemTargetState
-    const currentValue = await this.getTargetStatus();
-
-    return currentValue;
+  handleSecuritySystemTargetStateGet(): CharacteristicValue {
+    try {
+      const currentValue = this.eufyStation.getPropertyValue(PropertyName.StationGuardMode);
+      this.platform.log.debug(this.accessory.displayName, 'GET StationGuardMode:', currentValue);
+      return this.convertEufytoHK(currentValue.value) as number;
+    } catch {
+      this.platform.log.error(this.accessory.displayName, 'handleSecuritySystemTargetStateGet', 'Wrong return value');
+      return false;
+    }
   }
 
   private handleRawPropertyChange(
@@ -243,12 +199,14 @@ export class StationAccessory {
     value: string,
     modified: number,
   ): void {
-    this.platform.log.debug(this.accessory.displayName, 
-      'Handle Station Raw Property Changes:',
-      type,
-      value,
-      modified,
-    );
+    // this.platform.log.debug(this.accessory.displayName,
+    //   'ON handleRawPropertyChange:',
+    //   {
+    //     type,
+    //     value,
+    //     modified,
+    //   },
+    // );
   }
 
   private handlePropertyChange(
@@ -256,27 +214,23 @@ export class StationAccessory {
     name: string,
     value: PropertyValue,
   ): void {
-    this.platform.log.debug(this.accessory.displayName, 
-      'Handle Station Property Changes:',
-      name,
-      value,
-    );
+    // this.platform.log.debug(this.accessory.displayName,
+    //   'ON handlePropertyChange:',
+    //   {
+    //     name,
+    //     value,
+    //   },
+    // );
   }
 
   /**
    * Handle requests to set the 'Security System Target State' characteristic
    */
   handleSecuritySystemTargetStateSet(value: CharacteristicValue) {
-
-    const mode = this.convertHKtoEufy(value as number);
-
     try {
-      this.guardMode = mode;
+      const mode = this.convertHKtoEufy(value as number);
+      this.platform.log.debug(this.accessory.displayName, 'SET StationGuardMode:', mode);
       this.eufyStation.setGuardMode(mode);
-      this.service.updateCharacteristic(
-        this.characteristic.SecuritySystemCurrentState,
-        value,
-      );
     } catch (error) {
       this.platform.log.error('Error Setting security mode!', error);
     }
