@@ -92,7 +92,7 @@ export abstract class DeviceAccessory {
   ): void {
     this.platform.log.debug(
       this.accessory.displayName,
-      'Raw Property Changes:  -- ',
+      'Raw Property Changes:',
       type,
       value,
       modified,
@@ -106,7 +106,7 @@ export abstract class DeviceAccessory {
   ): void {
     this.platform.log.debug(
       this.accessory.displayName,
-      'Property Changes:  -- ',
+      'Property Changes:',
       name,
       value,
     );
