@@ -1,6 +1,10 @@
 const { EufySecurity, DeviceType } = require('eufy-security-client');
-const bunyan = require('bunyan');
 const { HomebridgePluginUiServer, RequestError } = require('@homebridge/plugin-ui-utils');
+
+const bunyan = require('bunyan');
+const bunyanDebugStream = require('bunyan-debug-stream');
+const plugin = require('../package.json');
+
 
 class UiServer extends HomebridgePluginUiServer {
   constructor() {
@@ -9,7 +13,21 @@ class UiServer extends HomebridgePluginUiServer {
     this.driver;
 
     const storagePath = this.homebridgeStoragePath;
-    this.log = bunyan.createLogger({ name: 'eufyLog - Settings' });
+    this.log = bunyan.createLogger({
+      name: '[' + plugin.version + ']',
+      hostname: '',
+      streams: [{
+        level: 'info',
+        type: 'raw',
+        stream: bunyanDebugStream({
+          forceColor: true,
+          showProcess: false,
+          showPid: false,
+          showDate: false,
+        }),
+      }],
+      serializers: bunyanDebugStream.serializers,
+    });
 
     this.config = {
       country: 'US',

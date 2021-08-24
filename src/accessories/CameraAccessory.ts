@@ -19,7 +19,7 @@ export class CameraAccessory extends DeviceAccessory {
 
   protected service: Service;
   protected Camera: Camera;
-  protected MotionService: Service;
+  protected CameraService: Service;
 
   constructor(
     platform: EufySecurityPlatform,
@@ -30,15 +30,15 @@ export class CameraAccessory extends DeviceAccessory {
     this.Camera = eufyDevice;
 
     this.service = {} as Service;
-    this.MotionService = {} as Service;
+    this.CameraService = {} as Service;
 
     this.platform.log.debug(this.accessory.displayName, 'Constructed Camera');
 
     if (this.platform.config.enableCamera || (typeof this.Camera.isDoorbell === 'function' && this.Camera.isDoorbell())) {
       this.platform.log.debug(this.accessory.displayName, 'has a camera');
       try {
-        this.service = this.cameraFunction(accessory);
-        this.MotionService = this.motionFunction(accessory);
+        this.CameraService = this.cameraFunction(accessory);
+        this.service = this.motionFunction(accessory);
 
         //video stream (work in progress)
 
@@ -209,7 +209,7 @@ export class CameraAccessory extends DeviceAccessory {
     device: Device,
     motion: boolean,
   ): void {
-    this.platform.log.debug(this.accessory.displayName, 'Handle Camera motion:', motion);
+    this.platform.log.debug(this.accessory.displayName, 'ON DeviceMotionDetected:', motion);
     this.service
       .getCharacteristic(this.characteristic.MotionDetected)
       .updateValue(motion);

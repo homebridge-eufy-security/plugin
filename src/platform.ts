@@ -39,7 +39,7 @@ import {
 // import { throws } from 'assert';
 
 import bunyan from 'bunyan';
-import PrettyStream from 'bunyan-prettystream';
+import bunyanDebugStream from 'bunyan-debug-stream';
 
 interface DeviceIdentifier {
   uniqueId: string;
@@ -85,19 +85,25 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
     } as EufySecurityConfig;
 
     if (this.config.enableDetailedLogging >= 1) {
-      const prettyStdOut = new PrettyStream();
-      prettyStdOut.pipe(process.stdout);
 
       const plugin = require('../package.json');
 
       this.log = bunyan.createLogger({
-        name: 'ef',
-        hostname: 'v' + plugin.version,
+        name: '[EufySecurity-' + plugin.version + ']',
+        hostname: '',
         streams: [{
           level: (this.config.enableDetailedLogging === 2) ? 'trace' : 'debug',
           type: 'raw',
-          stream: prettyStdOut,
+          stream: bunyanDebugStream({
+            forceColor: true,
+            showProcess: false,
+            showPid: false,
+            showDate: (time) => {
+              return '[' + time.toLocaleString('en-US') + ']';
+            },
+          }),
         }],
+        serializers: bunyanDebugStream.serializers,
       });
       this.log.info('Eufy Security Plugin: enableDetailedLogging on');
     } else {
