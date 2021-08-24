@@ -39,7 +39,7 @@ import {
 // import { throws } from 'assert';
 
 import bunyan from 'bunyan';
-import bunyanDebugStream from 'bunyan-debug-stream'
+import bunyanDebugStream from 'bunyan-debug-stream';
 
 interface DeviceIdentifier {
   uniqueId: string;
@@ -98,10 +98,12 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
             forceColor: true,
             showProcess: false,
             showPid: false,
-            showDate: (time) => {return '['+time.toLocaleString('en-US')+']'},
+            showDate: (time) => {
+              return '[' + time.toLocaleString('en-US') + ']';
+            },
           }),
         }],
-        serializers: bunyanDebugStream.serializers
+        serializers: bunyanDebugStream.serializers,
       });
       this.log.info('Eufy Security Plugin: enableDetailedLogging on');
     } else {
