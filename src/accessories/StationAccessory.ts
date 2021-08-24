@@ -1,7 +1,5 @@
 import { Service, PlatformAccessory, CharacteristicValue } from 'homebridge';
 
-import { EufySecurityPlatformConfig } from '../config';
-
 import { EufySecurityPlatform } from '../platform';
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore  
