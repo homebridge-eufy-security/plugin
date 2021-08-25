@@ -50,6 +50,7 @@ export class CameraAccessory extends DeviceAccessory {
           'name': this.Camera.getName(),
           'videoConfig': {
             'stillImageSource': '',
+            'audio': true,
             'debug': false,
           } as VideoConfig,
         };
