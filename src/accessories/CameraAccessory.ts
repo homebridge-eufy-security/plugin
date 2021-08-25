@@ -8,7 +8,9 @@ import { DeviceAccessory } from './Device';
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore  
 import { Camera, Device, PropertyName } from 'eufy-security-client';
-import { EufyCameraStreamingDelegate } from './streamingDelegate';
+import { StreamingDelegate } from './streamingDelegate';
+
+import { CameraConfig, VideoConfig } from './configTypes';
 
 /**
  * Platform Accessory
@@ -21,6 +23,8 @@ export class CameraAccessory extends DeviceAccessory {
   protected Camera: Camera;
   protected CameraService: Service;
 
+  protected readonly cameraConfig: CameraConfig;
+
   constructor(
     platform: EufySecurityPlatform,
     accessory: PlatformAccessory,
@@ -31,6 +35,7 @@ export class CameraAccessory extends DeviceAccessory {
 
     this.service = {} as Service;
     this.CameraService = {} as Service;
+    this.cameraConfig = {} as CameraConfig;
 
     this.platform.log.debug(this.accessory.displayName, 'Constructed Camera');
 
@@ -41,8 +46,15 @@ export class CameraAccessory extends DeviceAccessory {
         this.service = this.motionFunction(accessory);
 
         //video stream (work in progress)
+        this.cameraConfig = {
+          'name': this.Camera.getName(),
+          'videoConfig': {
+            'stillImageSource': '',
+            'debug': false,
+          } as VideoConfig,
+        };
 
-        const delegate = new EufyCameraStreamingDelegate(this.platform, this.Camera);
+        const delegate = new StreamingDelegate(this.platform, this.Camera, this.cameraConfig, this.platform.api, this.platform.api.hap);
         accessory.configureController(delegate.controller);
       } catch (Error) {
         this.platform.log.error(this.accessory.displayName, 'raise error to check and attach livestream function.', Error);
