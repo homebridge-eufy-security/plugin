@@ -77,10 +77,9 @@ function isDevicesIgnored(uniqueId) {
 
 async function list_stations_devices(stations) {
 
+    const s_div = document.getElementById('stations');
+
     if (!stations) {
-        document.getElementById('step1').style.display = 'block';
-        document.getElementById('step2').style.display = 'none';
-        document.getElementById('step3').style.display = 'none';
         s_div.innerHTML = '<span style="color:red; font-weight:bold;"><h3>Error: Nothing to retreive!</h3></span>';
         return;
     }
@@ -95,8 +94,6 @@ async function list_stations_devices(stations) {
 
     await homebridge.updatePluginConfig([pluginConfig]);
     await homebridge.savePluginConfig();
-
-    const s_div = document.getElementById('stations');
 
     const t1 = document.createElement("div");
     t1.setAttribute('class', 'divTable');
