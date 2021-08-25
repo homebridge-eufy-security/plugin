@@ -9,7 +9,6 @@ export type CameraConfig = {
   switches?: boolean;
   motionTimeout?: number;
   motionDoorbell?: boolean;
-  mqtt?: MqttCameraConfig;
   unbridge?: boolean;
   videoConfig?: VideoConfig;
 };
