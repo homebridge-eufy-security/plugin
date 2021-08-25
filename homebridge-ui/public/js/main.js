@@ -36,12 +36,6 @@ function updateConfigFromForm() {
     pluginConfig.ignoreDevices = document.getElementById('ignoreDevices').value;
 }
 
-function showHideTokenButton() {
-    const usernameInput = document.getElementById('usernameInput').value;
-    const passwordInput = document.getElementById('passwordInput').value;
-    document.getElementById('startOver').style.display = (!usernameInput || !passwordInput) ? 'inline-block' : 'none';
-}
-
 function adjustPollingValue() {
     const pollingValue = document.getElementById('pollingIntervalMinutes').value;
     document.getElementById('pollingValue').innerHTML = pollingValue + ' minutes';
@@ -198,7 +192,6 @@ async function list_stations_devices(stations) {
     }
 
     adjustPollingValue()
-    //showHideTokenButton()
 })();
 
 // watch for changes to the config form
@@ -214,8 +207,6 @@ document.getElementById('configForm').addEventListener('change', async () => {
 
 
 document.getElementById('pollingIntervalMinutes').addEventListener('input', adjustPollingValue);
-document.getElementById('usernameInput').addEventListener('input', showHideTokenButton);
-document.getElementById('passwordInput').addEventListener('input', showHideTokenButton);
 
 
 // step 1 submit handler
