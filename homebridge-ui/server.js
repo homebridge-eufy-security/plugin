@@ -17,7 +17,7 @@ class UiServer extends HomebridgePluginUiServer {
       name: '[' + plugin.version + ']',
       hostname: '',
       streams: [{
-        level: 'info',
+        level: 'debug',
         type: 'raw',
         stream: bunyanDebugStream({
           forceColor: true,
