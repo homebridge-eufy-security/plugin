@@ -50,7 +50,8 @@ jobs:
       - run: git config --global user.email '<>'
       - run: npm version ${{ github.event.inputs.version }} --preid=${{ github.event.inputs.preid }} -m "[${{ github.event.inputs.preid }}] %s"
       - run: npm update homebridge-eufy-security
-      - run: git push
+      - run: git tag -a "v${{ github.event.inputs.version }}" -m "[${{ github.event.inputs.preid }}] %s"
+      - run: git push origin --tags
 
   publish:
     runs-on: ubuntu-latest
