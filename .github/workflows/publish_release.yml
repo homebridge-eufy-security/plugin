@@ -6,19 +6,19 @@ on:
       version:
         description: 'premajor/prerelease/prepatch/major/minor/patch'
         required: true
-        default: 'prepatch'
+        default: 'prerelease'
       tag:
         description: 'latest/rc/beta'
         required: true
-        default: 'beta'
+        default: 'latest'
       preid:
         description: 'rc/beta'
         required: true
-        default: 'beta'
+        default: 'rc'
       branch:
         description: 'master/next/beta'
         required: true
-        default: 'beta'
+        default: 'next'
         
 jobs:
 
@@ -49,6 +49,7 @@ jobs:
       - run: git config --global user.name '[GitHub Bot]'
       - run: git config --global user.email '<>'
       - run: npm version ${{ github.event.inputs.version }} --preid=${{ github.event.inputs.preid }} -m "[${{ github.event.inputs.preid }}] %s"
+      - run: npm update homebridge-eufy-security
       - run: git push
 
   publish:
