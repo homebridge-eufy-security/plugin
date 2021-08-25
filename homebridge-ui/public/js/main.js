@@ -31,7 +31,7 @@ function updateConfigFromForm() {
     pluginConfig.hkAway = parseInt(document.getElementById('hkAway').value);
     pluginConfig.hkNight = parseInt(document.getElementById('hkNight').value);
     pluginConfig.hkOff = parseInt(document.getElementById('hkOff').value);
-    pluginConfig.enableDetailedLogging = parseInt(document.getElementById('enableDetailedLogging').checked*1);
+    pluginConfig.enableDetailedLogging = parseInt(document.getElementById('enableDetailedLogging').checked * 1);
     pluginConfig.ignoreStations = document.getElementById('ignoreStations').value;
     pluginConfig.ignoreDevices = document.getElementById('ignoreDevices').value;
 }
@@ -76,23 +76,27 @@ function isDevicesIgnored(uniqueId) {
 }
 
 async function list_stations_devices(stations) {
+
+    if (!stations) {
+        document.getElementById('step1').style.display = 'block';
+        document.getElementById('step2').style.display = 'none';
+        document.getElementById('step3').style.display = 'none';
+        s_div.innerHTML = '<span style="color:red; font-weight:bold;"><h3>Error: Nothing to retreive!</h3></span>';
+        return;
+    }
+
     pluginConfig.username = document.getElementById('usernameInput1').value;
     pluginConfig.password = document.getElementById('passwordInput1').value;
     document.getElementById('usernameInput').value = document.getElementById('usernameInput1').value;
     document.getElementById('passwordInput').value = document.getElementById('passwordInput1').value;
 
-    pluginConfig.ignoreStations = pluginConfig.ignoreStations || [];
-    pluginConfig.ignoreDevices = pluginConfig.ignoreDevices || [];
+    pluginConfig.ignoreStations = (typeof pluginConfig.ignoreStations === 'object') ? pluginConfig.ignoreStations : [];
+    pluginConfig.ignoreDevices = (typeof pluginConfig.ignoreDevices === 'object') ? pluginConfig.ignoreDevices : [];
 
     await homebridge.updatePluginConfig([pluginConfig]);
     await homebridge.savePluginConfig();
 
     const s_div = document.getElementById('stations');
-
-    if(!stations){
-        s_div.innerHTML = '<span style="color:red; font-weight:bold;"><h3>Error: Nothing to retreive!</h3></span>';
-        return;
-    }
 
     const t1 = document.createElement("div");
     t1.setAttribute('class', 'divTable');
@@ -117,7 +121,7 @@ async function list_stations_devices(stations) {
 
         const b1 = document.createElement("div");
         b1.setAttribute('class', 'divTableBody' + checked);
-        b1.setAttribute('id', `station_${item.uniqueId}`);
+        b1.setAttribute('id', `s_${item.uniqueId}`);
 
         var r1 = document.createElement("div");
 
@@ -139,7 +143,7 @@ async function list_stations_devices(stations) {
             var r2 = document.createElement("div");
             const checked = (isDevicesIgnored(item.uniqueId)) ? ' checked' : '';
             r2.setAttribute('class', 'divTableRow' + checked);
-            r2.setAttribute('id', `device_${item.uniqueId}`);
+            r2.setAttribute('id', `d_${item.uniqueId}`);
             r2.innerHTML = `
                     <div class="divTableCell">|--&nbsp;${item.displayName}</div>
                     <div class="divTableCell">${item.uniqueId}</div>
@@ -158,9 +162,9 @@ async function list_stations_devices(stations) {
 
         document.getElementById(`st_${item.uniqueId}`).addEventListener('change', async e => {
             if (e.target.checked) {
-                document.getElementById(`station_${item.uniqueId}`).setAttribute('class', 'divTableBody checked');
+                document.getElementById(`s_${item.uniqueId}`).setAttribute('class', 'divTableBody checked');
             } else {
-                document.getElementById(`station_${item.uniqueId}`).setAttribute('class', 'divTableBody');
+                document.getElementById(`s_${item.uniqueId}`).setAttribute('class', 'divTableBody');
             }
             await AddOrRemoveStationsIgnoreList(item.uniqueId);
         });
@@ -169,10 +173,10 @@ async function list_stations_devices(stations) {
 
             document.getElementById(`dev_${item.uniqueId}`).addEventListener('change', async e => {
                 if (e.target.checked) {
-                    document.getElementById(`device_${item.uniqueId}`).setAttribute('class', 'divTableRow checked');
+                    document.getElementById(`d_${item.uniqueId}`).setAttribute('class', 'divTableRow checked');
 
                 } else {
-                    document.getElementById(`device_${item.uniqueId}`).setAttribute('class', 'divTableRow');
+                    document.getElementById(`d_${item.uniqueId}`).setAttribute('class', 'divTableRow');
                 }
                 await AddOrRemoveDevicesIgnoreList(item.uniqueId);
             });

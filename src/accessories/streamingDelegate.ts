@@ -30,6 +30,11 @@ import { Logger } from './logger';
 import { Camera, PropertyName } from 'eufy-security-client';
 import { EufySecurityPlatform } from '../platform';
 
+import { readFile } from 'fs'
+import { promisify } from 'util'
+const readFileAsync = promisify(readFile),
+  SnapshotUnavailablePath = require.resolve('../../media/Snapshot-Unavailable.png');
+
 type SessionInfo = {
   address: string; // address of the HAP controller
   ipv6: boolean;
@@ -175,9 +180,15 @@ export class StreamingDelegate implements CameraStreamingDelegate {
   }
 
   fetchSnapshot(snapFilter?: string): Promise<Buffer> {
-    this.snapshotPromise = new Promise((resolve, reject) => {
 
-      this.videoConfig.stillImageSource = '-i ' + this.device.getPropertyValue(PropertyName.DevicePictureUrl).value as string;
+    this.snapshotPromise = new Promise(async (resolve, reject) => {
+
+      try {
+        this.videoConfig.stillImageSource = '-i ' + this.device.getPropertyValue(PropertyName.DevicePictureUrl).value as string;
+      } catch {
+        this.log.warn(this.cameraName + ' fetchSnapshot: ' + 'No Snapshot found');
+        resolve(await readFileAsync(SnapshotUnavailablePath));
+      }
 
       const startTime = Date.now();
       const ffmpegArgs = (this.videoConfig.stillImageSource || this.videoConfig.source!) + // Still
