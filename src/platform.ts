@@ -72,6 +72,10 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
       eventDurationSeconds: 10,
     } as EufySecurityConfig;
 
+
+    this.config.ignoreStations = this.config.ignoreStations || [];
+    this.config.ignoreDevices = this.config.ignoreDevices || [];
+
     if (this.config.enableDetailedLogging >= 1) {
 
       const plugin = require('../package.json');
@@ -299,14 +303,12 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
 
     // Cleaning cached accessory which are no longer exist
 
-    const staleAccessories = this.accessories.filter(function (item) {
+    const staleAccessories = this.accessories.filter((item) => {
       return activeAccessoryIds.indexOf(item.UUID) === -1;
     });
 
     staleAccessories.forEach((staleAccessory) => {
-      this.log.info(
-        `Removing cached accessory ${staleAccessory.UUID} ${staleAccessory.displayName}`
-      )
+      this.log.info(`Removing cached accessory ${staleAccessory.UUID} ${staleAccessory.displayName}`);
       this.api.unregisterPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [staleAccessory]);
     });
 

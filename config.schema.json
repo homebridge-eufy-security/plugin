@@ -23,9 +23,24 @@
         "type": "number",
         "default": 0,
         "oneOf": [
-          {"title": "Normal", "enum": [0]},
-          {"title": "Debug", "enum": [1]},
-          {"title": "Insane", "enum": [2]}
+          {
+            "title": "Normal",
+            "enum": [
+              0
+            ]
+          },
+          {
+            "title": "Debug",
+            "enum": [
+              1
+            ]
+          },
+          {
+            "title": "Insane",
+            "enum": [
+              2
+            ]
+          }
         ],
         "description": "Becarefull Debug and Insane may contain credential and personnal information which could be use to login into your Eufy Account",
         "required": true
@@ -35,35 +50,81 @@
         "description": "Camera seen as Motion Sensor by default, enable this setting to transform as Camera",
         "type": "boolean",
         "required": false
-      }, 
+      },
       "pollingIntervalMinutes": {
         "title": "Polling Interval (in minutes) ",
         "type": "number",
         "required": false
       },
       "ignoreStations": {
-        "title": "Ignoring stations listed here",
-        "type": "string",
-        "required": false
+        "title": "Ignoring stations",
+        "type": "array",
+        "required": false,
+        "items": {
+          "type": "string"
+        }
       },
       "ignoreDevices": {
-        "title": "Ignoring devices listed here",
-        "type": "string",
-        "required": false
+        "title": "Ignoring devices",
+        "type": "array",
+        "required": false,
+        "items": {
+          "type": "string"
+        }
       },
       "hkHome": {
         "title": "HomeKit Home",
         "type": "number",
         "default": 1,
         "oneOf": [
-          {"title": "Home", "enum": [1]},
-          {"title": "Away", "enum": [0]},
-          {"title": "Schedule", "enum": [2]},
-          {"title": "Custom 1", "enum": [3]},
-          {"title": "Custom 2", "enum": [4]},
-          {"title": "Custom 3", "enum": [5]},
-          {"title": "Geofencing", "enum": [47]},
-          {"title": "Disarmed", "enum": [63]}
+          {
+            "title": "Home",
+            "enum": [
+              1
+            ]
+          },
+          {
+            "title": "Away",
+            "enum": [
+              0
+            ]
+          },
+          {
+            "title": "Schedule",
+            "enum": [
+              2
+            ]
+          },
+          {
+            "title": "Custom 1",
+            "enum": [
+              3
+            ]
+          },
+          {
+            "title": "Custom 2",
+            "enum": [
+              4
+            ]
+          },
+          {
+            "title": "Custom 3",
+            "enum": [
+              5
+            ]
+          },
+          {
+            "title": "Geofencing",
+            "enum": [
+              47
+            ]
+          },
+          {
+            "title": "Disarmed",
+            "enum": [
+              63
+            ]
+          }
         ],
         "required": false
       },
@@ -72,14 +133,54 @@
         "type": "number",
         "default": 0,
         "oneOf": [
-          {"title": "Home", "enum": [1]},
-          {"title": "Away", "enum": [0]},
-          {"title": "Schedule", "enum": [2]},
-          {"title": "Custom 1", "enum": [3]},
-          {"title": "Custom 2", "enum": [4]},
-          {"title": "Custom 3", "enum": [5]},
-          {"title": "Geofencing", "enum": [47]},
-          {"title": "Disarmed", "enum": [63]}
+          {
+            "title": "Home",
+            "enum": [
+              1
+            ]
+          },
+          {
+            "title": "Away",
+            "enum": [
+              0
+            ]
+          },
+          {
+            "title": "Schedule",
+            "enum": [
+              2
+            ]
+          },
+          {
+            "title": "Custom 1",
+            "enum": [
+              3
+            ]
+          },
+          {
+            "title": "Custom 2",
+            "enum": [
+              4
+            ]
+          },
+          {
+            "title": "Custom 3",
+            "enum": [
+              5
+            ]
+          },
+          {
+            "title": "Geofencing",
+            "enum": [
+              47
+            ]
+          },
+          {
+            "title": "Disarmed",
+            "enum": [
+              63
+            ]
+          }
         ],
         "required": false
       },
@@ -88,14 +189,54 @@
         "type": "number",
         "default": 3,
         "oneOf": [
-          {"title": "Home", "enum": [1]},
-          {"title": "Away", "enum": [0]},
-          {"title": "Schedule", "enum": [2]},
-          {"title": "Custom 1", "enum": [3]},
-          {"title": "Custom 2", "enum": [4]},
-          {"title": "Custom 3", "enum": [5]},
-          {"title": "Geofencing", "enum": [47]},
-          {"title": "Disarmed", "enum": [63]}
+          {
+            "title": "Home",
+            "enum": [
+              1
+            ]
+          },
+          {
+            "title": "Away",
+            "enum": [
+              0
+            ]
+          },
+          {
+            "title": "Schedule",
+            "enum": [
+              2
+            ]
+          },
+          {
+            "title": "Custom 1",
+            "enum": [
+              3
+            ]
+          },
+          {
+            "title": "Custom 2",
+            "enum": [
+              4
+            ]
+          },
+          {
+            "title": "Custom 3",
+            "enum": [
+              5
+            ]
+          },
+          {
+            "title": "Geofencing",
+            "enum": [
+              47
+            ]
+          },
+          {
+            "title": "Disarmed",
+            "enum": [
+              63
+            ]
+          }
         ],
         "required": false
       },
@@ -104,14 +245,54 @@
         "type": "number",
         "default": 63,
         "oneOf": [
-          {"title": "Home", "enum": [1]},
-          {"title": "Away", "enum": [0]},
-          {"title": "Schedule", "enum": [2]},
-          {"title": "Custom 1", "enum": [3]},
-          {"title": "Custom 2", "enum": [4]},
-          {"title": "Custom 3", "enum": [5]},
-          {"title": "Geofencing", "enum": [47]},
-          {"title": "Disarmed", "enum": [63]}
+          {
+            "title": "Home",
+            "enum": [
+              1
+            ]
+          },
+          {
+            "title": "Away",
+            "enum": [
+              0
+            ]
+          },
+          {
+            "title": "Schedule",
+            "enum": [
+              2
+            ]
+          },
+          {
+            "title": "Custom 1",
+            "enum": [
+              3
+            ]
+          },
+          {
+            "title": "Custom 2",
+            "enum": [
+              4
+            ]
+          },
+          {
+            "title": "Custom 3",
+            "enum": [
+              5
+            ]
+          },
+          {
+            "title": "Geofencing",
+            "enum": [
+              47
+            ]
+          },
+          {
+            "title": "Disarmed",
+            "enum": [
+              63
+            ]
+          }
         ],
         "required": false
       }
@@ -140,7 +321,7 @@
         "hkAway",
         "hkNight",
         "hkOff"
-        ]
+      ]
     },
     {
       "type": "fieldset",
@@ -150,8 +331,44 @@
       "items": [
         "enableDetailedLogging",
         "enableCamera",
-        "pollingIntervalMinutes"
-        ]
+        "pollingIntervalMinutes",
+        {
+          "key": "ignoreStations",
+          "add": "Add Another Device ID",
+          "type": "array",
+          "items": [
+            {
+              "type": "div",
+              "displayFlex": true,
+              "flex-direction": "row",
+              "items": [
+                {
+                  "key": "ignoreStations[]",
+                  "placeholder": "Device ID"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "key": "ignoreDevices",
+          "add": "Add Another Device ID",
+          "type": "array",
+          "items": [
+            {
+              "type": "div",
+              "displayFlex": true,
+              "flex-direction": "row",
+              "items": [
+                {
+                  "key": "ignoreDevices[]",
+                  "placeholder": "Device ID"
+                }
+              ]
+            }
+          ]
+        }
+      ]
     }
   ]
 }
