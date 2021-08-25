@@ -1,19 +1,3 @@
-import { PlatformIdentifier, PlatformName } from 'homebridge';
-
-export type FfmpegPlatformConfig = {
-  platform: PlatformName | PlatformIdentifier;
-  name?: string;
-  videoProcessor?: string;
-  mqtt?: string;
-  portmqtt?: number;
-  tlsmqtt?: boolean;
-  usermqtt?: string;
-  passmqtt?: string;
-  porthttp?: number;
-  localhttp?: boolean;
-  cameras?: Array<CameraConfig>;
-};
-
 export type CameraConfig = {
   name?: string;
   manufacturer?: string;
@@ -49,13 +33,4 @@ export type VideoConfig = {
   audio?: boolean;
   debug?: boolean;
   debugReturn?: boolean;
-};
-
-export type MqttCameraConfig = {
-  motionTopic?: string;
-  motionMessage?: string;
-  motionResetTopic?: string;
-  motionResetMessage?: string;
-  doorbellTopic?: string;
-  doorbellMessage?: string;
 };
