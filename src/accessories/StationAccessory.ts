@@ -13,7 +13,7 @@ import { Station, PropertyName, PropertyValue, AlarmEvent } from 'eufy-security-
 export class StationAccessory {
   private service: Service;
   private alarm_triggered: boolean;
-  
+
   protected characteristic;
 
   constructor(
@@ -147,7 +147,9 @@ export class StationAccessory {
       { hk: 3, eufy: this.platform.config.hkOff ?? 63 },
     ];
 
-    //modes.push({ hk: 3, eufy: ((modes.filter((m) => { return m.eufy === 6; })[0]) ? 63 : 6) });
+    modes.push({ hk: 3, eufy: 6 }); // If keypad attached to the station
+
+    // modes.push({ hk: 3, eufy: ((modes.filter((m) => { return m.eufy === 6; })[0]) ? 63 : 6) });
 
     return modes;
   }
