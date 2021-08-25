@@ -13,6 +13,8 @@ import { PLATFORM_NAME, PLUGIN_NAME } from './settings';
 
 import { EufySecurityPlatformConfig } from './config';
 
+import { DeviceIdentifier, DeviceContainer } from './interfaces';
+
 import { StationAccessory } from './accessories/StationAccessory';
 import { EntrySensorAccessory } from './accessories/EntrySensorAccessory';
 import { MotionSensorAccessory } from './accessories/MotionSensorAccessory';
@@ -26,7 +28,6 @@ import {
   EufySecurityConfig,
   DeviceType,
   Station,
-  Device,
   EntrySensor,
   MotionSensor,
   Camera,
@@ -36,22 +37,9 @@ import {
   // eslint-disable-next-line @typescript-eslint/ban-ts-comment
   // @ts-ignore 
 } from 'eufy-security-client';
-// import { throws } from 'assert';
 
 import bunyan from 'bunyan';
 import bunyanDebugStream from 'bunyan-debug-stream';
-
-interface DeviceIdentifier {
-  uniqueId: string;
-  displayName: string;
-  type: number;
-  station: boolean;
-}
-
-interface DeviceContainer {
-  deviceIdentifier: DeviceIdentifier;
-  eufyDevice: Device | Station | null;
-}
 
 export class EufySecurityPlatform implements DynamicPlatformPlugin {
   public readonly Service: typeof Service = this.api.hap.Service;
@@ -83,6 +71,10 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
       pollingIntervalMinutes: this.config.pollingIntervalMinutes ?? 10,
       eventDurationSeconds: 10,
     } as EufySecurityConfig;
+
+
+    this.config.ignoreStations = this.config.ignoreStations || [];
+    this.config.ignoreDevices = this.config.ignoreDevices || [];
 
     if (this.config.enableDetailedLogging >= 1) {
 
@@ -179,11 +171,9 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
         station.getLANIPAddress(),
       );
 
-      let ignore = false;
-
       if (this.config.ignoreStations.indexOf(station.getSerial()) !== -1) {
         this.log.debug('Device ignored');
-        ignore = true;
+        continue;
       }
 
       const deviceContainer: DeviceContainer = {
@@ -193,7 +183,7 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
           type: station.getDeviceType(),
           station: true,
         } as DeviceIdentifier,
-        eufyDevice: (ignore) ? null : station,
+        eufyDevice: station,
       };
       devices.push(deviceContainer);
     }
@@ -209,16 +199,14 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
         DeviceType[device.getDeviceType()],
       );
 
-      let ignore = false;
-
       if (this.config.ignoreStations.indexOf(device.getStationSerial()) !== -1) {
         this.log.debug('Device ignored because station is ignored');
-        ignore = true;
+        continue;
       }
 
       if (this.config.ignoreDevices.indexOf(device.getSerial()) !== -1) {
         this.log.debug('Device ignored');
-        ignore = true;
+        continue;
       }
 
       const deviceContainer: DeviceContainer = {
@@ -228,11 +216,12 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
           type: device.getDeviceType(),
           station: false,
         } as DeviceIdentifier,
-        eufyDevice: (ignore) ? null : device,
+        eufyDevice: device,
       };
       devices.push(deviceContainer);
     }
 
+    const activeAccessoryIds: string[] = [];
 
     // loop over the discovered devices and register each one if it has not already been registered
     for (const device of devices) {
@@ -249,6 +238,8 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
         this.log.debug('This device is not a station. Generating a new UUID to avoid any duplicate issue');
       }
 
+      activeAccessoryIds.push(uuid);
+
       // see if an accessory with the same uuid has already been registered and restored from
       // the cached devices we stored in the `configureAccessory` method above
       const existingAccessory = this.accessories.find(
@@ -257,45 +248,25 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
 
       if (existingAccessory) {
         // the accessory already exists
-        if (device.eufyDevice !== null) {
-          // if you need to update the accessory.context then you should run `api.updatePlatformAccessories`. eg.:
-          // existingAccessory.context.device = device;
-          // this.api.updatePlatformAccessories([existingAccessory]);
 
-          // create the accessory handler for the restored accessory
-          // this is imported from `platformAccessory.ts`
-          if (this.register_accessory(
-            existingAccessory,
-            device.deviceIdentifier.type,
-            device.eufyDevice,
-            device.deviceIdentifier.station,
-          )
-          ) {
-            this.log.info(
-              'Restoring existing accessory from cache:',
-              existingAccessory.displayName,
-            );
-
-            // update accessory cache with any changes to the accessory details and information
-            this.api.updatePlatformAccessories([existingAccessory]);
-          }
-        } else {
-          // it is possible to remove platform accessories at any time using `api.unregisterPlatformAccessories`, eg.:
-          // remove platform accessories when no longer present
-          this.api.unregisterPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [
-            existingAccessory,
-          ]);
+        if (this.register_accessory(
+          existingAccessory,
+          device.deviceIdentifier.type,
+          device.eufyDevice,
+          device.deviceIdentifier.station,
+        )
+        ) {
           this.log.info(
-            'Removing existing accessory from cache:',
+            'Restoring existing accessory from cache:',
             existingAccessory.displayName,
           );
+
+          // update accessory cache with any changes to the accessory details and information
+          this.api.updatePlatformAccessories([existingAccessory]);
         }
+
       } else {
         // the accessory does not yet exist, so we need to create it
-
-        if (device.eufyDevice === null) {
-          continue;
-        }
 
         // create a new accessory
         const accessory = new this.api.platformAccessory(
@@ -329,6 +300,18 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
         }
       }
     }
+
+    // Cleaning cached accessory which are no longer exist
+
+    const staleAccessories = this.accessories.filter((item) => {
+      return activeAccessoryIds.indexOf(item.UUID) === -1;
+    });
+
+    staleAccessories.forEach((staleAccessory) => {
+      this.log.info(`Removing cached accessory ${staleAccessory.UUID} ${staleAccessory.displayName}`);
+      this.api.unregisterPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [staleAccessory]);
+    });
+
   }
 
   private register_accessory(

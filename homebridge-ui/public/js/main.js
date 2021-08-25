@@ -17,8 +17,8 @@ function updateFormFromConfig() {
     document.getElementById('hkNight').value = pluginConfig.hkNight || "3";
     document.getElementById('hkOff').value = pluginConfig.hkOff || "63";
     document.getElementById('enableDetailedLogging').checked = pluginConfig.enableDetailedLogging || '';
-    document.getElementById('ignoreStations').value = pluginConfig.ignoreStations || '';
-    document.getElementById('ignoreDevices').value = pluginConfig.ignoreDevices || '';
+    document.getElementById('ignoreStations').value = pluginConfig.ignoreStations || [];
+    document.getElementById('ignoreDevices').value = pluginConfig.ignoreDevices || [];
     homebridge.fixScrollHeight();
 }
 
@@ -32,8 +32,8 @@ function updateConfigFromForm() {
     pluginConfig.hkNight = parseInt(document.getElementById('hkNight').value);
     pluginConfig.hkOff = parseInt(document.getElementById('hkOff').value);
     pluginConfig.enableDetailedLogging = parseInt(document.getElementById('enableDetailedLogging').checked * 1);
-    pluginConfig.ignoreStations = document.getElementById('ignoreStations').value;
-    pluginConfig.ignoreDevices = document.getElementById('ignoreDevices').value;
+    pluginConfig.ignoreStations = document.getElementById('ignoreStations').value.split(",");
+    pluginConfig.ignoreDevices = document.getElementById('ignoreDevices').value.split(",");
 }
 
 function adjustPollingValue() {
