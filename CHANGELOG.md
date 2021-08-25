@@ -8,6 +8,7 @@
 -   OTP attached to an Eufy Account is supported
 -   Adding SmartLock (getting the status lock/unlock only)
 -   Hability to use Camera as a motion sensor or as a camera streaming device
+-   Audio support on LiveStream
 
 ### Changed
 -   Upgrade to the latest bropat/eufy-security-client lib (1.1.2)
