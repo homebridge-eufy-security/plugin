@@ -36,8 +36,7 @@
     "bunyan-debug-stream": "^2.0.0",
     "eufy-security-client": "^1.1.2",
     "ffmpeg-for-homebridge": "0.0.9",
-    "get-port": "^5.1.1",
-    "systeminformation": "^5.7.6"
+    "pick-port": "^1.0.0"
   },
   "devDependencies": {
     "@types/bunyan": "^1.8.6",
