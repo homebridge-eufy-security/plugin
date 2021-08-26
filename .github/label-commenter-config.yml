@@ -1,0 +1,6 @@
+labels:
+  - name: bug
+    labeled:
+      issue:
+        body: |
+          Did you check this [Common Issues](https://github.com/samemory/homebridge-eufy-security/wiki/Common-Issues#livestream) pages ?
