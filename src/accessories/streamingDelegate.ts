@@ -410,7 +410,7 @@ export class StreamingDelegate implements CameraStreamingDelegate {
             (request.audio.codec === AudioStreamingCodecType.OPUS ?
               ' -codec:a libopus' +
               ' -application lowdelay' :
-              ' -codec:a libfdk_aac' +
+              ' -codec:a aac' +
               ' -profile:a aac_eld') +
             ' -flags +global_header' +
             ' -f null' +
@@ -461,7 +461,7 @@ export class StreamingDelegate implements CameraStreamingDelegate {
           '-hide_banner' +
           ' -protocol_whitelist pipe,udp,rtp,file,crypto' +
           ' -f sdp' +
-          ' -c:a libfdk_aac' +
+          ' -c:a aac' +
           ' -i pipe:' +
           ' ' + this.videoConfig.returnAudioTarget +
           ' -loglevel level' + (this.videoConfig.debugReturn ? '+verbose' : '');
