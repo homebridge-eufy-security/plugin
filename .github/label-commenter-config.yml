@@ -4,3 +4,8 @@ labels:
       issue:
         body: |
           Did you check this [Common Issues](https://github.com/samemory/homebridge-eufy-security/wiki/Common-Issues#livestream) pages ?
+  - name: enhancement
+    labeled:
+      issue:
+        body: |
+          Did you check this [Road Map](https://github.com/samemory/homebridge-eufy-security/projects/4) pages ?
