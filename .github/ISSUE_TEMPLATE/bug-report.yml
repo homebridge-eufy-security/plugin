@@ -18,6 +18,22 @@ body:
       required: true
 
   - type: dropdown
+    id: device_type
+    attributes:
+      label: Device Type
+      description: On which device your facing issue?
+      options:
+        - Doorbell (Supported)
+        - Floodlight (Supported)
+        - Indoor Camera (Supported)
+        - Motion Detector (Supported)
+        - Contact Sensor (Supported)
+        - Station (Supported)
+        - other (UnSupported)
+    validations:
+      required: true
+
+  - type: dropdown
     id: plugin_version
     attributes:
       label: Plugin Version
