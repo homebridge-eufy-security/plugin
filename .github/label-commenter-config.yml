@@ -3,7 +3,7 @@ labels:
     labeled:
       issue:
         body: |
-          Did you check this [Common Issues](https://github.com/samemory/homebridge-eufy-security/wiki/Common-Issues#livestream) pages ?
+          Did you check this [Common Issues](https://github.com/samemory/homebridge-eufy-security/wiki/Common-Issues) pages ?
   - name: enhancement
     labeled:
       issue:
