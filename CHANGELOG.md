@@ -1,5 +1,39 @@
 # Change Log
 
+## 1.0.0 (09/02/2021)
+
+### Added
+-   Increase compatibility with new Eufy Camera devices
+-   New Config UI with onboarding
+-   OTP attached to an Eufy Account is supported
+-   Adding SmartLock (getting the status lock/unlock only)
+-   Hability to use Camera as a motion sensor or as a camera streaming device
+-   Audio support on LiveStream
+
+### Changed
+-   Upgrade to the latest bropat/eufy-security-client lib (1.1.2)
+-   Improving debug collection
+-   Code optimisation
+
+### Removed
+-   IP LAN address is no more required as config settings
+
+### Fixed
+-   Cloud Livestream on doorbell can stuck
+-   Handle duplicate when using Guest Eufy Account
+-   Updating some dep for security reason
+-   Multiple typo fix
+-   Sometimes battery status is not updated
+-   Fix push notification issue on new indoor outdoor camera device #184
+-   Fixing issue #190
+-   As @bropat notice, we need to clean function reference which will be deprecated soon (bropat/eufy-security-client#40)
+
+## 0.2.13 (07-26-2021)
+
+### Changes
+
+-   Motion Sensor Fix, trigger when motion is detected
+
 ## 0.2.12 (07-25-2021)
 
 ### Changes

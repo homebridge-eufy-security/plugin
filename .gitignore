@@ -111,6 +111,7 @@ dist
 
 # Stores VSCode versions used for testing VSCode extensions
 .vscode-test
+.vscode
 
 # yarn v2
 
@@ -121,3 +122,5 @@ dist
 
 .npmrc
 .history
+
+.github/workflows/

@@ -8,8 +8,11 @@
 Homebridge plugin to control certain Eufy Security devices
 
 [![npm](https://img.shields.io/npm/v/homebridge-eufy-security/latest?label=latest)](https://www.npmjs.com/package/homebridge-eufy-security)
-[![npm](https://img.shields.io/npm/v/homebridge-eufy-security/beta?label=beta)](https://github.com/samemory/homebridge-eufy-security/wiki/Beta-Version)
+[![verified-by-homebridge](https://badgen.net/badge/homebridge/verified/purple)](https://github.com/homebridge/homebridge/wiki/Verified-Plugins)
 [![npm](https://img.shields.io/npm/dt/homebridge-eufy-security)](https://www.npmjs.com/package/homebridge-eufy-security)
+
+
+[![npm](https://img.shields.io/npm/v/homebridge-eufy-security/beta?label=beta)](https://github.com/samemory/homebridge-eufy-security/wiki/Beta-Version)
 [![Discord](https://img.shields.io/discord/432663330281226270?color=728ED5&logo=discord&label=hb-discord)](https://discord.com/channels/432663330281226270/876907345962229791)
 
 </span>
@@ -39,6 +42,8 @@ Homebridge plugin to control certain Eufy Security devices
 
 ### Help
 
+- [Common Issues](https://github.com/samemory/homebridge-eufy-security/wiki/Common-Issues)
+- [Basic Troubleshooting](https://github.com/samemory/homebridge-eufy-security/wiki/Basic-Troubleshooting)
 - [Support Request](https://github.com/samemory/homebridge-eufy-security/issues/new/choose)
 - [Changelog](https://github.com/samemory/homebridge-eufy-security/blob/master/CHANGELOG.md)
 
