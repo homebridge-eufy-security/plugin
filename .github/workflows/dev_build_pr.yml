@@ -1,9 +1,9 @@
-name: DEV_Build_PR
+name: BETA_Build_PR
 
 on: 
   pull_request:
     branches:
-    - dev
+    - beta
     paths-ignore:
       - '.github/**'
       - '**.md'
@@ -15,7 +15,7 @@ jobs:
 
     strategy:
       matrix:
-        node-version: [10, 12, 14]
+        node-version: [12, 14, 16]
 
     steps:
       - uses: actions/checkout@v2

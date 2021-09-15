@@ -8,12 +8,13 @@ import { PlatformConfig } from 'homebridge';
 export interface EufySecurityPlatformConfig extends PlatformConfig {
   username: string;
   password: string;
-  ipAddress: string;
-  enableDetailedLogging: boolean;
+  enableDetailedLogging: number;
+  enableCamera: boolean;
   pollingIntervalMinutes: number;
   hkHome: number;
   hkAway: number;
   hkNight: number;
   hkOff: number;
-  hkDisarmed: number;
+  ignoreStations: string[];
+  ignoreDevices: string[];
 }

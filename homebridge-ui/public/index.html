@@ -1,0 +1,189 @@
+<link rel="stylesheet" href="css/style.css">
+
+<div class="card card-body">
+
+    <div class="logo">
+        <img class="logo" src="images/homebridge-eufy-security.png" width="150px" />
+    </div>
+    <br /><br />
+
+    <h3 class="text-center">
+        Welcome to<br />
+        <b style="font-weight: 800;">Eufy Security Plugin</b>
+    </h3>
+    <h6 class="text-center">Homebridge plugin for Eufy Security Devices</h6>
+    <hr />
+
+    <!-- shown when setup is complete or the plugin is already configured -->
+    <div id="setupComplete" style="display:none;">
+        <form id="configForm">
+            <div class="form-group">
+                <label for="usernameInput">Eufy Username</label>
+                <input type="text" class="form-control" id="usernameInput" />
+            </div>
+            <div class="form-group">
+                <label for="passwordInput">Eufy Password</label>
+                <input type="password" class="form-control" id="passwordInput" />
+            </div>
+
+            <hr />
+            <a id="startOver" class="btn btn-success">Startover the wizard process</a>
+            <hr />
+
+            <div class="custom-control custom-checkbox form-group">
+                <input type="checkbox" class="custom-control-input" id="enableCamera" />
+                <label class="custom-control-label" for="enableCamera">Livestream from Camera device</label>
+                <small id="help" class="form-text text-muted">Camera seen as Motion Sensor by default, enable this
+                    setting to transform as Camera</small>
+            </div>
+
+            <div class="schema-form-fieldset form-group">
+                <h4 id="advanced" style="cursor: pointer"><i class="fas fa-chevron-right"></i>&nbsp;Advanced Settings
+                </h4>
+                <p>Don't change these, unless you understand what you're doing.</p>
+                <div id="expandable" class="hidden">
+                    <div class="form-group">
+                        <label for="pollingIntervalMinutes">Polling Interval (in minutes)</label>
+                        <input type="range" class="custom-range" id="pollingIntervalMinutes" min="0" max="30" value="5"
+                            step="1" />
+                        <span id="pollingValue">5 minutes</span>
+                        <small id="help" class="form-text text-muted">Time in minutes between each status polling of the
+                            devices
+                            (set to 0 for no polling)</small>
+                    </div>
+                    <hr />
+                    <div class="custom-control custom-checkbox form-group">
+                        <input type="checkbox" class="custom-control-input" id="enableDetailedLogging" />
+                        <label class="custom-control-label" for="enableDetailedLogging">Enable Debug</label>
+                        <small id="help" class="form-text text-muted">Helping plugin team to understand what's going
+                            on.</small>
+                    </div>
+                    <hr />
+                    <div class="form-group">
+                        <label for="hkHome">HomeKit Home</label>
+                        <select class="form-control" id="hkHome">
+                            <option value="1">Eufy Home</option>
+                            <option value="0">Eufy Away</option>
+                            <option value="2">Eufy Schedule</option>
+                            <option value="3">Eufy Custom 1</option>
+                            <option value="4">Eufy Custom 2</option>
+                            <option value="5">Eufy Custom 3</option>
+                            <option value="47">Eufy Geofencing</option>
+                            <!-- <option value="6">Eufy Off</option> // Removing the ability to set Off(6) waiting Bropat feedback bropat/eufy-security-client#27 -->
+                            <option value="63">Eufy Disarmed</option>
+                        </select>
+                        <small id="help" class="form-text text-muted">Change how each mode in the HomeKit security
+                            system is mapped to the modes in the Eufy App</small>
+                    </div>
+                    <div class="form-group">
+                        <label for="hkAway">HomeKit Away</label>
+                        <select class="form-control" id="hkAway">
+                            <option value="1">Eufy Home</option>
+                            <option value="0">Eufy Away</option>
+                            <option value="2">Eufy Schedule</option>
+                            <option value="3">Eufy Custom 1</option>
+                            <option value="4">Eufy Custom 2</option>
+                            <option value="5">Eufy Custom 3</option>
+                            <option value="47">Eufy Geofencing</option>
+                            <!-- <option value="6">Eufy Off</option> // Removing the ability to set Off(6) waiting Bropat feedback bropat/eufy-security-client#27 -->
+                            <option value="63">Eufy Disarmed</option>
+                        </select>
+                        <small id="help" class="form-text text-muted">Change how each mode in the HomeKit security
+                            system is mapped to the modes in the Eufy App</small>
+                    </div>
+                    <div class="form-group">
+                        <label for="hkNight">HomeKit Night</label>
+                        <select class="form-control" id="hkNight">
+                            <option value="1">Eufy Home</option>
+                            <option value="0">Eufy Away</option>
+                            <option value="2">Eufy Schedule</option>
+                            <option value="3">Eufy Custom 1</option>
+                            <option value="4">Eufy Custom 2</option>
+                            <option value="5">Eufy Custom 3</option>
+                            <option value="47">Eufy Geofencing</option>
+                            <!-- <option value="6">Eufy Off</option> // Removing the ability to set Off(6) waiting Bropat feedback bropat/eufy-security-client#27 -->
+                            <option value="63">Eufy Disarmed</option>
+                        </select>
+                        <small id="help" class="form-text text-muted">Change how each mode in the HomeKit security
+                            system is mapped to the modes in the Eufy App</small>
+                    </div>
+                    <div class="form-group">
+                        <label for="hkOff">HomeKit Off</label>
+                        <select class="form-control" id="hkOff">
+                            <option value="1">Eufy Home</option>
+                            <option value="0">Eufy Away</option>
+                            <option value="2">Eufy Schedule</option>
+                            <option value="3">Eufy Custom 1</option>
+                            <option value="4">Eufy Custom 2</option>
+                            <option value="5">Eufy Custom 3</option>
+                            <option value="47">Eufy Geofencing</option>
+                            <!-- <option value="6">Eufy Off</option> // Removing the ability to set Off(6) waiting Bropat feedback bropat/eufy-security-client#27 -->
+                            <option value="63">Eufy Disarmed</option>
+                        </select>
+                        <small id="help" class="form-text text-muted">Change how each mode in the HomeKit security
+                            system is mapped to the modes in the Eufy App</small>
+                    </div>
+                    <div class="form-group">
+                        <label for="ignoreStations">Ignore Stations</label>
+                        <input type="text" class="form-control" id="ignoreStations" />
+                        <small id="help" class="form-text text-muted">Ignoring stations listed here (separated by a
+                            comma)</small>
+                    </div>
+                    <div class="form-group">
+                        <label for="ignoreDevices">Ignore Devices</label>
+                        <input type="text" class="form-control" id="ignoreDevices" />
+                        <small id="help" class="form-text text-muted">Ignoring devices listed here (separated by a
+                            comma)</small>
+                    </div>
+
+                </div>
+
+            </div>
+        </form>
+    </div>
+
+    <!-- shown when the plugin is not configured -->
+    <div id="setupRequired" style="display:none;">
+
+        <div id="step1">
+            <div class="form-group">
+                <label for="usernameInput1">Eufy Username</label>
+                <input type="text" class="form-control" id="usernameInput1" aria-describedby="usernameHelp"
+                    required /><small id="usernameHelp" class="form-text text-muted">Please enter your eufy
+                    username.</small>
+                <label for="passwordInput1">Eufy Password</label>
+                <input type="password" class="form-control" id="passwordInput1" aria-describedby="passwordHelp"
+                    required /><small id="passwordHelp" class="form-text text-muted">Please
+                    enter your eufy
+                    password.</small>
+            </div>
+            <div class="text-center">
+                <a id="skip" class="btn btn-elegant">Skip</a>
+                <button id="step1Submit" type="submit" class="btn btn-primary">Next</button>
+            </div>
+        </div>
+
+        <div id="step2" style="display:none;">
+            <div class="form-group">
+                <label for="otpInput">OTP Code</label>
+                <input type="text" class="form-control" id="otpInput" aria-describedby="otpHelp" />
+                <small id="otpHelp" class="form-text text-muted">Please enter the OTP password received at your
+                    email.</small>
+            </div>
+            <div class="text-center">
+                <a id="skip2" class="btn btn-elegant">Skip</a>
+                <button id="step2Submit" type="submit" class="btn btn-primary">Next</button>
+            </div>
+        </div>
+
+        <div id="step3" style="display:none;">
+            <div class="form-group">
+                <div id="stations"></div>
+            </div>
+        </div>
+
+    </div>
+
+</div>
+
+<script type="text/javascript" src="js/main.js"></script>
