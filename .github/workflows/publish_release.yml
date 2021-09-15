@@ -13,7 +13,7 @@ on:
         default: 'latest'
       preid:
         description: 'rc/beta'
-        required: true
+        required: false
         default: ''
       branch:
         description: 'master/next/beta'
