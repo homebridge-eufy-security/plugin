@@ -20,7 +20,6 @@ import { CameraConfig, VideoConfig } from './configTypes';
 export class CameraAccessory extends DeviceAccessory {
 
   protected service: Service;
-  protected Camera: Camera;
   protected CameraService: Service;
 
   protected readonly cameraConfig: CameraConfig;
@@ -31,7 +30,6 @@ export class CameraAccessory extends DeviceAccessory {
     eufyDevice: Camera,
   ) {
     super(platform, accessory, eufyDevice);
-    this.Camera = eufyDevice;
 
     this.service = {} as Service;
     this.CameraService = {} as Service;
@@ -39,23 +37,24 @@ export class CameraAccessory extends DeviceAccessory {
 
     this.platform.log.debug(this.accessory.displayName, 'Constructed Camera');
 
-    if (this.platform.config.enableCamera || (typeof this.Camera.isDoorbell === 'function' && this.Camera.isDoorbell())) {
+    if (this.platform.config.enableCamera || (typeof this.eufyDevice.isDoorbell === 'function' && this.eufyDevice.isDoorbell())) {
       this.platform.log.debug(this.accessory.displayName, 'has a camera');
       try {
         this.CameraService = this.cameraFunction(accessory);
         this.service = this.motionFunction(accessory);
 
-        //video stream (work in progress)
+        this.CameraService.setPrimaryService(true);
+
         this.cameraConfig = {
-          'name': this.Camera.getName(),
+          'name': this.eufyDevice.getName(),
           'videoConfig': {
             'stillImageSource': '',
             'audio': true,
-            'debug': false,
+            'debug': true,
           } as VideoConfig,
         };
 
-        const delegate = new StreamingDelegate(this.platform, this.Camera, this.cameraConfig, this.platform.api, this.platform.api.hap);
+        const delegate = new StreamingDelegate(this.platform, eufyDevice, this.cameraConfig, this.platform.api, this.platform.api.hap);
         accessory.configureController(delegate.controller);
       } catch (Error) {
         this.platform.log.error(this.accessory.displayName, 'raise error to check and attach livestream function.', Error);
@@ -70,7 +69,7 @@ export class CameraAccessory extends DeviceAccessory {
     }
 
     try {
-      if (typeof this.Camera.isEnabled === 'function') {
+      if (this.eufyDevice.hasProperty('enabled')) {
         this.platform.log.debug(this.accessory.displayName, 'has a isEnabled, so append switchEnabledService characteristic to him.');
 
         const switchEnabledService =
@@ -94,7 +93,7 @@ export class CameraAccessory extends DeviceAccessory {
     }
 
     try {
-      if (typeof this.Camera.isMotionDetectionEnabled === 'function') {
+      if (this.eufyDevice.hasProperty('motionDetection')) {
         this.platform.log.debug(this.accessory.displayName, 'has a isMotionDetectionEnabled, so append switchMotionService characteristic to him.');
 
         const switchMotionService =
@@ -111,40 +110,35 @@ export class CameraAccessory extends DeviceAccessory {
           .onSet(this.handleMotionOnSet.bind(this));
 
       } else {
-        this.platform.log.debug(this.accessory.displayName, 'Looks like not compatible with isMotionDetectionEnabled');
+        this.platform.log.warn(this.accessory.displayName, 'Looks like not compatible with isMotionDetectionEnabled');
       }
     } catch (Error) {
       this.platform.log.error(this.accessory.displayName, 'raise error to check and attach switchMotionService.', Error);
     }
-  }
 
-  handleEventSnapshotsActiveGet(): Promise<CharacteristicValue> {
-    const currentValue = this.characteristic.EventSnapshotsActive.DISABLE;
-    this.platform.log.debug(this.accessory.displayName, 'Triggered GET EventSnapshotsActive:', currentValue);
-    return currentValue;
-  }
+    try {
+      if (this.eufyDevice.hasProperty('light') && (typeof this.eufyDevice.isFloodLight === 'function' && this.eufyDevice.isFloodLight())) {
+        this.platform.log.debug(this.accessory.displayName, 'has a DeviceLight, so append switchLightService characteristic to him.');
 
-  /**
-   * Handle requests to set the "Event Snapshots Active" characteristic
-   */
-  handleEventSnapshotsActiveSet(value) {
-    this.platform.log.debug(this.accessory.displayName, 'Triggered SET EventSnapshotsActive:', value);
-  }
+        const switchLightService =
+          this.accessory.getService('Light') ||
+          this.accessory.addService(this.platform.Service.Switch, 'Light', 'light');
 
-  /**
-   * Handle requests to get the current value of the "HomeKit Camera Active" characteristic
-   */
-  handleHomeKitCameraActiveGet(): Promise<CharacteristicValue> {
-    const currentValue = this.characteristic.HomeKitCameraActive.OFF;
-    this.platform.log.debug(this.accessory.displayName, 'Triggered GET HomeKitCameraActive:', currentValue);
-    return currentValue;
-  }
+        switchLightService.setCharacteristic(
+          this.platform.Characteristic.Name,
+          accessory.displayName + ' Light',
+        );
 
-  /**
-   * Handle requests to set the "HomeKit Camera Active" characteristic
-   */
-  handleHomeKitCameraActiveSet(value) {
-    this.platform.log.debug(this.accessory.displayName, 'Triggered SET HomeKitCameraActive:', value);
+        switchLightService.getCharacteristic(this.characteristic.On)
+          .onGet(this.handleLightOnGet.bind(this))
+          .onSet(this.handleLightOnSet.bind(this));
+
+      } else {
+        this.platform.log.warn(this.accessory.displayName, 'Looks like not compatible with DeviceLight');
+      }
+    } catch (Error) {
+      this.platform.log.error(this.accessory.displayName, 'raise error to check and attach switchLightService.', Error);
+    }
   }
 
   private cameraFunction(
@@ -173,7 +167,104 @@ export class CameraAccessory extends DeviceAccessory {
       .getCharacteristic(this.characteristic.HomeKitCameraActive)
       .onSet(this.handleHomeKitCameraActiveSet.bind(this));
 
+    if (this.eufyDevice.hasProperty('enabled')) {
+      service
+        .getCharacteristic(this.characteristic.ManuallyDisabled)
+        .onGet(this.handleManuallyDisabledGet.bind(this));
+    }
+
+    if (this.eufyDevice.hasProperty('statusLed')) {
+      service
+        .getCharacteristic(this.characteristic.CameraOperatingModeIndicator)
+        .onGet(this.handleHomeKitCameraOperatingModeIndicatorGet.bind(this))
+        .onSet(this.handleHomeKitCameraOperatingModeIndicatorSet.bind(this));
+    }
+
+    if (this.eufyDevice.hasProperty('nightvision')) {
+      service
+        .getCharacteristic(this.characteristic.NightVision)
+        .onGet(this.handleHomeKitNightVisionGet.bind(this))
+        .onSet(this.handleHomeKitNightVisionSet.bind(this));
+    }
+
     return service as Service;
+  }
+
+  handleEventSnapshotsActiveGet(): Promise<CharacteristicValue> {
+    const currentValue = this.characteristic.EventSnapshotsActive.DISABLE;
+    this.platform.log.debug(this.accessory.displayName, 'GET EventSnapshotsActive:', currentValue);
+    return currentValue;
+  }
+
+  /**
+   * Handle requests to set the "Event Snapshots Active" characteristic
+   */
+  handleEventSnapshotsActiveSet(value) {
+    this.platform.log.debug(this.accessory.displayName, 'SET EventSnapshotsActive:', value);
+  }
+
+  /**
+   * Handle requests to get the current value of the "HomeKit Camera Active" characteristic
+   */
+  handleHomeKitCameraActiveGet(): Promise<CharacteristicValue> {
+    const currentValue = this.characteristic.HomeKitCameraActive.OFF;
+    this.platform.log.debug(this.accessory.displayName, 'GET HomeKitCameraActive:', currentValue);
+    return currentValue;
+  }
+
+  /**
+   * Handle requests to set the "HomeKit Camera Active" characteristic
+   */
+  handleHomeKitCameraActiveSet(value) {
+    this.platform.log.debug(this.accessory.displayName, 'SET HomeKitCameraActive:', value);
+  }
+
+  /**
+   * Handle requests to get the current value of the "HomeKit Camera Active" characteristic
+   */
+  async handleHomeKitCameraOperatingModeIndicatorGet(): Promise<CharacteristicValue> {
+    try {
+      const currentValue = this.eufyDevice.getPropertyValue(PropertyName.DeviceStatusLed);
+      this.platform.log.debug(this.accessory.displayName, 'GET DeviceStatusLed:', currentValue);
+      return currentValue.value as boolean;
+    } catch {
+      this.platform.log.error(this.accessory.displayName, 'handleHomeKitCameraOperatingModeIndicatorGet', 'Wrong return value');
+      return false;
+    }
+  }
+
+  /**
+   * Handle requests to set the "HomeKit Camera Active" characteristic
+   */
+  handleHomeKitCameraOperatingModeIndicatorSet(value) {
+    this.platform.log.debug(this.accessory.displayName, 'SET HomeKitCameraOperatingModeIndicator:', value);
+    const station = this.platform.getStationById(this.eufyDevice.getStationSerial());
+    station.setStatusLed(this.eufyDevice, value as boolean);
+    this.CameraService.getCharacteristic(this.characteristic.CameraOperatingModeIndicator).updateValue(value as boolean);
+  }
+
+  /**
+   * Handle requests to get the current value of the "HomeKit Camera Active" characteristic
+   */
+  async handleHomeKitNightVisionGet(): Promise<CharacteristicValue> {
+    try {
+      const currentValue = this.eufyDevice.getPropertyValue(PropertyName.DeviceNightvision);
+      this.platform.log.debug(this.accessory.displayName, 'GET DeviceNightvision:', currentValue);
+      return currentValue.value as boolean;
+    } catch {
+      this.platform.log.error(this.accessory.displayName, 'handleHomeKitNightVisionGet', 'Wrong return value');
+      return false;
+    }
+  }
+
+  /**
+   * Handle requests to set the "HomeKit Camera Active" characteristic
+   */
+  handleHomeKitNightVisionSet(value) {
+    this.platform.log.debug(this.accessory.displayName, 'SET handleHomeKitNightVisionSet:', value);
+    const station = this.platform.getStationById(this.eufyDevice.getStationSerial());
+    station.setNightVision(this.eufyDevice, value as number);
+    this.CameraService.getCharacteristic(this.characteristic.NightVision).updateValue(value as boolean);
   }
 
   private motionFunction(
@@ -192,15 +283,15 @@ export class CameraAccessory extends DeviceAccessory {
       .getCharacteristic(this.characteristic.MotionDetected)
       .onGet(this.handleMotionDetectedGet.bind(this));
 
-    this.Camera.on('motion detected', (device: Device, motion: boolean) =>
+    this.eufyDevice.on('motion detected', (device: Device, motion: boolean) =>
       this.onDeviceMotionDetectedPushNotification(device, motion),
     );
 
-    this.Camera.on('person detected', (device: Device, motion: boolean) =>
+    this.eufyDevice.on('person detected', (device: Device, motion: boolean) =>
       this.onDeviceMotionDetectedPushNotification(device, motion),
     );
 
-    this.Camera.on('pet detected', (device: Device, motion: boolean) =>
+    this.eufyDevice.on('pet detected', (device: Device, motion: boolean) =>
       this.onDeviceMotionDetectedPushNotification(device, motion),
     );
 
@@ -209,7 +300,7 @@ export class CameraAccessory extends DeviceAccessory {
 
   async handleMotionDetectedGet(): Promise<CharacteristicValue> {
     try {
-      const currentValue = this.Camera.getPropertyValue(PropertyName.DeviceMotionDetected);
+      const currentValue = this.eufyDevice.getPropertyValue(PropertyName.DeviceMotionDetected);
       this.platform.log.debug(this.accessory.displayName, 'GET DeviceMotionDetected:', currentValue);
       return currentValue.value as boolean;
     } catch {
@@ -230,7 +321,7 @@ export class CameraAccessory extends DeviceAccessory {
 
   async handleEnableGet(): Promise<CharacteristicValue> {
     try {
-      const currentValue = this.Camera.getPropertyValue(PropertyName.DeviceEnabled);
+      const currentValue = this.eufyDevice.getPropertyValue(PropertyName.DeviceEnabled);
       this.platform.log.debug(this.accessory.displayName, 'GET DeviceEnabled:', currentValue);
       return currentValue.value as boolean;
     } catch {
@@ -239,15 +330,27 @@ export class CameraAccessory extends DeviceAccessory {
     }
   }
 
+  async handleManuallyDisabledGet(): Promise<CharacteristicValue> {
+    try {
+      const currentValue = this.eufyDevice.getPropertyValue(PropertyName.DeviceEnabled);
+      this.platform.log.debug(this.accessory.displayName, 'GET DeviceEnabled:', currentValue);
+      return !currentValue.value as boolean;
+    } catch {
+      this.platform.log.error(this.accessory.displayName, 'handleManuallyDisabledGet', 'Wrong return value');
+      return false;
+    }
+  }
+
   async handleEnableSet(value: CharacteristicValue) {
     this.platform.log.debug(this.accessory.displayName, 'SET DeviceEnabled:', value);
-    const station = this.platform.getStationById(this.Camera.getStationSerial());
-    station.enableDevice(this.Camera, value as boolean);
+    const station = this.platform.getStationById(this.eufyDevice.getStationSerial());
+    station.enableDevice(this.eufyDevice, value as boolean);
+    this.CameraService.getCharacteristic(this.characteristic.ManuallyDisabled).updateValue(!value as boolean);
   }
 
   async handleMotionOnGet(): Promise<CharacteristicValue> {
     try {
-      const currentValue = await this.Camera.getPropertyValue(PropertyName.DeviceMotionDetection);
+      const currentValue = await this.eufyDevice.getPropertyValue(PropertyName.DeviceMotionDetection);
       this.platform.log.debug(this.accessory.displayName, 'GET DeviceMotionDetection:', currentValue);
       return currentValue.value as boolean;
     } catch {
@@ -258,7 +361,24 @@ export class CameraAccessory extends DeviceAccessory {
 
   async handleMotionOnSet(value: CharacteristicValue) {
     this.platform.log.debug(this.accessory.displayName, 'SET DeviceMotionDetection:', value);
-    const station = this.platform.getStationById(this.Camera.getStationSerial());
-    station.setMotionDetection(this.Camera, value as boolean);
+    const station = this.platform.getStationById(this.eufyDevice.getStationSerial());
+    station.setMotionDetection(this.eufyDevice, value as boolean);
+  }
+
+  async handleLightOnGet(): Promise<CharacteristicValue> {
+    try {
+      const currentValue = await this.eufyDevice.getPropertyValue(PropertyName.DeviceLight);
+      this.platform.log.debug(this.accessory.displayName, 'GET DeviceLight:', currentValue);
+      return currentValue.value as boolean;
+    } catch {
+      this.platform.log.error(this.accessory.displayName, 'handleLightOnGet', 'Wrong return value');
+      return false;
+    }
+  }
+
+  async handleLightOnSet(value: CharacteristicValue) {
+    this.platform.log.debug(this.accessory.displayName, 'SET DeviceLight:', value);
+    const station = this.platform.getStationById(this.eufyDevice.getStationSerial());
+    station.switchLight(this.eufyDevice, value as boolean);
   }
 }
