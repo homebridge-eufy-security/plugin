@@ -6,7 +6,8 @@ import { Writable } from 'stream';
 import { Logger } from './logger';
 import { StreamingDelegate } from './streamingDelegate';
 
-type FfmpegProgress = {
+
+type FfmpegProgress_video = {
   frame: number;
   fps: number;
   stream_q: number;
@@ -20,33 +21,52 @@ type FfmpegProgress = {
   progress: string;
 };
 
+type FfmpegProgress_audio = {
+  bitrate: number;
+  total_size: number;
+  out_time_us: number;
+  out_time_ms: number;
+  out_time: string;
+  dup_frames: number;
+  drop_frames: number;
+  speed: number;
+  progress: string;
+};
+
 export class FfmpegProcess {
   private readonly process: ChildProcessWithoutNullStreams;
   private killTimeout?: NodeJS.Timeout;
   readonly stdin: Writable;
 
-  constructor(cameraName: string, sessionId: string, videoProcessor: string, ffmpegArgs: string, log: Logger,
+  public log;
+  private cameraName: string;
+
+  constructor(cameraName: string, sessionId: string, videoProcessor: string, ffmpegArgs: string[], log,
     debug = false, delegate: StreamingDelegate, callback?: StreamRequestCallback) {
-    log.debug('Stream command: ' + videoProcessor + ' ' + ffmpegArgs, cameraName, debug);
+
+    this.log = log;
+    this.cameraName = cameraName;
+
+    this.log.debug(this.cameraName, 'Stream command: ' + videoProcessor + ' ' + ffmpegArgs.join(' '));
 
     let started = false;
     const startTime = Date.now();
-    this.process = spawn(videoProcessor, ffmpegArgs.split(/\s+/), { env: process.env });
+    this.process = spawn(videoProcessor, ffmpegArgs.join(' ').split(/\s+/), { env: process.env });
     this.stdin = this.process.stdin;
 
     this.process.stdout.on('data', (data) => {
       const progress = this.parseProgress(data);
       if (progress) {
-        if (!started && progress.frame > 0) {
+        if (!started && progress.bitrate > 0) {
           started = true;
           const runtime = (Date.now() - startTime) / 1000;
           const message = 'Getting the first frames took ' + runtime + ' seconds.';
           if (runtime < 5) {
-            log.debug(message, cameraName, debug);
+            this.log.debug(this.cameraName, message);
           } else if (runtime < 22) {
-            log.warn(message, cameraName);
+            this.log.warn(this.cameraName, message);
           } else {
-            log.error(message, cameraName);
+            this.log.error(this.cameraName, message);
           }
         }
       }
@@ -61,13 +81,13 @@ export class FfmpegProcess {
         callback = undefined;
       }
       if (debug && line.match(/\[(panic|fatal|error)\]/)) { // For now only write anything out when debug is set
-        log.error(line, cameraName);
+        this.log.error(this.cameraName, line);
       } else if (debug) {
-        log.debug(line, cameraName, true);
+        this.log.debug(this.cameraName, line);
       }
     });
     this.process.on('error', (error: Error) => {
-      log.error('FFmpeg process creation failed: ' + error.message, cameraName);
+      this.log.error(this.cameraName, 'FFmpeg process creation failed: ' + error.message);
       if (callback) {
         callback(new Error('FFmpeg process creation failed'));
       }
@@ -81,15 +101,15 @@ export class FfmpegProcess {
       const message = 'FFmpeg exited with code: ' + code + ' and signal: ' + signal;
 
       if (this.killTimeout && code === 0) {
-        log.debug(message + ' (Expected)', cameraName, debug);
+        this.log.debug(this.cameraName, message + ' (Expected)');
       } else if (code == null || code === 255) {
         if (this.process.killed) {
-          log.debug(message + ' (Forced)', cameraName, debug);
+          this.log.debug(this.cameraName, message + ' (Forced)');
         } else {
-          log.error(message + ' (Unexpected)', cameraName);
+          this.log.error(this.cameraName, message + ' (Unexpected)');
         }
       } else {
-        log.error(message + ' (Error)', cameraName);
+        this.log.error(this.cameraName, message + ' (Error)');
         delegate.stopStream(sessionId);
         if (!started && callback) {
           callback(new Error(message));
@@ -100,10 +120,11 @@ export class FfmpegProcess {
     });
   }
 
-  parseProgress(data: Uint8Array): FfmpegProgress | undefined {
+  parseProgress(data: Uint8Array): FfmpegProgress_video | FfmpegProgress_audio | undefined {
     const input = data.toString();
 
     if (input.indexOf('frame=') == 0) {
+
       try {
         const progress = new Map<string, string>();
         input.split(/\r?\n/).forEach((line) => {
@@ -123,7 +144,31 @@ export class FfmpegProcess {
           drop_frames: parseInt(progress.get('drop_frames')!),
           speed: parseFloat(progress.get('speed')!),
           progress: progress.get('progress')!.trim()
-        };
+        } as FfmpegProgress_video;
+      } catch {
+        return undefined;
+      }
+
+    } else if (input.indexOf('bitrate=') == 0) {
+
+      try {
+        const progress = new Map<string, string>();
+        input.split(/\r?\n/).forEach((line) => {
+          const split = line.split('=', 2);
+          progress.set(split[0], split[1]);
+        });
+
+        return {
+          bitrate: parseFloat(progress.get('bitrate')!),
+          total_size: parseInt(progress.get('total_size')!),
+          out_time_us: parseInt(progress.get('out_time_us')!),
+          out_time_ms: parseInt(progress.get('out_time_ms')!),
+          out_time: progress.get('out_time')!.trim(),
+          dup_frames: parseInt(progress.get('dup_frames')!),
+          drop_frames: parseInt(progress.get('drop_frames')!),
+          speed: parseFloat(progress.get('speed')!),
+          progress: progress.get('progress')!.trim()
+        } as FfmpegProgress_audio;
       } catch {
         return undefined;
       }
