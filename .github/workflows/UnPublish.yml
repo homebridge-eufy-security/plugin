@@ -13,7 +13,7 @@ jobs:
   dist-tag:
     runs-on: ubuntu-latest
     steps:
-      - run: npm dist-tag rm homebridge-eufy-security {{ github.event.inputs.version }}
+      - run: npm dist-tag rm homebridge-eufy-security ${{ github.event.inputs.version }}
         env:
           NODE_AUTH_TOKEN: ${{secrets.npm_token}}
 
