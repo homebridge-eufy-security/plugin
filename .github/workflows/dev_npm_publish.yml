@@ -35,7 +35,7 @@ jobs:
 
       - run: git config --global user.name '[Workflow]'
       - run: git config --global user.email '<>'
-      - run: npm version patch -m "[BETA] %s"
+      - run: npm version prerelease --preid=beta -m "[BETA] %s"
       - run: git push
 
   publish:
