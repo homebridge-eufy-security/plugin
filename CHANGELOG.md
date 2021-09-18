@@ -1,5 +1,14 @@
 # Change Log
 
+## BETA (17/02/2021)
+
+### Added
+- Local Livestream
+- Ability to switch light on compatible device (to be tested)
+
+### Fixed
+-   Updating some dep for security reason
+
 ## 1.0.0 (09/02/2021)
 
 ### Added
