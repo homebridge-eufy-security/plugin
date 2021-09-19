@@ -199,10 +199,10 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
         DeviceType[device.getDeviceType()],
       );
 
-      if (this.config.ignoreStations.indexOf(device.getStationSerial()) !== -1) {
-        this.log.debug('Device ignored because station is ignored');
-        continue;
-      }
+      // if (this.config.ignoreStations.indexOf(device.getStationSerial()) !== -1) {
+      //   this.log.debug('Device ignored because station is ignored');
+      //   continue;
+      // }
 
       if (this.config.ignoreDevices.indexOf(device.getSerial()) !== -1) {
         this.log.debug('Device ignored');

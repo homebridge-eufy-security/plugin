@@ -111,12 +111,12 @@ async function list_stations_devices(stations) {
         const checked = (isStationsIgnored(item.uniqueId)) ? ' checked' : '';
 
         const b1 = document.createElement("div");
-        b1.setAttribute('class', 'divTableBody' + checked);
-        b1.setAttribute('id', `s_${item.uniqueId}`);
+        b1.setAttribute('class', 'divTableBody');
 
         var r1 = document.createElement("div");
 
-        r1.setAttribute('class', 'divTableRow');
+        r1.setAttribute('class', 'divTableRow' + checked);
+        r1.setAttribute('id', `s_${item.uniqueId}`);
 
         r1.innerHTML = `
                     <div class="divTableCell">${item.displayName}</div>
@@ -153,9 +153,9 @@ async function list_stations_devices(stations) {
 
         document.getElementById(`st_${item.uniqueId}`).addEventListener('change', async e => {
             if (e.target.checked) {
-                document.getElementById(`s_${item.uniqueId}`).setAttribute('class', 'divTableBody checked');
+                document.getElementById(`s_${item.uniqueId}`).setAttribute('class', 'divTableRow checked');
             } else {
-                document.getElementById(`s_${item.uniqueId}`).setAttribute('class', 'divTableBody');
+                document.getElementById(`s_${item.uniqueId}`).setAttribute('class', 'divTableRow');
             }
             await AddOrRemoveStationsIgnoreList(item.uniqueId);
         });
