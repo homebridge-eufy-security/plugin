@@ -1,5 +1,10 @@
 # Change Log
 
+## 1.0.1 (18/10/2021)
+
+### Fixed
+-  [Bug]: can’t login after plug-in remove #254 
+
 ## 1.0.0 (09/02/2021)
 
 ### Added
