@@ -415,7 +415,7 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
     if (client) {
       this.log.debug('Refresh data from cloud and schedule next refresh.');
       try {
-        await client.refreshData();
+        await client.refreshCloudData();
       } catch (error) {
         this.log.error('Error refreshing data from Eufy: ', error);
       }

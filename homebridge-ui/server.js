@@ -60,7 +60,7 @@ class UiServer extends HomebridgePluginUiServer {
     await this.driver.connect();
 
     if (this.driver.api.token && this.driver.connected == true) {
-      await this.driver.refreshData();
+      await this.driver.refreshCloudData();
       const stations = await this.getStations();
       return { result: 2, stations: stations }; // Connected
     }
