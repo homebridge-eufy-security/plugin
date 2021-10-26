@@ -1,5 +1,10 @@
 # Change Log
 
+## 1.0.2 (26/10/2021)
+
+### Changed
+-   Upgrade to the latest bropat/eufy-security-client lib (1.2.1)
+
 ## 1.0.1 (18/10/2021)
 
 ### Fixed
