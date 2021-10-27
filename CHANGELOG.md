@@ -1,5 +1,10 @@
 # Change Log
 
+## 1.0.4 (27/10/2021)
+
+### Changed
+-   Upgrade to the latest lib and fix the minor version for the critical one
+
 ## 1.0.3 (26/10/2021)
 
 ### Changed
