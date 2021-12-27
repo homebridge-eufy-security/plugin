@@ -17,6 +17,7 @@ import { CameraAccessory } from './CameraAccessory';
 export class DoorbellCameraAccessory extends CameraAccessory {
 
   protected DoorbellCamera: DoorbellCamera;
+  private ring_triggered: boolean;
 
   private doorbellService: Service;
 
@@ -33,6 +34,8 @@ export class DoorbellCameraAccessory extends CameraAccessory {
     this.doorbellService =
       this.accessory.getService(this.platform.Service.Doorbell) ||
       this.accessory.addService(this.platform.Service.Doorbell);
+
+    this.ring_triggered = false;
 
     // set the Battery service characteristics
     this.doorbellService.setCharacteristic(
@@ -53,11 +56,17 @@ export class DoorbellCameraAccessory extends CameraAccessory {
 
   }
 
+  // We receive 2 push when Doorbell ring, mute the second by checking if we already send the event to HK then reset the marker when 2nd times occurs
   private onDeviceRingsPushNotification(): void {
-    this.platform.log.debug(this.accessory.displayName, 'DoorBell ringing');
-    this.doorbellService
-      .getCharacteristic(this.platform.Characteristic.ProgrammableSwitchEvent)
-      .updateValue(this.platform.Characteristic.ProgrammableSwitchEvent.SINGLE_PRESS);
+    if (!this.ring_triggered) {
+      this.ring_triggered = true;
+      this.platform.log.debug(this.accessory.displayName, 'DoorBell ringing');
+      this.doorbellService
+        .getCharacteristic(this.platform.Characteristic.ProgrammableSwitchEvent)
+        .updateValue(this.platform.Characteristic.ProgrammableSwitchEvent.SINGLE_PRESS);
+    } else {
+      this.ring_triggered = false;
+    }
   }
 
 }
