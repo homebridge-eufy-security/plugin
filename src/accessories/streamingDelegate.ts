@@ -183,7 +183,7 @@ export class StreamingDelegate implements CameraStreamingDelegate {
                 (resInfo.height > 0 ? '\'min(' + resInfo.height + ',ih)\'' : 'ih') +
                 ':force_original_aspect_ratio=decrease';
             filters.push(resInfo.resizeFilter);
-            filters.push('scale=trunc(iw/2)*2:trunc(ih/2)*2'); // Force to fit encoder restrictions
+            filters.push('scale=\'trunc(iw/2)*2:trunc(ih/2)*2\''); // Force to fit encoder restrictions
         }
 
         if (filters.length > 0) {
