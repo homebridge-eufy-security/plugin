@@ -1,19 +1,20 @@
 # Change Log
 
+## BETA (17/02/2021)
+
+### Added
+-   Local Livestream
+-   Ability to switch light on compatible device (to be tested)
+-   Fixing Duplicate notification on doorbell ring #236
+
+### Fixed
+-   Updating some dep for security reason
+-   Fix keypad issue while using off/disarmed mode (#88, #147, #197)
+
 ## 1.0.1 (18/10/2021)
 
 ### Fixed
 -  [Bug]: can’t login after plug-in remove #254 
-
-## BETA (17/02/2021)
-
-### Added
-- Local Livestream
-- Ability to switch light on compatible device (to be tested)
-- Fixing Duplicate notification on doorbell ring #236
-
-### Fixed
--   Updating some dep for security reason
 
 ## 1.0.0 (09/02/2021)
 
