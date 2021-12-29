@@ -106,9 +106,6 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
       ? new EufySecurity(this.eufyConfig, this.log)
       : new EufySecurity(this.eufyConfig);
 
-    // Removing the ability to set Off(6) waiting Bropat feedback bropat/eufy-security-client#27
-    this.config.hkOff = (this.config.hkOff === 6) ? 63 : this.config.hkOff;
-
     // When this event is fired it means Homebridge has restored all cached accessories from disk.
     // Dynamic Platform plugins should only register new accessories after this event was fired,
     // in order to ensure they weren't added to homebridge already. This event can also be used

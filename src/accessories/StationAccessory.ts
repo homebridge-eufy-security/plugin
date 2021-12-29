@@ -3,7 +3,7 @@ import { Service, PlatformAccessory, CharacteristicValue } from 'homebridge';
 import { EufySecurityPlatform } from '../platform';
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore  
-import { Station, PropertyName, PropertyValue, AlarmEvent } from 'eufy-security-client';
+import { Station, DeviceType, PropertyName, PropertyValue, AlarmEvent } from 'eufy-security-client';
 
 /**
  * Platform Accessory
@@ -143,13 +143,16 @@ export class StationAccessory {
     const modes = [
       { hk: 0, eufy: this.platform.config.hkHome ?? 1 },
       { hk: 1, eufy: this.platform.config.hkAway ?? 0 },
-      { hk: 2, eufy: this.platform.config.hkNight ?? 3 },
-      { hk: 3, eufy: this.platform.config.hkOff ?? 63 },
+      { hk: 2, eufy: this.platform.config.hkNight ?? 3 }
     ];
 
-    modes.push({ hk: 3, eufy: 6 }); // If keypad attached to the station
-
-    // modes.push({ hk: 3, eufy: ((modes.filter((m) => { return m.eufy === 6; })[0]) ? 63 : 6) });
+    // If keypad attached to the station
+    if (this.eufyStation.hasDeviceWithType(DeviceType.KEYPAD)) {
+      modes.push({ hk: 3, eufy: this.platform.config.hkOff ?? 63 });
+      modes.push({ hk: 3, eufy: ((modes.filter((m) => { return m.eufy === 6; })[0]) ? 63 : 6) });
+    } else {
+      modes.push({ hk: 3, eufy: (this.platform.config.hkOff == 6) ? 63 : this.platform.config.hkOff }); // Enforce 63 if keypad has been selected but not attached to the station
+    }
 
     return modes;
   }
