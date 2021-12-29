@@ -195,36 +195,6 @@ export class StationAccessory {
     }
   }
 
-  private handleRawPropertyChange(
-    device: Station,
-    type: number,
-    value: string,
-    modified: number,
-  ): void {
-    // this.platform.log.debug(this.accessory.displayName,
-    //   'ON handleRawPropertyChange:',
-    //   {
-    //     type,
-    //     value,
-    //     modified,
-    //   },
-    // );
-  }
-
-  private handlePropertyChange(
-    device: Station,
-    name: string,
-    value: PropertyValue,
-  ): void {
-    // this.platform.log.debug(this.accessory.displayName,
-    //   'ON handlePropertyChange:',
-    //   {
-    //     name,
-    //     value,
-    //   },
-    // );
-  }
-
   /**
    * Handle requests to set the 'Security System Target State' characteristic
    */
@@ -236,5 +206,35 @@ export class StationAccessory {
     } catch (error) {
       this.platform.log.error('Error Setting security mode!', error);
     }
+  }
+
+  private handleRawPropertyChange(
+    device: Station,
+    type: number,
+    value: string,
+    modified: number,
+  ): void {
+    this.platform.log.debug(this.accessory.displayName,
+      'ON handleRawPropertyChange:',
+      {
+        type,
+        value,
+        modified,
+      },
+    );
+  }
+
+  private handlePropertyChange(
+    device: Station,
+    name: string,
+    value: PropertyValue,
+  ): void {
+    this.platform.log.debug(this.accessory.displayName,
+      'ON handlePropertyChange:',
+      {
+        name,
+        value,
+      },
+    );
   }
 }
