@@ -72,7 +72,6 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
       eventDurationSeconds: 10,
     } as EufySecurityConfig;
 
-
     this.config.ignoreStations = this.config.ignoreStations || [];
     this.config.ignoreDevices = this.config.ignoreDevices || [];
 
@@ -97,10 +96,12 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
         }],
         serializers: bunyanDebugStream.serializers,
       });
-      this.log.info('Eufy Security Plugin: enableDetailedLogging on');
+      this.log.info('enableDetailedLogging on');
     } else {
       this.log = hblog;
     }
+
+    this.log.info('Country set:', this.config.country ?? 'US');
 
     this.eufyClient = (this.config.enableDetailedLogging === 2)
       ? new EufySecurity(this.eufyConfig, this.log)

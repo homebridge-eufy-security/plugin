@@ -17,7 +17,7 @@ class UiServer extends HomebridgePluginUiServer {
       name: '[' + plugin.version + ']',
       hostname: '',
       streams: [{
-        level: 'debug',
+        level: 'info',
         type: 'raw',
         stream: bunyanDebugStream({
           forceColor: true,
@@ -55,6 +55,8 @@ class UiServer extends HomebridgePluginUiServer {
     this.config['password'] = body.password;
     this.config['country'] = body.country || 'US';
 
+    this.log.info('country:', body.country || 'US');
+
     this.driver = new EufySecurity(this.config, this.log);
 
     await this.driver.connect();
@@ -62,14 +64,17 @@ class UiServer extends HomebridgePluginUiServer {
     if (this.driver.api.token && this.driver.connected == true) {
       await this.driver.refreshCloudData();
       const stations = await this.getStations();
+      this.log.info('Stations found:',stations);
       return { result: 2, stations: stations }; // Connected
     }
 
     if (this.driver.api.token && this.driver.connected == false) {
+      this.log.info('OTP required');
       return { result: 1 }; // OTP needed
     }
 
     if (!this.driver.api.token && this.driver.connected == false) {
+      this.log.info('Wrong username and/or password');
       return { result: 0 }; // Wrong username and/or password
     }
 
