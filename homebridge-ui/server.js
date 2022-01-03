@@ -30,7 +30,6 @@ class UiServer extends HomebridgePluginUiServer {
     });
 
     this.config = {
-      country: 'US',
       language: 'en',
       persistentDir: storagePath,
       p2pConnectionSetup: 0,
@@ -54,6 +53,7 @@ class UiServer extends HomebridgePluginUiServer {
 
     this.config['username'] = body.username;
     this.config['password'] = body.password;
+    this.config['country'] = body.country || 'US';
 
     this.driver = new EufySecurity(this.config, this.log);
 

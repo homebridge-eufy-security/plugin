@@ -295,6 +295,12 @@
           }
         ],
         "required": false
+      },
+      "country": {
+        "title": "Eufy Country",
+        "type": "string",
+        "required": false,
+        "discription": "Eufy Country selection"
       }
     }
   },
@@ -332,6 +338,7 @@
         "enableDetailedLogging",
         "enableCamera",
         "pollingIntervalMinutes",
+        "country",
         {
           "key": "ignoreStations",
           "add": "Add Another Device ID",

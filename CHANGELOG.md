@@ -6,6 +6,7 @@
 -   Local Livestream
 -   Ability to switch light on compatible device (to be tested)
 -   Fixing Duplicate notification on doorbell ring #236
+-   Change Country #310
 
 ### Fixed
 -   Updating some dep for security reason

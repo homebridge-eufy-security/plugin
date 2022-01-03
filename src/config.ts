@@ -17,4 +17,5 @@ export interface EufySecurityPlatformConfig extends PlatformConfig {
   hkOff: number;
   ignoreStations: string[];
   ignoreDevices: string[];
+  country: string;
 }

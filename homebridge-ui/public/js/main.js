@@ -19,6 +19,8 @@ function updateFormFromConfig() {
     document.getElementById('enableDetailedLogging').checked = pluginConfig.enableDetailedLogging || '';
     document.getElementById('ignoreStations').value = pluginConfig.ignoreStations || [];
     document.getElementById('ignoreDevices').value = pluginConfig.ignoreDevices || [];
+    document.getElementById('country').value = pluginConfig.country || "US";
+    document.getElementById('countryInput1').value = pluginConfig.country || "US";
     homebridge.fixScrollHeight();
 }
 
@@ -34,6 +36,7 @@ function updateConfigFromForm() {
     pluginConfig.enableDetailedLogging = parseInt(document.getElementById('enableDetailedLogging').checked * 1);
     pluginConfig.ignoreStations = document.getElementById('ignoreStations').value.split(",");
     pluginConfig.ignoreDevices = document.getElementById('ignoreDevices').value.split(",");
+    pluginConfig.country = document.getElementById('country').value;
 }
 
 function adjustPollingValue() {
@@ -80,8 +83,10 @@ async function list_stations_devices(stations) {
 
     pluginConfig.username = document.getElementById('usernameInput1').value;
     pluginConfig.password = document.getElementById('passwordInput1').value;
+    pluginConfig.country = document.getElementById('countryInput1').value;
     document.getElementById('usernameInput').value = document.getElementById('usernameInput1').value;
     document.getElementById('passwordInput').value = document.getElementById('passwordInput1').value;
+    document.getElementById('country').value = document.getElementById('countryInput1').value;
 
     pluginConfig.ignoreStations = (typeof pluginConfig.ignoreStations === 'object') ? pluginConfig.ignoreStations : [];
     pluginConfig.ignoreDevices = (typeof pluginConfig.ignoreDevices === 'object') ? pluginConfig.ignoreDevices : [];
@@ -198,7 +203,7 @@ async function list_stations_devices(stations) {
 document.getElementById('configForm').addEventListener('change', async () => {
     // extract the values from the form - stored in var pluginConfig.
     updateConfigFromForm();
-    adjustPollingValue()
+    adjustPollingValue();
 
     // send the current value to the UI.
     await homebridge.updatePluginConfig([pluginConfig]);
@@ -252,6 +257,7 @@ document.getElementById('startOver').addEventListener('click', async () => {
 document.getElementById('step1Submit').addEventListener('click', async () => {
     const usernameValue = document.getElementById('usernameInput1').value;
     const passwordValue = document.getElementById('passwordInput1').value;
+    const countryValue = document.getElementById('countryInput1').value;
 
     if (!usernameValue || !passwordValue) {
         homebridge.toast.error('Please enter your username and password.', 'Error');
@@ -262,7 +268,7 @@ document.getElementById('step1Submit').addEventListener('click', async () => {
 
     try {
         homebridge.showSpinner()
-        const response = await homebridge.request('/request-otp', { username: usernameValue, password: passwordValue });
+        const response = await homebridge.request('/request-otp', { username: usernameValue, password: passwordValue, country: countryValue });
         homebridge.hideSpinner()
         if (response.result == 0) {
             homebridge.toast.error("Wrong username or password");
