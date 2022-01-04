@@ -21,6 +21,7 @@ function updateFormFromConfig() {
     document.getElementById('ignoreDevices').value = pluginConfig.ignoreDevices || [];
     document.getElementById('country').value = pluginConfig.country || "US";
     document.getElementById('countryInput1').value = pluginConfig.country || "US";
+    document.getElementById('CameraMaxLivestreamDuration').value = pluginConfig.CameraMaxLivestreamDuration || 30;
     homebridge.fixScrollHeight();
 }
 
@@ -37,11 +38,17 @@ function updateConfigFromForm() {
     pluginConfig.ignoreStations = document.getElementById('ignoreStations').value.split(",");
     pluginConfig.ignoreDevices = document.getElementById('ignoreDevices').value.split(",");
     pluginConfig.country = document.getElementById('country').value;
+    pluginConfig.CameraMaxLivestreamDuration = parseInt(document.getElementById('CameraMaxLivestreamDuration').value);
 }
 
 function adjustPollingValue() {
-    const pollingValue = document.getElementById('pollingIntervalMinutes').value;
+    const pollingValue = parseInt(document.getElementById('pollingIntervalMinutes').value);
     document.getElementById('pollingValue').innerHTML = pollingValue + ' minutes';
+}
+
+function adjustCMLDPollingValue() {
+    const pollingValue = parseInt(document.getElementById('CameraMaxLivestreamDuration').value);
+    document.getElementById('CMLDpollingValue').innerHTML = pollingValue + ' seconds';
 }
 
 async function AddOrRemoveStationsIgnoreList(item) {
@@ -196,7 +203,8 @@ async function list_stations_devices(stations) {
         document.getElementById('setupComplete').style.display = 'block';
     }
 
-    adjustPollingValue()
+    adjustPollingValue();
+    adjustCMLDPollingValue();
 })();
 
 // watch for changes to the config form
@@ -204,6 +212,7 @@ document.getElementById('configForm').addEventListener('change', async () => {
     // extract the values from the form - stored in var pluginConfig.
     updateConfigFromForm();
     adjustPollingValue();
+    adjustCMLDPollingValue();
 
     // send the current value to the UI.
     await homebridge.updatePluginConfig([pluginConfig]);
@@ -212,6 +221,7 @@ document.getElementById('configForm').addEventListener('change', async () => {
 
 
 document.getElementById('pollingIntervalMinutes').addEventListener('input', adjustPollingValue);
+document.getElementById('CameraMaxLivestreamDuration').addEventListener('input', adjustCMLDPollingValue);
 
 
 // step 1 submit handler

@@ -33,7 +33,7 @@
             <div class="custom-control custom-checkbox form-group">
                 <input type="checkbox" class="custom-control-input" id="enableCamera" />
                 <label class="custom-control-label" for="enableCamera">Livestream from Camera device</label>
-                <small id="help" class="form-text text-muted">Camera seen as Motion Sensor by default, enable this
+                <small id="help1" class="form-text text-muted">Camera seen as Motion Sensor by default, enable this
                     setting to transform as Camera</small>
             </div>
 
@@ -47,15 +47,24 @@
                         <input type="range" class="custom-range" id="pollingIntervalMinutes" min="0" max="30" value="5"
                             step="1" />
                         <span id="pollingValue">5 minutes</span>
-                        <small id="help" class="form-text text-muted">Time in minutes between each status polling of the
+                        <small id="help2" class="form-text text-muted">Time in minutes between each status polling of the
                             devices
                             (set to 0 for no polling)</small>
+                    </div>
+                    <hr />
+                    <div class="form-group">
+                        <label for="CameraMaxLivestreamDuration">Camera Max Livestream Duration (in seconds)</label>
+                        <input type="range" class="custom-range" id="CameraMaxLivestreamDuration" min="10" max="300"
+                            value="30" step="5" />
+                        <span id="CMLDpollingValue">30 seconds</span>
+                        <small id="help3" class="form-text text-muted">Time in second before ending the livestream
+                            (longer livestream imply shorten batterylife)</small>
                     </div>
                     <hr />
                     <div class="custom-control custom-checkbox form-group">
                         <input type="checkbox" class="custom-control-input" id="enableDetailedLogging" />
                         <label class="custom-control-label" for="enableDetailedLogging">Enable Debug</label>
-                        <small id="help" class="form-text text-muted">Helping plugin team to understand what's going
+                        <small id="help4" class="form-text text-muted">Helping plugin team to understand what's going
                             on.</small>
                     </div>
                     <hr />
@@ -333,7 +342,7 @@
                                 <option value="WF" label="Wallis and Futuna">Wallis and Futuna</option>
                             </optgroup>
                         </select>
-                        <small id="help" class="form-text text-muted">Select the same country that's the one selected on
+                        <small id="help5" class="form-text text-muted">Select the same country that's the one selected on
                             Eufy APP</small>
                     </div>
                     <hr />
@@ -350,7 +359,7 @@
                             <!-- <option value="6">Eufy Off</option> // Removing the ability to set Off(6) waiting Bropat feedback bropat/eufy-security-client#27 -->
                             <option value="63">Eufy Disarmed</option>
                         </select>
-                        <small id="help" class="form-text text-muted">Change how each mode in the HomeKit security
+                        <small id="help6" class="form-text text-muted">Change how each mode in the HomeKit security
                             system is mapped to the modes in the Eufy App</small>
                     </div>
                     <div class="form-group">
@@ -366,7 +375,7 @@
                             <!-- <option value="6">Eufy Off</option> // Removing the ability to set Off(6) waiting Bropat feedback bropat/eufy-security-client#27 -->
                             <option value="63">Eufy Disarmed</option>
                         </select>
-                        <small id="help" class="form-text text-muted">Change how each mode in the HomeKit security
+                        <small id="help7" class="form-text text-muted">Change how each mode in the HomeKit security
                             system is mapped to the modes in the Eufy App</small>
                     </div>
                     <div class="form-group">
@@ -382,7 +391,7 @@
                             <!-- <option value="6">Eufy Off</option> // Removing the ability to set Off(6) waiting Bropat feedback bropat/eufy-security-client#27 -->
                             <option value="63">Eufy Disarmed</option>
                         </select>
-                        <small id="help" class="form-text text-muted">Change how each mode in the HomeKit security
+                        <small id="help8" class="form-text text-muted">Change how each mode in the HomeKit security
                             system is mapped to the modes in the Eufy App</small>
                     </div>
                     <div class="form-group">
@@ -398,19 +407,19 @@
                             <option value="6">Eufy Off (Keypad required)</option>
                             <option value="63">Eufy Disarmed</option>
                         </select>
-                        <small id="help" class="form-text text-muted">Change how each mode in the HomeKit security
+                        <small id="help9" class="form-text text-muted">Change how each mode in the HomeKit security
                             system is mapped to the modes in the Eufy App</small>
                     </div>
                     <div class="form-group">
                         <label for="ignoreStations">Ignore Stations</label>
                         <input type="text" class="form-control" id="ignoreStations" />
-                        <small id="help" class="form-text text-muted">Ignoring stations listed here (separated by a
+                        <small id="help10" class="form-text text-muted">Ignoring stations listed here (separated by a
                             comma)</small>
                     </div>
                     <div class="form-group">
                         <label for="ignoreDevices">Ignore Devices</label>
                         <input type="text" class="form-control" id="ignoreDevices" />
-                        <small id="help" class="form-text text-muted">Ignoring devices listed here (separated by a
+                        <small id="help11" class="form-text text-muted">Ignoring devices listed here (separated by a
                             comma)</small>
                     </div>
 

@@ -51,6 +51,11 @@
         "type": "boolean",
         "required": false
       },
+      "CameraMaxLivestreamDuration": {
+        "title": "Camera Max Livestream Duration (in seconds) ",
+        "type": "number",
+        "required": false
+      },
       "pollingIntervalMinutes": {
         "title": "Polling Interval (in minutes) ",
         "type": "number",
@@ -337,6 +342,7 @@
       "items": [
         "enableDetailedLogging",
         "enableCamera",
+        "CameraMaxLivestreamDuration",
         "pollingIntervalMinutes",
         "country",
         {
