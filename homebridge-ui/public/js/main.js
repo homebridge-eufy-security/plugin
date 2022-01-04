@@ -216,7 +216,6 @@ document.getElementById('configForm').addEventListener('change', async () => {
 
     // send the current value to the UI.
     await homebridge.updatePluginConfig([pluginConfig]);
-    await homebridge.savePluginConfig();
 });
 
 
