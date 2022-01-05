@@ -381,7 +381,7 @@ export class StreamingDelegate implements CameraStreamingDelegate {
         this.log.debug('ReqHK:', JSON.stringify(request));
         this.log.debug('ReqEufy:', JSON.stringify(streamData.metadata));
 
-        const uVideoStream = StreamInput(streamData.videostream);
+        const uVideoStream = StreamInput(streamData.videostream, this.cameraName + '_video', this.log);
 
         const sessionInfo = this.pendingSessions.get(request.sessionID);
         if (sessionInfo) {
@@ -479,7 +479,7 @@ export class StreamingDelegate implements CameraStreamingDelegate {
             // Required audio came to early so end user will see a lag of the video
             await new Promise((resolve) => { setTimeout(resolve, 6000); });
 
-            const uAudioStream = StreamInput(streamData.audiostream);
+            const uAudioStream = StreamInput(streamData.audiostream, this.cameraName + '_audio', this.log);
 
             let ffmpegArgs_audio = [''];
 
