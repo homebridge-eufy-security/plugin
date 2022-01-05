@@ -156,7 +156,7 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
     });
 
     this.eufyClient.setCameraMaxLivestreamDuration(this.config.CameraMaxLivestreamDuration ?? 30);
-    this.log.debug('CameraMaxLivestreamDuration:',this.eufyClient.getCameraMaxLivestreamDuration());
+    this.log.debug('CameraMaxLivestreamDuration:', this.eufyClient.getCameraMaxLivestreamDuration());
 
     const eufyStations = await this.eufyClient.getStations();
     this.log.debug('Found ' + eufyStations.length + ' stations.');
