@@ -31,7 +31,7 @@ import { Station, Camera, PropertyName, StreamMetadata, VideoCodec } from 'eufy-
 import { EufySecurityPlatform } from '../platform';
 
 import { Readable } from 'stream';
-import { StreamInput } from './UniversalStream';
+import { NamePipeStream, StreamInput } from './UniversalStream';
 
 import { readFile } from 'fs'
 import { promisify } from 'util'
@@ -69,6 +69,9 @@ type ActiveSession = {
     timeout?: NodeJS.Timeout;
     vsocket?: Socket;
     asocket?: Socket;
+    uVideoStream?: NamePipeStream;
+    uAudioStream?: NamePipeStream;
+
 };
 
 type StationStream = {
@@ -457,8 +460,8 @@ export class StreamingDelegate implements CameraStreamingDelegate {
             activeSession.vsocket = createSocket(sessionInfo.ipv6 ? 'udp6' : 'udp4');
             activeSession.vsocket.on('error', (err: Error) => {
                 this.log.error(this.cameraName, 'Socket error: ' + err.message);
+                // uVideoStream.close();
                 this.stopStream(request.sessionID);
-                uVideoStream.close();
             });
             activeSession.vsocket.on('message', () => {
                 if (activeSession.timeout) {
@@ -467,11 +470,13 @@ export class StreamingDelegate implements CameraStreamingDelegate {
                 activeSession.timeout = setTimeout(() => {
                     this.log.info(this.cameraName, 'Device appears to be inactive. Stopping stream.');
                     this.controller.forceStopStreamingSession(request.sessionID);
+                    // uVideoStream.close();
                     this.stopStream(request.sessionID);
-                    uVideoStream.close();
                 }, request.video.rtcp_interval * 5 * 1000);
             });
             activeSession.vsocket.bind(sessionInfo.videoReturnPort);
+            
+            activeSession.uVideoStream = uVideoStream;
 
             activeSession.mainProcess_video = new FfmpegProcess(this.cameraName + '_video', request.sessionID, this.videoProcessor,
                 clean_ffmpegArgs_video, this.log, this.videoConfig.debug, this, callback);
@@ -517,8 +522,8 @@ export class StreamingDelegate implements CameraStreamingDelegate {
                 activeSession.asocket = createSocket(sessionInfo.ipv6 ? 'udp6' : 'udp4');
                 activeSession.asocket.on('error', (err: Error) => {
                     this.log.error(this.cameraName, 'Socket error: ' + err.message);
+                    // uAudioStream.close();
                     this.stopStream(request.sessionID);
-                    uAudioStream.close();
                 });
                 activeSession.asocket.on('message', () => {
                     if (activeSession.timeout) {
@@ -527,11 +532,13 @@ export class StreamingDelegate implements CameraStreamingDelegate {
                     activeSession.timeout = setTimeout(() => {
                         this.log.info(this.cameraName, 'Device appears to be inactive. Stopping stream.');
                         this.controller.forceStopStreamingSession(request.sessionID);
+                        // uAudioStream.close();
                         this.stopStream(request.sessionID);
-                        uAudioStream.close();
                     }, request.audio.rtcp_interval * 5 * 1000);
                 });
                 activeSession.asocket.bind(sessionInfo.audioReturnPort);
+
+                activeSession.uAudioStream = uAudioStream;
 
                 activeSession.mainProcess_audio = new FfmpegProcess(this.cameraName + '_audio', request.sessionID, this.videoProcessor,
                     clean_ffmpegArgs_audio, this.log, this.videoConfig.debug, this);
@@ -544,14 +551,26 @@ export class StreamingDelegate implements CameraStreamingDelegate {
                 if (this.platform.eufyClient.getStationDevice(station.getSerial(), channel).getSerial() === this.device.getSerial()) {
                     this.log.info(this.cameraName, 'Eufy Station stopped the stream. Stopping stream.');
                     this.controller.forceStopStreamingSession(request.sessionID);
+                    // uVideoStream.close();
+                    // uAudioStream.close();
                     this.stopStream(request.sessionID);
-                    uVideoStream.close();
-                    uAudioStream.close();
                 }
             });
 
-            this.ongoingSessions.set(request.sessionID, activeSession);
-            this.pendingSessions.delete(request.sessionID);
+            // Check if the pendingSession has been stopped before it was successfully started.
+            const pendingSession = this.pendingSessions.get(request.sessionID);
+            // pendingSession has not been deleted. Transfer it to ongoingSessions.
+            if(pendingSession)
+            {
+              this.ongoingSessions.set(request.sessionID, activeSession);
+              this.pendingSessions.delete(request.sessionID);
+            }
+            // pendingSession has been deleted. Add it to ongoingSession and end it immediately.
+            else
+            {
+              this.ongoingSessions.set(request.sessionID, activeSession);
+              this.stopStream(request.sessionID);
+            }
         } else {
             this.log.error(this.cameraName, 'Error finding session information.');
             callback(new Error('Error finding session information'));
@@ -576,12 +595,23 @@ export class StreamingDelegate implements CameraStreamingDelegate {
     }
 
     public stopStream(sessionId: string): void {
+        this.log.info('Stopping session with id: ' + sessionId);
+
+        const pendingSession = this.pendingSessions.get(sessionId);
+        if(pendingSession){
+          this.pendingSessions.delete(sessionId);
+        }
+
         const session = this.ongoingSessions.get(sessionId);
         if (session) {
             if (session.timeout) {
                 clearTimeout(session.timeout);
             }
+            session.uVideoStream?.close();
+            session.uAudioStream?.close();
             try {
+                this.log.info('Stopping video pid' + session.mainProcess_video?.process.pid);
+                this.log.info('Stopping audio pid' + session.mainProcess_audio?.process.pid);
                 session.mainProcess_video?.stop();
                 session.mainProcess_audio?.stop();
             } catch (err) {
@@ -598,8 +628,13 @@ export class StreamingDelegate implements CameraStreamingDelegate {
             } catch (err) {
                 this.log.error(this.cameraName, 'Error occurred closing socket: ' + err);
             }
+
+            this.ongoingSessions.delete(sessionId);
+            this.log.info(this.cameraName, 'Stopped video stream.');
         }
-        this.ongoingSessions.delete(sessionId);
-        this.log.info(this.cameraName, 'Stopped video stream.');
+        else{
+          this.log.info('No session to stop.')
+        }
+
     }
 }

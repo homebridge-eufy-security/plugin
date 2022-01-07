@@ -2,7 +2,7 @@ import net from 'net'
 import fs from 'fs'
 import os from 'os'
 import { Readable } from 'stream';
-
+import { Logger } from './logger';
 let counter = 0
 
 export class NamePipeStream {
@@ -13,11 +13,13 @@ export class NamePipeStream {
     public url;
     private stream: Readable;
 
-    constructor(stream, onSocket, who, log) {
+    constructor(stream: Readable, who: string, log: Logger) {
         this.log = log;
         this.stream = stream;
         this.who = who;
         let path;
+
+        var writableStream = this.createWriteable(stream);
 
         this.sock_id = ++counter
 
@@ -35,10 +37,14 @@ export class NamePipeStream {
             fs.unlinkSync(path)
         } catch (err) { }
 
-        this.server = net.createServer(onSocket);
+        this.server = net.createServer(writableStream);
 
         this.stream.on('finish', () => {
             this.server.close();
+        });
+
+        this.stream.on('error', (err) => {
+            this.log.error(err);
         });
 
         this.server.on('error', (err: Error) => {
@@ -57,12 +63,22 @@ export class NamePipeStream {
             this.log.error(this.who, 'NamePipeStream did exist?');
         }
     }
+
+    createWriteable(stream){
+        return (writableStream) => stream.pipe(writableStream).on('error', (err) => {
+            if(err.code === 'ECONNRESET'){
+                this.log.info('Connection closed by Eufy station.')
+            }
+            else
+            {
+                this.log.error(err);
+            }
+            this.log.info('ErrorCode ' +err.code);
+            this.close();
+        });      
+    }
 }
 
-export function StreamInput(stream, who, log) {
-    return new NamePipeStream(stream, socket => stream.pipe(socket), who, log)
-}
-
-export function StreamOutput(stream, who, log) {
-    return new NamePipeStream(stream, socket => socket.pipe(stream), who, log)
+export function StreamInput(stream: Readable, who: string, log: Logger) {
+    return new NamePipeStream(stream, who, log)
 }
