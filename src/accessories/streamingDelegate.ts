@@ -610,8 +610,6 @@ export class StreamingDelegate implements CameraStreamingDelegate {
             session.uVideoStream?.close();
             session.uAudioStream?.close();
             try {
-                this.log.info('Stopping video pid' + session.mainProcess_video?.process.pid);
-                this.log.info('Stopping audio pid' + session.mainProcess_audio?.process.pid);
                 session.mainProcess_video?.stop();
                 session.mainProcess_audio?.stop();
             } catch (err) {
