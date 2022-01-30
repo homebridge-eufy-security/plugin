@@ -1,3 +1,4 @@
+/* eslint-disable indent */
 import {
     API,
     APIEvent,
@@ -91,6 +92,7 @@ export class StreamingDelegate implements CameraStreamingDelegate {
     private readonly videoProcessor: string;
     readonly controller: CameraController;
     private snapshotPromise?: Promise<Buffer>;
+    private stationStream: StationStream | undefined;
 
     private readonly platform: EufySecurityPlatform;
     private readonly device: Camera;
@@ -198,25 +200,41 @@ export class StreamingDelegate implements CameraStreamingDelegate {
 
     fetchSnapshot(snapFilter?: string): Promise<Buffer> {
 
-        this.snapshotPromise = new Promise(async (resolve, reject) => {
+        return new Promise(async (resolve, reject) => {
+            
 
-            try {
-                this.videoConfig.stillImageSource = '-i ' + this.device.getPropertyValue(PropertyName.DevicePictureUrl).value as string;
-            } catch {
-                this.log.warn(this.cameraName + ' fetchSnapshot: ' + 'No Snapshot found');
-                resolve(await readFileAsync(SnapshotUnavailablePath));
-            }
+            // if(this.platform.config.UseLocalStreamSnapshot){
+            //     try {
+            //         this.videoConfig.stillImageSource = '-i ' + this.device.getPropertyValue(PropertyName.DevicePictureUrl).value as string;
+            //     } catch {
+            //         this.log.warn(this.cameraName + ' fetchSnapshot: ' + 'No Snapshot found');
+            //         resolve(await readFileAsync(SnapshotUnavailablePath));
+            //     }
+            // }
+
+            // const ffmpegArgs = (this.videoConfig.stillImageSource || this.videoConfig.source!) + // Still
+            // ' -frames:v 1' +
+            // (snapFilter ? ' -filter:v ' + snapFilter : '') +
+            // ' -f image2 -' +
+            // ' -hide_banner' +
+            // ' -loglevel ' + (this.platform.config.enableDetailedLogging >= 1 ? '+verbose' : 'error');
+
+            const streamData = await this.getLocalLiveStream();
+            
+            this.log.debug('Received local livestream.');
 
             const startTime = Date.now();
-            const ffmpegArgs = (this.videoConfig.stillImageSource || this.videoConfig.source!) + // Still
-                ' -frames:v 1' +
+            const ffmpegArgs = '-probesize 3000 -analyzeduration 0 -ss 00:00:00.500 -i pipe: -frames:v 1 -c:v copy' +
                 (snapFilter ? ' -filter:v ' + snapFilter : '') +
                 ' -f image2 -' +
                 ' -hide_banner' +
-                ' -loglevel error';
+                ' -loglevel ' + (this.platform.config.enableDetailedLogging >= 1 ? '+verbose' : 'error');
 
             this.log.debug(this.cameraName, 'Snapshot command: ' + this.videoProcessor + ' ' + ffmpegArgs, this.videoConfig.debug);
             const ffmpeg = spawn(this.videoProcessor, ffmpegArgs.split(/\s+/), { env: process.env });
+            streamData.videostream.pipe(ffmpeg.stdin).on('error', (err) => {
+                this.log.error(err.message, this.cameraName);
+            });
 
             let snapshotBuffer = Buffer.alloc(0);
             ffmpeg.stdout.on('data', (data) => {
@@ -239,7 +257,10 @@ export class StreamingDelegate implements CameraStreamingDelegate {
                     reject('Failed to fetch snapshot.');
                 }
 
+                this.platform.eufyClient.stopStationLivestream(this.device.getSerial());
+
                 setTimeout(() => {
+                    this.log.debug('Setting snapshotPromise to undefined.');
                     this.snapshotPromise = undefined;
                 }, 3 * 1000); // Expire cached snapshot after 3 seconds
 
@@ -260,7 +281,6 @@ export class StreamingDelegate implements CameraStreamingDelegate {
                 }
             });
         });
-        return this.snapshotPromise;
     }
 
     resizeSnapshot(snapshot: Buffer, resizeFilter?: string): Promise<Buffer> {
@@ -288,6 +308,8 @@ export class StreamingDelegate implements CameraStreamingDelegate {
     }
 
     async handleSnapshotRequest(request: SnapshotRequest, callback: SnapshotRequestCallback): Promise<void> {
+        this.log.debug('handleSnapshotRequest');
+        this.log.debug('snapshotPromise: ' + !!this.snapshotPromise);
         const resolution = this.determineResolution(request, true);
 
         try {
@@ -297,6 +319,16 @@ export class StreamingDelegate implements CameraStreamingDelegate {
                 this.cameraName, this.videoConfig.debug);
 
             const snapshot = await (this.snapshotPromise || this.fetchSnapshot(resolution.snapFilter));
+            // let snapshot;
+            // if(this.snapshotPromise) {
+            //     this.log.debug('Awaiting promise');
+            //     snapshot = await this.snapshotPromise;
+            // } else{
+            //     this.log.debug('Calling fetchSnapshot');
+            //     snapshot = await this.fetchSnapshot(resolution.snapFilter);
+            // }
+
+            this.log.debug('snapshot byte lenght: ' + snapshot?.byteLength);
 
             this.log.debug('Sending snapshot: ' + (resolution.width > 0 ? resolution.width : 'native') + ' x ' +
                 (resolution.height > 0 ? resolution.height : 'native') +
@@ -362,15 +394,24 @@ export class StreamingDelegate implements CameraStreamingDelegate {
     }
 
     private async getLocalLiveStream(): Promise<StationStream> {
-        return await new Promise((resolve, reject) => {
-
-            this.platform.eufyClient.startStationLivestream(this.device.getSerial());
+        return new Promise((resolve, reject) => {
             const station = this.platform.getStationById(this.device.getStationSerial());
+            const isLiveStreaming = station.isLiveStreaming(this.device);
+            this.platform.eufyClient.startStationLivestream(this.device.getSerial());
+            
+            this.log.debug('isLiveStreaming: ' + isLiveStreaming);
+            if(isLiveStreaming){
+                if(this.stationStream !== undefined){
+                    resolve(this.stationStream);
+                }
+                reject('Station responded with isLiveStreaming but we had no stream.');
+            }
 
             station.on('livestream start', (station: Station, channel: number, metadata: StreamMetadata,
                 videostream: Readable, audiostream: Readable) => {
                 if (this.platform.eufyClient.getStationDevice(station.getSerial(), channel).getSerial() === this.device.getSerial()) {
                     const stationStream: StationStream = { station, channel, metadata, videostream, audiostream };
+                    this.stationStream = stationStream;
                     resolve(stationStream);
                 }
             });
@@ -449,8 +490,8 @@ export class StreamingDelegate implements CameraStreamingDelegate {
             );
 
             ffmpegArgs_video.push(
-                '-loglevel level' + (this.videoConfig.debug ? '+verbose' : ''),
-                '-progress pipe:1'
+                '-loglevel ' + (this.platform.config.enableDetailedLogging >= 1 ? '+verbose' : 'error'),
+                '-progress pipe:1',
             );
 
             const clean_ffmpegArgs_video = ffmpegArgs_video.filter(function (el) { return el; });
@@ -513,8 +554,8 @@ export class StreamingDelegate implements CameraStreamingDelegate {
                 );
 
                 ffmpegArgs_audio.push(
-                    '-loglevel level' + (this.videoConfig.debug ? '+verbose' : ''),
-                    '-progress pipe:1'
+                    '-loglevel ' + (this.platform.config.enableDetailedLogging >= 1 ? '+verbose' : 'error'),
+                    '-progress pipe:1',
                 );
 
                 const clean_ffmpegArgs_audio = ffmpegArgs_audio.filter(function (el) { return el; });
