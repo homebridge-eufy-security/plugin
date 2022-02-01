@@ -13,6 +13,7 @@
 -   Fix keypad issue while using off/disarmed mode (#88, #147, #197)
 -   Handling stop livestream event from Eufy Station #262
 -   Fix HB crashed #321 thanks @schliemann
+-   Fix Arming stuck while using Schedule or Geo #342
 
 ## 1.0.1 (18/10/2021)
 
