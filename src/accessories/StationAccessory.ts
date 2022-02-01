@@ -189,8 +189,8 @@ export class StationAccessory {
    */
   handleSecuritySystemTargetStateGet(): CharacteristicValue {
     try {
-      const currentValue = this.eufyStation.getPropertyValue(PropertyName.StationGuardMode);
-      this.platform.log.debug(this.accessory.displayName, 'GET StationGuardMode:', currentValue);
+      const currentValue = this.eufyStation.getPropertyValue(PropertyName.StationCurrentMode);
+      this.platform.log.debug(this.accessory.displayName, 'GET StationCurrentMode:', currentValue);
       return this.convertEufytoHK(currentValue.value) as number;
     } catch {
       this.platform.log.error(this.accessory.displayName, 'handleSecuritySystemTargetStateGet', 'Wrong return value');
