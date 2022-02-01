@@ -94,7 +94,7 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
             },
           }),
         }],
-        serializers: bunyanDebugStream.serializers,
+        serializers: bunyanDebugStream.stdSerializers,
       });
       this.log.info('enableDetailedLogging on');
     } else {
