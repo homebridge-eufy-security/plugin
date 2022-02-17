@@ -4,7 +4,10 @@
 
 .divTable {
     display: table;
-    width: 100%;
+    table-layout: fixed;
+    max-width: none;
+    width: auto;
+    min-width: 100%;
 }
 
 .divTableRow {
@@ -47,9 +50,9 @@ image.logo {
 }
 
 .divTableCell, .divTableHead {
-    border: 1px solid #eee;
+    border: 0.05rem solid #eee;
     display: table-cell;
-    padding: 3px 10px;
+    padding: 0.25rem;
 }
 
 .divTableHeading {

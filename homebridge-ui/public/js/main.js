@@ -55,14 +55,12 @@ async function AddOrRemoveStationsIgnoreList(item) {
     pluginConfig.ignoreStations.indexOf(item) === -1 ? pluginConfig.ignoreStations.push(item) : pluginConfig.ignoreStations.splice(pluginConfig.ignoreStations.indexOf(item), 1);
     document.getElementById('ignoreStations').value = pluginConfig.ignoreStations.toString();
     await homebridge.updatePluginConfig([pluginConfig]);
-    await homebridge.savePluginConfig();
 }
 
 async function AddOrRemoveDevicesIgnoreList(item) {
     pluginConfig.ignoreDevices.indexOf(item) === -1 ? pluginConfig.ignoreDevices.push(item) : pluginConfig.ignoreDevices.splice(pluginConfig.ignoreDevices.indexOf(item), 1);
     document.getElementById('ignoreDevices').value = pluginConfig.ignoreDevices.toString();
     await homebridge.updatePluginConfig([pluginConfig]);
-    await homebridge.savePluginConfig();
 }
 
 function isStationsIgnored(uniqueId) {
@@ -99,7 +97,6 @@ async function list_stations_devices(stations) {
     pluginConfig.ignoreDevices = (typeof pluginConfig.ignoreDevices === 'object') ? pluginConfig.ignoreDevices : [];
 
     await homebridge.updatePluginConfig([pluginConfig]);
-    await homebridge.savePluginConfig();
 
     const t1 = document.createElement("div");
     t1.setAttribute('class', 'divTable');
