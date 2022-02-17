@@ -36,11 +36,14 @@ class UiServer extends HomebridgePluginUiServer {
       p2pConnectionSetup: 0,
       pollingIntervalMinutes: 10,
       eventDurationSeconds: 10,
+      acceptInvitations: true,
     };
 
     // create request handlers
     this.onRequest('/request-otp', this.requestOtp.bind(this));
     this.onRequest('/check-otp', this.checkOtp.bind(this));
+    this.onRequest('/refreshData', this.refreshData.bind(this));
+    this.onRequest('/getStations', this.getStations.bind(this));
     this.onRequest('/reset', this.reset.bind(this));
 
     // must be called when the script is ready to accept connections
@@ -61,75 +64,107 @@ class UiServer extends HomebridgePluginUiServer {
 
     this.driver = new EufySecurity(this.config, this.log);
 
-    await this.driver.connect();
+    try {
+      await this.driver.connect();
 
-    if (this.driver.api.token && this.driver.connected == true) {
-      await this.driver.refreshCloudData();
-      const stations = await this.getStations();
-      this.log.info('Stations found:', stations);
-      return { result: 2, stations: stations }; // Connected
-    }
+      if (this.driver.api.token && this.driver.connected == true) {
+        return { result: 2 }; // Connected
+      }
 
-    if (this.driver.api.token && this.driver.connected == false) {
-      this.log.info('OTP required');
-      return { result: 1 }; // OTP needed
-    }
+      if (this.driver.api.token && this.driver.connected == false) {
+        this.log.info('OTP required');
+        return { result: 1 }; // OTP needed
+      }
 
-    if (!this.driver.api.token && this.driver.connected == false) {
-      this.log.info('Wrong username and/or password');
+      if (!this.driver.api.token && this.driver.connected == false) {
+        this.log.info('Wrong username and/or password');
+        return { result: 0 }; // Wrong username and/or password
+      }
+
+    } catch (e) {
+      this.log.info('Error:', e.message);
       return { result: 0 }; // Wrong username and/or password
     }
 
-  }
-
-  async getStations() {
-
-    const Eufy_stations = await this.driver.getStations();
-    const Eufy_devices = await this.driver.getDevices();
-
-    const stations = [];
-
-    for (const station of Eufy_stations) {
-
-      const object = {
-        uniqueId: station.getSerial(),
-        displayName: station.getName(),
-        type: DeviceType[station.getDeviceType()],
-        devices: [],
-      }
-
-      stations.push(object);
-    }
-
-    for (const device of Eufy_devices) {
-
-      const object = {
-        uniqueId: device.getSerial(),
-        displayName: device.getName(),
-        type: DeviceType[device.getDeviceType()],
-        station: device.getStationSerial(),
-      }
-
-      stations.find((o, i, a) => {
-        if (o.uniqueId === object.station)
-          a[i].devices.push(object);
-      });
-    }
-
-    return stations;
   }
 
   /**
    * Handle requests sent to /check-otp
    */
   async checkOtp(body) {
+    try {
+      await this.driver.connect(body.code);
 
-    await this.driver.connect(body.code);
+      if (this.driver.api.token && this.driver.connected == true) {
+        return { result: 1 }; // Connected
+      }
+
+      if (!this.driver.api.token && this.driver.connected == false) {
+        return { result: 0 }; // Wrong OTP
+      }
+
+    } catch (e) {
+      this.log.error('Error:', e.message);
+      return { result: 0 }; // Error
+    }
+  }
+
+  async listDevices() {
+
+    try {
+      const Eufy_stations = await this.driver.getStations();
+      const Eufy_devices = await this.driver.getDevices();
+
+      const stations = [];
+
+      for (const station of Eufy_stations) {
+
+        const object = {
+          uniqueId: station.getSerial(),
+          displayName: station.getName(),
+          type: DeviceType[station.getDeviceType()],
+          devices: [],
+        }
+
+        stations.push(object);
+      }
+
+      for (const device of Eufy_devices) {
+
+        const object = {
+          uniqueId: device.getSerial(),
+          displayName: device.getName(),
+          type: DeviceType[device.getDeviceType()],
+          station: device.getStationSerial(),
+        }
+
+        stations.find((o, i, a) => {
+          if (o.uniqueId === object.station)
+            a[i].devices.push(object);
+        });
+      }
+
+      return stations;
+
+    } catch (e) {
+      this.log.error('Error:', e.message);
+      return null; // Error
+    }
+  }
+
+  /**
+   * Handle requests sent to /refreshData
+   */
+  async refreshData(body) {
 
     if (this.driver.api.token && this.driver.connected == true) {
-      await this.driver.refreshData();
-      const stations = await this.getStations();
-      return { result: 2, stations: stations }; // Connected
+      try {
+        await this.driver.refreshCloudData();
+        return { result: 1 }; // Connected
+      } catch (e) {
+        this.log.error('Error:', e.message);
+        return { result: 0 }; // Error
+      }
     }
 
     if (!this.driver.api.token && this.driver.connected == false) {
@@ -139,11 +174,32 @@ class UiServer extends HomebridgePluginUiServer {
   }
 
   /**
-   * Handle requests sent to /check-otp
+   * Handle requests sent to /getStations
+   */
+  async getStations(body) {
+
+    if (this.driver.api.token && this.driver.connected == true) {
+      try {
+        const stations = await this.listDevices();
+        return { result: 1, stations: stations }; // Connected
+      } catch (e) {
+        this.log.error('Error:', e.message);
+        return { result: 0 }; // Error
+      }
+    }
+
+    if (!this.driver.api.token && this.driver.connected == false) {
+      return { result: 0 }; // Wrong OTP
+    }
+
+  }
+
+  /**
+   * Handle requests sent to /reset
    */
   async reset(body) {
 
-    const path = this.config['persistentDir']+'/persistent.json';
+    const path = this.config['persistentDir'] + '/persistent.json';
 
     try {
       fs.unlinkSync(path);

@@ -80,9 +80,12 @@ function isDevicesIgnored(uniqueId) {
 async function list_stations_devices(stations) {
 
     const s_div = document.getElementById('stations');
+    
+    document.getElementById('step2').style.display = 'none';
+    document.getElementById('step3').style.display = 'block';
 
-    if (!stations) {
-        s_div.innerHTML = '<span style="color:red; font-weight:bold;"><h3>Error: Nothing to retreive!</h3></span>';
+    if (!stations.length) {
+        s_div.innerHTML = '<span style="color:red; font-weight:bold;">Error: Nothing have been retreived!</span>';
         return;
     }
 
@@ -294,27 +297,54 @@ document.getElementById('step1Submit').addEventListener('click', async () => {
     document.getElementById('step1Submit').setAttribute('disabled', 'disabled');
 
     try {
-        homebridge.showSpinner()
+        homebridge.showSpinner();
         const response = await homebridge.request('/request-otp', { username: usernameValue, password: passwordValue, country: countryValue });
-        homebridge.hideSpinner()
+        homebridge.hideSpinner();
+
         if (response.result == 0) {
             homebridge.toast.error("Wrong username or password");
-            return;
-        }
-        document.getElementById('step1').style.display = 'none';
-        if (response.result == 1)
-            document.getElementById('step2').style.display = 'block';
-        if (response.result == 2) {
-            document.getElementById('step3').style.display = 'block';
-            await list_stations_devices(response.stations);
+            document.getElementById('step1Submit').removeAttribute('disabled');
+        } else {
+            document.getElementById('step1').style.display = 'none';
+            if (response.result == 1)
+                document.getElementById('step2').style.display = 'block';
+            if (response.result == 2) {
+                await refreshData();
+                await getStations();
+            }
         }
     } catch (e) {
         homebridge.hideSpinner()
         homebridge.toast.error(e.message, 'Error');
     }
-
-    document.getElementById('step1Submit').removeAttribute('disabled');
 });
+
+async function refreshData() {
+    try {
+        homebridge.showSpinner();
+        homebridge.toast.info('Refreshing Data....');
+        await homebridge.request('/refreshData');
+        homebridge.hideSpinner();
+    } catch (e) {
+        homebridge.hideSpinner();
+        homebridge.toast.error(e.message, 'Error');
+    }
+}
+
+async function getStations() {
+    try {
+
+        homebridge.showSpinner();
+        homebridge.toast.info('Getting Devices....');
+        const response = await homebridge.request('/getStations');
+        homebridge.hideSpinner();
+
+        await list_stations_devices(response.stations);
+    } catch (e) {
+        homebridge.hideSpinner();
+        homebridge.toast.error(e.message, 'Error');
+    }
+}
 
 // step 2 submit handler
 document.getElementById('step2Submit').addEventListener('click', async () => {
@@ -328,18 +358,17 @@ document.getElementById('step2Submit').addEventListener('click', async () => {
     document.getElementById('step2Submit').setAttribute('disabled', 'disabled');
 
     try {
-        homebridge.showSpinner()
+        homebridge.showSpinner();
         const response = await homebridge.request('/check-otp', { code: otpValue });
-        document.getElementById('step2').style.display = 'none';
 
-        homebridge.hideSpinner()
+        homebridge.hideSpinner();
         if (response.result == 0) {
             homebridge.toast.error("Wrong OTP");
-            document.getElementById('step1').style.display = 'block';
+            document.getElementById('step2Submit').removeAttribute('disabled');
         }
-        if (response.result == 2) {
-            document.getElementById('step3').style.display = 'block';
-            await list_stations_devices(response.stations);
+        if (response.result == 1) {
+            await refreshData();
+            await getStations();
         }
 
     } catch (e) {
@@ -347,7 +376,6 @@ document.getElementById('step2Submit').addEventListener('click', async () => {
         homebridge.toast.error(e.error || e.message, 'Error');
     }
 
-    document.getElementById('step2Submit').removeAttribute('disabled');
 });
 
 // step reset submit handler
@@ -356,13 +384,14 @@ document.getElementById('reset-confirm-btn').addEventListener('click', async () 
     document.getElementById('reset-confirm-btn').setAttribute('disabled', 'disabled');
 
     try {
-        homebridge.showSpinner()
+        homebridge.showSpinner();
         const response = await homebridge.request('/reset', {});
 
         await homebridge.updatePluginConfig([]);
         await homebridge.savePluginConfig();
+        homebridge.closeSettings();
 
-        homebridge.hideSpinner()
+        homebridge.hideSpinner();
         if (response.result == 0) {
             homebridge.toast.error("First install or already resetted");
         }
