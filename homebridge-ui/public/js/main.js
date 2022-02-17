@@ -241,6 +241,7 @@ document.getElementById('skip').addEventListener('click', async () => {
     document.getElementById('step2').style.display = 'none';
     document.getElementById('setupRequired').style.display = 'none';
     document.getElementById('setupComplete').style.display = 'block';
+    document.getElementById('reset-box').style.display = 'none';
 });
 
 
@@ -249,12 +250,32 @@ document.getElementById('skip2').addEventListener('click', async () => {
     document.getElementById('step2').style.display = 'none';
     document.getElementById('setupRequired').style.display = 'none';
     document.getElementById('setupComplete').style.display = 'block';
+    document.getElementById('reset-box').style.display = 'none';
+});
+
+
+// skip-reset
+document.getElementById('skip-reset').addEventListener('click', async () => {
+    document.getElementById('step2').style.display = 'none';
+    document.getElementById('setupRequired').style.display = 'none';
+    document.getElementById('setupComplete').style.display = 'block';
+    document.getElementById('reset-box').style.display = 'none';
 });
 
 
 // startOver
 document.getElementById('startOver').addEventListener('click', async () => {
     document.getElementById('setupRequired').style.display = 'block';
+    document.getElementById('step2').style.display = 'none';
+    document.getElementById('setupComplete').style.display = 'none';
+    document.getElementById('reset-box').style.display = 'none';
+});
+
+
+// Reset
+document.getElementById('reset').addEventListener('click', async () => {
+    document.getElementById('setupRequired').style.display = 'none';
+    document.getElementById('reset-box').style.display = 'block';
     document.getElementById('step2').style.display = 'none';
     document.getElementById('setupComplete').style.display = 'none';
 });
@@ -327,4 +348,31 @@ document.getElementById('step2Submit').addEventListener('click', async () => {
     }
 
     document.getElementById('step2Submit').removeAttribute('disabled');
+});
+
+// step reset submit handler
+document.getElementById('reset-confirm-btn').addEventListener('click', async () => {
+
+    document.getElementById('reset-confirm-btn').setAttribute('disabled', 'disabled');
+
+    try {
+        homebridge.showSpinner()
+        const response = await homebridge.request('/reset', {});
+
+        await homebridge.updatePluginConfig([]);
+        await homebridge.savePluginConfig();
+
+        homebridge.hideSpinner()
+        if (response.result == 0) {
+            homebridge.toast.error("First install or already resetted");
+        }
+        if (response.result == 1) {
+            homebridge.toast.success("Success");
+        }
+
+    } catch (e) {
+        homebridge.hideSpinner()
+        homebridge.toast.error(e.error || e.message, 'Error');
+    }
+
 });

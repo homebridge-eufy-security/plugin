@@ -4,6 +4,7 @@ const { HomebridgePluginUiServer, RequestError } = require('@homebridge/plugin-u
 const bunyan = require('bunyan');
 const bunyanDebugStream = require('bunyan-debug-stream');
 const plugin = require('../package.json');
+const fs = require('fs')
 
 
 class UiServer extends HomebridgePluginUiServer {
@@ -40,6 +41,7 @@ class UiServer extends HomebridgePluginUiServer {
     // create request handlers
     this.onRequest('/request-otp', this.requestOtp.bind(this));
     this.onRequest('/check-otp', this.checkOtp.bind(this));
+    this.onRequest('/reset', this.reset.bind(this));
 
     // must be called when the script is ready to accept connections
     this.ready();
@@ -64,7 +66,7 @@ class UiServer extends HomebridgePluginUiServer {
     if (this.driver.api.token && this.driver.connected == true) {
       await this.driver.refreshCloudData();
       const stations = await this.getStations();
-      this.log.info('Stations found:',stations);
+      this.log.info('Stations found:', stations);
       return { result: 2, stations: stations }; // Connected
     }
 
@@ -132,6 +134,22 @@ class UiServer extends HomebridgePluginUiServer {
 
     if (!this.driver.api.token && this.driver.connected == false) {
       return { result: 0 }; // Wrong OTP
+    }
+
+  }
+
+  /**
+   * Handle requests sent to /check-otp
+   */
+  async reset(body) {
+
+    const path = this.config['persistentDir']+'/persistent.json';
+
+    try {
+      fs.unlinkSync(path);
+      return { result: 1 }; //file removed
+    } catch (err) {
+      return { result: 0 }; //error while removing the file
     }
 
   }

@@ -7,6 +7,7 @@
 -   Ability to switch light on compatible device (to be tested)
 -   Fixing Duplicate notification on doorbell ring #236
 -   Change Country #310
+-   Provide a clear/reset wizard in order to clean persistent data
 
 ### Fixed
 -   Updating some dep for security reason

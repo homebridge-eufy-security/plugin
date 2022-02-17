@@ -17,17 +17,9 @@
     <!-- shown when setup is complete or the plugin is already configured -->
     <div id="setupComplete" style="display:none;">
         <form id="configForm">
-            <div class="form-group">
-                <label for="usernameInput">Eufy Username</label>
-                <input type="text" class="form-control" id="usernameInput" />
-            </div>
-            <div class="form-group">
-                <label for="passwordInput">Eufy Password</label>
-                <input type="password" class="form-control" id="passwordInput" />
-            </div>
-
-            <hr />
-            <a id="startOver" class="btn btn-success">Startover the wizard process</a>
+            <center>
+                <a id="startOver" class="btn btn-success">Startover the wizard process</a>
+            </center>
             <hr />
 
             <div class="custom-control custom-checkbox form-group">
@@ -42,12 +34,24 @@
                 </h4>
                 <p>Don't change these, unless you understand what you're doing.</p>
                 <div id="expandable" class="hidden">
+
+                    <div class="form-group">
+                        <label for="usernameInput">Eufy Username</label>
+                        <input type="text" class="form-control" id="usernameInput" />
+                    </div>
+                    <div class="form-group">
+                        <label for="passwordInput">Eufy Password</label>
+                        <input type="password" class="form-control" id="passwordInput" />
+                    </div>
+
+                    <hr />
                     <div class="form-group">
                         <label for="pollingIntervalMinutes">Polling Interval (in minutes)</label>
                         <input type="range" class="custom-range" id="pollingIntervalMinutes" min="0" max="30" value="5"
                             step="1" />
                         <span id="pollingValue">5 minutes</span>
-                        <small id="help2" class="form-text text-muted">Time in minutes between each status polling of the
+                        <small id="help2" class="form-text text-muted">Time in minutes between each status polling of
+                            the
                             devices
                             (set to 0 for no polling)</small>
                     </div>
@@ -342,7 +346,8 @@
                                 <option value="WF" label="Wallis and Futuna">Wallis and Futuna</option>
                             </optgroup>
                         </select>
-                        <small id="help5" class="form-text text-muted">Select the same country that's the one selected on
+                        <small id="help5" class="form-text text-muted">Select the same country that's the one selected
+                            on
                             Eufy APP</small>
                     </div>
                     <hr />
@@ -413,15 +418,23 @@
                     <div class="form-group">
                         <label for="ignoreStations">Ignore Stations</label>
                         <input type="text" class="form-control" id="ignoreStations" />
-                        <small id="help10" class="form-text text-muted">Serial numbers of stations to ignore listed here (separated by a
+                        <small id="help10" class="form-text text-muted">Serial numbers of stations to ignore listed here
+                            (separated by a
                             comma)</small>
                     </div>
                     <div class="form-group">
                         <label for="ignoreDevices">Ignore Devices</label>
                         <input type="text" class="form-control" id="ignoreDevices" />
-                        <small id="help11" class="form-text text-muted">Serial numbers of devices to ignore listed here (separated by a
+                        <small id="help11" class="form-text text-muted">Serial numbers of devices to ignore listed here
+                            (separated by a
                             comma)</small>
                     </div>
+
+                    <hr />
+
+                    <center>
+                        <a id="reset" class="btn btn-warning">Reset</a>
+                    </center>
 
                 </div>
 
@@ -742,6 +755,23 @@
         <div id="step3" style="display:none;">
             <div class="form-group">
                 <div id="stations"></div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- shown when the plugin is not configured -->
+    <div id="reset-box" style="display:none;">
+
+        <div id="reset-confirmation">
+            <div class="text-center">
+
+                <h3 class="text-center">
+                    <b style="font-weight: 800;">This action will clear persistent data and configuration of this plugin.</b>
+                </h3>
+
+                <a id="skip-reset" class="btn btn-info">Cancel</a>
+                <button id="reset-confirm-btn" type="submit" class="btn btn-red">Reset Everything</button>
             </div>
         </div>
 
