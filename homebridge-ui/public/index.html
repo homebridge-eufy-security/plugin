@@ -432,6 +432,20 @@
 
                     <hr />
 
+                    <div class="custom-control custom-checkbox form-group">
+                        <input type="checkbox" class="custom-control-input" id="enableButton" />
+                        <label class="custom-control-label" for="enableButton">Display homekit button to switch on/off camera</label>
+                    </div>
+
+                    <div class="custom-control custom-checkbox form-group">
+                        <input type="checkbox" class="custom-control-input" id="motionButton" />
+                        <label class="custom-control-label" for="motionButton">Display homekit button to switch on/off motion camera</label>
+                    </div>
+
+                    <small id="help12" class="form-text text-muted">When disabling theses buttons you might need to clear accessory cache (homebridge settings) so it can take effect into homekit.</small>
+
+                    <hr />
+
                     <center>
                         <a id="reset" class="btn btn-warning">Reset</a>
                     </center>

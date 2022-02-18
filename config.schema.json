@@ -61,6 +61,20 @@
         "type": "number",
         "required": false
       },
+      "enableButton": {
+        "title": "Display homekit button to switch on/off camera",
+        "description": "When disabling theses buttons you might need to clear accessory cache (homebridge settings) so it can take effect into homekit.",
+        "type": "boolean",
+        "default": true,
+        "required": false
+      },
+      "motionButton": {
+        "title": "Display homekit button to switch on/off motion camera",
+        "description": "When disabling theses buttons you might need to clear accessory cache (homebridge settings) so it can take effect into homekit.",
+        "type": "boolean",
+        "default": true,
+        "required": false
+      },
       "ignoreStations": {
         "title": "Ignoring stations",
         "type": "array",
@@ -342,6 +356,8 @@
       "items": [
         "enableDetailedLogging",
         "enableCamera",
+        "enableButton",
+        "motionButton",
         "CameraMaxLivestreamDuration",
         "pollingIntervalMinutes",
         "country",

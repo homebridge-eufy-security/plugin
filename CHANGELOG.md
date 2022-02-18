@@ -1,6 +1,6 @@
 # Change Log
 
-## BETA (17/02/2021)
+## BETA (18/02/2022)
 
 ### Added
 -   Local Livestream
@@ -8,6 +8,7 @@
 -   Fixing Duplicate notification on doorbell ring #236
 -   Change Country #310
 -   Provide a clear/reset wizard in order to clean persistent data
+-   Add a config value to remove enable/motion homekit buttons #320
 
 ### Fixed
 -   Updating some dep for security reason

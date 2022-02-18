@@ -72,8 +72,11 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
       eventDurationSeconds: 10,
     } as EufySecurityConfig;
 
-    this.config.ignoreStations = this.config.ignoreStations || [];
-    this.config.ignoreDevices = this.config.ignoreDevices || [];
+    this.config.ignoreStations = this.config.ignoreStations ??= [];
+    this.config.ignoreDevices = this.config.ignoreDevices ??= [];
+
+    this.config.enableButton = this.config.enableButton ??= true;
+    this.config.motionButton = this.config.motionButton ??= true;
 
     if (this.config.enableDetailedLogging >= 1) {
 

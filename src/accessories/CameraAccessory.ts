@@ -69,7 +69,7 @@ export class CameraAccessory extends DeviceAccessory {
     }
 
     try {
-      if (this.eufyDevice.hasProperty('enabled')) {
+      if (this.eufyDevice.hasProperty('enabled') && this.platform.config.enableButton) {
         this.platform.log.debug(this.accessory.displayName, 'has a isEnabled, so append switchEnabledService characteristic to him.');
 
         const switchEnabledService =
@@ -86,14 +86,14 @@ export class CameraAccessory extends DeviceAccessory {
           .onSet(this.handleEnableSet.bind(this));
 
       } else {
-        this.platform.log.warn(this.accessory.displayName, 'Looks like not compatible with isEnabled');
+        this.platform.log.warn(this.accessory.displayName, 'Looks like not compatible with isEnabled or this has been disabled within configuration');
       }
     } catch (Error) {
       this.platform.log.error(this.accessory.displayName, 'raise error to check and attach switchEnabledService.', Error);
     }
 
     try {
-      if (this.eufyDevice.hasProperty('motionDetection')) {
+      if (this.eufyDevice.hasProperty('motionDetection') && this.platform.config.motionButton) {
         this.platform.log.debug(this.accessory.displayName, 'has a isMotionDetectionEnabled, so append switchMotionService characteristic to him.');
 
         const switchMotionService =
@@ -110,7 +110,7 @@ export class CameraAccessory extends DeviceAccessory {
           .onSet(this.handleMotionOnSet.bind(this));
 
       } else {
-        this.platform.log.warn(this.accessory.displayName, 'Looks like not compatible with isMotionDetectionEnabled');
+        this.platform.log.warn(this.accessory.displayName, 'Looks like not compatible with isMotionDetectionEnabled or this has been disabled within configuration');
       }
     } catch (Error) {
       this.platform.log.error(this.accessory.displayName, 'raise error to check and attach switchMotionService.', Error);
