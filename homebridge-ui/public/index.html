@@ -18,7 +18,8 @@
     <div id="setupComplete" style="display:none;">
         <form id="configForm">
             <center>
-                <a id="startOver" class="btn btn-success">Startover the wizard process</a>
+                <a id="startOver" class="btn btn-info">Startover the wizard process</a> | 
+                <a id="listDevices" class="btn btn-success startover">List Devices</a>
             </center>
             <hr />
 
@@ -459,10 +460,10 @@
     <!-- shown when the plugin is not configured -->
     <div id="setupRequired" style="display:none;">
 
-        <div id="step1">
+        <div id="step1" style="display:none;">
             <div class="form-group">
                 <label for="usernameInput1">Eufy Username</label>
-                <input type="text" class="form-control" id="usernameInput1" aria-describedby="usernameHelp"
+                <input type="email" class="form-control" id="usernameInput1" aria-describedby="usernameHelp" autocomplete="off"
                     required /><small id="usernameHelp" class="form-text text-muted">Please enter your eufy
                     username.</small>
                 <label for="passwordInput1">Eufy Password</label>
@@ -748,21 +749,35 @@
                     Eufy APP</small>
             </div>
             <div class="text-center">
-                <a id="skip" class="btn btn-elegant">Skip</a>
-                <button id="step1Submit" type="submit" class="btn btn-primary">Next</button>
+                <a id="skip" class="btn btn-elegant skip">Skip</a>
+                <button id="step1Submit" type="submit" class="btn btn-primary startover">Next</button>
             </div>
         </div>
 
-        <div id="step2" style="display:none;">
+        <div id="step2-captcha" style="display:none;">
             <div class="form-group">
-                <label for="otpInput">OTP Code</label>
-                <input type="text" class="form-control" id="otpInput" aria-describedby="otpHelp" />
+                <label for="captchaInput">Captcha Code</label>
+                <p id="captcha-img" class="text-center"></p>
+                <input type="hidden" id="captcha-id" name="captcha-id" />
+                <input type="text" class="form-control" id="captchaInput" aria-describedby="captchaHelp" autocomplete="off" />
+                <small id="captchaHelp" class="form-text text-muted">Please enter the captcha you're seeing.</small>
+            </div>
+            <div class="text-center">
+                <a id="skip2" class="btn btn-elegant skip">Skip</a>
+                <button id="step2-captcha-Submit" type="submit" class="btn btn-primary">Next</button>
+            </div>
+        </div>
+
+        <div id="step2-otp" style="display:none;">
+            <div class="form-group">
+                <label for="otpInput">OTP</label>
+                <input type="number" class="form-control" id="otpInput" aria-describedby="otpHelp" autocomplete="off" />
                 <small id="otpHelp" class="form-text text-muted">Please enter the OTP password received at your
                     email.</small>
             </div>
             <div class="text-center">
-                <a id="skip2" class="btn btn-elegant">Skip</a>
-                <button id="step2Submit" type="submit" class="btn btn-primary">Next</button>
+                <a id="skip2" class="btn btn-elegant skip">Skip</a>
+                <button id="step2-otp-Submit" type="submit" class="btn btn-primary">Next</button>
             </div>
         </div>
 
@@ -784,7 +799,7 @@
                     <b style="font-weight: 800;">This action will clear persistent data and configuration of this plugin.</b>
                 </h3>
 
-                <a id="skip-reset" class="btn btn-info">Cancel</a>
+                <a id="skip-reset" class="btn btn-info skip">Cancel</a>
                 <button id="reset-confirm-btn" type="submit" class="btn btn-red">Reset Everything</button>
             </div>
         </div>
@@ -793,4 +808,4 @@
 
 </div>
 
-<script type="text/javascript" src="js/main.js"></script>
+<script type="text/javascript" src="js/main.js?v=1.1.1-beta.24"></script>

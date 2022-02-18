@@ -1,4 +1,3 @@
-
 var pluginConfig = {
     platform: 'EufySecurity',
 };
@@ -84,9 +83,8 @@ function isDevicesIgnored(uniqueId) {
 async function list_stations_devices(stations) {
 
     const s_div = document.getElementById('stations');
-    
-    document.getElementById('step2').style.display = 'none';
-    document.getElementById('step3').style.display = 'block';
+
+    display_setupRequired('step3');
 
     if (!stations.length) {
         s_div.innerHTML = '<span style="color:red; font-weight:bold;">Error: Nothing have been retreived!</span>';
@@ -197,14 +195,14 @@ async function list_stations_devices(stations) {
     const pluginConfigBlocks = await homebridge.getPluginConfig();
 
     if (!pluginConfigBlocks.length || !pluginConfigBlocks[0].username || !pluginConfigBlocks[0].password) {
-        document.getElementById('setupRequired').style.display = 'block';
+        display_setupRequired('step1');
         if (pluginConfigBlocks[0])
             pluginConfig = pluginConfigBlocks[0];
         updateFormFromConfig();
     } else {
         pluginConfig = pluginConfigBlocks[0];
         updateFormFromConfig();
-        document.getElementById('setupComplete').style.display = 'block';
+        display_setupCompleted();
     }
 
     adjustPollingValue();
@@ -243,85 +241,86 @@ document.getElementById('advanced').addEventListener('click', async (e) => {
 });
 
 
-// skip
-document.getElementById('skip').addEventListener('click', async () => {
-    document.getElementById('step2').style.display = 'none';
-    document.getElementById('setupRequired').style.display = 'none';
-    document.getElementById('setupComplete').style.display = 'block';
-    document.getElementById('reset-box').style.display = 'none';
+document.querySelectorAll('.skip').forEach(item => {
+    item.addEventListener('click', event => {
+        display_setupCompleted();
+    })
 });
-
-
-// skip2
-document.getElementById('skip2').addEventListener('click', async () => {
-    document.getElementById('step2').style.display = 'none';
-    document.getElementById('setupRequired').style.display = 'none';
-    document.getElementById('setupComplete').style.display = 'block';
-    document.getElementById('reset-box').style.display = 'none';
-});
-
-
-// skip-reset
-document.getElementById('skip-reset').addEventListener('click', async () => {
-    document.getElementById('step2').style.display = 'none';
-    document.getElementById('setupRequired').style.display = 'none';
-    document.getElementById('setupComplete').style.display = 'block';
-    document.getElementById('reset-box').style.display = 'none';
-});
-
 
 // startOver
 document.getElementById('startOver').addEventListener('click', async () => {
-    document.getElementById('setupRequired').style.display = 'block';
-    document.getElementById('step2').style.display = 'none';
-    document.getElementById('setupComplete').style.display = 'none';
-    document.getElementById('reset-box').style.display = 'none';
+    display_setupRequired('step1');
 });
 
 
 // Reset
 document.getElementById('reset').addEventListener('click', async () => {
-    document.getElementById('setupRequired').style.display = 'none';
-    document.getElementById('reset-box').style.display = 'block';
-    document.getElementById('step2').style.display = 'none';
-    document.getElementById('setupComplete').style.display = 'none';
+    display_reset();
 });
 
 // step 1 submit handler
-document.getElementById('step1Submit').addEventListener('click', async () => {
-    const usernameValue = document.getElementById('usernameInput1').value;
-    const passwordValue = document.getElementById('passwordInput1').value;
-    const countryValue = document.getElementById('countryInput1').value;
+document.querySelectorAll('.startover').forEach(item => {
+    item.addEventListener('click', async event => {
 
-    if (!usernameValue || !passwordValue) {
-        homebridge.toast.error('Please enter your username and password.', 'Error');
-        return;
-    }
-
-    document.getElementById('step1Submit').setAttribute('disabled', 'disabled');
-
-    try {
         homebridge.showSpinner();
-        const response = await homebridge.request('/request-otp', { username: usernameValue, password: passwordValue, country: countryValue });
-        homebridge.hideSpinner();
 
-        if (response.result == 0) {
-            homebridge.toast.error("Wrong username or password");
-            document.getElementById('step1Submit').removeAttribute('disabled');
-        } else {
-            document.getElementById('step1').style.display = 'none';
-            if (response.result == 1)
-                document.getElementById('step2').style.display = 'block';
-            if (response.result == 2) {
-                await refreshData();
-                await getStations();
-            }
+        const usernameValue = document.getElementById('usernameInput1').value;
+        const passwordValue = document.getElementById('passwordInput1').value;
+        const countryValue = document.getElementById('countryInput1').value;
+
+        if (!usernameValue || !passwordValue) {
+            homebridge.toast.error('Please enter your username and password.', 'Error');
+            homebridge.hideSpinner();
+            return;
         }
-    } catch (e) {
-        homebridge.hideSpinner()
-        homebridge.toast.error(e.message, 'Error');
-    }
+
+        try {
+            const response = await homebridge.request('/auth', { username: usernameValue, password: passwordValue, country: countryValue });
+            homebridge.hideSpinner();
+
+            if (response.result == 0) {
+                homebridge.toast.error("Wrong username or password");
+            } else {
+                if (response.result == 1)
+                    display_setupRequired('step2-captcha');
+                if (response.result == 2)
+                    display_setupRequired('step2-otp');
+                if (response.result == 3) {
+                    await refreshData();
+                    await getStations();
+                }
+            }
+        } catch (e) {
+            homebridge.hideSpinner()
+            homebridge.toast.error(e.message, 'Error');
+        }
+    })
 });
+
+function display_setupCompleted(display) {
+    document.getElementById('setupComplete').style.display = 'block';
+    document.getElementById('setupRequired').style.display = 'none';
+    document.getElementById('reset-box').style.display = 'none';
+}
+
+function display_reset(display) {
+    document.getElementById('setupComplete').style.display = 'none';
+    document.getElementById('setupRequired').style.display = 'none';
+    document.getElementById('reset-box').style.display = 'block';
+}
+
+function display_setupRequired(display) {
+    const bloc = ['step1', 'step2-captcha', 'step2-otp', 'step3'];
+
+    document.getElementById('setupComplete').style.display = 'none';
+    document.getElementById('setupRequired').style.display = 'block';
+    document.getElementById('reset-box').style.display = 'none';
+
+    bloc.forEach(e => {
+        document.getElementById(e).style.display = (e === display) ? 'block' : 'none';
+    });
+
+}
 
 async function refreshData() {
     try {
@@ -350,29 +349,68 @@ async function getStations() {
     }
 }
 
-// step 2 submit handler
-document.getElementById('step2Submit').addEventListener('click', async () => {
-    const otpValue = document.getElementById('otpInput').value;
+// step 2 captcha submit handler
+document.getElementById('step2-captcha-Submit').addEventListener('click', async () => {
+    homebridge.showSpinner();
+    const captchaInput = document.getElementById('captchaInput').value;
+    const captchaID = document.getElementById('captcha-id').value;
 
-    if (!otpValue) {
-        homebridge.toast.error('Please enter a valid OTP code.', 'Error');
+    if (!captchaInput || !captchaID) {
+        homebridge.toast.error('Please enter a valid captcha code.', 'Error');
+        homebridge.hideSpinner();
         return;
     }
 
-    document.getElementById('step2Submit').setAttribute('disabled', 'disabled');
-
     try {
-        homebridge.showSpinner();
-        const response = await homebridge.request('/check-otp', { code: otpValue });
+        const response = await homebridge.request('/check-captcha', { id: captchaID, captcha: captchaInput });
 
         homebridge.hideSpinner();
         if (response.result == 0) {
             homebridge.toast.error("Wrong OTP");
-            document.getElementById('step2Submit').removeAttribute('disabled');
+        } else {
+            if (response.result == 1)
+                display_setupRequired('step2-captcha');
+            if (response.result == 2)
+                display_setupRequired('step2-otp');
+            if (response.result == 3) {
+                await refreshData();
+                await getStations();
+            }
         }
-        if (response.result == 1) {
-            await refreshData();
-            await getStations();
+
+    } catch (e) {
+        homebridge.hideSpinner()
+        homebridge.toast.error(e.error || e.message, 'Error');
+    }
+
+});
+
+// step 2 otp submit handler
+document.getElementById('step2-otp-Submit').addEventListener('click', async () => {
+    homebridge.showSpinner();
+    const otpInput = document.getElementById('otpInput').value;
+
+    if (!otpInput) {
+        homebridge.toast.error('Please enter a valid OTP code.', 'Error');
+        homebridge.hideSpinner();
+        return;
+    }
+
+    try {
+        const response = await homebridge.request('/check-otp', { code: otpInput });
+
+        homebridge.hideSpinner();
+        if (response.result == 0) {
+            homebridge.toast.error("Wrong OTP");
+        } else {
+            if (response.result == 1)
+                display_setupRequired('step2-captcha');
+            if (response.result == 2)
+                display_setupRequired('step2-otp');
+            if (response.result == 3) {
+                await refreshData();
+                await getStations();
+            }
         }
 
     } catch (e) {
@@ -385,15 +423,9 @@ document.getElementById('step2Submit').addEventListener('click', async () => {
 // step reset submit handler
 document.getElementById('reset-confirm-btn').addEventListener('click', async () => {
 
-    document.getElementById('reset-confirm-btn').setAttribute('disabled', 'disabled');
-
     try {
         homebridge.showSpinner();
         const response = await homebridge.request('/reset', {});
-
-        await homebridge.updatePluginConfig([]);
-        await homebridge.savePluginConfig();
-        homebridge.closeSettings();
 
         homebridge.hideSpinner();
         if (response.result == 0) {
@@ -403,9 +435,20 @@ document.getElementById('reset-confirm-btn').addEventListener('click', async () 
             homebridge.toast.success("Success");
         }
 
+        await homebridge.updatePluginConfig([]);
+        await homebridge.savePluginConfig();
+        homebridge.closeSettings();
+
     } catch (e) {
         homebridge.hideSpinner()
         homebridge.toast.error(e.error || e.message, 'Error');
     }
 
+});
+
+homebridge.addEventListener('captcha', (e) => {
+    console.log(JSON.stringify(e.data.id));
+    console.log(JSON.stringify(e.data.captcha));
+    document.getElementById('captcha-id').value = e.data.id;
+    document.getElementById('captcha-img').innerHTML = '<img src="' + e.data.captcha + '" />';
 });

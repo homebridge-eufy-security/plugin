@@ -9,6 +9,7 @@
 -   Change Country #310
 -   Provide a clear/reset wizard in order to clean persistent data
 -   Add a config value to remove enable/motion homekit buttons #320
+-   Handling captcha request
 
 ### Fixed
 -   Updating some dep for security reason

@@ -1,4 +1,4 @@
-const { EufySecurity, DeviceType } = require('eufy-security-client');
+const { EufySecurity, DeviceType, AuthResult } = require('eufy-security-client');
 const { HomebridgePluginUiServer, RequestError } = require('@homebridge/plugin-ui-utils');
 
 const bunyan = require('bunyan');
@@ -40,7 +40,8 @@ class UiServer extends HomebridgePluginUiServer {
     };
 
     // create request handlers
-    this.onRequest('/request-otp', this.requestOtp.bind(this));
+    this.onRequest('/auth', this.auth.bind(this));
+    this.onRequest('/check-captcha', this.checkCaptcha.bind(this));
     this.onRequest('/check-otp', this.checkOtp.bind(this));
     this.onRequest('/refreshData', this.refreshData.bind(this));
     this.onRequest('/getStations', this.getStations.bind(this));
@@ -50,11 +51,54 @@ class UiServer extends HomebridgePluginUiServer {
     this.ready();
   }
 
+  async authenticate(verifyCodeOrCaptcha = null, captchaId = null) {
+    try {
+      let retries = 0;
+      await this.driver.api.loadApiBase().catch((error) => {
+        this.log.error("Load Api base Error", error);
+      });
+
+      while (true) {
+        switch (await this.driver.api.authenticate(verifyCodeOrCaptcha, captchaId)) {
+          case AuthResult.CAPTCHA_NEEDED:
+            this.log.info('AuthResult.CAPTCHA_NEEDED');
+            return { result: 1 };
+          case AuthResult.SEND_VERIFY_CODE:
+            this.log.info('AuthResult.SEND_VERIFY_CODE');
+            return { result: 2 };
+          case AuthResult.OK:
+            this.log.info('AuthResult.OK');
+            return { result: 3 };
+          case AuthResult.RENEW:
+            this.log.info('AuthResult.RENEW');
+            break;
+          case AuthResult.ERROR:
+            this.log.info('AuthResult.ERROR');
+            return { result: 0 };
+          default:
+            this.log.info('AuthResult.KO');
+            return { result: 0 };
+        }
+
+        if (retries > 4) {
+          this.log.error("Max connect attempts reached, interrupt");
+          return { result: 0 };
+        } else {
+          retries += 1;
+        }
+
+      }
+
+    } catch (e) {
+      this.log.info('Error:', e.message);
+      return { result: 0 }; // Wrong username and/or password
+    }
+  }
 
   /**
    * Handle requests sent to /request-otp
    */
-  async requestOtp(body) {
+  async auth(body) {
 
     this.config['username'] = body.username;
     this.config['password'] = body.password;
@@ -64,27 +108,12 @@ class UiServer extends HomebridgePluginUiServer {
 
     this.driver = new EufySecurity(this.config, this.log);
 
-    try {
-      await this.driver.connect();
+    this.driver.api.on('captcha request', (id, captcha) => {
+      this.log.debug('captcha request:', id, captcha);
+      this.pushEvent('captcha', { id: id, captcha: captcha });
+    });
 
-      if (this.driver.api.token && this.driver.connected == true) {
-        return { result: 2 }; // Connected
-      }
-
-      if (this.driver.api.token && this.driver.connected == false) {
-        this.log.info('OTP required');
-        return { result: 1 }; // OTP needed
-      }
-
-      if (!this.driver.api.token && this.driver.connected == false) {
-        this.log.info('Wrong username and/or password');
-        return { result: 0 }; // Wrong username and/or password
-      }
-
-    } catch (e) {
-      this.log.info('Error:', e.message);
-      return { result: 0 }; // Wrong username and/or password
-    }
+    return await this.authenticate();
 
   }
 
@@ -92,21 +121,14 @@ class UiServer extends HomebridgePluginUiServer {
    * Handle requests sent to /check-otp
    */
   async checkOtp(body) {
-    try {
-      await this.driver.connect(body.code);
+    return await this.authenticate(body.code);
+  }
 
-      if (this.driver.api.token && this.driver.connected == true) {
-        return { result: 1 }; // Connected
-      }
-
-      if (!this.driver.api.token && this.driver.connected == false) {
-        return { result: 0 }; // Wrong OTP
-      }
-
-    } catch (e) {
-      this.log.error('Error:', e.message);
-      return { result: 0 }; // Error
-    }
+  /**
+   * Handle requests sent to /check-otp
+   */
+  async checkCaptcha(body) {
+    return await this.authenticate(body.captcha, body.id);
   }
 
   async listDevices() {
@@ -149,6 +171,8 @@ class UiServer extends HomebridgePluginUiServer {
     } catch (e) {
       this.log.error('Error:', e.message);
       return null; // Error
+    } finally {
+      this.driver.close();
     }
   }
 
