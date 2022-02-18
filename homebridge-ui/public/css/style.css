@@ -25,13 +25,20 @@ div.logo {
     margin: 0 0 5px 0;
 }
 
-image.logo {
-    width: 40%;
+img.logo {
     text-align: center;
     margin: 0 auto;
+    max-width: 75%;
+    height: auto;
+    object-fit: cover;
 }
 
-.text-center{
+.footer {
+    font-size: small;
+    color: #888;
+}
+
+.text-center {
     text-align: center !important;
 }
 

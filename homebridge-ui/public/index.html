@@ -3,9 +3,8 @@
 <div class="card card-body">
 
     <div class="logo">
-        <img class="logo" src="images/homebridge-eufy-security.png" width="150px" />
+        <img class="logo" src="images/homebridge-eufy-security.png" />
     </div>
-    <br /><br />
 
     <h3 class="text-center">
         Welcome to<br />
@@ -18,7 +17,7 @@
     <div id="setupComplete" style="display:none;">
         <form id="configForm">
             <center>
-                <a id="startOver" class="btn btn-info">Startover the wizard process</a> | 
+                <a id="startOver" class="btn btn-info">Startover the wizard process</a> |
                 <a id="listDevices" class="btn btn-success startover">List Devices</a>
             </center>
             <hr />
@@ -435,15 +434,18 @@
 
                     <div class="custom-control custom-checkbox form-group">
                         <input type="checkbox" class="custom-control-input" id="enableButton" />
-                        <label class="custom-control-label" for="enableButton">Display homekit button to switch on/off camera</label>
+                        <label class="custom-control-label" for="enableButton">Display homekit button to switch on/off
+                            camera</label>
                     </div>
 
                     <div class="custom-control custom-checkbox form-group">
                         <input type="checkbox" class="custom-control-input" id="motionButton" />
-                        <label class="custom-control-label" for="motionButton">Display homekit button to switch on/off motion camera</label>
+                        <label class="custom-control-label" for="motionButton">Display homekit button to switch on/off
+                            motion camera</label>
                     </div>
 
-                    <small id="help12" class="form-text text-muted">When disabling theses buttons you might need to clear accessory cache (homebridge settings) so it can take effect into homekit.</small>
+                    <small id="help12" class="form-text text-muted">When disabling theses buttons you might need to
+                        clear accessory cache (homebridge settings) so it can take effect into homekit.</small>
 
                     <hr />
 
@@ -463,8 +465,9 @@
         <div id="step1" style="display:none;">
             <div class="form-group">
                 <label for="usernameInput1">Eufy Username</label>
-                <input type="email" class="form-control" id="usernameInput1" aria-describedby="usernameHelp" autocomplete="off"
-                    required /><small id="usernameHelp" class="form-text text-muted">Please enter your eufy
+                <input type="email" class="form-control" id="usernameInput1" aria-describedby="usernameHelp"
+                    autocomplete="off" required /><small id="usernameHelp" class="form-text text-muted">Please enter
+                    your eufy
                     username.</small>
                 <label for="passwordInput1">Eufy Password</label>
                 <input type="password" class="form-control" id="passwordInput1" aria-describedby="passwordHelp"
@@ -759,7 +762,8 @@
                 <label for="captchaInput">Captcha Code</label>
                 <p id="captcha-img" class="text-center"></p>
                 <input type="hidden" id="captcha-id" name="captcha-id" />
-                <input type="text" class="form-control" id="captchaInput" aria-describedby="captchaHelp" autocomplete="off" />
+                <input type="text" class="form-control" id="captchaInput" aria-describedby="captchaHelp"
+                    autocomplete="off" />
                 <small id="captchaHelp" class="form-text text-muted">Please enter the captcha you're seeing.</small>
             </div>
             <div class="text-center">
@@ -796,7 +800,8 @@
             <div class="text-center">
 
                 <h3 class="text-center">
-                    <b style="font-weight: 800;">This action will clear persistent data and configuration of this plugin.</b>
+                    <b style="font-weight: 800;">This action will clear persistent data and configuration of this
+                        plugin.</b>
                 </h3>
 
                 <a id="skip-reset" class="btn btn-info skip">Cancel</a>
@@ -805,6 +810,11 @@
         </div>
 
     </div>
+
+    <hr />
+
+    <div class="footer">We are not affiliated, associated, authorized, endorsed by, or in any way officially connected
+        with Anker Innovations Technology Co.LTd, and Shenzhen Oceanwing Smart Innovations Technology Co., Ltd, and its affiliated companies within the Anker Group, or any of its subsidiaries or its affiliates.</div>
 
 </div>
 
