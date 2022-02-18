@@ -6,24 +6,24 @@ var pluginConfig = {
 function updateFormFromConfig() {
     // populate the form
 
-    document.getElementById('usernameInput').value = pluginConfig.username || '';
-    document.getElementById('passwordInput').value = pluginConfig.password || '';
-    document.getElementById('usernameInput1').value = pluginConfig.username || '';
-    document.getElementById('passwordInput1').value = pluginConfig.password || '';
-    document.getElementById('enableCamera').checked = pluginConfig.enableCamera || '';
-    document.getElementById('pollingIntervalMinutes').value = !pluginConfig.pollingIntervalMinutes && pluginConfig.pollingIntervalMinutes !== 0 ? 30 : pluginConfig.pollingIntervalMinutes;
-    document.getElementById('hkHome').value = pluginConfig.hkHome || "1";
-    document.getElementById('hkAway').value = pluginConfig.hkAway || "0";
-    document.getElementById('hkNight').value = pluginConfig.hkNight || "3";
-    document.getElementById('hkOff').value = pluginConfig.hkOff || "63";
-    document.getElementById('enableDetailedLogging').checked = pluginConfig.enableDetailedLogging || '';
-    document.getElementById('ignoreStations').value = pluginConfig.ignoreStations || [];
-    document.getElementById('ignoreDevices').value = pluginConfig.ignoreDevices || [];
-    document.getElementById('country').value = pluginConfig.country || "US";
-    document.getElementById('countryInput1').value = pluginConfig.country || "US";
-    document.getElementById('CameraMaxLivestreamDuration').value = pluginConfig.CameraMaxLivestreamDuration || 30;
-    document.getElementById('enableButton').checked = pluginConfig.enableButton || true;
-    document.getElementById('motionButton').checked = pluginConfig.motionButton || true;
+    document.getElementById('usernameInput').value = pluginConfig.username ??= '';
+    document.getElementById('passwordInput').value = pluginConfig.password ??= '';
+    document.getElementById('usernameInput1').value = pluginConfig.username ??= '';
+    document.getElementById('passwordInput1').value = pluginConfig.password ??= '';
+    document.getElementById('enableCamera').checked = pluginConfig.enableCamera ??= '';
+    document.getElementById('pollingIntervalMinutes').value = pluginConfig.pollingIntervalMinutes ??= 30;
+    document.getElementById('hkHome').value = pluginConfig.hkHome ??= '1';
+    document.getElementById('hkAway').value = pluginConfig.hkAway ??= '0';
+    document.getElementById('hkNight').value = pluginConfig.hkNight ??= '3';
+    document.getElementById('hkOff').value = pluginConfig.hkOff ??= '63';
+    document.getElementById('enableDetailedLogging').checked = pluginConfig.enableDetailedLogging ??= '';
+    document.getElementById('ignoreStations').value = pluginConfig.ignoreStations ??= [];
+    document.getElementById('ignoreDevices').value = pluginConfig.ignoreDevices ??= [];
+    document.getElementById('country').value = pluginConfig.country ??= 'US';
+    document.getElementById('countryInput1').value = pluginConfig.country ??= 'US';
+    document.getElementById('CameraMaxLivestreamDuration').value = pluginConfig.CameraMaxLivestreamDuration ??= 30;
+    document.getElementById('enableButton').checked = pluginConfig.enableButton ??= true;
+    document.getElementById('motionButton').checked = pluginConfig.motionButton ??= true;
     homebridge.fixScrollHeight();
 }
 
