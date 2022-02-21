@@ -12,11 +12,13 @@ export class NamePipeStream {
     private who;
     public url;
     private stream: Readable;
+    private storagePath: string;
 
-    constructor(stream: Readable, who: string, log: Logger) {
+    constructor(stream: Readable, who: string, storagePath: string, log: Logger) {
         this.log = log;
         this.stream = stream;
         this.who = who;
+        this.storagePath = storagePath;
         let path;
 
         var writableStream = this.createWriteable(stream);
@@ -28,8 +30,10 @@ export class NamePipeStream {
             path = '\\\\.\\pipe\\stream' + (++counter)
             this.url = path
         } else {
-            path = './' + (++counter) + '.sock'
+            path = this.storagePath + '/' + (++counter) + '.sock'
             this.url = 'unix:' + path
+            this.log.debug('current_path', path);
+            this.log.debug('parent_dir',__dirname);
         }
 
         try {
@@ -79,6 +83,6 @@ export class NamePipeStream {
     }
 }
 
-export function StreamInput(stream: Readable, who: string, log: Logger) {
-    return new NamePipeStream(stream, who, log)
+export function StreamInput(stream: Readable, who: string, storagePath: string, log: Logger) {
+    return new NamePipeStream(stream, who, storagePath, log);
 }

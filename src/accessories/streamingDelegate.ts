@@ -35,6 +35,7 @@ import { Readable } from 'stream';
 import { NamePipeStream, StreamInput } from './UniversalStream';
 
 import { readFile } from 'fs'
+import fs from 'fs'
 import { promisify } from 'util'
 const readFileAsync = promisify(readFile),
     SnapshotUnavailablePath = require.resolve('../../media/Snapshot-Unavailable.png');
@@ -85,6 +86,7 @@ type StationStream = {
 
 export class StreamingDelegate implements CameraStreamingDelegate {
     private readonly hap: HAP;
+    private readonly api: API;
     private readonly log: Logger;
     private readonly cameraName: string;
     private readonly unbridge: boolean;
@@ -97,6 +99,8 @@ export class StreamingDelegate implements CameraStreamingDelegate {
     private readonly platform: EufySecurityPlatform;
     private readonly device: Camera;
 
+    private readonly eufyPath: string;
+
     // keep track of sessions
     pendingSessions: Map<string, SessionInfo> = new Map();
     ongoingSessions: Map<string, ActiveSession> = new Map();
@@ -105,6 +109,13 @@ export class StreamingDelegate implements CameraStreamingDelegate {
     constructor(platform: EufySecurityPlatform, device: Camera, cameraConfig: CameraConfig, api: API, hap: HAP) { // eslint-disable-line @typescript-eslint/explicit-module-boundary-types
         this.log = platform.log;
         this.hap = hap;
+        this.api = api;
+
+        this.eufyPath = this.api.user.storagePath()+'/eufysecurity'; 
+
+        if (!fs.existsSync(this.eufyPath)){
+            fs.mkdirSync(this.eufyPath);
+        }
 
         this.platform = platform;
         this.device = device;
@@ -114,7 +125,7 @@ export class StreamingDelegate implements CameraStreamingDelegate {
         this.videoConfig = cameraConfig.videoConfig!;
         this.videoProcessor = ffmpegPath || 'ffmpeg';
 
-        api.on(APIEvent.SHUTDOWN, () => {
+        this.api.on(APIEvent.SHUTDOWN, () => {
             for (const session in this.ongoingSessions) {
                 this.stopStream(session);
             }
@@ -425,7 +436,7 @@ export class StreamingDelegate implements CameraStreamingDelegate {
         this.log.debug('ReqHK:', JSON.stringify(request));
         this.log.debug('ReqEufy:', JSON.stringify(streamData.metadata));
 
-        const uVideoStream = StreamInput(streamData.videostream, this.cameraName + '_video', this.log);
+        const uVideoStream = StreamInput(streamData.videostream, this.cameraName + '_video', this.eufyPath, this.log);
 
         const sessionInfo = this.pendingSessions.get(request.sessionID);
         if (sessionInfo) {
@@ -525,7 +536,7 @@ export class StreamingDelegate implements CameraStreamingDelegate {
             // Required audio came to early so end user will see a lag of the video
             await new Promise((resolve) => { setTimeout(resolve, 6000); });
 
-            const uAudioStream = StreamInput(streamData.audiostream, this.cameraName + '_audio', this.log);
+            const uAudioStream = StreamInput(streamData.audiostream, this.cameraName + '_audio', this.eufyPath, this.log);
 
             let ffmpegArgs_audio = [''];
 

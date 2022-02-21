@@ -17,6 +17,7 @@
 -   Handling stop livestream event from Eufy Station #262
 -   Fix HB crashed #321 thanks @schliemann
 -   Fix Arming stuck while using Schedule or Geo #342
+-   Streaming issue while using Docker #308 (thanks @alternativ)
 
 ## 1.0.1 (18/10/2021)
 
