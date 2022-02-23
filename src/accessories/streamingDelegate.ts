@@ -111,9 +111,9 @@ export class StreamingDelegate implements CameraStreamingDelegate {
         this.hap = hap;
         this.api = api;
 
-        this.eufyPath = this.api.user.storagePath()+'/eufysecurity'; 
+        this.eufyPath = this.api.user.storagePath() + '/eufysecurity';
 
-        if (!fs.existsSync(this.eufyPath)){
+        if (!fs.existsSync(this.eufyPath)) {
             fs.mkdirSync(this.eufyPath);
         }
 
@@ -209,88 +209,109 @@ export class StreamingDelegate implements CameraStreamingDelegate {
         return resInfo;
     }
 
+    private async getLocalLiveStream(): Promise<StationStream> {
+        return new Promise((resolve, reject) => {
+            const station = this.platform.getStationById(this.device.getStationSerial());
+            this.platform.eufyClient.startStationLivestream(this.device.getSerial());
+
+            station.on('livestream start', (station: Station, channel: number, metadata: StreamMetadata,
+                videostream: Readable, audiostream: Readable) => {
+                if (this.platform.eufyClient.getStationDevice(station.getSerial(), channel).getSerial() === this.device.getSerial()) {
+                    const stationStream: StationStream = { station, channel, metadata, videostream, audiostream };
+                    this.stationStream = stationStream;
+                    resolve(stationStream);
+                }
+            });
+        });
+    }
+
     fetchSnapshot(snapFilter?: string): Promise<Buffer> {
 
         return new Promise(async (resolve, reject) => {
-            
 
-            // if(this.platform.config.UseLocalStreamSnapshot){
-            //     try {
-            //         this.videoConfig.stillImageSource = '-i ' + this.device.getPropertyValue(PropertyName.DevicePictureUrl).value as string;
-            //     } catch {
-            //         this.log.warn(this.cameraName + ' fetchSnapshot: ' + 'No Snapshot found');
-            //         resolve(await readFileAsync(SnapshotUnavailablePath));
-            //     }
-            // }
+            try {
+                // try {
+                //     this.videoConfig.stillImageSource = '-i ' + this.device.getPropertyValue(PropertyName.DevicePictureUrl).value as string;
+                // } catch {
+                //     this.log.warn(this.cameraName + ' fetchSnapshot: ' + 'No Snapshot found');
+                //     resolve(await readFileAsync(SnapshotUnavailablePath));
+                // }
 
-            // const ffmpegArgs = (this.videoConfig.stillImageSource || this.videoConfig.source!) + // Still
-            // ' -frames:v 1' +
-            // (snapFilter ? ' -filter:v ' + snapFilter : '') +
-            // ' -f image2 -' +
-            // ' -hide_banner' +
-            // ' -loglevel ' + (this.platform.config.enableDetailedLogging >= 1 ? '+verbose' : 'error');
 
-            const streamData = await this.getLocalLiveStream();
-            
-            this.log.debug('Received local livestream.');
+                // const ffmpegArgs = (this.videoConfig.stillImageSource || this.videoConfig.source!) + // Still
+                // ' -frames:v 1' +
+                // (snapFilter ? ' -filter:v ' + snapFilter : '') +
+                // ' -f image2 -' +
+                // ' -hide_banner' +
+                // ' -loglevel ' + (this.platform.config.enableDetailedLogging >= 1 ? '+verbose' : 'error');
 
-            const startTime = Date.now();
-            const ffmpegArgs = '-probesize 3000 -analyzeduration 0 -ss 00:00:00.500 -i pipe: -frames:v 1 -c:v copy' +
-                (snapFilter ? ' -filter:v ' + snapFilter : '') +
-                ' -f image2 -' +
-                ' -hide_banner' +
-                ' -loglevel ' + (this.platform.config.enableDetailedLogging >= 1 ? '+verbose' : 'error');
+                const streamData = await this.getLocalLiveStream().catch(err => {
+                    throw err;
+                });
 
-            this.log.debug(this.cameraName, 'Snapshot command: ' + this.videoProcessor + ' ' + ffmpegArgs, this.videoConfig.debug);
-            const ffmpeg = spawn(this.videoProcessor, ffmpegArgs.split(/\s+/), { env: process.env });
-            streamData.videostream.pipe(ffmpeg.stdin).on('error', (err) => {
-                this.log.error(err.message, this.cameraName);
-            });
+                this.log.debug('Received local livestream.');
 
-            let snapshotBuffer = Buffer.alloc(0);
-            ffmpeg.stdout.on('data', (data) => {
-                snapshotBuffer = Buffer.concat([snapshotBuffer, data]);
-            });
-            ffmpeg.on('error', (error: Error) => {
-                reject('FFmpeg process creation failed: ' + error.message);
-            });
-            ffmpeg.stderr.on('data', (data) => {
-                data.toString().split('\n').forEach((line: string) => {
-                    if (this.videoConfig.debug && line.length > 0) { // For now only write anything out when debug is set
-                        this.log.error(line, this.cameraName + '] [Snapshot');
+                const startTime = Date.now();
+                const ffmpegArgs = '-probesize 3000 -analyzeduration 0 -ss 00:00:00.500 -i pipe: -frames:v 1 -c:v copy' +
+                    (snapFilter ? ' -filter:v ' + snapFilter : '') +
+                    ' -f image2 -' +
+                    ' -hide_banner' +
+                    ' -loglevel ' + (this.platform.config.enableDetailedLogging >= 1 ? '+verbose' : 'error');
+
+                this.log.debug(this.cameraName, 'Snapshot command: ' + this.videoProcessor + ' ' + ffmpegArgs, this.videoConfig.debug);
+                const ffmpeg = spawn(this.videoProcessor, ffmpegArgs.split(/\s+/), { env: process.env });
+                streamData.videostream.pipe(ffmpeg.stdin).on('error', (err) => {
+                    this.log.error(err.message, this.cameraName);
+                });
+
+                let snapshotBuffer = Buffer.alloc(0);
+                ffmpeg.stdout.on('data', (data) => {
+                    snapshotBuffer = Buffer.concat([snapshotBuffer, data]);
+                });
+                ffmpeg.on('error', (error: Error) => {
+                    reject('FFmpeg process creation failed: ' + error.message);
+                });
+                ffmpeg.stderr.on('data', (data) => {
+                    data.toString().split('\n').forEach((line: string) => {
+                        if (this.videoConfig.debug && line.length > 0) { // For now only write anything out when debug is set
+                            this.log.error(line, this.cameraName + '] [Snapshot');
+                        }
+                    });
+                });
+                ffmpeg.on('close', () => {
+                    if (snapshotBuffer.length > 0) {
+                        resolve(snapshotBuffer);
+                    } else {
+                        reject('Failed to fetch snapshot.');
+                    }
+
+                    this.platform.eufyClient.stopStationLivestream(this.device.getSerial());
+
+                    setTimeout(() => {
+                        this.log.debug('Setting snapshotPromise to undefined.');
+                        this.snapshotPromise = undefined;
+                    }, 3 * 1000); // Expire cached snapshot after 3 seconds
+
+                    const runtime = (Date.now() - startTime) / 1000;
+                    let message = 'Fetching snapshot took ' + runtime + ' seconds.';
+                    if (runtime < 5) {
+                        this.log.debug(message, this.cameraName, this.videoConfig.debug);
+                    } else {
+                        if (!this.unbridge) {
+                            message += ' It is highly recommended you switch to unbridge mode.';
+                        }
+                        if (runtime < 22) {
+                            this.log.warn(message, this.cameraName);
+                        } else {
+                            message += ' The request has timed out and the snapshot has not been refreshed in HomeKit.';
+                            this.log.error(message, this.cameraName);
+                        }
                     }
                 });
-            });
-            ffmpeg.on('close', () => {
-                if (snapshotBuffer.length > 0) {
-                    resolve(snapshotBuffer);
-                } else {
-                    reject('Failed to fetch snapshot.');
-                }
-
-                this.platform.eufyClient.stopStationLivestream(this.device.getSerial());
-
-                setTimeout(() => {
-                    this.log.debug('Setting snapshotPromise to undefined.');
-                    this.snapshotPromise = undefined;
-                }, 3 * 1000); // Expire cached snapshot after 3 seconds
-
-                const runtime = (Date.now() - startTime) / 1000;
-                let message = 'Fetching snapshot took ' + runtime + ' seconds.';
-                if (runtime < 5) {
-                    this.log.debug(message, this.cameraName, this.videoConfig.debug);
-                } else {
-                    if (!this.unbridge) {
-                        message += ' It is highly recommended you switch to unbridge mode.';
-                    }
-                    if (runtime < 22) {
-                        this.log.warn(message, this.cameraName);
-                    } else {
-                        message += ' The request has timed out and the snapshot has not been refreshed in HomeKit.';
-                        this.log.error(message, this.cameraName);
-                    }
-                }
-            });
+            } catch (err) {
+                this.log.error(this.cameraName, err as string);
+                reject('Failed to fetch snapshot.');
+            }
         });
     }
 
@@ -404,228 +425,203 @@ export class StreamingDelegate implements CameraStreamingDelegate {
         callback(undefined, response);
     }
 
-    private async getLocalLiveStream(): Promise<StationStream> {
-        return new Promise((resolve, reject) => {
-            const station = this.platform.getStationById(this.device.getStationSerial());
-            const isLiveStreaming = station.isLiveStreaming(this.device);
-            this.platform.eufyClient.startStationLivestream(this.device.getSerial());
-            
-            this.log.debug('isLiveStreaming: ' + isLiveStreaming);
-            if(isLiveStreaming){
-                if(this.stationStream !== undefined){
-                    resolve(this.stationStream);
-                }
-                reject('Station responded with isLiveStreaming but we had no stream.');
-            }
-
-            station.on('livestream start', (station: Station, channel: number, metadata: StreamMetadata,
-                videostream: Readable, audiostream: Readable) => {
-                if (this.platform.eufyClient.getStationDevice(station.getSerial(), channel).getSerial() === this.device.getSerial()) {
-                    const stationStream: StationStream = { station, channel, metadata, videostream, audiostream };
-                    this.stationStream = stationStream;
-                    resolve(stationStream);
-                }
-            });
-        });
-    }
-
     private async startStream(request: StartStreamRequest, callback: StreamRequestCallback): Promise<void> {
 
-        const streamData = await this.getLocalLiveStream();
-
-        this.log.debug('ReqHK:', JSON.stringify(request));
-        this.log.debug('ReqEufy:', JSON.stringify(streamData.metadata));
-
-        const uVideoStream = StreamInput(streamData.videostream, this.cameraName + '_video', this.eufyPath, this.log);
-
-        const sessionInfo = this.pendingSessions.get(request.sessionID);
-        if (sessionInfo) {
-            const vcodec = this.videoConfig.vcodec || 'libx264';
-            const mtu = this.videoConfig.packetSize || 1316; // request.video.mtu is not used
-            let encoderOptions = this.videoConfig.encoderOptions;
-            if (!encoderOptions && vcodec === 'libx264') {
-                encoderOptions = '-preset ultrafast -tune zerolatency';
-            }
-
-            const resolution = this.determineResolution(request.video, false);
-
-            let fps = (this.videoConfig.maxFPS !== undefined &&
-                (this.videoConfig.forceMax || request.video.fps > this.videoConfig.maxFPS)) ?
-                this.videoConfig.maxFPS : request.video.fps;
-            let videoBitrate = (this.videoConfig.maxBitrate !== undefined &&
-                (this.videoConfig.forceMax || request.video.max_bit_rate > this.videoConfig.maxBitrate)) ?
-                this.videoConfig.maxBitrate : request.video.max_bit_rate;
-
-            if (vcodec === 'copy') {
-                resolution.width = 0;
-                resolution.height = 0;
-                resolution.videoFilter = undefined;
-                fps = 0;
-                videoBitrate = 0;
-            }
-
-            this.log.debug(this.cameraName, 'Video stream requested: ' + request.video.width + ' x ' + request.video.height + ', ' +
-                request.video.fps + ' fps, ' + request.video.max_bit_rate + ' kbps', this.videoConfig.debug);
-            this.log.info(this.cameraName, 'Starting video stream: ' + (resolution.width > 0 ? resolution.width : 'native') + ' x ' +
-                (resolution.height > 0 ? resolution.height : 'native') + ', ' + (fps > 0 ? fps : 'native') +
-                ' fps, ' + (videoBitrate > 0 ? videoBitrate : '???') + ' kbps' +
-                (this.videoConfig.audio ? (' (' + request.audio.codec + ')') : ''));
-
-            let ffmpegArgs_video = [''];
-
-            ffmpegArgs_video.push('-use_wallclock_as_timestamps 1');
-
-            ffmpegArgs_video.push((streamData.metadata.videoCodec === 0) ? '-f h264' : '');
-            ffmpegArgs_video.push(`-r ${streamData.metadata.videoFPS}`);
-            ffmpegArgs_video.push(`-i ${uVideoStream.url}`);
-
-            ffmpegArgs_video.push( // Video
-                (this.videoConfig.mapvideo ? '-map ' + this.videoConfig.mapvideo : '-an -sn -dn'),
-                '-codec:v ' + vcodec,
-                '-pix_fmt yuv420p',
-                '-color_range mpeg',
-                (fps > 0 ? '-r ' + fps : ''),
-                (encoderOptions || ''),
-                (resolution.videoFilter ? '-filter:v ' + resolution.videoFilter : ''),
-                (videoBitrate > 0 ? '-b:v ' + videoBitrate + 'k' : ''),
-                '-payload_type ' + request.video.pt,
-            );
-
-            ffmpegArgs_video.push( // Video Stream
-                '-ssrc ' + sessionInfo.videoSSRC,
-                '-f rtp',
-                '-srtp_out_suite AES_CM_128_HMAC_SHA1_80',
-                '-srtp_out_params ' + sessionInfo.videoSRTP.toString('base64'),
-                'srtp://' + sessionInfo.address + ':' + sessionInfo.videoPort +
-                '?rtcpport=' + sessionInfo.videoPort + '&pkt_size=' + mtu,
-            );
-
-            ffmpegArgs_video.push(
-                '-loglevel ' + (this.platform.config.enableDetailedLogging >= 1 ? '+verbose' : 'error'),
-                '-progress pipe:1',
-            );
-
-            const clean_ffmpegArgs_video = ffmpegArgs_video.filter(function (el) { return el; });
-
-            const activeSession: ActiveSession = {};
-
-            activeSession.vsocket = createSocket(sessionInfo.ipv6 ? 'udp6' : 'udp4');
-            activeSession.vsocket.on('error', (err: Error) => {
-                this.log.error(this.cameraName, 'Socket error: ' + err.message);
-                // uVideoStream.close();
-                this.stopStream(request.sessionID);
+        try {
+            const streamData = await this.getLocalLiveStream().catch(err => {
+                throw err;
             });
-            activeSession.vsocket.on('message', () => {
-                if (activeSession.timeout) {
-                    clearTimeout(activeSession.timeout);
+
+            this.log.debug('ReqHK:', JSON.stringify(request));
+            this.log.debug('ReqEufy:', JSON.stringify(streamData.metadata));
+
+            const uVideoStream = StreamInput(streamData.videostream, this.cameraName + '_video', this.eufyPath, this.log);
+
+            const sessionInfo = this.pendingSessions.get(request.sessionID);
+            if (sessionInfo) {
+                const vcodec = this.videoConfig.vcodec || 'libx264';
+                const mtu = this.videoConfig.packetSize || 1316; // request.video.mtu is not used
+                let encoderOptions = this.videoConfig.encoderOptions;
+                if (!encoderOptions && vcodec === 'libx264') {
+                    encoderOptions = '-preset ultrafast -tune zerolatency';
                 }
-                activeSession.timeout = setTimeout(() => {
-                    this.log.info(this.cameraName, 'Device appears to be inactive. Stopping stream.');
-                    this.controller.forceStopStreamingSession(request.sessionID);
-                    // uVideoStream.close();
-                    this.stopStream(request.sessionID);
-                }, request.video.rtcp_interval * 5 * 1000);
-            });
-            activeSession.vsocket.bind(sessionInfo.videoReturnPort);
-            
-            activeSession.uVideoStream = uVideoStream;
 
-            activeSession.mainProcess_video = new FfmpegProcess(this.cameraName + '_video', request.sessionID, this.videoProcessor,
-                clean_ffmpegArgs_video, this.log, this.videoConfig.debug, this, callback);
+                const resolution = this.determineResolution(request.video, false);
 
-            // Required audio came to early so end user will see a lag of the video
-            await new Promise((resolve) => { setTimeout(resolve, 6000); });
+                let fps = (this.videoConfig.maxFPS !== undefined &&
+                    (this.videoConfig.forceMax || request.video.fps > this.videoConfig.maxFPS)) ?
+                    this.videoConfig.maxFPS : request.video.fps;
+                let videoBitrate = (this.videoConfig.maxBitrate !== undefined &&
+                    (this.videoConfig.forceMax || request.video.max_bit_rate > this.videoConfig.maxBitrate)) ?
+                    this.videoConfig.maxBitrate : request.video.max_bit_rate;
 
-            const uAudioStream = StreamInput(streamData.audiostream, this.cameraName + '_audio', this.eufyPath, this.log);
+                if (vcodec === 'copy') {
+                    resolution.width = 0;
+                    resolution.height = 0;
+                    resolution.videoFilter = undefined;
+                    fps = 0;
+                    videoBitrate = 0;
+                }
 
-            let ffmpegArgs_audio = [''];
+                this.log.debug(this.cameraName, 'Video stream requested: ' + request.video.width + ' x ' + request.video.height + ', ' +
+                    request.video.fps + ' fps, ' + request.video.max_bit_rate + ' kbps', this.videoConfig.debug);
+                this.log.info(this.cameraName, 'Starting video stream: ' + (resolution.width > 0 ? resolution.width : 'native') + ' x ' +
+                    (resolution.height > 0 ? resolution.height : 'native') + ', ' + (fps > 0 ? fps : 'native') +
+                    ' fps, ' + (videoBitrate > 0 ? videoBitrate : '???') + ' kbps' +
+                    (this.videoConfig.audio ? (' (' + request.audio.codec + ')') : ''));
 
-            ffmpegArgs_audio.push(`-i ${uAudioStream.url}`);
+                let ffmpegArgs_video = [''];
 
-            if (request.audio.codec === AudioStreamingCodecType.OPUS || request.audio.codec === AudioStreamingCodecType.AAC_ELD) {
-                ffmpegArgs_audio.push( // Audio
-                    (this.videoConfig.mapaudio ? '-map ' + this.videoConfig.mapaudio : '-vn -sn -dn'),
-                    (request.audio.codec === AudioStreamingCodecType.OPUS ?
-                        '-codec:a libopus' + ' -application lowdelay' :
-                        '-codec:a libfdk_aac' + ' -profile:a aac_eld'),
-                    '-flags +global_header',
-                    '-ar ' + request.audio.sample_rate + 'k',
-                    '-b:a ' + request.audio.max_bit_rate + 'k',
-                    '-ac ' + request.audio.channel,
-                    '-payload_type ' + request.audio.pt,
+                ffmpegArgs_video.push('-use_wallclock_as_timestamps 1');
+
+                ffmpegArgs_video.push((streamData.metadata.videoCodec === 0) ? '-f h264' : '');
+                ffmpegArgs_video.push(`-r ${streamData.metadata.videoFPS}`);
+                ffmpegArgs_video.push(`-i ${uVideoStream.url}`);
+
+                ffmpegArgs_video.push( // Video
+                    (this.videoConfig.mapvideo ? '-map ' + this.videoConfig.mapvideo : '-an -sn -dn'),
+                    '-codec:v ' + vcodec,
+                    '-pix_fmt yuv420p',
+                    '-color_range mpeg',
+                    (fps > 0 ? '-r ' + fps : ''),
+                    (encoderOptions || ''),
+                    (resolution.videoFilter ? '-filter:v ' + resolution.videoFilter : ''),
+                    (videoBitrate > 0 ? '-b:v ' + videoBitrate + 'k' : ''),
+                    '-payload_type ' + request.video.pt,
                 );
 
-                ffmpegArgs_audio.push( // Audio Stream
-                    '-ssrc ' + sessionInfo.audioSSRC,
+                ffmpegArgs_video.push( // Video Stream
+                    '-ssrc ' + sessionInfo.videoSSRC,
                     '-f rtp',
                     '-srtp_out_suite AES_CM_128_HMAC_SHA1_80',
-                    '-srtp_out_params ' + sessionInfo.audioSRTP.toString('base64'),
-                    'srtp://' + sessionInfo.address + ':' + sessionInfo.audioPort +
-                    '?rtcpport=' + sessionInfo.audioPort + '&pkt_size=188',
+                    '-srtp_out_params ' + sessionInfo.videoSRTP.toString('base64'),
+                    'srtp://' + sessionInfo.address + ':' + sessionInfo.videoPort +
+                    '?rtcpport=' + sessionInfo.videoPort + '&pkt_size=' + mtu,
                 );
 
-                ffmpegArgs_audio.push(
+                ffmpegArgs_video.push(
                     '-loglevel ' + (this.platform.config.enableDetailedLogging >= 1 ? '+verbose' : 'error'),
                     '-progress pipe:1',
                 );
 
-                const clean_ffmpegArgs_audio = ffmpegArgs_audio.filter(function (el) { return el; });
+                const clean_ffmpegArgs_video = ffmpegArgs_video.filter(function (el) { return el; });
 
-                activeSession.asocket = createSocket(sessionInfo.ipv6 ? 'udp6' : 'udp4');
-                activeSession.asocket.on('error', (err: Error) => {
+                const activeSession: ActiveSession = {};
+
+                activeSession.vsocket = createSocket(sessionInfo.ipv6 ? 'udp6' : 'udp4');
+                activeSession.vsocket.on('error', (err: Error) => {
                     this.log.error(this.cameraName, 'Socket error: ' + err.message);
-                    // uAudioStream.close();
                     this.stopStream(request.sessionID);
                 });
-                activeSession.asocket.on('message', () => {
+                activeSession.vsocket.on('message', () => {
                     if (activeSession.timeout) {
                         clearTimeout(activeSession.timeout);
                     }
                     activeSession.timeout = setTimeout(() => {
-                        this.log.info(this.cameraName, 'Device appears to be inactive. Stopping stream.');
+                        this.log.info(this.cameraName, 'Device appears to be inactive. Stopping video stream.');
                         this.controller.forceStopStreamingSession(request.sessionID);
-                        // uAudioStream.close();
                         this.stopStream(request.sessionID);
-                    }, request.audio.rtcp_interval * 5 * 1000);
+                    }, request.video.rtcp_interval * 5 * 1000);
                 });
-                activeSession.asocket.bind(sessionInfo.audioReturnPort);
+                activeSession.vsocket.bind(sessionInfo.videoReturnPort);
 
-                activeSession.uAudioStream = uAudioStream;
+                activeSession.uVideoStream = uVideoStream;
 
-                activeSession.mainProcess_audio = new FfmpegProcess(this.cameraName + '_audio', request.sessionID, this.videoProcessor,
-                    clean_ffmpegArgs_audio, this.log, this.videoConfig.debug, this);
+                activeSession.mainProcess_video = new FfmpegProcess(this.cameraName + '_video', request.sessionID, this.videoProcessor,
+                    clean_ffmpegArgs_video, this.log, this.videoConfig.debug, this, callback);
 
-            } else {
-                this.log.error(this.cameraName, 'Unsupported audio codec requested: ' + request.audio.codec);
-            }
+                // Required audio came to early so end user will see a lag of the video
+                await new Promise((resolve) => { setTimeout(resolve, 6000); });
 
-            streamData.station.on('livestream stop', (station: Station, channel: number) => {
-                if (this.platform.eufyClient.getStationDevice(station.getSerial(), channel).getSerial() === this.device.getSerial()) {
-                    this.log.info(this.cameraName, 'Eufy Station stopped the stream. Stopping stream.');
-                    this.controller.forceStopStreamingSession(request.sessionID);
-                    // uVideoStream.close();
-                    // uAudioStream.close();
+                const uAudioStream = StreamInput(streamData.audiostream, this.cameraName + '_audio', this.eufyPath, this.log);
+
+                let ffmpegArgs_audio = [''];
+
+                ffmpegArgs_audio.push(`-i ${uAudioStream.url}`);
+
+                if (request.audio.codec === AudioStreamingCodecType.OPUS || request.audio.codec === AudioStreamingCodecType.AAC_ELD) {
+                    ffmpegArgs_audio.push( // Audio
+                        (this.videoConfig.mapaudio ? '-map ' + this.videoConfig.mapaudio : '-vn -sn -dn'),
+                        (request.audio.codec === AudioStreamingCodecType.OPUS ?
+                            '-codec:a libopus' + ' -application lowdelay' :
+                            '-codec:a libfdk_aac' + ' -profile:a aac_eld'),
+                        '-flags +global_header',
+                        '-ar ' + request.audio.sample_rate + 'k',
+                        '-b:a ' + request.audio.max_bit_rate + 'k',
+                        '-ac ' + request.audio.channel,
+                        '-payload_type ' + request.audio.pt,
+                    );
+
+                    ffmpegArgs_audio.push( // Audio Stream
+                        '-ssrc ' + sessionInfo.audioSSRC,
+                        '-f rtp',
+                        '-srtp_out_suite AES_CM_128_HMAC_SHA1_80',
+                        '-srtp_out_params ' + sessionInfo.audioSRTP.toString('base64'),
+                        'srtp://' + sessionInfo.address + ':' + sessionInfo.audioPort +
+                        '?rtcpport=' + sessionInfo.audioPort + '&pkt_size=188',
+                    );
+
+                    ffmpegArgs_audio.push(
+                        '-loglevel ' + (this.platform.config.enableDetailedLogging >= 1 ? '+verbose' : 'error'),
+                        '-progress pipe:1',
+                    );
+
+                    const clean_ffmpegArgs_audio = ffmpegArgs_audio.filter(function (el) { return el; });
+
+                    activeSession.asocket = createSocket(sessionInfo.ipv6 ? 'udp6' : 'udp4');
+                    activeSession.asocket.on('error', (err: Error) => {
+                        this.log.error(this.cameraName, 'Socket error: ' + err.message);
+                        this.stopStream(request.sessionID);
+                    });
+                    activeSession.asocket.on('message', () => {
+                        if (activeSession.timeout) {
+                            clearTimeout(activeSession.timeout);
+                        }
+                        activeSession.timeout = setTimeout(() => {
+                            this.log.info(this.cameraName, 'Device appears to be inactive. Stopping audio stream.');
+                            this.controller.forceStopStreamingSession(request.sessionID);
+                            this.stopStream(request.sessionID);
+                        }, request.audio.rtcp_interval * 5 * 1000);
+                    });
+                    activeSession.asocket.bind(sessionInfo.audioReturnPort);
+
+                    activeSession.uAudioStream = uAudioStream;
+
+                    activeSession.mainProcess_audio = new FfmpegProcess(this.cameraName + '_audio', request.sessionID, this.videoProcessor,
+                        clean_ffmpegArgs_audio, this.log, this.videoConfig.debug, this);
+
+                } else {
+                    this.log.error(this.cameraName, 'Unsupported audio codec requested: ' + request.audio.codec);
+                }
+
+                // streamData.station.on('livestream stop', (station: Station, channel: number) => {
+                //     if (this.platform.eufyClient.getStationDevice(station.getSerial(), channel).getSerial() === this.device.getSerial()) {
+                //         this.log.info(this.cameraName, 'Eufy Station stopped the stream. Stopping stream.');
+                //         this.controller.forceStopStreamingSession(request.sessionID);
+                //         this.stopStream(request.sessionID);
+                //     }
+                // });
+
+                // Check if the pendingSession has been stopped before it was successfully started.
+                const pendingSession = this.pendingSessions.get(request.sessionID);
+                // pendingSession has not been deleted. Transfer it to ongoingSessions.
+                if (pendingSession) {
+                    this.ongoingSessions.set(request.sessionID, activeSession);
+                    this.pendingSessions.delete(request.sessionID);
+                }
+                // pendingSession has been deleted. Add it to ongoingSession and end it immediately.
+                else {
+                    this.ongoingSessions.set(request.sessionID, activeSession);
+                    this.log.info(this.cameraName, 'pendingSession has been deleted. Add it to ongoingSession and end it immediately.');
                     this.stopStream(request.sessionID);
                 }
-            });
+            } else {
+                this.log.error(this.cameraName, 'Error finding session information.');
+                callback(new Error('Error finding session information'));
+            }
 
-            // Check if the pendingSession has been stopped before it was successfully started.
-            const pendingSession = this.pendingSessions.get(request.sessionID);
-            // pendingSession has not been deleted. Transfer it to ongoingSessions.
-            if(pendingSession)
-            {
-              this.ongoingSessions.set(request.sessionID, activeSession);
-              this.pendingSessions.delete(request.sessionID);
-            }
-            // pendingSession has been deleted. Add it to ongoingSession and end it immediately.
-            else
-            {
-              this.ongoingSessions.set(request.sessionID, activeSession);
-              this.stopStream(request.sessionID);
-            }
-        } else {
-            this.log.error(this.cameraName, 'Error finding session information.');
-            callback(new Error('Error finding session information'));
+        } catch (err) {
+            this.log.error(this.cameraName + ' Unable to start the livestream: ' + err as string);
         }
     }
 
@@ -640,6 +636,7 @@ export class StreamingDelegate implements CameraStreamingDelegate {
                 callback();
                 break;
             case StreamRequestTypes.STOP:
+                this.log.info(this.cameraName, 'Receive Apple HK Stop request'+JSON.stringify(request));
                 this.stopStream(request.sessionID);
                 callback();
                 break;
@@ -650,8 +647,8 @@ export class StreamingDelegate implements CameraStreamingDelegate {
         this.log.info('Stopping session with id: ' + sessionId);
 
         const pendingSession = this.pendingSessions.get(sessionId);
-        if(pendingSession){
-          this.pendingSessions.delete(sessionId);
+        if (pendingSession) {
+            this.pendingSessions.delete(sessionId);
         }
 
         const session = this.ongoingSessions.get(sessionId);
@@ -659,8 +656,6 @@ export class StreamingDelegate implements CameraStreamingDelegate {
             if (session.timeout) {
                 clearTimeout(session.timeout);
             }
-            session.uVideoStream?.close();
-            session.uAudioStream?.close();
             try {
                 session.mainProcess_video?.stop();
                 session.mainProcess_audio?.stop();
@@ -668,22 +663,28 @@ export class StreamingDelegate implements CameraStreamingDelegate {
                 this.log.error(this.cameraName, 'Error occurred terminating main FFmpeg process: ' + err);
             }
             try {
-                this.platform.eufyClient.stopStationLivestream(this.device.getSerial());
-            } catch (err) {
-                this.log.error(this.cameraName, 'Error occurred terminating Eufy Station livestream: ' + err);
-            }
-            try {
                 session.vsocket?.close();
                 session.asocket?.close();
             } catch (err) {
                 this.log.error(this.cameraName, 'Error occurred closing socket: ' + err);
             }
+            try {
+                session.uVideoStream?.close();
+                session.uAudioStream?.close();
+            } catch (err) {
+                this.log.error(this.cameraName, 'Error occurred Universal Stream: ' + err);
+            }
+            try {
+                this.platform.eufyClient.stopStationLivestream(this.device.getSerial());
+            } catch (err) {
+                this.log.error(this.cameraName, 'Error occurred terminating Eufy Station livestream: ' + err);
+            }
 
             this.ongoingSessions.delete(sessionId);
             this.log.info(this.cameraName, 'Stopped video stream.');
         }
-        else{
-          this.log.info('No session to stop.')
+        else {
+            this.log.debug('No session to stop.')
         }
 
     }
