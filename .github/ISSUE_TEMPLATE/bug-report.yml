@@ -52,7 +52,8 @@ body:
       label: HomeBridge Version
       description: What version of homebridge are you running?
       options:
-        - v1.3.x (Supported)
+        - v1.4.x (Supported)
+        - v1.3.x (UnSupported)
         - v1.2.x (UnSupported)
         - other (UnSupported)
     validations:
