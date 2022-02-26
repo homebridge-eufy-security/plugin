@@ -43,7 +43,6 @@
                         <label for="passwordInput">Eufy Password</label>
                         <input type="password" class="form-control" id="passwordInput" />
                     </div>
-
                     <hr />
                     <div class="form-group">
                         <label for="pollingIntervalMinutes">Polling Interval (in minutes)</label>
@@ -449,6 +448,21 @@
 
                     <hr />
 
+                    <div class="form-group">
+                        <label for="codec">Video Codec</label>
+                        <input type="text" class="form-control" id="codec" />
+                        <small id="help13" class="form-text text-muted">Force Codec for FFMPEG (leave blank or put
+                            copy)</small>
+                    </div>
+
+                    <div class="custom-control custom-checkbox form-group">
+                        <input type="checkbox" class="custom-control-input" id="ffmpegdebug" />
+                        <label class="custom-control-label" for="ffmpegdebug">Force debug on FFMPEG</label>
+                        <small id="help14" class="form-text text-muted">Debug need to be enabled as well above</small>
+                    </div>
+
+                    <hr />
+
                     <center>
                         <a id="reset" class="btn btn-warning">Reset</a>
                     </center>
@@ -814,8 +828,9 @@
     <hr />
 
     <div class="footer">We are not affiliated, associated, authorized, endorsed by, or in any way officially connected
-        with Anker Innovations Technology Co.LTd, and Shenzhen Oceanwing Smart Innovations Technology Co., Ltd, and its affiliated companies within the Anker Group, or any of its subsidiaries or its affiliates.</div>
+        with Anker Innovations Technology Co.LTd, and Shenzhen Oceanwing Smart Innovations Technology Co., Ltd, and its
+        affiliated companies within the Anker Group, or any of its subsidiaries or its affiliates.</div>
 
 </div>
 
-<script type="text/javascript" src="js/main.js?v=1.1.1-beta.24"></script>
+<script type="text/javascript" src="js/main.js?v=1.1.1-beta.29"></script>

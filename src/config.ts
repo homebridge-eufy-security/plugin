@@ -21,4 +21,6 @@ export interface EufySecurityPlatformConfig extends PlatformConfig {
   ignoreStations: string[];
   ignoreDevices: string[];
   country: string;
+  codec: string;
+  ffmpegdebug: boolean;
 }

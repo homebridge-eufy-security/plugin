@@ -49,8 +49,9 @@ export class CameraAccessory extends DeviceAccessory {
           'name': this.eufyDevice.getName(),
           'videoConfig': {
             'stillImageSource': '',
+            'vcodec': this.platform.config.codec,
             'audio': true,
-            'debug': true,
+            'debug': this.platform.config.ffmpegdebug,
           } as VideoConfig,
         };
 

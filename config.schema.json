@@ -320,6 +320,18 @@
         "type": "string",
         "required": false,
         "discription": "Eufy Country selection"
+      },
+      "codec": {
+        "title": "Force Codec for FFMPEG",
+        "type": "string",
+        "required": false,
+        "discription": "leave blank or put copy"
+      },
+      "ffmpegdebug": {
+        "title": "Camera device seen as Camera",
+        "description": "Camera seen as Motion Sensor by default, enable this setting to transform as Camera",
+        "type": "boolean",
+        "required": false
       }
     }
   },
@@ -361,6 +373,8 @@
         "CameraMaxLivestreamDuration",
         "pollingIntervalMinutes",
         "country",
+        "codec",
+        "ffmpegdebug",
         {
           "key": "ignoreStations",
           "add": "Add Another Device ID",

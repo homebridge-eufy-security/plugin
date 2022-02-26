@@ -10,6 +10,7 @@
 -   Provide a clear/reset wizard in order to clean persistent data
 -   Add a config value to remove enable/motion homekit buttons #320
 -   Handling captcha request
+-   Adding config setting to force codec and force debug on ffmpeg
 
 ### Fixed
 -   Updating some dep for security reason
@@ -18,6 +19,7 @@
 -   Fix HB crashed #321 thanks @schliemann
 -   Fix Arming stuck while using Schedule or Geo #342
 -   Streaming issue while using Docker #308 (thanks @alternativ)
+-   Fix issue on video stream while debug is disabled #356
 
 ## 1.0.1 (18/10/2021)
 

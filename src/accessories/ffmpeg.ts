@@ -7,25 +7,13 @@ import { Logger } from './logger';
 import { StreamingDelegate } from './streamingDelegate';
 
 
-type FfmpegProgress_video = {
+type FfmpegProgress = {
   frame: number;
   fps: number;
   stream_q: number;
   bitrate: number;
   total_size: number;
   out_time_us: number;
-  out_time: string;
-  dup_frames: number;
-  drop_frames: number;
-  speed: number;
-  progress: string;
-};
-
-type FfmpegProgress_audio = {
-  bitrate: number;
-  total_size: number;
-  out_time_us: number;
-  out_time_ms: number;
   out_time: string;
   dup_frames: number;
   drop_frames: number;
@@ -62,7 +50,7 @@ export class FfmpegProcess {
           const runtime = (Date.now() - startTime) / 1000;
           const message = 'Getting the first frames took ' + runtime + ' seconds.';
           if (runtime < 5) {
-            this.log.debug(this.cameraName, message);
+            this.log.info(this.cameraName, message);
           } else if (runtime < 22) {
             this.log.warn(this.cameraName, message);
           } else {
@@ -101,10 +89,10 @@ export class FfmpegProcess {
       const message = 'FFmpeg exited with code: ' + code + ' and signal: ' + signal;
 
       if (this.killTimeout && code === 0) {
-        this.log.debug(this.cameraName, message + ' (Expected)');
+        this.log.info(this.cameraName, message + ' (Expected)');
       } else if (code == null || code === 255) {
         if (this.process.killed) {
-          this.log.debug(this.cameraName, message + ' (Forced)');
+          this.log.info(this.cameraName, message + ' (Forced)');
         } else {
           this.log.error(this.cameraName, message + ' (Unexpected)');
         }
@@ -120,7 +108,7 @@ export class FfmpegProcess {
     });
   }
 
-  parseProgress(data: Uint8Array): FfmpegProgress_video | FfmpegProgress_audio | undefined {
+  parseProgress(data: Uint8Array): FfmpegProgress | undefined {
     const input = data.toString();
 
     if (input.indexOf('frame=') == 0) {
@@ -144,31 +132,7 @@ export class FfmpegProcess {
           drop_frames: parseInt(progress.get('drop_frames')!),
           speed: parseFloat(progress.get('speed')!),
           progress: progress.get('progress')!.trim()
-        } as FfmpegProgress_video;
-      } catch {
-        return undefined;
-      }
-
-    } else if (input.indexOf('bitrate=') == 0) {
-
-      try {
-        const progress = new Map<string, string>();
-        input.split(/\r?\n/).forEach((line) => {
-          const split = line.split('=', 2);
-          progress.set(split[0], split[1]);
-        });
-
-        return {
-          bitrate: parseFloat(progress.get('bitrate')!),
-          total_size: parseInt(progress.get('total_size')!),
-          out_time_us: parseInt(progress.get('out_time_us')!),
-          out_time_ms: parseInt(progress.get('out_time_ms')!),
-          out_time: progress.get('out_time')!.trim(),
-          dup_frames: parseInt(progress.get('dup_frames')!),
-          drop_frames: parseInt(progress.get('drop_frames')!),
-          speed: parseFloat(progress.get('speed')!),
-          progress: progress.get('progress')!.trim()
-        } as FfmpegProgress_audio;
+        } as FfmpegProgress;
       } catch {
         return undefined;
       }

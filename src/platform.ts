@@ -78,6 +78,9 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
     this.config.enableButton = this.config.enableButton ??= true;
     this.config.motionButton = this.config.motionButton ??= true;
 
+    this.config.codec = this.config.codec ??= '';
+    this.config.ffmpegdebug = this.config.ffmpegdebug ??= false;
+
     if (this.config.enableDetailedLogging >= 1) {
 
       const plugin = require('../package.json');

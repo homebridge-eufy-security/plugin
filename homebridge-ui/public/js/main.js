@@ -23,6 +23,8 @@ function updateFormFromConfig() {
     document.getElementById('CameraMaxLivestreamDuration').value = pluginConfig.CameraMaxLivestreamDuration ??= 30;
     document.getElementById('enableButton').checked = pluginConfig.enableButton ??= true;
     document.getElementById('motionButton').checked = pluginConfig.motionButton ??= true;
+    document.getElementById('codec').value = pluginConfig.codec ??= '';
+    document.getElementById('ffmpegdebug').checked = pluginConfig.ffmpegdebug ??= false;
     homebridge.fixScrollHeight();
 }
 
@@ -42,6 +44,8 @@ function updateConfigFromForm() {
     pluginConfig.CameraMaxLivestreamDuration = parseInt(document.getElementById('CameraMaxLivestreamDuration').value);
     pluginConfig.enableButton = document.getElementById('enableButton').checked;
     pluginConfig.motionButton = document.getElementById('motionButton').checked;
+    pluginConfig.codec = document.getElementById('codec').value;
+    pluginConfig.ffmpegdebug = document.getElementById('ffmpegdebug').checked;
 }
 
 function adjustPollingValue() {
