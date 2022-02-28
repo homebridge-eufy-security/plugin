@@ -439,7 +439,7 @@ export class StreamingDelegate implements CameraStreamingDelegate {
         config.vcodec = config.vcodec || 'libx264';
         config.acodec = config.acodec || 'libfdk_aac';
         config.encoderOptions = config.encoderOptions || '-preset ultrafast -tune zerolatency';
-        config.packetSize = config.packetSize || 1318;
+        config.packetSize = config.packetSize || 1316;
 
         return config;
     }
@@ -546,6 +546,7 @@ export class StreamingDelegate implements CameraStreamingDelegate {
                 '-hide_banner',
                 '-loglevel',
                 `level${this.videoConfig.debug ? '+verbose' : ''}`,
+                '-use_wallclock_as_timestamps 1',
                 ...ffmpegInput,
             ];
 
