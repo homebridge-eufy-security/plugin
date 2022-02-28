@@ -40,6 +40,7 @@ import {
 
 import bunyan from 'bunyan';
 import bunyanDebugStream from 'bunyan-debug-stream';
+import fs from 'fs';
 
 export class EufySecurityPlatform implements DynamicPlatformPlugin {
   public readonly Service: typeof Service = this.api.hap.Service;
@@ -53,6 +54,9 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
   private eufyConfig: EufySecurityConfig;
 
   public log;
+  public logLib;
+
+  public readonly eufyPath: string;
 
   constructor(
     public readonly hblog: Logger,
@@ -61,12 +65,18 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
   ) {
     this.config = config as EufySecurityPlatformConfig;
 
+    this.eufyPath = this.api.user.storagePath() + '/eufysecurity';
+
+    if (!fs.existsSync(this.eufyPath)) {
+      fs.mkdirSync(this.eufyPath);
+    }
+
     this.eufyConfig = {
       username: this.config.username,
       password: this.config.password,
       country: this.config.country ?? 'US',
       language: 'en',
-      persistentDir: api.user.storagePath(),
+      persistentDir: this.eufyPath,
       p2pConnectionSetup: 0,
       pollingIntervalMinutes: this.config.pollingIntervalMinutes ?? 10,
       eventDurationSeconds: 10,
@@ -102,6 +112,19 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
         }],
         serializers: bunyanDebugStream.stdSerializers,
       });
+
+      this.logLib = bunyan.createLogger({
+        name: '[EufySecurity-' + plugin.version + ']',
+        hostname: '',
+        streams: [{
+          level: (this.config.enableDetailedLogging === 2) ? 'trace' : 'debug',
+          type: 'rotating-file',
+          path: this.eufyPath + '/log-lib.log',
+          period: '1d',   // daily rotation
+          count: 3,        // keep 3 back copies
+        }]
+      });
+
       this.log.info('enableDetailedLogging on');
     } else {
       this.log = hblog;
@@ -109,8 +132,14 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
 
     this.log.info('Country set:', this.config.country ?? 'US');
 
-    this.eufyClient = (this.config.enableDetailedLogging === 2)
-      ? new EufySecurity(this.eufyConfig, this.log)
+    // moving persistent into our dedicated folder
+    if (fs.existsSync(this.api.user.storagePath() + '/persistent.json')) {
+      this.log.info('persistent file found!');
+      fs.rename(this.api.user.storagePath() + '/persistent.json', this.eufyPath + '/persistent.json', (err) => { });
+    }
+
+    this.eufyClient = (this.config.enableDetailedLogging >= 1)
+      ? new EufySecurity(this.eufyConfig, this.logLib)
       : new EufySecurity(this.eufyConfig);
 
     // When this event is fired it means Homebridge has restored all cached accessories from disk.

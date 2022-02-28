@@ -35,7 +35,6 @@ import { Readable } from 'stream';
 import { NamePipeStream, StreamInput } from './UniversalStream';
 
 import { readFile } from 'fs';
-import fs from 'fs';
 import path from 'path';
 import { promisify } from 'util';
 const readFileAsync = promisify(readFile),
@@ -102,8 +101,6 @@ export class StreamingDelegate implements CameraStreamingDelegate {
     private readonly platform: EufySecurityPlatform;
     private readonly device: Camera;
 
-    private readonly eufyPath: string;
-
     // keep track of sessions
     pendingSessions: Map<string, SessionInfo> = new Map();
     ongoingSessions: Map<string, ActiveSession> = new Map();
@@ -113,12 +110,6 @@ export class StreamingDelegate implements CameraStreamingDelegate {
         this.log = platform.log;
         this.hap = hap;
         this.api = api;
-
-        this.eufyPath = this.api.user.storagePath() + '/eufysecurity';
-
-        if (!fs.existsSync(this.eufyPath)) {
-            fs.mkdirSync(this.eufyPath);
-        }
 
         this.platform = platform;
         this.device = device;
@@ -504,8 +495,8 @@ export class StreamingDelegate implements CameraStreamingDelegate {
                     const streamData = await this.getLocalLiveStream().catch(err => {
                         throw err;
                     });
-                    uVideoStream = StreamInput(streamData.videostream, this.cameraName + '_video', this.eufyPath, this.log);
-                    uAudioStream = StreamInput(streamData.audiostream, this.cameraName + '_audio', this.eufyPath, this.log);
+                    uVideoStream = StreamInput(streamData.videostream, this.cameraName + '_video', this.platform.eufyPath, this.log);
+                    uAudioStream = StreamInput(streamData.audiostream, this.cameraName + '_audio', this.platform.eufyPath, this.log);
                     ffmpegInput = this.generateInputSource(videoConfig, '-i ' + uVideoStream.url).split(/\s+/);
                 } catch (err) {
                     this.log.error(this.cameraName + ' Unable to start the livestream: ' + err as string);

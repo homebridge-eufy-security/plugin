@@ -223,7 +223,7 @@ class UiServer extends HomebridgePluginUiServer {
    */
   async reset(body) {
 
-    const path = this.config['persistentDir'] + '/persistent.json';
+    const path = this.config['persistentDir'] + '/eufysecurity/persistent.json';
 
     try {
       fs.unlinkSync(path);
