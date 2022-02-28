@@ -424,13 +424,13 @@ export class StreamingDelegate implements CameraStreamingDelegate {
 
         config.maxWidth = config.maxWidth || 1280;
         config.maxHeight = config.maxHeight || 720;
-        config.maxFPS = config.maxFPS >= 20 ? videoConfig.maxFPS : 20;
-        config.maxStreams = config.maxStreams >= 1 ? videoConfig.maxStreams : 4;
+        config.maxFPS = config.maxFPS >= 20 ? videoConfig.maxFPS : 30;
+        config.maxStreams = config.maxStreams >= 1 ? videoConfig.maxStreams : 2;
         config.maxBitrate = config.maxBitrate || 299;
         config.vcodec = config.vcodec || 'libx264';
         config.acodec = config.acodec || 'libfdk_aac';
         config.encoderOptions = config.encoderOptions || '-preset ultrafast -tune zerolatency';
-        config.packetSize = config.packetSize || 1316;
+        config.packetSize = config.packetSize || 1128;
 
         return config;
     }
@@ -477,7 +477,7 @@ export class StreamingDelegate implements CameraStreamingDelegate {
 
         if (sessionInfo) {
             let inputChanged = false;
-            let prebufferInput = false;
+            let prebufferInput = true;
             let uVideoStream;
             let uAudioStream;
             let ffmpegInput;
@@ -505,7 +505,7 @@ export class StreamingDelegate implements CameraStreamingDelegate {
 
             const resolution = this.determineResolution(request.video, false);
             const vcodec = this.videoConfig.vcodec || 'libx264';
-            const mtu = this.videoConfig.packetSize || 1316; // request.video.mtu is not used
+            const mtu = this.videoConfig.packetSize || 1128; // request.video.mtu is not used
 
             let fps = videoConfig.maxFPS && videoConfig.forceMax ? videoConfig.maxFPS : request.video.fps;
             let videoBitrate =
