@@ -122,7 +122,7 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
           path: this.eufyPath + '/log-lib.log',
           period: '1d',   // daily rotation
           count: 3,        // keep 3 back copies
-        }]
+        }],
       });
 
       this.log.info('enableDetailedLogging on');
@@ -134,8 +134,10 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
 
     // moving persistent into our dedicated folder
     if (fs.existsSync(this.api.user.storagePath() + '/persistent.json')) {
-      this.log.info('persistent file found!');
-      fs.rename(this.api.user.storagePath() + '/persistent.json', this.eufyPath + '/persistent.json', (err) => { });
+      this.log.debug('An old persistent file have been found');
+      fs.rename(this.api.user.storagePath() + '/persistent.json', this.eufyPath + '/persistent.json', (err) => {
+        this.log.error('Unable to move the existing persistent file into the new folder ');
+      });
     }
 
     this.eufyClient = (this.config.enableDetailedLogging >= 1)
