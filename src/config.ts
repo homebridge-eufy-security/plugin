@@ -23,5 +23,4 @@ export interface EufySecurityPlatformConfig extends PlatformConfig {
   country: string;
   ffmpegdebug: boolean;
   cameras: CameraConfig[];
-  cleanCache: boolean;
 }

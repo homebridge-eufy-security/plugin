@@ -84,7 +84,6 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
 
     this.config.ignoreStations = this.config.ignoreStations ??= [];
     this.config.ignoreDevices = this.config.ignoreDevices ??= [];
-    this.config.cleanCache = this.config.cleanCache ??= true;
 
     if (this.config.enableDetailedLogging >= 1) {
 
@@ -295,39 +294,36 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
         // create the accessory handler for the newly create accessory
         // this is imported from `platformAccessory.ts`
 
-        this.register_accessory(accessory, device, false);
+        this.register_accessory(accessory, device.deviceIdentifier.type, device.eufyDevice, device.deviceIdentifier.station, false);
       } else {
-        this.register_accessory(cachedAccessory, device, true);
+        this.register_accessory(cachedAccessory, device.deviceIdentifier.type, device.eufyDevice, device.deviceIdentifier.station, true);
       }
     }
 
     // Cleaning cached accessory which are no longer exist
 
-    if (this.config.cleanCache) {
-      const staleAccessories = this.accessories.filter((item) => {
-        return activeAccessoryIds.indexOf(item.UUID) === -1;
-      });
+    const staleAccessories = this.accessories.filter((item) => {
+      return activeAccessoryIds.indexOf(item.UUID) === -1;
+    });
 
-      staleAccessories.forEach((staleAccessory) => {
-        this.log.info(`Removing cached accessory ${staleAccessory.UUID} ${staleAccessory.displayName}`);
-        this.api.unregisterPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [staleAccessory]);
-      });
-    }
+    staleAccessories.forEach((staleAccessory) => {
+      this.log.info(`Removing cached accessory ${staleAccessory.UUID} ${staleAccessory.displayName}`);
+      this.api.unregisterPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [staleAccessory]);
+    });
+
   }
 
   private register_accessory(
     accessory: PlatformAccessory,
-    container: DeviceContainer,
+    type: number,
+    device,
+    station: boolean,
     exist: boolean
   ) {
 
     this.log.debug(accessory.displayName, 'UUID:', accessory.UUID);
 
     var unbridge: boolean = false;
-
-    var station = container.deviceIdentifier.station;
-    var type = container.deviceIdentifier.type;
-    var device = container.eufyDevice;
 
     /* Under development area
 
