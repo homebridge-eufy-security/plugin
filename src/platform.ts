@@ -295,9 +295,9 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
         // create the accessory handler for the newly create accessory
         // this is imported from `platformAccessory.ts`
 
-        this.register_accessory(accessory, device.deviceIdentifier.type, device.eufyDevice, device.deviceIdentifier.station, false);
+        this.register_accessory(accessory, device, false);
       } else {
-        this.register_accessory(cachedAccessory, device.deviceIdentifier.type, device.eufyDevice, device.deviceIdentifier.station, true);
+        this.register_accessory(cachedAccessory, device, true);
       }
     }
 
@@ -313,20 +313,21 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
         this.api.unregisterPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [staleAccessory]);
       });
     }
-
   }
 
   private register_accessory(
     accessory: PlatformAccessory,
-    type: number,
-    device,
-    station: boolean,
+    container: DeviceContainer,
     exist: boolean
   ) {
 
     this.log.debug(accessory.displayName, 'UUID:', accessory.UUID);
 
     var unbridge: boolean = false;
+
+    var station = container.deviceIdentifier.station;
+    var type = container.deviceIdentifier.type;
+    var device = container.eufyDevice;
 
     /* Under development area
 
