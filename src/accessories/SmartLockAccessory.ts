@@ -70,8 +70,11 @@ export class SmartLockAccessory extends DeviceAccessory {
     return lockStatus as number;
   }
 
-  async handleLockTargetStateSet() {
-    this.platform.log.warn(this.accessory.displayName, 'Open/Close trigger is not implemented');
+  async handleLockTargetStateSet(value) {
+    this.platform.log.debug(this.accessory.displayName, 'Triggered SET LockTargetState', value);   
+    const stationSerial = this.SmartLock.getStationSerial();
+    const station = this.platform.getStationById(stationSerial);
+    station.lockDevice(this.SmartLock, !!value);
   }
 
   getLockStatus(current = true) {
