@@ -432,34 +432,11 @@
                     <hr />
 
                     <div class="custom-control custom-checkbox form-group">
-                        <input type="checkbox" class="custom-control-input" id="enableButton" />
-                        <label class="custom-control-label" for="enableButton">Display homekit button to switch on/off
-                            camera</label>
+                        <input type="checkbox" class="custom-control-input" id="cleanCache" />
+                        <label class="custom-control-label" for="cleanCache">Clean Cache automatically</label>
                     </div>
 
-                    <div class="custom-control custom-checkbox form-group">
-                        <input type="checkbox" class="custom-control-input" id="motionButton" />
-                        <label class="custom-control-label" for="motionButton">Display homekit button to switch on/off
-                            motion camera</label>
-                    </div>
-
-                    <small id="help12" class="form-text text-muted">When disabling theses buttons you might need to
-                        clear accessory cache (homebridge settings) so it can take effect into homekit.</small>
-
-                    <hr />
-
-                    <div class="form-group">
-                        <label for="codec">Video Codec</label>
-                        <input type="text" class="form-control" id="codec" />
-                        <small id="help13" class="form-text text-muted">Force Codec for FFMPEG (leave blank or put
-                            copy)</small>
-                    </div>
-
-                    <div class="custom-control custom-checkbox form-group">
-                        <input type="checkbox" class="custom-control-input" id="ffmpegdebug" />
-                        <label class="custom-control-label" for="ffmpegdebug">Force debug on FFMPEG</label>
-                        <small id="help14" class="form-text text-muted">Debug need to be enabled as well above</small>
-                    </div>
+                    <small id="help12" class="form-text text-muted">When enable, you let the plugin clean accessory when removed from the Eufy app.</small>
 
                     <hr />
 
@@ -833,4 +810,4 @@
 
 </div>
 
-<script type="text/javascript" src="js/main.js?v=1.1.1-beta.29"></script>
+<script type="text/javascript" src="js/main.js?v=1.1.1-beta.30-c"></script>

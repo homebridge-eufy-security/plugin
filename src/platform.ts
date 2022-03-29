@@ -84,12 +84,7 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
 
     this.config.ignoreStations = this.config.ignoreStations ??= [];
     this.config.ignoreDevices = this.config.ignoreDevices ??= [];
-
-    this.config.enableButton = this.config.enableButton ??= true;
-    this.config.motionButton = this.config.motionButton ??= true;
-
-    this.config.codec = this.config.codec ??= '';
-    this.config.ffmpegdebug = this.config.ffmpegdebug ??= false;
+    this.config.cleanCache = this.config.cleanCache ??= true;
 
     if (this.config.enableDetailedLogging >= 1) {
 
@@ -131,6 +126,7 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
     }
 
     this.log.info('Country set:', this.config.country ?? 'US');
+    this.log.info('Unbridge set:', this.config.unbridge ?? 'false');
 
     // moving persistent into our dedicated folder
     if (fs.existsSync(this.api.user.storagePath() + '/persistent.json')) {
@@ -280,30 +276,10 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
 
       // see if an accessory with the same uuid has already been registered and restored from
       // the cached devices we stored in the `configureAccessory` method above
-      const existingAccessory = this.accessories.find(
-        (accessory) => accessory.UUID === uuid,
-      );
+      const cachedAccessory = this.accessories.find((accessory) => accessory.UUID === uuid);
 
-      if (existingAccessory) {
-        // the accessory already exists
+      if (!cachedAccessory) {
 
-        if (this.register_accessory(
-          existingAccessory,
-          device.deviceIdentifier.type,
-          device.eufyDevice,
-          device.deviceIdentifier.station,
-        )
-        ) {
-          this.log.info(
-            'Restoring existing accessory from cache:',
-            existingAccessory.displayName,
-          );
-
-          // update accessory cache with any changes to the accessory details and information
-          this.api.updatePlatformAccessories([existingAccessory]);
-        }
-
-      } else {
         // the accessory does not yet exist, so we need to create it
 
         // create a new accessory
@@ -318,48 +294,40 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
 
         // create the accessory handler for the newly create accessory
         // this is imported from `platformAccessory.ts`
-        if (
-          this.register_accessory(
-            accessory,
-            device.deviceIdentifier.type,
-            device.eufyDevice,
-            device.deviceIdentifier.station,
-          )
-        ) {
-          this.log.info(
-            'Adding new accessory:',
-            device.deviceIdentifier.displayName,
-          );
 
-          // link the accessory to your platform
-          this.api.registerPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [
-            accessory,
-          ]);
-        }
+        this.register_accessory(accessory, device, false);
+      } else {
+        this.register_accessory(cachedAccessory, device, true);
       }
     }
 
     // Cleaning cached accessory which are no longer exist
 
-    const staleAccessories = this.accessories.filter((item) => {
-      return activeAccessoryIds.indexOf(item.UUID) === -1;
-    });
+    if (this.config.cleanCache) {
+      const staleAccessories = this.accessories.filter((item) => {
+        return activeAccessoryIds.indexOf(item.UUID) === -1;
+      });
 
-    staleAccessories.forEach((staleAccessory) => {
-      this.log.info(`Removing cached accessory ${staleAccessory.UUID} ${staleAccessory.displayName}`);
-      this.api.unregisterPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [staleAccessory]);
-    });
-
+      staleAccessories.forEach((staleAccessory) => {
+        this.log.info(`Removing cached accessory ${staleAccessory.UUID} ${staleAccessory.displayName}`);
+        this.api.unregisterPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [staleAccessory]);
+      });
+    }
   }
 
   private register_accessory(
     accessory: PlatformAccessory,
-    type: number,
-    device,
-    station: boolean,
+    container: DeviceContainer,
+    exist: boolean
   ) {
 
     this.log.debug(accessory.displayName, 'UUID:', accessory.UUID);
+
+    var unbridge: boolean = false;
+
+    var station = container.deviceIdentifier.station;
+    var type = container.deviceIdentifier.type;
+    var device = container.eufyDevice;
 
     /* Under development area
 
@@ -379,9 +347,8 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
           || type === DeviceType.BATTERY_DOORBELL_2)) {
           this.log.warn(accessory.displayName, 'looks station but it\'s not could imply some errors', 'Type:', type);
           new StationAccessory(this, accessory, device as Station);
-          return true;
         } else {
-          return false;
+          return;
         }
       }
     }
@@ -415,12 +382,14 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
       case DeviceType.FLOODLIGHT_CAMERA_8422:
       case DeviceType.FLOODLIGHT_CAMERA_8423:
       case DeviceType.FLOODLIGHT_CAMERA_8424:
-        new CameraAccessory(this, accessory, device as Camera);
+        var a = new CameraAccessory(this, accessory, device as Camera);
+        unbridge = a.cameraConfig.unbridge ??= false;
         break;
       case DeviceType.DOORBELL:
       case DeviceType.BATTERY_DOORBELL:
       case DeviceType.BATTERY_DOORBELL_2:
-        new DoorbellCameraAccessory(this, accessory, device as DoorbellCamera);
+        var b = new DoorbellCameraAccessory(this, accessory, device as DoorbellCamera);
+        unbridge = b.cameraConfig.unbridge ??= false;
         break;
       case DeviceType.SENSOR:
         new EntrySensorAccessory(this, accessory, device as EntrySensor);
@@ -441,9 +410,22 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
           'Type:',
           type,
         );
-        return false;
+        return;
     }
-    return true;
+
+    if (exist) {
+      this.api.updatePlatformAccessories([accessory]);
+      return;
+    }
+
+    if (unbridge) {
+      this.log.info('Adding new bridged accessory:', accessory.displayName);
+      this.api.publishExternalAccessories(PLUGIN_NAME, [accessory]);
+    } else {
+      this.log.info('Adding new accessory:', accessory.displayName);
+      this.api.registerPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [accessory]);
+    }
+
   }
 
   public async refreshData(client: EufySecurity): Promise<void> {

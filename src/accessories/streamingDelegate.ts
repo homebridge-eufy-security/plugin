@@ -419,22 +419,6 @@ export class StreamingDelegate implements CameraStreamingDelegate {
         callback(undefined, response);
     }
 
-    private generateVideoConfig(videoConfig) {
-        const config = { ...videoConfig };
-
-        config.maxWidth = config.maxWidth || 1280;
-        config.maxHeight = config.maxHeight || 720;
-        config.maxFPS = config.maxFPS >= 20 ? videoConfig.maxFPS : 30;
-        config.maxStreams = config.maxStreams >= 1 ? videoConfig.maxStreams : 2;
-        config.maxBitrate = config.maxBitrate || 299;
-        config.vcodec = config.vcodec || 'libx264';
-        config.acodec = config.acodec || 'libfdk_aac';
-        config.encoderOptions = config.encoderOptions || '-preset ultrafast -tune zerolatency';
-        config.packetSize = config.packetSize || 1128;
-
-        return config;
-    }
-
     private generateInputSource(videoConfig, source) {
         let inputSource = source || videoConfig.source;
 
@@ -482,8 +466,6 @@ export class StreamingDelegate implements CameraStreamingDelegate {
             let uAudioStream;
             let ffmpegInput;
 
-            const videoConfig = this.generateVideoConfig(this.videoConfig);
-
             if (false) {
                 ffmpegInput = ['-re', '-loop', '1', '-i', offlineImage];
                 inputChanged = true;
@@ -497,7 +479,7 @@ export class StreamingDelegate implements CameraStreamingDelegate {
                     });
                     uVideoStream = StreamInput(streamData.videostream, this.cameraName + '_video', this.platform.eufyPath, this.log);
                     uAudioStream = StreamInput(streamData.audiostream, this.cameraName + '_audio', this.platform.eufyPath, this.log);
-                    ffmpegInput = this.generateInputSource(videoConfig, '-i ' + uVideoStream.url).split(/\s+/);
+                    ffmpegInput = this.generateInputSource(this.videoConfig, '-i ' + uVideoStream.url).split(/\s+/);
                 } catch (err) {
                     this.log.error(this.cameraName + ' Unable to start the livestream: ' + err as string);
                 }
@@ -507,12 +489,12 @@ export class StreamingDelegate implements CameraStreamingDelegate {
             const vcodec = this.videoConfig.vcodec || 'libx264';
             const mtu = this.videoConfig.packetSize || 1128; // request.video.mtu is not used
 
-            let fps = videoConfig.maxFPS && videoConfig.forceMax ? videoConfig.maxFPS : request.video.fps;
+            let fps = this.videoConfig.maxFPS && this.videoConfig.forceMax ? this.videoConfig.maxFPS : request.video.fps;
             let videoBitrate =
-                videoConfig.maxBitrate && videoConfig.forceMax ? videoConfig.maxBitrate : request.video.max_bit_rate;
+                this.videoConfig.maxBitrate && this.videoConfig.forceMax ? this.videoConfig.maxBitrate : request.video.max_bit_rate;
             let bufsize = request.video.max_bit_rate * 2;
             let maxrate = request.video.max_bit_rate;
-            let encoderOptions = videoConfig.encoderOptions;
+            let encoderOptions = this.videoConfig.encoderOptions;
 
             if (vcodec === 'copy') {
                 resolution.width = 0;
@@ -528,7 +510,7 @@ export class StreamingDelegate implements CameraStreamingDelegate {
             const resolutionText =
                 vcodec === 'copy'
                     ? 'native'
-                    : `${resolution.width}x${resolution.height}, ${fps} fps, ${videoBitrate} kbps ${videoConfig.audio ? ' (' + request.audio.codec + ')' : ''
+                    : `${resolution.width}x${resolution.height}, ${fps} fps, ${videoBitrate} kbps ${this.videoConfig.audio ? ' (' + request.audio.codec + ')' : ''
                     }`;
 
             this.log.info(this.cameraName, `Starting video stream: ${resolutionText}`);
@@ -543,8 +525,8 @@ export class StreamingDelegate implements CameraStreamingDelegate {
 
             // ffmpegArgs.push('-use_wallclock_as_timestamps 1');
 
-            if (!inputChanged && !prebufferInput && videoConfig.mapvideo) {
-                ffmpegArgs.push('-map', videoConfig.mapvideo);
+            if (!inputChanged && !prebufferInput && this.videoConfig.mapvideo) {
+                ffmpegArgs.push('-map', this.videoConfig.mapvideo);
             } else {
                 ffmpegArgs.push('-an', '-sn', '-dn');
             }

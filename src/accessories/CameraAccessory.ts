@@ -22,7 +22,7 @@ export class CameraAccessory extends DeviceAccessory {
   protected service: Service;
   protected CameraService: Service;
 
-  protected readonly cameraConfig: CameraConfig;
+  public readonly cameraConfig: CameraConfig;
 
   constructor(
     platform: EufySecurityPlatform,
@@ -45,15 +45,8 @@ export class CameraAccessory extends DeviceAccessory {
 
         this.CameraService.setPrimaryService(true);
 
-        this.cameraConfig = {
-          'name': this.eufyDevice.getName(),
-          'videoConfig': {
-            'stillImageSource': '',
-            'vcodec': this.platform.config.codec,
-            'audio': true,
-            'debug': this.platform.config.ffmpegdebug,
-          } as VideoConfig,
-        };
+        this.cameraConfig = this.getCameraConfig();
+        this.platform.log.debug(this.accessory.displayName, 'config is:', this.cameraConfig);
 
         const delegate = new StreamingDelegate(this.platform, eufyDevice, this.cameraConfig, this.platform.api, this.platform.api.hap);
         accessory.configureController(delegate.controller);
@@ -70,7 +63,8 @@ export class CameraAccessory extends DeviceAccessory {
     }
 
     try {
-      if (this.eufyDevice.hasProperty('enabled') && this.platform.config.enableButton) {
+      this.platform.log.debug(this.accessory.displayName, 'enableButton config:', this.cameraConfig.enableButton);
+      if (this.eufyDevice.hasProperty('enabled') && this.cameraConfig.enableButton) {
         this.platform.log.debug(this.accessory.displayName, 'has a isEnabled, so append switchEnabledService characteristic to him.');
 
         const switchEnabledService =
@@ -94,7 +88,8 @@ export class CameraAccessory extends DeviceAccessory {
     }
 
     try {
-      if (this.eufyDevice.hasProperty('motionDetection') && this.platform.config.motionButton) {
+      this.platform.log.debug(this.accessory.displayName, 'motionButton config:', this.cameraConfig.motionButton);
+      if (this.eufyDevice.hasProperty('motionDetection') && this.cameraConfig.motionButton) {
         this.platform.log.debug(this.accessory.displayName, 'has a isMotionDetectionEnabled, so append switchMotionService characteristic to him.');
 
         const switchMotionService =
@@ -140,6 +135,37 @@ export class CameraAccessory extends DeviceAccessory {
     } catch (Error) {
       this.platform.log.error(this.accessory.displayName, 'raise error to check and attach switchLightService.', Error);
     }
+  }
+
+  private getCameraVideoConfig(videoConfig) {
+    const config = { ...videoConfig };
+
+    config.audio = config.audio || true;
+    
+    config.maxWidth = config.maxWidth || 1280;
+    config.maxHeight = config.maxHeight || 720;
+    config.maxFPS = config.maxFPS >= 20 ? videoConfig.maxFPS : 30;
+    config.maxStreams = config.maxStreams >= 1 ? videoConfig.maxStreams : 2;
+    config.maxBitrate = config.maxBitrate || 299;
+    config.vcodec = config.vcodec || 'libx264';
+    config.acodec = config.acodec || 'libfdk_aac';
+    config.encoderOptions = config.encoderOptions || '-preset ultrafast -tune zerolatency';
+    config.packetSize = config.packetSize || 1128;
+
+    return config;
+  }
+
+  private getCameraConfig() {
+    var pos = this.platform.config.cameras.map(function (e) { return e.serialNumber; }).indexOf(this.eufyDevice.getSerial());
+    var config = { ...this.platform.config.cameras[pos] };
+
+    config.name = config.name ??= this.accessory.displayName;
+    config.enableButton = config.enableButton ??= true;
+    config.motionButton = config.motionButton ??= true;
+
+    config.videoConfig = this.getCameraVideoConfig(config.videoConfig);
+
+    return config;
   }
 
   private cameraFunction(
