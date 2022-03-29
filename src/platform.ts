@@ -318,16 +318,16 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
   private register_accessory(
     accessory: PlatformAccessory,
     container: DeviceContainer,
-    exist: boolean
+    exist: boolean,
   ) {
 
     this.log.debug(accessory.displayName, 'UUID:', accessory.UUID);
 
-    var unbridge: boolean = false;
+    let unbridge = false;
 
-    var station = container.deviceIdentifier.station;
-    var type = container.deviceIdentifier.type;
-    var device = container.eufyDevice;
+    const station = container.deviceIdentifier.station;
+    const type = container.deviceIdentifier.type;
+    const device = container.eufyDevice;
 
     /* Under development area
 
@@ -352,6 +352,8 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
         }
       }
     }
+
+    let a;
 
     switch (type) {
       case DeviceType.STATION:
@@ -382,14 +384,14 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
       case DeviceType.FLOODLIGHT_CAMERA_8422:
       case DeviceType.FLOODLIGHT_CAMERA_8423:
       case DeviceType.FLOODLIGHT_CAMERA_8424:
-        var a = new CameraAccessory(this, accessory, device as Camera);
+        a = new CameraAccessory(this, accessory, device as Camera);
         unbridge = a.cameraConfig.unbridge ??= false;
         break;
       case DeviceType.DOORBELL:
       case DeviceType.BATTERY_DOORBELL:
       case DeviceType.BATTERY_DOORBELL_2:
-        var b = new DoorbellCameraAccessory(this, accessory, device as DoorbellCamera);
-        unbridge = b.cameraConfig.unbridge ??= false;
+        a = new DoorbellCameraAccessory(this, accessory, device as DoorbellCamera);
+        unbridge = a.cameraConfig.unbridge ??= false;
         break;
       case DeviceType.SENSOR:
         new EntrySensorAccessory(this, accessory, device as EntrySensor);
@@ -404,12 +406,7 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
         new SmartLockAccessory(this, accessory, device as Lock);
         break;
       default:
-        this.log.warn(
-          'This accessory is not compatible with HomeBridge Eufy Security plugin:',
-          accessory.displayName,
-          'Type:',
-          type,
-        );
+        this.log.warn('This accessory is not compatible with HomeBridge Eufy Security plugin:', accessory.displayName, 'Type:', type);
         return;
     }
 
