@@ -136,25 +136,7 @@ export class CameraAccessory extends DeviceAccessory {
       this.platform.log.error(this.accessory.displayName, 'raise error to check and attach switchLightService.', Error);
     }
   }
-
-  private getCameraVideoConfig(videoConfig) {
-    const config = { ...videoConfig };
-
-    config.audio = config.audio || true;
-    
-    config.maxWidth = config.maxWidth || 1280;
-    config.maxHeight = config.maxHeight || 720;
-    config.maxFPS = config.maxFPS >= 20 ? videoConfig.maxFPS : 30;
-    config.maxStreams = config.maxStreams >= 1 ? videoConfig.maxStreams : 2;
-    config.maxBitrate = config.maxBitrate || 299;
-    config.vcodec = config.vcodec || 'libx264';
-    config.acodec = config.acodec || 'libfdk_aac';
-    config.encoderOptions = config.encoderOptions || '-preset ultrafast -tune zerolatency';
-    config.packetSize = config.packetSize || 1128;
-
-    return config;
-  }
-
+  
   private getCameraConfig() {
     var pos = this.platform.config.cameras.map(function (e) { return e.serialNumber; }).indexOf(this.eufyDevice.getSerial());
     var config = { ...this.platform.config.cameras[pos] };
@@ -162,8 +144,6 @@ export class CameraAccessory extends DeviceAccessory {
     config.name = config.name ??= this.accessory.displayName;
     config.enableButton = config.enableButton ??= true;
     config.motionButton = config.motionButton ??= true;
-
-    config.videoConfig = this.getCameraVideoConfig(config.videoConfig);
 
     return config;
   }

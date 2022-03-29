@@ -37,6 +37,7 @@ import { NamePipeStream, StreamInput } from './UniversalStream';
 import { readFile } from 'fs';
 import path from 'path';
 import { promisify } from 'util';
+import { json } from 'stream/consumers';
 const readFileAsync = promisify(readFile),
     SnapshotUnavailablePath = require.resolve('../../media/Snapshot-Unavailable.png');
 
@@ -71,8 +72,7 @@ type ResolutionInfo = {
 type ActiveSession = {
     mainProcess?: FfmpegProcess;
     timeout?: NodeJS.Timeout;
-    vsocket?: Socket;
-    asocket?: Socket;
+    socket?: Socket;
     uVideoStream?: NamePipeStream;
     uAudioStream?: NamePipeStream;
 
@@ -92,7 +92,7 @@ export class StreamingDelegate implements CameraStreamingDelegate {
     private readonly log: Logger;
     private readonly cameraName: string;
     private readonly unbridge: boolean;
-    private readonly videoConfig: VideoConfig;
+    private videoConfig: VideoConfig;
     private readonly videoProcessor: string;
     readonly controller: CameraController;
     private snapshotPromise?: Promise<Buffer>;
@@ -419,12 +419,107 @@ export class StreamingDelegate implements CameraStreamingDelegate {
         callback(undefined, response);
     }
 
+    private generateVideoConfigSnapShot(videoConfig) {
+        const config = { ...videoConfig };
+
+        config.maxWidth = config.maxWidth || 640;
+        config.maxHeight = config.maxHeight || 480;
+        config.maxFPS = config.maxFPS >= 4 ? videoConfig.maxFPS : 10;
+        config.maxStreams = config.maxStreams >= 2 ? videoConfig.maxStreams : 2;
+        config.maxBitrate = config.maxBitrate || 99;
+        config.vcodec = config.vcodec || 'libx264';
+        config.packetSize = config.packetSize || 188;
+
+        return config;
+    }
+
+    private generateVideoConfig(videoConfig, request, appleDevice = "") {
+        let config = { ...videoConfig };
+
+        config.vcodec = config.vcodec ??= 'libx264';
+        config.acodec = config.acodec ??= 'libfdk_aac';
+        config.encoderOptions = config.encoderOptions ??= '-preset ultrafast -tune zerolatency';
+        config.packetSize = config.packetSize ??= 1128;
+        config.forceMax = config.forceMax ??= false;
+
+        switch (appleDevice) {
+
+            /**
+             * req:{"sessionID":"xxx","type":"start","video":{"codec":0,"profile":2,"level":2,"packetizationMode":0,"width":1280,"height":720,"fps":30,"pt":99,"ssrc":1671847285,"max_bit_rate":299,"rtcp_interval":0.5,"mtu":1378},"audio":{"codec":"AAC-eld","channel":1,"bit_rate":0,"sample_rate":16,"packet_time":30,"pt":110,"ssrc":xxx,"max_bit_rate":24,"rtcp_interval":5,"comfort_pt":13,"comfortNoiseEnabled":false}}
+             */
+
+            case "iPhone":
+                config.maxWidth = config.maxWidth || 1280;
+                config.maxHeight = config.maxHeight || 720;
+                config.maxFPS = config.maxFPS >= 24 ? videoConfig.maxFPS : 30;
+                config.maxStreams = config.maxStreams >= 2 ? videoConfig.maxStreams : 2;
+                config.maxBitrate = config.maxBitrate || 299;
+                break;
+
+            /**
+             * {"sessionID":"xxx","type":"start","video":{"codec":0,"profile":2,"level":2,"packetizationMode":0,"width":1920,"height":1080,"fps":30,"pt":99,"ssrc":1643739993,"max_bit_rate":802,"rtcp_interval":0.5,"mtu":1378},"audio":{"codec":"AAC-eld","channel":1,"bit_rate":0,"sample_rate":16,"packet_time":30,"pt":110,"ssrc":xxx,"max_bit_rate":24,"rtcp_interval":5,"comfort_pt":13,"comfortNoiseEnabled":false}}
+             */
+
+            case "iPad":
+                config.maxWidth = config.maxWidth || 1920;
+                config.maxHeight = config.maxHeight || 1080;
+                config.maxFPS = config.maxFPS >= 24 ? videoConfig.maxFPS : 30;
+                config.maxStreams = config.maxStreams >= 2 ? videoConfig.maxStreams : 2;
+                config.maxBitrate = config.maxBitrate || 802;
+                break;
+
+            /**
+             * req:{"sessionID":"xxx","type":"start","video":{"codec":0,"profile":2,"level":2,"packetizationMode":0,"width":320,"height":240,"fps":15,"pt":99,"ssrc":947616013,"max_bit_rate":68,"rtcp_interval":0.5,"mtu":1378},"audio":{"codec":"AAC-eld","channel":1,"bit_rate":0,"sample_rate":16,"packet_time":60,"pt":110,"ssrc":xxx,"max_bit_rate":24,"rtcp_interval":5,"comfort_pt":13,"comfortNoiseEnabled":false}}
+             */
+
+            case "AppleWatch":
+                config.maxWidth = config.maxWidth || 1920;
+                config.maxHeight = config.maxHeight || 1080;
+                config.maxFPS = config.maxFPS >= 24 ? videoConfig.maxFPS : 30;
+                config.maxStreams = config.maxStreams >= 2 ? videoConfig.maxStreams : 2;
+                config.maxBitrate = config.maxBitrate || 802;
+                break;
+
+            /**
+             * req:{"sessionID":"xxx","type":"start","video":{"codec":0,"profile":2,"level":2,"packetizationMode":0,"width":1280,"height":720,"fps":30,"pt":99,"ssrc":2211981671,"max_bit_rate":299,"rtcp_interval":0.5,"mtu":1378},"audio":{"codec":"AAC-eld","channel":1,"bit_rate":0,"sample_rate":16,"packet_time":30,"pt":110,"ssrc":xxx,"max_bit_rate":24,"rtcp_interval":5,"comfort_pt":13,"comfortNoiseEnabled":false}}
+             */
+
+            case "Mac":
+                config.maxWidth = config.maxWidth || 1280;
+                config.maxHeight = config.maxHeight || 720;
+                config.maxFPS = config.maxFPS >= 24 ? videoConfig.maxFPS : 30;
+                config.maxStreams = config.maxStreams >= 2 ? videoConfig.maxStreams : 2;
+                config.maxBitrate = config.maxBitrate || 299;
+                break;
+
+            /**
+             * req:{"sessionID":"xxx","type":"start","video":{"codec":0,"profile":2,"level":2,"packetizationMode":0,"width":1920,"height":1080,"fps":30,"pt":99,"ssrc":2685104393,"max_bit_rate":802,"rtcp_interval":0.5,"mtu":1378},"audio":{"codec":"AAC-eld","channel":1,"bit_rate":0,"sample_rate":16,"packet_time":30,"pt":110,"ssrc":xxx,"max_bit_rate":24,"rtcp_interval":5,"comfort_pt":13,"comfortNoiseEnabled":false}}
+             */
+
+            case "AppleTV":
+                config.maxWidth = config.maxWidth || 1920;
+                config.maxHeight = config.maxHeight || 1080;
+                config.maxFPS = config.maxFPS >= 24 ? videoConfig.maxFPS : 30;
+                config.maxStreams = config.maxStreams >= 2 ? videoConfig.maxStreams : 2;
+                config.maxBitrate = config.maxBitrate || 802;
+                break;
+
+            default:
+        }
+
+        return config;
+    }
+
     private generateInputSource(videoConfig, source) {
         let inputSource = source || videoConfig.source;
 
         if (inputSource) {
             if (videoConfig.readRate && !inputSource.includes('-re')) {
                 inputSource = `-re ${inputSource}`;
+            }
+
+            if (videoConfig.reconnect > 1 && !inputSource.includes("-reconnect")) {
+                inputSource = `-reconnect ${videoConfig.reconnect * 1} ${inputSource}`;
             }
 
             if (videoConfig.stimeout > 0 && !inputSource.includes('-stimeout')) {
@@ -485,18 +580,23 @@ export class StreamingDelegate implements CameraStreamingDelegate {
                 }
             }
 
+            this.log.debug(this.cameraName, 'req:' + JSON.stringify(request));
+
+            this.log.debug(this.cameraName, 'conf-b:' + JSON.stringify(this.videoConfig));
+
+            this.videoConfig = this.generateVideoConfig(this.videoConfig, request.video);
+
+            this.log.debug(this.cameraName, 'conf-a:' + JSON.stringify(this.videoConfig));
+
             const resolution = this.determineResolution(request.video, false);
-            const vcodec = this.videoConfig.vcodec || 'libx264';
-            const mtu = this.videoConfig.packetSize || 1128; // request.video.mtu is not used
 
             let fps = this.videoConfig.maxFPS && this.videoConfig.forceMax ? this.videoConfig.maxFPS : request.video.fps;
-            let videoBitrate =
-                this.videoConfig.maxBitrate && this.videoConfig.forceMax ? this.videoConfig.maxBitrate : request.video.max_bit_rate;
+            let videoBitrate = this.videoConfig.maxBitrate && this.videoConfig.forceMax ? this.videoConfig.maxBitrate : request.video.max_bit_rate;
             let bufsize = request.video.max_bit_rate * 2;
             let maxrate = request.video.max_bit_rate;
             let encoderOptions = this.videoConfig.encoderOptions;
 
-            if (vcodec === 'copy') {
+            if (this.videoConfig.vcodec === 'copy') {
                 resolution.width = 0;
                 resolution.height = 0;
                 resolution.videoFilter = undefined;
@@ -508,7 +608,7 @@ export class StreamingDelegate implements CameraStreamingDelegate {
             }
 
             const resolutionText =
-                vcodec === 'copy'
+                this.videoConfig.vcodec === 'copy'
                     ? 'native'
                     : `${resolution.width}x${resolution.height}, ${fps} fps, ${videoBitrate} kbps ${this.videoConfig.audio ? ' (' + request.audio.codec + ')' : ''
                     }`;
@@ -523,8 +623,6 @@ export class StreamingDelegate implements CameraStreamingDelegate {
                 ...ffmpegInput,
             ];
 
-            // ffmpegArgs.push('-use_wallclock_as_timestamps 1');
-
             if (!inputChanged && !prebufferInput && this.videoConfig.mapvideo) {
                 ffmpegArgs.push('-map', this.videoConfig.mapvideo);
             } else {
@@ -537,7 +635,7 @@ export class StreamingDelegate implements CameraStreamingDelegate {
 
             ffmpegArgs.push(
                 '-vcodec',
-                inputChanged ? (vcodec === 'copy' ? 'libx264' : vcodec) : vcodec,
+                inputChanged ? (this.videoConfig.vcodec === 'copy' ? 'libx264' : this.videoConfig.vcodec) : this.videoConfig.vcodec,
                 '-pix_fmt',
                 'yuv420p',
                 '-color_range',
@@ -573,7 +671,7 @@ export class StreamingDelegate implements CameraStreamingDelegate {
                 '-srtp_out_suite AES_CM_128_HMAC_SHA1_80',
                 '-srtp_out_params ' + sessionInfo.videoSRTP.toString('base64'),
                 'srtp://' + sessionInfo.address + ':' + sessionInfo.videoPort +
-                '?rtcpport=' + sessionInfo.videoPort + '&pkt_size=' + mtu,
+                '?rtcpport=' + sessionInfo.videoPort + '&pkt_size=' + this.videoConfig.packetSize,
             );
 
             if (request.audio.codec === AudioStreamingCodecType.OPUS || request.audio.codec === AudioStreamingCodecType.AAC_ELD) {
@@ -610,12 +708,12 @@ export class StreamingDelegate implements CameraStreamingDelegate {
 
             const activeSession: ActiveSession = {};
 
-            activeSession.vsocket = createSocket(sessionInfo.ipv6 ? 'udp6' : 'udp4');
-            activeSession.vsocket.on('error', (err: Error) => {
+            activeSession.socket = createSocket(sessionInfo.ipv6 ? 'udp6' : 'udp4');
+            activeSession.socket.on('error', (err: Error) => {
                 this.log.error(this.cameraName, 'Socket error: ' + err.message);
                 this.stopStream(request.sessionID);
             });
-            activeSession.vsocket.on('message', () => {
+            activeSession.socket.on('message', () => {
                 if (activeSession.timeout) {
                     clearTimeout(activeSession.timeout);
                 }
@@ -625,7 +723,7 @@ export class StreamingDelegate implements CameraStreamingDelegate {
                     this.stopStream(request.sessionID);
                 }, request.video.rtcp_interval * 5 * 1000);
             });
-            activeSession.vsocket.bind(sessionInfo.videoReturnPort);
+            activeSession.socket.bind(sessionInfo.videoReturnPort);
 
             activeSession.uVideoStream = uVideoStream;
             activeSession.uAudioStream = uAudioStream;
@@ -697,8 +795,7 @@ export class StreamingDelegate implements CameraStreamingDelegate {
                 this.log.error(this.cameraName, 'Error occurred terminating main FFmpeg process: ' + err);
             }
             try {
-                session.vsocket?.close();
-                session.asocket?.close();
+                session.socket?.close();
             } catch (err) {
                 this.log.error(this.cameraName, 'Error occurred closing socket: ' + err);
             }
