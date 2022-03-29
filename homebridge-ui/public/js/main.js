@@ -21,6 +21,7 @@ function updateFormFromConfig() {
     document.getElementById('country').value = pluginConfig.country ??= 'US';
     document.getElementById('countryInput1').value = pluginConfig.country ??= 'US';
     document.getElementById('CameraMaxLivestreamDuration').value = pluginConfig.CameraMaxLivestreamDuration ??= 30;
+    document.getElementById('cleanCache').checked = pluginConfig.cleanCache ??= true;
     homebridge.fixScrollHeight();
 }
 
@@ -38,6 +39,7 @@ function updateConfigFromForm() {
     pluginConfig.ignoreDevices = document.getElementById('ignoreDevices').value.split(",");
     pluginConfig.country = document.getElementById('country').value;
     pluginConfig.CameraMaxLivestreamDuration = parseInt(document.getElementById('CameraMaxLivestreamDuration').value);
+    pluginConfig.cleanCache = document.getElementById('cleanCache').checked;
 }
 
 function adjustPollingValue() {
