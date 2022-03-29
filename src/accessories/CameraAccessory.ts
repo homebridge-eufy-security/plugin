@@ -7,7 +7,7 @@ import { DeviceAccessory } from './Device';
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore  
-import { Camera, Device, PropertyName } from 'eufy-security-client';
+import { Camera, Device, PropertyName, VideoCodec } from 'eufy-security-client';
 import { StreamingDelegate } from './streamingDelegate';
 
 import { CameraConfig, VideoConfig } from './configTypes';
@@ -37,16 +37,33 @@ export class CameraAccessory extends DeviceAccessory {
 
     this.platform.log.debug(this.accessory.displayName, 'Constructed Camera');
 
+    this.cameraConfig = this.getCameraConfig();
+    this.platform.log.debug(this.accessory.displayName, 'config is:', this.cameraConfig);
+
     if (this.platform.config.enableCamera || (typeof this.eufyDevice.isDoorbell === 'function' && this.eufyDevice.isDoorbell())) {
       this.platform.log.debug(this.accessory.displayName, 'has a camera');
+
+      try {
+        if (this.cameraConfig.rtsp && this.eufyDevice.hasProperty('rtspStream')) {
+          if (this.eufyDevice.getPropertyValue(PropertyName.DeviceRTSPStream)) {
+            this.platform.log.debug(this.accessory.displayName, ': RTSP capabilities already enabled');
+          } else {
+            this.platform.log.debug(this.accessory.displayName, ': RTSP capabilities not enabled. You will need to do it manually!');
+            this.cameraConfig.rtsp = false;
+          }
+        } else {
+          this.platform.log.warn(this.accessory.displayName, 'Looks like not compatible with RTSP or this has been disabled within configuration');
+          this.cameraConfig.rtsp = false;
+        }
+      } catch (Error) {
+        this.platform.log.error(this.accessory.displayName, 'raise error while enabling RTSP capabilities.', Error);
+      }
+
       try {
         this.CameraService = this.cameraFunction(accessory);
         this.service = this.motionFunction(accessory);
 
         this.CameraService.setPrimaryService(true);
-
-        this.cameraConfig = this.getCameraConfig();
-        this.platform.log.debug(this.accessory.displayName, 'config is:', this.cameraConfig);
 
         const delegate = new StreamingDelegate(this.platform, eufyDevice, this.cameraConfig, this.platform.api, this.platform.api.hap);
         accessory.configureController(delegate.controller);
@@ -64,7 +81,7 @@ export class CameraAccessory extends DeviceAccessory {
 
     try {
       this.platform.log.debug(this.accessory.displayName, 'enableButton config:', this.cameraConfig.enableButton);
-      if (this.eufyDevice.hasProperty('enabled') && this.cameraConfig.enableButton) {
+      if (this.cameraConfig.enableButton && this.eufyDevice.hasProperty('enabled')) {
         this.platform.log.debug(this.accessory.displayName, 'has a isEnabled, so append switchEnabledService characteristic to him.');
 
         const switchEnabledService =
@@ -89,7 +106,7 @@ export class CameraAccessory extends DeviceAccessory {
 
     try {
       this.platform.log.debug(this.accessory.displayName, 'motionButton config:', this.cameraConfig.motionButton);
-      if (this.eufyDevice.hasProperty('motionDetection') && this.cameraConfig.motionButton) {
+      if (this.cameraConfig.motionButton && this.eufyDevice.hasProperty('motionDetection')) {
         this.platform.log.debug(this.accessory.displayName, 'has a isMotionDetectionEnabled, so append switchMotionService characteristic to him.');
 
         const switchMotionService =
@@ -136,7 +153,7 @@ export class CameraAccessory extends DeviceAccessory {
       this.platform.log.error(this.accessory.displayName, 'raise error to check and attach switchLightService.', Error);
     }
   }
-  
+
   private getCameraConfig() {
     var pos = this.platform.config.cameras.map(function (e) { return e.serialNumber; }).indexOf(this.eufyDevice.getSerial());
     var config = { ...this.platform.config.cameras[pos] };
@@ -144,6 +161,8 @@ export class CameraAccessory extends DeviceAccessory {
     config.name = config.name ??= this.accessory.displayName;
     config.enableButton = config.enableButton ??= true;
     config.motionButton = config.motionButton ??= true;
+    config.rtsp = config.rtsp ??= false;
+    config.videoConfig = config.videoConfig ??= {};
 
     return config;
   }

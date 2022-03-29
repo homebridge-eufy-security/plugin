@@ -92,6 +92,7 @@ export class StreamingDelegate implements CameraStreamingDelegate {
     private readonly log: Logger;
     private readonly cameraName: string;
     private readonly unbridge: boolean;
+    private cameraConfig: CameraConfig;
     private videoConfig: VideoConfig;
     private readonly videoProcessor: string;
     readonly controller: CameraController;
@@ -116,6 +117,7 @@ export class StreamingDelegate implements CameraStreamingDelegate {
 
         this.cameraName = device.getName()!;
         this.unbridge = false;
+        this.cameraConfig = cameraConfig;
         this.videoConfig = cameraConfig.videoConfig!;
         this.videoProcessor = ffmpegPath || 'ffmpeg';
 
@@ -567,6 +569,16 @@ export class StreamingDelegate implements CameraStreamingDelegate {
             } else if (false) {
                 ffmpegInput = ['-re', '-loop', '1', '-i', privacyImage];
                 inputChanged = true;
+            } else if (this.cameraConfig.rtsp) {
+
+                let url = this.device.getPropertyValue(PropertyName.DeviceRTSPStreamUrl).value;
+
+                this.platform.log.debug(this.cameraName, 'RSTP URL: ' + url);
+
+                this.videoConfig.source = '' + url;
+
+                ffmpegInput = this.generateInputSource(this.videoConfig, '-i ' + this.videoConfig.source).split(/\s+/);
+
             } else {
                 try {
                     const streamData = await this.getLocalLiveStream().catch(err => {
@@ -580,13 +592,7 @@ export class StreamingDelegate implements CameraStreamingDelegate {
                 }
             }
 
-            this.log.debug(this.cameraName, 'req:' + JSON.stringify(request));
-
-            this.log.debug(this.cameraName, 'conf-b:' + JSON.stringify(this.videoConfig));
-
             this.videoConfig = this.generateVideoConfig(this.videoConfig, request.video);
-
-            this.log.debug(this.cameraName, 'conf-a:' + JSON.stringify(this.videoConfig));
 
             const resolution = this.determineResolution(request.video, false);
 
@@ -675,7 +681,10 @@ export class StreamingDelegate implements CameraStreamingDelegate {
             );
 
             if (request.audio.codec === AudioStreamingCodecType.OPUS || request.audio.codec === AudioStreamingCodecType.AAC_ELD) {
-                ffmpegArgs.push(`-i ${uAudioStream.url}`);
+
+                if (!this.cameraConfig.rtsp) {
+                    ffmpegArgs.push(`-i ${uAudioStream.url}`);
+                }
 
                 ffmpegArgs.push( // Audio
                     (this.videoConfig.mapaudio ? '-map ' + this.videoConfig.mapaudio : '-vn -sn -dn'),
@@ -731,13 +740,15 @@ export class StreamingDelegate implements CameraStreamingDelegate {
             activeSession.mainProcess = new FfmpegProcess(this.cameraName, request.sessionID, this.videoProcessor,
                 clean_ffmpegArgs, this.log, this.videoConfig.debug, this, callback);
 
-            // streamData.station.on('livestream stop', (station: Station, channel: number) => {
-            //     if (this.platform.eufyClient.getStationDevice(station.getSerial(), channel).getSerial() === this.device.getSerial()) {
-            //         this.log.info(this.cameraName, 'Eufy Station stopped the stream. Stopping stream.');
-            //         this.controller.forceStopStreamingSession(request.sessionID);
-            //         this.stopStream(request.sessionID);
-            //     }
-            // });
+            if (!this.cameraConfig.rtsp) {
+                // streamData.station.on('livestream stop', (station: Station, channel: number) => {
+                //     if (this.platform.eufyClient.getStationDevice(station.getSerial(), channel).getSerial() === this.device.getSerial()) {
+                //         this.log.info(this.cameraName, 'Eufy Station stopped the stream. Stopping stream.');
+                //         this.controller.forceStopStreamingSession(request.sessionID);
+                //         this.stopStream(request.sessionID);
+                //     }
+                // });
+            }
 
             // Check if the pendingSession has been stopped before it was successfully started.
             const pendingSession = this.pendingSessions.get(request.sessionID);
@@ -800,13 +811,17 @@ export class StreamingDelegate implements CameraStreamingDelegate {
                 this.log.error(this.cameraName, 'Error occurred closing socket: ' + err);
             }
             try {
-                session.uVideoStream?.close();
-                session.uAudioStream?.close();
+                if (!this.cameraConfig.rtsp) {
+                    session.uVideoStream?.close();
+                    session.uAudioStream?.close();
+                }
             } catch (err) {
                 this.log.error(this.cameraName, 'Error occurred Universal Stream: ' + err);
             }
             try {
-                this.platform.eufyClient.stopStationLivestream(this.device.getSerial());
+                if (!this.cameraConfig.rtsp) {
+                    this.platform.eufyClient.stopStationLivestream(this.device.getSerial());
+                }
             } catch (err) {
                 this.log.error(this.cameraName, 'Error occurred terminating Eufy Station livestream: ' + err);
             }
