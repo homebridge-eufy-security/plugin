@@ -52,7 +52,7 @@ export class CameraAccessory extends DeviceAccessory {
             this.cameraConfig.rtsp = false;
           }
         } else {
-          this.platform.log.warn(this.accessory.displayName, 'Looks like not compatible with RTSP or this has been disabled within configuration');
+          this.platform.log.debug(this.accessory.displayName, 'Looks like not compatible with RTSP or this has been disabled within configuration');
           this.cameraConfig.rtsp = false;
         }
       } catch (Error) {
@@ -81,7 +81,9 @@ export class CameraAccessory extends DeviceAccessory {
 
     try {
       this.platform.log.debug(this.accessory.displayName, 'enableButton config:', this.cameraConfig.enableButton);
-      if (this.cameraConfig.enableButton && this.eufyDevice.hasProperty('enabled')) {
+      if (this.platform.config.enableCamera
+        && this.cameraConfig.enableButton 
+        && this.eufyDevice.hasProperty('enabled')) {
         this.platform.log.debug(this.accessory.displayName, 'has a isEnabled, so append switchEnabledService characteristic to him.');
 
         const switchEnabledService =
@@ -98,7 +100,7 @@ export class CameraAccessory extends DeviceAccessory {
           .onSet(this.handleEnableSet.bind(this));
 
       } else {
-        this.platform.log.warn(this.accessory.displayName, 'Looks like not compatible with isEnabled or this has been disabled within configuration');
+        this.platform.log.debug(this.accessory.displayName, 'Looks like not compatible with isEnabled or this has been disabled within configuration');
       }
     } catch (Error) {
       this.platform.log.error(this.accessory.displayName, 'raise error to check and attach switchEnabledService.', Error);
@@ -106,7 +108,9 @@ export class CameraAccessory extends DeviceAccessory {
 
     try {
       this.platform.log.debug(this.accessory.displayName, 'motionButton config:', this.cameraConfig.motionButton);
-      if (this.cameraConfig.motionButton && this.eufyDevice.hasProperty('motionDetection')) {
+      if (this.platform.config.enableCamera
+        && this.cameraConfig.motionButton
+        && this.eufyDevice.hasProperty('motionDetection')) {
         this.platform.log.debug(this.accessory.displayName, 'has a isMotionDetectionEnabled, so append switchMotionService characteristic to him.');
 
         const switchMotionService =
@@ -123,7 +127,7 @@ export class CameraAccessory extends DeviceAccessory {
           .onSet(this.handleMotionOnSet.bind(this));
 
       } else {
-        this.platform.log.warn(this.accessory.displayName, 'Looks like not compatible with isMotionDetectionEnabled or this has been disabled within configuration');
+        this.platform.log.debug(this.accessory.displayName, 'Looks like not compatible with isMotionDetectionEnabled or this has been disabled within configuration');
       }
     } catch (Error) {
       this.platform.log.error(this.accessory.displayName, 'raise error to check and attach switchMotionService.', Error);
@@ -147,7 +151,7 @@ export class CameraAccessory extends DeviceAccessory {
           .onSet(this.handleLightOnSet.bind(this));
 
       } else {
-        this.platform.log.warn(this.accessory.displayName, 'Looks like not compatible with DeviceLight');
+        this.platform.log.debug(this.accessory.displayName, 'Looks like not compatible with DeviceLight');
       }
     } catch (Error) {
       this.platform.log.error(this.accessory.displayName, 'raise error to check and attach switchLightService.', Error);

@@ -68,7 +68,7 @@ export abstract class DeviceAccessory {
         }
 
       } else {
-        this.platform.log.warn(this.accessory.displayName, 'has no battery');
+        this.platform.log.debug(this.accessory.displayName, 'has no battery');
       }
     } catch (Error) {
       this.platform.log.error(this.accessory.displayName, 'raise error to check and attach a battery.', Error);

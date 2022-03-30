@@ -19,15 +19,16 @@ var CameraConfig = {
         "acodec": '',
         "videoFilter": '',
         "encoderOptions": '',
-        "probeSize": '',
-        "analyzeDuration": '',
+        "probeSize": 0,
+        "analyzeDuration": 0,
         "mapvideo": '',
-        "maxDelay": '',
-        "maxStreams": '',
-        "maxWidth": '',
-        "maxHeight": '',
-        "maxFPS": '',
-        "maxBitrate": '',
+        "mapaudio": '',
+        "maxDelay": 0,
+        "maxStreams": 0,
+        "maxWidth": 0,
+        "maxHeight": 0,
+        "maxFPS": 0,
+        "maxBitrate": 0,
     }
 }
 
@@ -455,6 +456,9 @@ function ConfigCameraFill(camera) {
         if (typeof config.videoConfig[key] === 'boolean') {
             document.getElementById('cc-videoConfig-' + key).checked = value;
         }
+        if (typeof CameraConfig.videoConfig[key] === 'number') {
+            document.getElementById('cc-videoConfig-' + key).value = value;
+        }
         if (typeof config.videoConfig[key] === 'string') {
             document.getElementById('cc-videoConfig-' + key).value = value;
         }
@@ -491,6 +495,9 @@ document.getElementById('confirm-camera-config').addEventListener('click', async
     Object.entries(CameraConfig.videoConfig).forEach(([key, value]) => {
         if (typeof CameraConfig.videoConfig[key] === 'boolean') {
             c.videoConfig[key] = document.getElementById('cc-videoConfig-' + key).checked;
+        }
+        if (typeof CameraConfig.videoConfig[key] === 'number') {
+            c.videoConfig[key] = parseInt(document.getElementById('cc-videoConfig-' + key).value);
         }
         if (typeof CameraConfig.videoConfig[key] === 'string') {
             c.videoConfig[key] = document.getElementById('cc-videoConfig-' + key).value;

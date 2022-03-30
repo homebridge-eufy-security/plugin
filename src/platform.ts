@@ -384,13 +384,13 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
       case DeviceType.FLOODLIGHT_CAMERA_8423:
       case DeviceType.FLOODLIGHT_CAMERA_8424:
         a = new CameraAccessory(this, accessory, device as Camera);
-        unbridge = a.cameraConfig.unbridge ??= false;
+        unbridge = (a.cameraConfig.enableCamera) ? a.cameraConfig.unbridge ??= false : false;
         break;
       case DeviceType.DOORBELL:
       case DeviceType.BATTERY_DOORBELL:
       case DeviceType.BATTERY_DOORBELL_2:
         a = new DoorbellCameraAccessory(this, accessory, device as DoorbellCamera);
-        unbridge = a.cameraConfig.unbridge ??= false;
+        unbridge = (a.cameraConfig.enableCamera) ? a.cameraConfig.unbridge ??= false : false;
         break;
       case DeviceType.SENSOR:
         new EntrySensorAccessory(this, accessory, device as EntrySensor);
@@ -410,8 +410,14 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
     }
 
     if (exist) {
-      this.api.updatePlatformAccessories([accessory]);
-      return;
+      if (!unbridge) {
+        this.log.info('Updating accessory:', accessory.displayName);
+        this.api.updatePlatformAccessories([accessory]);
+        return;
+      } else{
+        this.log.info(`Removing cached accessory ${accessory.UUID} ${accessory.displayName}`);
+        this.api.unregisterPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [accessory]);
+      }
     }
 
     if (unbridge) {
