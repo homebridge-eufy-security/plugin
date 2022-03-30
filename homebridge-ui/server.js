@@ -13,7 +13,14 @@ class UiServer extends HomebridgePluginUiServer {
 
     this.driver;
 
-    const storagePath = this.homebridgeStoragePath;
+    this.storagePath = this.homebridgeStoragePath + '/eufysecurity';
+
+    this.stations_file = this.storagePath + '/stations.json';
+
+    if (!fs.existsSync(this.storagePath)) {
+      fs.mkdirSync(this.storagePath);
+    }
+
     this.log = bunyan.createLogger({
       name: '[' + plugin.version + ']',
       hostname: '',
@@ -32,7 +39,7 @@ class UiServer extends HomebridgePluginUiServer {
 
     this.config = {
       language: 'en',
-      persistentDir: storagePath,
+      persistentDir: this.storagePath,
       p2pConnectionSetup: 0,
       pollingIntervalMinutes: 10,
       eventDurationSeconds: 10,
@@ -40,6 +47,7 @@ class UiServer extends HomebridgePluginUiServer {
     };
 
     // create request handlers
+    this.onRequest('/init', this.init.bind(this));
     this.onRequest('/auth', this.auth.bind(this));
     this.onRequest('/check-captcha', this.checkCaptcha.bind(this));
     this.onRequest('/check-otp', this.checkOtp.bind(this));
@@ -49,6 +57,16 @@ class UiServer extends HomebridgePluginUiServer {
 
     // must be called when the script is ready to accept connections
     this.ready();
+  }
+
+  async init(body) {
+
+    if (body) {
+      this.config['username'] = body.username;
+      this.config['password'] = body.password;
+      this.config['country'] = body.country ??= 'US';
+    }
+
   }
 
   async authenticate(verifyCodeOrCaptcha = null, captchaId = null) {
@@ -76,7 +94,7 @@ class UiServer extends HomebridgePluginUiServer {
             this.log.info('AuthResult.ERROR');
             return { result: 0 };
           default:
-            this.log.info('AuthResult.KO');
+            this.log.info('AuthResult.UNKNOW');
             return { result: 0 };
         }
 
@@ -98,13 +116,17 @@ class UiServer extends HomebridgePluginUiServer {
   /**
    * Handle requests sent to /request-otp
    */
-  async auth(body) {
+  async auth(body = null) {
 
-    this.config['username'] = body.username;
-    this.config['password'] = body.password;
-    this.config['country'] = body.country || 'US';
+    if (body) {
+      this.config['username'] = body.username;
+      this.config['password'] = body.password;
+      this.config['country'] = body.country ??= 'US';
+    }
 
-    this.log.info('country:', body.country || 'US');
+    this.log.info('config:', JSON.stringify(this.config));
+
+    this.log.info('country:', this.config['country']);
 
     this.driver = new EufySecurity(this.config, this.log);
 
@@ -131,7 +153,33 @@ class UiServer extends HomebridgePluginUiServer {
     return await this.authenticate(body.captcha, body.id);
   }
 
+  async needRefreshDevices() {
+
+    fs.stat(this.stations_file, (err, stat) => {
+      var endTime, now;
+
+      if (err) { this.log.error('error:', stat); return true; };
+
+      now = new Date().getTime();
+      endTime = new Date(stat.ctime).getTime() + 3600000;
+
+      // If file older than 1 hour it's not accurate
+      if (now > endTime) { return true; }
+
+    });
+
+    return false;
+  }
+
   async listDevices() {
+    try {
+      return JSON.parse(fs.readFileSync(this.stations_file, {encoding: 'utf-8'}));
+    } catch {
+      return null;
+    }
+  }
+
+  async refreshDevices() {
 
     try {
       const Eufy_stations = await this.driver.getStations();
@@ -149,6 +197,7 @@ class UiServer extends HomebridgePluginUiServer {
         }
 
         stations.push(object);
+
       }
 
       for (const device of Eufy_devices) {
@@ -164,6 +213,11 @@ class UiServer extends HomebridgePluginUiServer {
           if (o.uniqueId === object.station)
             a[i].devices.push(object);
         });
+
+      }
+
+      if (stations !== []) {
+        fs.writeFileSync(this.stations_file, JSON.stringify(stations));
       }
 
       return stations;
@@ -179,7 +233,7 @@ class UiServer extends HomebridgePluginUiServer {
   /**
    * Handle requests sent to /refreshData
    */
-  async refreshData(body) {
+  async refreshData() {
 
     if (this.driver.api.token && this.driver.connected == true) {
       try {
@@ -200,9 +254,11 @@ class UiServer extends HomebridgePluginUiServer {
   /**
    * Handle requests sent to /getStations
    */
-  async getStations(body) {
+  async getStations() {
 
-    if (this.driver.api.token && this.driver.connected == true) {
+    // Do we really need to ask Eufy ? cached is enough ?
+    if (!await this.needRefreshDevices()) {
+      this.log.debug('No need to refresh the devices list');
       try {
         const stations = await this.listDevices();
         return { result: 1, stations: stations }; // Connected
@@ -210,10 +266,23 @@ class UiServer extends HomebridgePluginUiServer {
         this.log.error('Error:', e.message);
         return { result: 0 }; // Error
       }
-    }
 
-    if (!this.driver.api.token && this.driver.connected == false) {
-      return { result: 0 }; // Wrong OTP
+    } else {
+      this.log.debug('Need to refresh the devices list');
+      try {
+        const r = await this.auth();
+        if (r.result = 3) {
+          await this.refreshData();
+          const stations = await this.refreshDevices();
+          return { result: 1, stations: stations }; // Connected
+        } else {
+          return { result: r.result };
+        }
+      } catch (e) {
+        this.log.error('Error:', e.message);
+        return { result: 0 }; // Error
+      }
+
     }
 
   }
@@ -221,17 +290,13 @@ class UiServer extends HomebridgePluginUiServer {
   /**
    * Handle requests sent to /reset
    */
-  async reset(body) {
-
-    const path = this.config['persistentDir'] + '/eufysecurity/persistent.json';
-
+  async reset() {
     try {
-      fs.unlinkSync(path);
+      fs.unlinkSync(this.storagePath + '/eufysecurity/persistent.json');
       return { result: 1 }; //file removed
     } catch (err) {
       return { result: 0 }; //error while removing the file
     }
-
   }
 }
 

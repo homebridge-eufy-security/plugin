@@ -78,3 +78,11 @@ img.logo {
 .divTableBody {
     display: table-row-group;
 }
+
+.showme {
+    display: none;
+}
+
+.showhim:hover ~ .showme {
+    display: block;
+}

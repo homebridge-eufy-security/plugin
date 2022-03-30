@@ -155,10 +155,15 @@ export class CameraAccessory extends DeviceAccessory {
   }
 
   private getCameraConfig() {
-    var pos = this.platform.config.cameras.map(function (e) { return e.serialNumber; }).indexOf(this.eufyDevice.getSerial());
-    var config = { ...this.platform.config.cameras[pos] };
 
-    config.name = config.name ??= this.accessory.displayName;
+    var config = {} as CameraConfig;
+
+    if (typeof this.platform.config.cameras !== 'undefined') {
+      var pos = this.platform.config.cameras.map(function (e) { return e.serialNumber; }).indexOf(this.eufyDevice.getSerial());
+      config = { ...this.platform.config.cameras[pos] };
+    }
+
+    config.name = this.accessory.displayName;
     config.enableButton = config.enableButton ??= true;
     config.motionButton = config.motionButton ??= true;
     config.rtsp = config.rtsp ??= false;

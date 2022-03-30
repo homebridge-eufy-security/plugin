@@ -126,14 +126,13 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
     }
 
     this.log.info('Country set:', this.config.country ?? 'US');
-    this.log.info('Unbridge set:', this.config.unbridge ?? 'false');
 
-    // moving persistent into our dedicated folder
+    // This function is here to avoid any break while moving from 1.0.x to 1.1.x
+    // moving persistent into our dedicated folder (this need to be removed after few release of 1.1.x)
     if (fs.existsSync(this.api.user.storagePath() + '/persistent.json')) {
       this.log.debug('An old persistent file have been found');
-      fs.rename(this.api.user.storagePath() + '/persistent.json', this.eufyPath + '/persistent.json', (err) => {
-        this.log.error('Unable to move the existing persistent file into the new folder ');
-      });
+      fs.copyFileSync(this.api.user.storagePath() + '/persistent.json', this.eufyPath + '/persistent.json', fs.constants.COPYFILE_EXCL);
+      fs.unlinkSync(this.api.user.storagePath() + '/persistent.json');
     }
 
     this.eufyClient = (this.config.enableDetailedLogging >= 1)

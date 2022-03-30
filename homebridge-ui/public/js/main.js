@@ -2,6 +2,35 @@ var pluginConfig = {
     platform: 'EufySecurity',
 };
 
+var isCamera = ['CAMERA', 'CAMERA2', 'CAMERA_E', 'CAMERA2C', 'INDOOR_CAMERA', 'INDOOR_PT_CAMERA', 'FLOODLIGHT', 'DOORBELL', 'BATTERY_DOORBELL', 'BATTERY_DOORBELL_2', 'CAMERA2C_PRO', 'CAMERA2_PRO', 'INDOOR_CAMERA_1080', 'INDOOR_PT_CAMERA_1080', 'SOLO_CAMERA', 'SOLO_CAMERA_PRO', 'SOLO_CAMERA_SPOTLIGHT_1080', 'SOLO_CAMERA_SPOTLIGHT_2K', 'SOLO_CAMERA_SPOTLIGHT_SOLAR', 'INDOOR_OUTDOOR_CAMERA_1080P', 'INDOOR_OUTDOOR_CAMERA_1080P_NO_LIGHT', 'INDOOR_OUTDOOR_CAMERA_2K', 'FLOODLIGHT_CAMERA_8422', 'FLOODLIGHT_CAMERA_8423', 'FLOODLIGHT_CAMERA_8424'];
+
+var CameraConfig = {
+    "enableCamera": false,
+    "enableButton": true,
+    "motionButton": true,
+    "rtsp": true,
+    "unbridge": true,
+    "videoConfig": {
+        "debug": false,
+        "audio": true,
+        "readRate": false,
+        "forceMax": false,
+        "vcodec": '',
+        "acodec": '',
+        "videoFilter": '',
+        "encoderOptions": '',
+        "probeSize": '',
+        "analyzeDuration": '',
+        "mapvideo": '',
+        "maxDelay": '',
+        "maxStreams": '',
+        "maxWidth": '',
+        "maxHeight": '',
+        "maxFPS": '',
+        "maxBitrate": '',
+    }
+}
+
 function updateFormFromConfig() {
     // populate the form
 
@@ -82,7 +111,9 @@ async function list_stations_devices(stations) {
 
     const s_div = document.getElementById('stations');
 
-    display_setupRequired('step3');
+    s_div.innerHTML = '';
+
+    display_box('step3');
 
     if (!stations.length) {
         s_div.innerHTML = '<span style="color:red; font-weight:bold;">Error: Nothing have been retreived!</span>';
@@ -118,9 +149,9 @@ async function list_stations_devices(stations) {
     h1.appendChild(r1);
     t1.appendChild(h1);
 
-    stations.forEach(function (item) {
+    stations.forEach(function (s_item) {
 
-        const checked = (isStationsIgnored(item.uniqueId)) ? ' checked' : '';
+        const checked = (isStationsIgnored(s_item.uniqueId)) ? ' checked' : '';
 
         const b1 = document.createElement("div");
         b1.setAttribute('class', 'divTableBody');
@@ -128,17 +159,17 @@ async function list_stations_devices(stations) {
         var r1 = document.createElement("div");
 
         r1.setAttribute('class', 'divTableRow' + checked);
-        r1.setAttribute('id', `s_${item.uniqueId}`);
+        r1.setAttribute('id', `s_${s_item.uniqueId}`);
 
         r1.innerHTML = `
-                    <div class="divTableCell">${item.displayName}</div>
-                    <div class="divTableCell">${item.uniqueId}</div>
-                    <div class="divTableCell">${item.type}</div>
-                    <div class="divTableCell"><input type="checkbox" class="ignore_stations" id="st_${item.uniqueId}" name="${item.uniqueId}"${checked} /></div>
+                    <div class="divTableCell">${s_item.displayName}</div>
+                    <div class="divTableCell">${s_item.uniqueId}</div>
+                    <div class="divTableCell">${s_item.type}</div>
+                    <div class="divTableCell"><input type="checkbox" class="ignore_stations" id="st_${s_item.uniqueId}" name="${s_item.uniqueId}"${checked} /></div>
                 `;
         b1.appendChild(r1);
 
-        item.devices.forEach(function (item) {
+        s_item.devices.forEach(function (item) {
 
             if (item.ignore) {
                 AddOrRemoveDevicesIgnoreList(item.uniqueId);
@@ -149,7 +180,17 @@ async function list_stations_devices(stations) {
             r2.setAttribute('id', `d_${item.uniqueId}`);
             r2.innerHTML = `
                     <div class="divTableCell">|--&nbsp;${item.displayName}</div>
+                    `;
+            if (isCamera.includes(item.type)) {
+                r2.innerHTML += `
+                    <div class="divTableCell"><a href="javascript:void(0)" id="conf_d_${item.uniqueId}">${item.uniqueId}</a></div>
+                    `;
+            } else {
+                r2.innerHTML += `
                     <div class="divTableCell">${item.uniqueId}</div>
+                    `;
+            }
+            r2.innerHTML += `
                     <div class="divTableCell">${item.type}</div>
                     <div class="divTableCell"><input type="checkbox" class="ignore_devices" id="dev_${item.uniqueId}" name="${item.uniqueId}"${checked} /></div>
                 `;
@@ -161,18 +202,22 @@ async function list_stations_devices(stations) {
 
     s_div.appendChild(t1);
 
-    stations.forEach(function (item) {
+    var st = 0;
 
-        document.getElementById(`st_${item.uniqueId}`).addEventListener('change', async e => {
+    stations.forEach(function (s_item) {
+
+        var ds = 0;
+
+        document.getElementById(`st_${s_item.uniqueId}`).addEventListener('change', async e => {
             if (e.target.checked) {
-                document.getElementById(`s_${item.uniqueId}`).setAttribute('class', 'divTableRow checked');
+                document.getElementById(`s_${s_item.uniqueId}`).setAttribute('class', 'divTableRow checked');
             } else {
-                document.getElementById(`s_${item.uniqueId}`).setAttribute('class', 'divTableRow');
+                document.getElementById(`s_${s_item.uniqueId}`).setAttribute('class', 'divTableRow');
             }
-            await AddOrRemoveStationsIgnoreList(item.uniqueId);
+            await AddOrRemoveStationsIgnoreList(s_item.uniqueId);
         });
 
-        item.devices.forEach(function (item) {
+        s_item.devices.forEach(function (item) {
 
             document.getElementById(`dev_${item.uniqueId}`).addEventListener('change', async e => {
                 if (e.target.checked) {
@@ -183,7 +228,15 @@ async function list_stations_devices(stations) {
                 }
                 await AddOrRemoveDevicesIgnoreList(item.uniqueId);
             });
+            if (isCamera.includes(item.type)) {
+                this[item.uniqueId] = stations[st].devices[ds];
+                document.getElementById(`conf_d_${item.uniqueId}`).addEventListener('click', async e => {
+                    ConfigCameraFill(this[item.uniqueId]);
+                });
+            }
+            ds++;
         });
+        st++;
 
     });
 }
@@ -193,18 +246,20 @@ async function list_stations_devices(stations) {
     const pluginConfigBlocks = await homebridge.getPluginConfig();
 
     if (!pluginConfigBlocks.length || !pluginConfigBlocks[0].username || !pluginConfigBlocks[0].password) {
-        display_setupRequired('step1');
+        display_box('step1');
         if (pluginConfigBlocks[0])
             pluginConfig = pluginConfigBlocks[0];
         updateFormFromConfig();
     } else {
         pluginConfig = pluginConfigBlocks[0];
         updateFormFromConfig();
-        display_setupCompleted();
+        await homebridge.request('/init', { username: pluginConfig.username, password: pluginConfig.password, country: pluginConfig.country });
+        display_box('setupComplete');
     }
 
     adjustPollingValue();
     adjustCMLDPollingValue();
+
 })();
 
 // watch for changes to the config form
@@ -241,19 +296,23 @@ document.getElementById('advanced').addEventListener('click', async (e) => {
 
 document.querySelectorAll('.skip').forEach(item => {
     item.addEventListener('click', event => {
-        display_setupCompleted();
+        display_box('setupComplete');
     })
 });
 
 // startOver
 document.getElementById('startOver').addEventListener('click', async () => {
-    display_setupRequired('step1');
+    display_box('step1');
 });
 
+// list-devices
+document.getElementById('listDevices').addEventListener('click', async () => {
+    await getStations();
+});
 
 // Reset
 document.getElementById('reset').addEventListener('click', async () => {
-    display_reset();
+    display_box('reset-box');
 });
 
 // step 1 submit handler
@@ -273,21 +332,7 @@ document.querySelectorAll('.startover').forEach(item => {
         }
 
         try {
-            const response = await homebridge.request('/auth', { username: usernameValue, password: passwordValue, country: countryValue });
-            homebridge.hideSpinner();
-
-            if (response.result == 0) {
-                homebridge.toast.error("Wrong username or password");
-            } else {
-                if (response.result == 1)
-                    display_setupRequired('step2-captcha');
-                if (response.result == 2)
-                    display_setupRequired('step2-otp');
-                if (response.result == 3) {
-                    await refreshData();
-                    await getStations();
-                }
-            }
+            whatsnext('/auth', { username: usernameValue, password: passwordValue, country: countryValue });
         } catch (e) {
             homebridge.hideSpinner()
             homebridge.toast.error(e.message, 'Error');
@@ -295,26 +340,18 @@ document.querySelectorAll('.startover').forEach(item => {
     })
 });
 
-function display_setupCompleted(display) {
-    document.getElementById('setupComplete').style.display = 'block';
-    document.getElementById('setupRequired').style.display = 'none';
-    document.getElementById('reset-box').style.display = 'none';
-}
+function display_box(display) {
+    const bloc_main = ['setupComplete', 'setupRequired', 'reset-box', 'camera-config-box'];
+    const bloc_setup = ['step1', 'step2-captcha', 'step2-otp', 'step3'];
 
-function display_reset(display) {
-    document.getElementById('setupComplete').style.display = 'none';
-    document.getElementById('setupRequired').style.display = 'none';
-    document.getElementById('reset-box').style.display = 'block';
-}
+    bloc_main.forEach(e => {
+        document.getElementById(e).style.display = (e === display) ? 'block' : 'none';
+    });
 
-function display_setupRequired(display) {
-    const bloc = ['step1', 'step2-captcha', 'step2-otp', 'step3'];
-
-    document.getElementById('setupComplete').style.display = 'none';
-    document.getElementById('setupRequired').style.display = 'block';
-    document.getElementById('reset-box').style.display = 'none';
-
-    bloc.forEach(e => {
+    bloc_setup.forEach(e => {
+        if (e === display) {
+            document.getElementById('setupRequired').style.display = 'block';
+        }
         document.getElementById(e).style.display = (e === display) ? 'block' : 'none';
     });
 
@@ -347,6 +384,152 @@ async function getStations() {
     }
 }
 
+async function ConfigCamera() {
+    try {
+
+        homebridge.showSpinner();
+        homebridge.toast.info('Getting Devices....');
+        const response = await homebridge.request('/getStations');
+        homebridge.hideSpinner();
+
+        var camera_id = 0;
+        var cameras = pluginConfig.cameras;
+        var stations = response.stations;
+
+        ConfigCameraFill(cameras[camera_id]);
+
+    } catch (e) {
+        homebridge.hideSpinner();
+        homebridge.toast.error(e.message, 'Error');
+    }
+}
+
+function getConfigCamera(uniqueId) {
+
+    if (!pluginConfig.cameras) pluginConfig.cameras = [];
+
+    var pos = pluginConfig.cameras.map(function (e) { return e.serialNumber; }).indexOf(uniqueId);
+
+    if (pos === -1) {
+        return CameraConfig;
+    }
+
+    var d = pluginConfig.cameras[pos];
+    var c = CameraConfig;
+
+    d.videoConfig = { ...CameraConfig.videoConfig, ...pluginConfig.cameras[pos].videoConfig };
+    return { ...c, ...d };
+}
+
+document.querySelectorAll('input[type=radio]').forEach(item => {
+    item.addEventListener('change', event => {
+
+        document.getElementsByName(item.name).forEach(atem => {
+            atem.parentElement.classList.remove('active');
+        });
+
+        item.parentElement.classList.add('active');
+
+        if (item.name === "cc-enableCamera-btn") {
+            document.getElementById('camera-adv').style.display = (item.id === "cc-enableCamera-btn-true") ? 'block' : 'none';
+            document.getElementById('cc-enableCamera').checked = (item.id === "cc-enableCamera-btn-true") ? true : false;
+        }
+
+    })
+});
+
+function ConfigCameraFill(camera) {
+
+    var config = getConfigCamera(camera.uniqueId);
+
+    document.getElementById('cc-name').value = camera.displayName;
+    document.getElementById('cc-serialnumber').value = camera.uniqueId;
+
+    Object.entries(config).forEach(([key, value]) => {
+        if (typeof config[key] === 'boolean') {
+            document.getElementById('cc-' + key).checked = value;
+        }
+    });
+
+    Object.entries(config.videoConfig).forEach(([key, value]) => {
+        if (typeof config.videoConfig[key] === 'boolean') {
+            document.getElementById('cc-videoConfig-' + key).checked = value;
+        }
+        if (typeof config.videoConfig[key] === 'string') {
+            document.getElementById('cc-videoConfig-' + key).value = value;
+        }
+    });
+
+    document.getElementById('cc-enableCamera-btn-false').checked = !config.enableCamera;
+    document.getElementById('cc-enableCamera-btn-true').checked = config.enableCamera;
+
+    if (config.enableCamera) {
+        document.getElementById('cc-enableCamera-btn-false').parentElement.classList.remove('active');
+        document.getElementById('cc-enableCamera-btn-true').parentElement.classList.add('active');
+    } else {
+        document.getElementById('cc-enableCamera-btn-false').parentElement.classList.add('active');
+        document.getElementById('cc-enableCamera-btn-true').parentElement.classList.remove('active');
+    }
+
+    document.getElementById('camera-adv').style.display = (config.enableCamera) ? 'block' : 'none';
+
+    display_box('camera-config-box');
+}
+
+document.getElementById('confirm-camera-config').addEventListener('click', async () => {
+
+    var c = {...CameraConfig};
+
+    c['serialNumber'] = document.getElementById('cc-serialnumber').value;
+
+    Object.entries(CameraConfig).forEach(([key, value]) => {
+        if (typeof CameraConfig[key] === 'boolean') {
+            c[key] = document.getElementById('cc-' + key).checked;
+        }
+    });
+
+    Object.entries(CameraConfig.videoConfig).forEach(([key, value]) => {
+        if (typeof CameraConfig.videoConfig[key] === 'boolean') {
+            c.videoConfig[key] = document.getElementById('cc-videoConfig-' + key).checked;
+        }
+        if (typeof CameraConfig.videoConfig[key] === 'string') {
+            c.videoConfig[key] = document.getElementById('cc-videoConfig-' + key).value;
+        }
+    });
+
+    if (!pluginConfig.cameras) pluginConfig.cameras = [];
+
+    var pos = pluginConfig.cameras.map(function (e) { return e.serialNumber; }).indexOf(c['serialNumber']);
+
+    if (pos === -1) {
+        pluginConfig.cameras.push(c);
+    }
+
+    pluginConfig.cameras[pos] = c;
+    
+    await homebridge.updatePluginConfig([pluginConfig]);
+    await homebridge.savePluginConfig();
+
+});
+
+async function whatsnext(url, params) {
+    const response = await homebridge.request(url, params);
+
+    homebridge.hideSpinner();
+    if (response.result == 0) {
+        homebridge.toast.error("Wrong OTP");
+    } else {
+        if (response.result == 1)
+            display_box('step2-captcha');
+        if (response.result == 2)
+            display_box('step2-otp');
+        if (response.result == 3) {
+            await refreshData();
+            await getStations();
+        }
+    }
+}
+
 // step 2 captcha submit handler
 document.getElementById('step2-captcha-Submit').addEventListener('click', async () => {
     homebridge.showSpinner();
@@ -360,22 +543,7 @@ document.getElementById('step2-captcha-Submit').addEventListener('click', async 
     }
 
     try {
-        const response = await homebridge.request('/check-captcha', { id: captchaID, captcha: captchaInput });
-
-        homebridge.hideSpinner();
-        if (response.result == 0) {
-            homebridge.toast.error("Wrong OTP");
-        } else {
-            if (response.result == 1)
-                display_setupRequired('step2-captcha');
-            if (response.result == 2)
-                display_setupRequired('step2-otp');
-            if (response.result == 3) {
-                await refreshData();
-                await getStations();
-            }
-        }
-
+        await whatsnext('/check-captcha', { id: captchaID, captcha: captchaInput });
     } catch (e) {
         homebridge.hideSpinner()
         homebridge.toast.error(e.error || e.message, 'Error');
@@ -395,22 +563,7 @@ document.getElementById('step2-otp-Submit').addEventListener('click', async () =
     }
 
     try {
-        const response = await homebridge.request('/check-otp', { code: otpInput });
-
-        homebridge.hideSpinner();
-        if (response.result == 0) {
-            homebridge.toast.error("Wrong OTP");
-        } else {
-            if (response.result == 1)
-                display_setupRequired('step2-captcha');
-            if (response.result == 2)
-                display_setupRequired('step2-otp');
-            if (response.result == 3) {
-                await refreshData();
-                await getStations();
-            }
-        }
-
+        await whatsnext('/check-otp', { code: otpInput });
     } catch (e) {
         homebridge.hideSpinner()
         homebridge.toast.error(e.error || e.message, 'Error');
@@ -445,8 +598,6 @@ document.getElementById('reset-confirm-btn').addEventListener('click', async () 
 });
 
 homebridge.addEventListener('captcha', (e) => {
-    console.log(JSON.stringify(e.data.id));
-    console.log(JSON.stringify(e.data.captcha));
     document.getElementById('captcha-id').value = e.data.id;
     document.getElementById('captcha-img').innerHTML = '<img src="' + e.data.captcha + '" />';
 });
