@@ -124,10 +124,6 @@ class UiServer extends HomebridgePluginUiServer {
       this.config['country'] = body.country ??= 'US';
     }
 
-    this.log.info('config:', JSON.stringify(this.config));
-
-    this.log.info('country:', this.config['country']);
-
     this.driver = new EufySecurity(this.config, this.log);
 
     this.driver.api.on('captcha request', (id, captcha) => {
@@ -153,27 +149,26 @@ class UiServer extends HomebridgePluginUiServer {
     return await this.authenticate(body.captcha, body.id);
   }
 
-  async needRefreshDevices() {
+  async isNeedRefreshStationsCache() {
+    let endTime, now, stat;
 
-    fs.stat(this.stations_file, (err, stat) => {
-      var endTime, now;
-
-      if (err) { this.log.error('error:', stat); return true; };
-
+    try {
+      stat = fs.statSync(this.stations_file);
       now = new Date().getTime();
       endTime = new Date(stat.ctime).getTime() + 3600000;
 
-      // If file older than 1 hour it's not accurate
-      if (now > endTime) { return true; }
+      if (now > endTime) return true;
 
-    });
+    } catch {
+      return true;
+    }
 
     return false;
   }
 
-  async listDevices() {
+  async getCachedStations() {
     try {
-      return JSON.parse(fs.readFileSync(this.stations_file, {encoding: 'utf-8'}));
+      return JSON.parse(fs.readFileSync(this.stations_file, { encoding: 'utf-8' }));
     } catch {
       return null;
     }
@@ -257,32 +252,31 @@ class UiServer extends HomebridgePluginUiServer {
   async getStations() {
 
     // Do we really need to ask Eufy ? cached is enough ?
-    if (!await this.needRefreshDevices()) {
+    if (!await this.isNeedRefreshStationsCache()) {
       this.log.debug('No need to refresh the devices list');
       try {
-        const stations = await this.listDevices();
+        const stations = await this.getCachedStations();
         return { result: 1, stations: stations }; // Connected
       } catch (e) {
         this.log.error('Error:', e.message);
         return { result: 0 }; // Error
       }
 
-    } else {
-      this.log.debug('Need to refresh the devices list');
-      try {
-        const r = await this.auth();
-        if (r.result = 3) {
-          await this.refreshData();
-          const stations = await this.refreshDevices();
-          return { result: 1, stations: stations }; // Connected
-        } else {
-          return { result: r.result };
-        }
-      } catch (e) {
-        this.log.error('Error:', e.message);
-        return { result: 0 }; // Error
-      }
+    }
 
+    this.log.debug('Need to refresh the devices list');
+    try {
+      const r = await this.auth();
+      if (r.result = 3) {
+        await this.refreshData();
+        const stations = await this.refreshDevices();
+        return { result: 1, stations: stations }; // Connected
+      } else {
+        return { result: r.result };
+      }
+    } catch (e) {
+      this.log.error('Error:', e.message);
+      return { result: 0 }; // Error
     }
 
   }
@@ -292,7 +286,7 @@ class UiServer extends HomebridgePluginUiServer {
    */
   async reset() {
     try {
-      fs.unlinkSync(this.storagePath + '/eufysecurity/persistent.json');
+      fs.rmSync(this.storagePath, { recursive: true });
       return { result: 1 }; //file removed
     } catch (err) {
       return { result: 0 }; //error while removing the file

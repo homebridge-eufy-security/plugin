@@ -226,39 +226,43 @@ export class StreamingDelegate implements CameraStreamingDelegate {
         return new Promise(async (resolve, reject) => {
 
             try {
-                // try {
-                //     this.videoConfig.stillImageSource = '-i ' + this.device.getPropertyValue(PropertyName.DevicePictureUrl).value as string;
-                // } catch {
-                //     this.log.warn(this.cameraName + ' fetchSnapshot: ' + 'No Snapshot found');
-                //     resolve(await readFileAsync(SnapshotUnavailablePath));
-                // }
 
-
-                // const ffmpegArgs = (this.videoConfig.stillImageSource || this.videoConfig.source!) + // Still
-                // ' -frames:v 1' +
-                // (snapFilter ? ' -filter:v ' + snapFilter : '') +
-                // ' -f image2 -' +
-                // ' -hide_banner' +
-                // ' -loglevel ' + (this.platform.config.enableDetailedLogging >= 1 ? '+verbose' : 'error');
-
-                const streamData = await this.getLocalLiveStream().catch(err => {
-                    throw err;
-                });
-
-                this.log.debug('Received local livestream.');
+                try {
+                    this.videoConfig.stillImageSource = '-i ' + this.device.getPropertyValue(PropertyName.DevicePictureUrl).value as string;
+                } catch {
+                    this.log.warn(this.cameraName + ' fetchSnapshot: ' + 'No Snapshot found');
+                    resolve(await readFileAsync(SnapshotUnavailablePath));
+                }
 
                 const startTime = Date.now();
-                const ffmpegArgs = '-probesize 3000 -analyzeduration 0 -ss 00:00:00.500 -i pipe: -frames:v 1 -c:v copy' +
+                const ffmpegArgs = (this.videoConfig.stillImageSource || this.videoConfig.source!) + // Still
+                    ' -frames:v 1' +
                     (snapFilter ? ' -filter:v ' + snapFilter : '') +
                     ' -f image2 -' +
                     ' -hide_banner' +
-                    ' -loglevel ' + (this.platform.config.enableDetailedLogging >= 1 ? '+verbose' : 'error');
+                    ' -loglevel error';
 
                 this.log.debug(this.cameraName, 'Snapshot command: ' + this.videoProcessor + ' ' + ffmpegArgs, this.videoConfig.debug);
                 const ffmpeg = spawn(this.videoProcessor, ffmpegArgs.split(/\s+/), { env: process.env });
-                streamData.videostream.pipe(ffmpeg.stdin).on('error', (err) => {
-                    this.log.error(err.message, this.cameraName);
-                });
+
+                // const streamData = await this.getLocalLiveStream().catch(err => {
+                //     throw err;
+                // });
+
+                // this.log.debug('Received local livestream.');
+
+                // const startTime = Date.now();
+                // const ffmpegArgs = '-probesize 3000 -analyzeduration 0 -ss 00:00:00.500 -i pipe: -frames:v 1 -c:v copy' +
+                //     (snapFilter ? ' -filter:v ' + snapFilter : '') +
+                //     ' -f image2 -' +
+                //     ' -hide_banner' +
+                //     ' -loglevel ' + (this.platform.config.enableDetailedLogging >= 1 ? '+verbose' : 'error');
+
+                // this.log.debug(this.cameraName, 'Snapshot command: ' + this.videoProcessor + ' ' + ffmpegArgs, this.videoConfig.debug);
+                // const ffmpeg = spawn(this.videoProcessor, ffmpegArgs.split(/\s+/), { env: process.env });
+                // streamData.videostream.pipe(ffmpeg.stdin).on('error', (err) => {
+                //     this.log.error(err.message, this.cameraName);
+                // });
 
                 let snapshotBuffer = Buffer.alloc(0);
                 ffmpeg.stdout.on('data', (data) => {
@@ -593,6 +597,8 @@ export class StreamingDelegate implements CameraStreamingDelegate {
             }
 
             this.videoConfig = this.generateVideoConfig(this.videoConfig, request.video);
+
+            this.log.debug(this.cameraName, 'VIDEOCONFIG: ' + JSON.stringify(this.videoConfig));
 
             const resolution = this.determineResolution(request.video, false);
 

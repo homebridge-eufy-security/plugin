@@ -176,6 +176,7 @@ export class StationAccessory {
     }
     try {
       const currentValue = this.eufyStation.getPropertyValue(PropertyName.StationCurrentMode);
+      if(currentValue.value === -1) throw 'Something wrong with this device';
       this.platform.log.debug(this.accessory.displayName, 'GET StationCurrentMode:', currentValue);
       return this.convertEufytoHK(currentValue.value) as number;
     } catch {
@@ -190,6 +191,7 @@ export class StationAccessory {
   handleSecuritySystemTargetStateGet(): CharacteristicValue {
     try {
       const currentValue = this.eufyStation.getPropertyValue(PropertyName.StationCurrentMode);
+      if(currentValue.value === -1) throw 'Something wrong with this device';
       this.platform.log.debug(this.accessory.displayName, 'GET StationCurrentMode:', currentValue);
       return this.convertEufytoHK(currentValue.value) as number;
     } catch {

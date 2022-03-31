@@ -40,7 +40,7 @@ export class CameraAccessory extends DeviceAccessory {
     this.cameraConfig = this.getCameraConfig();
     this.platform.log.debug(this.accessory.displayName, 'config is:', this.cameraConfig);
 
-    if (this.platform.config.enableCamera || (typeof this.eufyDevice.isDoorbell === 'function' && this.eufyDevice.isDoorbell())) {
+    if (this.cameraConfig.enableCamera || (typeof this.eufyDevice.isDoorbell === 'function' && this.eufyDevice.isDoorbell())) {
       this.platform.log.debug(this.accessory.displayName, 'has a camera');
 
       try {
@@ -81,8 +81,8 @@ export class CameraAccessory extends DeviceAccessory {
 
     try {
       this.platform.log.debug(this.accessory.displayName, 'enableButton config:', this.cameraConfig.enableButton);
-      if (this.platform.config.enableCamera
-        && this.cameraConfig.enableButton 
+      if (this.cameraConfig.enableCamera
+        && this.cameraConfig.enableButton
         && this.eufyDevice.hasProperty('enabled')) {
         this.platform.log.debug(this.accessory.displayName, 'has a isEnabled, so append switchEnabledService characteristic to him.');
 
@@ -108,7 +108,7 @@ export class CameraAccessory extends DeviceAccessory {
 
     try {
       this.platform.log.debug(this.accessory.displayName, 'motionButton config:', this.cameraConfig.motionButton);
-      if (this.platform.config.enableCamera
+      if (this.cameraConfig.enableCamera
         && this.cameraConfig.motionButton
         && this.eufyDevice.hasProperty('motionDetection')) {
         this.platform.log.debug(this.accessory.displayName, 'has a isMotionDetectionEnabled, so append switchMotionService characteristic to him.');
@@ -171,7 +171,11 @@ export class CameraAccessory extends DeviceAccessory {
     config.enableButton = config.enableButton ??= true;
     config.motionButton = config.motionButton ??= true;
     config.rtsp = config.rtsp ??= false;
+    config.videoConfigEna = config.videoConfigEna ??= false;
     config.videoConfig = config.videoConfig ??= {};
+
+    if (config.videoConfigEna === false)
+      config.videoConfig = {};
 
     return config;
   }
@@ -215,12 +219,12 @@ export class CameraAccessory extends DeviceAccessory {
         .onSet(this.handleHomeKitCameraOperatingModeIndicatorSet.bind(this));
     }
 
-    if (this.eufyDevice.hasProperty('nightvision')) {
-      service
-        .getCharacteristic(this.characteristic.NightVision)
-        .onGet(this.handleHomeKitNightVisionGet.bind(this))
-        .onSet(this.handleHomeKitNightVisionSet.bind(this));
-    }
+    // if (this.eufyDevice.hasProperty('nightvision')) {
+    //   service
+    //     .getCharacteristic(this.characteristic.NightVision)
+    //     .onGet(this.handleHomeKitNightVisionGet.bind(this))
+    //     .onSet(this.handleHomeKitNightVisionSet.bind(this));
+    // }
 
     return service as Service;
   }

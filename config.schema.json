@@ -10,13 +10,13 @@
         "title": "Eufy username",
         "type": "string",
         "required": true,
-        "discription": "Eufy username/email"
+        "description": "Eufy username/email"
       },
       "password": {
         "title": "Eufy Password",
         "type": "string",
         "required": true,
-        "discription": "Eufy password"
+        "description": "Eufy password"
       },
       "enableDetailedLogging": {
         "title": "Enable Detailed Logging?",

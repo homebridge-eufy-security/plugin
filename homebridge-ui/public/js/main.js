@@ -4,12 +4,29 @@ var pluginConfig = {
 
 var isCamera = ['CAMERA', 'CAMERA2', 'CAMERA_E', 'CAMERA2C', 'INDOOR_CAMERA', 'INDOOR_PT_CAMERA', 'FLOODLIGHT', 'DOORBELL', 'BATTERY_DOORBELL', 'BATTERY_DOORBELL_2', 'CAMERA2C_PRO', 'CAMERA2_PRO', 'INDOOR_CAMERA_1080', 'INDOOR_PT_CAMERA_1080', 'SOLO_CAMERA', 'SOLO_CAMERA_PRO', 'SOLO_CAMERA_SPOTLIGHT_1080', 'SOLO_CAMERA_SPOTLIGHT_2K', 'SOLO_CAMERA_SPOTLIGHT_SOLAR', 'INDOOR_OUTDOOR_CAMERA_1080P', 'INDOOR_OUTDOOR_CAMERA_1080P_NO_LIGHT', 'INDOOR_OUTDOOR_CAMERA_2K', 'FLOODLIGHT_CAMERA_8422', 'FLOODLIGHT_CAMERA_8423', 'FLOODLIGHT_CAMERA_8424'];
 
+var EufyPluginConfig = {
+    "username": '',
+    "password": '',
+    "pollingIntervalMinutes": 30,
+    "hkHome": '1',
+    "hkAway": '0',
+    "hkNight": '3',
+    "hkOff": '63',
+    "enableDetailedLogging": false,
+    "ignoreStations": [],
+    "ignoreDevices": [],
+    "country": 'US',
+    "CameraMaxLivestreamDuration": 30,
+    "cleanCache": true
+}
+
 var CameraConfig = {
     "enableCamera": false,
     "enableButton": true,
     "motionButton": true,
     "rtsp": true,
     "unbridge": true,
+    "videoConfigEna": false,
     "videoConfig": {
         "debug": false,
         "audio": true,
@@ -32,65 +49,314 @@ var CameraConfig = {
     }
 }
 
-function updateFormFromConfig() {
-    // populate the form
+var countries = {
+    "AF": "Afghanistan",
+    "AX": "Aland Islands",
+    "AL": "Albania",
+    "DZ": "Algeria",
+    "AS": "American Samoa",
+    "AD": "Andorra",
+    "AO": "Angola",
+    "AI": "Anguilla",
+    "AQ": "Antarctica",
+    "AG": "Antigua and Barbuda",
+    "AR": "Argentina",
+    "AM": "Armenia",
+    "AW": "Aruba",
+    "AU": "Australia",
+    "AT": "Austria",
+    "AZ": "Azerbaijan",
+    "BS": "Bahamas",
+    "BH": "Bahrain",
+    "BD": "Bangladesh",
+    "BB": "Barbados",
+    "BY": "Belarus",
+    "BE": "Belgium",
+    "BZ": "Belize",
+    "BJ": "Benin",
+    "BM": "Bermuda",
+    "BT": "Bhutan",
+    "BO": "Bolivia",
+    "BQ": "Bonaire, Sint Eustatius and Saba",
+    "BA": "Bosnia and Herzegovina",
+    "BW": "Botswana",
+    "BV": "Bouvet Island",
+    "BR": "Brazil",
+    "IO": "British Indian Ocean Territory",
+    "BN": "Brunei Darussalam",
+    "BG": "Bulgaria",
+    "BF": "Burkina Faso",
+    "BI": "Burundi",
+    "KH": "Cambodia",
+    "CM": "Cameroon",
+    "CA": "Canada",
+    "CV": "Cape Verde",
+    "KY": "Cayman Islands",
+    "CF": "Central African Republic",
+    "TD": "Chad",
+    "CL": "Chile",
+    "CN": "China",
+    "CX": "Christmas Island",
+    "CC": "Cocos (Keeling) Islands",
+    "CO": "Colombia",
+    "KM": "Comoros",
+    "CG": "Congo",
+    "CD": "Congo, the Democratic Republic of the",
+    "CK": "Cook Islands",
+    "CR": "Costa Rica",
+    "CI": "Cote D'Ivoire",
+    "HR": "Croatia",
+    "CU": "Cuba",
+    "CW": "Curacao",
+    "CY": "Cyprus",
+    "CZ": "Czech Republic",
+    "DK": "Denmark",
+    "DJ": "Djibouti",
+    "DM": "Dominica",
+    "DO": "Dominican Republic",
+    "EC": "Ecuador",
+    "EG": "Egypt",
+    "SV": "El Salvador",
+    "GQ": "Equatorial Guinea",
+    "ER": "Eritrea",
+    "EE": "Estonia",
+    "ET": "Ethiopia",
+    "FK": "Falkland Islands (Malvinas)",
+    "FO": "Faroe Islands",
+    "FJ": "Fiji",
+    "FI": "Finland",
+    "FR": "France",
+    "GF": "French Guiana",
+    "PF": "French Polynesia",
+    "TF": "French Southern Territories",
+    "GA": "Gabon",
+    "GM": "Gambia",
+    "GE": "Georgia",
+    "DE": "Germany",
+    "GH": "Ghana",
+    "GI": "Gibraltar",
+    "GR": "Greece",
+    "GL": "Greenland",
+    "GD": "Grenada",
+    "GP": "Guadeloupe",
+    "GU": "Guam",
+    "GT": "Guatemala",
+    "GG": "Guernsey",
+    "GN": "Guinea",
+    "GW": "Guinea-Bissau",
+    "GY": "Guyana",
+    "HT": "Haiti",
+    "HM": "Heard Island and Mcdonald Islands",
+    "VA": "Holy See (Vatican City State)",
+    "HN": "Honduras",
+    "HK": "Hong Kong",
+    "HU": "Hungary",
+    "IS": "Iceland",
+    "IN": "India",
+    "ID": "Indonesia",
+    "IR": "Iran, Islamic Republic of",
+    "IQ": "Iraq",
+    "IE": "Ireland",
+    "IM": "Isle of Man",
+    "IL": "Israel",
+    "IT": "Italy",
+    "JM": "Jamaica",
+    "JP": "Japan",
+    "JE": "Jersey",
+    "JO": "Jordan",
+    "KZ": "Kazakhstan",
+    "KE": "Kenya",
+    "KI": "Kiribati",
+    "KP": "Korea, Democratic People's Republic of",
+    "KR": "Korea, Republic of",
+    "XK": "Kosovo",
+    "KW": "Kuwait",
+    "KG": "Kyrgyzstan",
+    "LA": "Lao People's Democratic Republic",
+    "LV": "Latvia",
+    "LB": "Lebanon",
+    "LS": "Lesotho",
+    "LR": "Liberia",
+    "LY": "Libyan Arab Jamahiriya",
+    "LI": "Liechtenstein",
+    "LT": "Lithuania",
+    "LU": "Luxembourg",
+    "MO": "Macao",
+    "MK": "Macedonia, the Former Yugoslav Republic of",
+    "MG": "Madagascar",
+    "MW": "Malawi",
+    "MY": "Malaysia",
+    "MV": "Maldives",
+    "ML": "Mali",
+    "MT": "Malta",
+    "MH": "Marshall Islands",
+    "MQ": "Martinique",
+    "MR": "Mauritania",
+    "MU": "Mauritius",
+    "YT": "Mayotte",
+    "MX": "Mexico",
+    "FM": "Micronesia, Federated States of",
+    "MD": "Moldova, Republic of",
+    "MC": "Monaco",
+    "MN": "Mongolia",
+    "ME": "Montenegro",
+    "MS": "Montserrat",
+    "MA": "Morocco",
+    "MZ": "Mozambique",
+    "MM": "Myanmar",
+    "NA": "Namibia",
+    "NR": "Nauru",
+    "NP": "Nepal",
+    "NL": "Netherlands",
+    "AN": "Netherlands Antilles",
+    "NC": "New Caledonia",
+    "NZ": "New Zealand",
+    "NI": "Nicaragua",
+    "NE": "Niger",
+    "NG": "Nigeria",
+    "NU": "Niue",
+    "NF": "Norfolk Island",
+    "MP": "Northern Mariana Islands",
+    "NO": "Norway",
+    "OM": "Oman",
+    "PK": "Pakistan",
+    "PW": "Palau",
+    "PS": "Palestinian Territory, Occupied",
+    "PA": "Panama",
+    "PG": "Papua New Guinea",
+    "PY": "Paraguay",
+    "PE": "Peru",
+    "PH": "Philippines",
+    "PN": "Pitcairn",
+    "PL": "Poland",
+    "PT": "Portugal",
+    "PR": "Puerto Rico",
+    "QA": "Qatar",
+    "RE": "Reunion",
+    "RO": "Romania",
+    "RU": "Russian Federation",
+    "RW": "Rwanda",
+    "BL": "Saint Barthelemy",
+    "SH": "Saint Helena",
+    "KN": "Saint Kitts and Nevis",
+    "LC": "Saint Lucia",
+    "MF": "Saint Martin",
+    "PM": "Saint Pierre and Miquelon",
+    "VC": "Saint Vincent and the Grenadines",
+    "WS": "Samoa",
+    "SM": "San Marino",
+    "ST": "Sao Tome and Principe",
+    "SA": "Saudi Arabia",
+    "SN": "Senegal",
+    "RS": "Serbia",
+    "CS": "Serbia and Montenegro",
+    "SC": "Seychelles",
+    "SL": "Sierra Leone",
+    "SG": "Singapore",
+    "SX": "Sint Maarten",
+    "SK": "Slovakia",
+    "SI": "Slovenia",
+    "SB": "Solomon Islands",
+    "SO": "Somalia",
+    "ZA": "South Africa",
+    "GS": "South Georgia and the South Sandwich Islands",
+    "SS": "South Sudan",
+    "ES": "Spain",
+    "LK": "Sri Lanka",
+    "SD": "Sudan",
+    "SR": "Suriname",
+    "SJ": "Svalbard and Jan Mayen",
+    "SZ": "Swaziland",
+    "SE": "Sweden",
+    "CH": "Switzerland",
+    "SY": "Syrian Arab Republic",
+    "TW": "Taiwan, Province of China",
+    "TJ": "Tajikistan",
+    "TZ": "Tanzania, United Republic of",
+    "TH": "Thailand",
+    "TL": "Timor-Leste",
+    "TG": "Togo",
+    "TK": "Tokelau",
+    "TO": "Tonga",
+    "TT": "Trinidad and Tobago",
+    "TN": "Tunisia",
+    "TR": "Turk",
+    "TM": "Turkmenistan",
+    "TC": "Turks and Caicos Islands",
+    "TV": "Tuvalu",
+    "UG": "Uganda",
+    "UA": "Ukraine",
+    "AE": "United Arab Emirates",
+    "GB": "United Kingdom",
+    "US": "United States",
+    "UM": "United States Minor Outlying Islands",
+    "UY": "Uruguay",
+    "UZ": "Uzbekistan",
+    "VU": "Vanuatu",
+    "VE": "Venezuela",
+    "VN": "Viet Nam",
+    "VG": "Virgin Islands, British",
+    "VI": "Virgin Islands, U.s.",
+    "WF": "Wallis and Futuna",
+    "EH": "Western Sahara",
+    "YE": "Yemen",
+    "ZM": "Zambia",
+    "ZW": "Zimbabwe"
+};
 
-    document.getElementById('usernameInput').value = pluginConfig.username ??= '';
-    document.getElementById('passwordInput').value = pluginConfig.password ??= '';
-    document.getElementById('usernameInput1').value = pluginConfig.username ??= '';
-    document.getElementById('passwordInput1').value = pluginConfig.password ??= '';
-    document.getElementById('enableCamera').checked = pluginConfig.enableCamera ??= '';
-    document.getElementById('pollingIntervalMinutes').value = pluginConfig.pollingIntervalMinutes ??= 30;
-    document.getElementById('hkHome').value = pluginConfig.hkHome ??= '1';
-    document.getElementById('hkAway').value = pluginConfig.hkAway ??= '0';
-    document.getElementById('hkNight').value = pluginConfig.hkNight ??= '3';
-    document.getElementById('hkOff').value = pluginConfig.hkOff ??= '63';
-    document.getElementById('enableDetailedLogging').checked = pluginConfig.enableDetailedLogging ??= '';
-    document.getElementById('ignoreStations').value = pluginConfig.ignoreStations ??= [];
-    document.getElementById('ignoreDevices').value = pluginConfig.ignoreDevices ??= [];
-    document.getElementById('country').value = pluginConfig.country ??= 'US';
-    document.getElementById('countryInput1').value = pluginConfig.country ??= 'US';
-    document.getElementById('CameraMaxLivestreamDuration').value = pluginConfig.CameraMaxLivestreamDuration ??= 30;
-    document.getElementById('cleanCache').checked = pluginConfig.cleanCache ??= true;
+function generate_country_selector(id) {
+    let option = '';
+    Object.entries(countries).forEach(([k, v]) => {
+        option += '<option value="' + k + '">' + v + '</option>';
+    });
+    document.getElementById(id).innerHTML = option;
+}
+
+async function hb_request(url, params) {
+    homebridge.showSpinner();
+    const c = await homebridge.request(url, params);
+    homebridge.hideSpinner();
+    return c;
+}
+
+function updateFormFromConfig() {
+
+    const c = { ...EufyPluginConfig, ...pluginConfig };
+    const i = ['cameras', 'platform'];
+
+    Object.entries(c).forEach(([k, v]) => {
+        if (i.includes(k)) return;
+        if (typeof EufyPluginConfig[k] === 'boolean') document.getElementById('epc-' + k).checked = v;
+        if (typeof EufyPluginConfig[k] === 'number') document.getElementById('epc-' + k).value = v;
+        if (typeof EufyPluginConfig[k] === 'string') document.getElementById('epc-' + k).value = v;
+    });
+
+    document.getElementById('usernameInput1').value = c.username;
+    document.getElementById('passwordInput1').value = c.password;
+    document.getElementById('countryInput1').value = c.country;
+
     homebridge.fixScrollHeight();
 }
 
 function updateConfigFromForm() {
-    pluginConfig.username = document.getElementById('usernameInput').value;
-    pluginConfig.password = document.getElementById('passwordInput').value;
-    pluginConfig.enableCamera = document.getElementById('enableCamera').checked;
-    pluginConfig.pollingIntervalMinutes = parseInt(document.getElementById('pollingIntervalMinutes').value);
-    pluginConfig.hkHome = parseInt(document.getElementById('hkHome').value);
-    pluginConfig.hkAway = parseInt(document.getElementById('hkAway').value);
-    pluginConfig.hkNight = parseInt(document.getElementById('hkNight').value);
-    pluginConfig.hkOff = parseInt(document.getElementById('hkOff').value);
-    pluginConfig.enableDetailedLogging = parseInt(document.getElementById('enableDetailedLogging').checked * 1);
-    pluginConfig.ignoreStations = document.getElementById('ignoreStations').value.split(",");
-    pluginConfig.ignoreDevices = document.getElementById('ignoreDevices').value.split(",");
-    pluginConfig.country = document.getElementById('country').value;
-    pluginConfig.CameraMaxLivestreamDuration = parseInt(document.getElementById('CameraMaxLivestreamDuration').value);
-    pluginConfig.cleanCache = document.getElementById('cleanCache').checked;
-}
-
-function adjustPollingValue() {
-    const pollingValue = parseInt(document.getElementById('pollingIntervalMinutes').value);
-    document.getElementById('pollingValue').innerHTML = pollingValue + ' minutes';
-}
-
-function adjustCMLDPollingValue() {
-    const pollingValue = parseInt(document.getElementById('CameraMaxLivestreamDuration').value);
-    document.getElementById('CMLDpollingValue').innerHTML = pollingValue + ' seconds';
+    const i = ['cameras', 'platform'];
+    Object.entries(EufyPluginConfig).forEach(([k, v]) => {
+        if (i.includes(k)) return;
+        if (typeof EufyPluginConfig[k] === 'boolean') pluginConfig[k] = document.getElementById('epc-' + k).checked;
+        if (typeof EufyPluginConfig[k] === 'number') pluginConfig[k] = parseInt(document.getElementById('epc-' + k).value);
+        if (typeof EufyPluginConfig[k] === 'string') pluginConfig[k] = document.getElementById('epc-' + k).value;
+    });
 }
 
 async function AddOrRemoveStationsIgnoreList(item) {
     pluginConfig.ignoreStations.indexOf(item) === -1 ? pluginConfig.ignoreStations.push(item) : pluginConfig.ignoreStations.splice(pluginConfig.ignoreStations.indexOf(item), 1);
-    document.getElementById('ignoreStations').value = pluginConfig.ignoreStations.toString();
+    document.getElementById('epc-ignoreStations').value = pluginConfig.ignoreStations.toString();
     await homebridge.updatePluginConfig([pluginConfig]);
 }
 
 async function AddOrRemoveDevicesIgnoreList(item) {
     pluginConfig.ignoreDevices.indexOf(item) === -1 ? pluginConfig.ignoreDevices.push(item) : pluginConfig.ignoreDevices.splice(pluginConfig.ignoreDevices.indexOf(item), 1);
-    document.getElementById('ignoreDevices').value = pluginConfig.ignoreDevices.toString();
+    document.getElementById('epc-ignoreDevices').value = pluginConfig.ignoreDevices.toString();
     await homebridge.updatePluginConfig([pluginConfig]);
 }
 
@@ -112,8 +378,6 @@ async function list_stations_devices(stations) {
 
     const s_div = document.getElementById('stations');
 
-    s_div.innerHTML = '';
-
     display_box('step3');
 
     if (!stations.length) {
@@ -124,43 +388,24 @@ async function list_stations_devices(stations) {
     pluginConfig.username = document.getElementById('usernameInput1').value;
     pluginConfig.password = document.getElementById('passwordInput1').value;
     pluginConfig.country = document.getElementById('countryInput1').value;
-    document.getElementById('usernameInput').value = document.getElementById('usernameInput1').value;
-    document.getElementById('passwordInput').value = document.getElementById('passwordInput1').value;
-    document.getElementById('country').value = document.getElementById('countryInput1').value;
+    document.getElementById('epc-username').value = document.getElementById('usernameInput1').value;
+    document.getElementById('epc-password').value = document.getElementById('passwordInput1').value;
+    document.getElementById('epc-country').value = document.getElementById('countryInput1').value;
 
     pluginConfig.ignoreStations = (typeof pluginConfig.ignoreStations === 'object') ? pluginConfig.ignoreStations : [];
     pluginConfig.ignoreDevices = (typeof pluginConfig.ignoreDevices === 'object') ? pluginConfig.ignoreDevices : [];
 
     await homebridge.updatePluginConfig([pluginConfig]);
 
-    const t1 = document.createElement("div");
-    t1.setAttribute('class', 'divTable');
-
-    const h1 = document.createElement("div");
-    h1.setAttribute('class', 'divTableHeading');
-
-    var r1 = document.createElement("div");
-    r1.setAttribute('class', 'divTableRow');
-    r1.innerHTML = `
-                    <div class="divTableCell">Name</div>
-                    <div class="divTableCell">Serial Number</div>
-                    <div class="divTableCell">Type</div>
-                    <div class="divTableCell">Ignore?</div>
-                `;
-    h1.appendChild(r1);
-    t1.appendChild(h1);
+    document.getElementById('list_body').innerHTML = '';
 
     stations.forEach(function (s_item) {
 
         const checked = (isStationsIgnored(s_item.uniqueId)) ? ' checked' : '';
 
-        const b1 = document.createElement("div");
-        b1.setAttribute('class', 'divTableBody');
-
         var r1 = document.createElement("div");
 
         r1.setAttribute('class', 'divTableRow' + checked);
-        r1.setAttribute('id', `s_${s_item.uniqueId}`);
 
         r1.innerHTML = `
                     <div class="divTableCell">${s_item.displayName}</div>
@@ -168,7 +413,7 @@ async function list_stations_devices(stations) {
                     <div class="divTableCell">${s_item.type}</div>
                     <div class="divTableCell"><input type="checkbox" class="ignore_stations" id="st_${s_item.uniqueId}" name="${s_item.uniqueId}"${checked} /></div>
                 `;
-        b1.appendChild(r1);
+        document.getElementById('list_body').appendChild(r1);
 
         s_item.devices.forEach(function (item) {
 
@@ -178,7 +423,6 @@ async function list_stations_devices(stations) {
             var r2 = document.createElement("div");
             const checked = (isDevicesIgnored(item.uniqueId)) ? ' checked' : '';
             r2.setAttribute('class', 'divTableRow' + checked);
-            r2.setAttribute('id', `d_${item.uniqueId}`);
             r2.innerHTML = `
                     <div class="divTableCell">|--&nbsp;${item.displayName}</div>
                     `;
@@ -193,40 +437,39 @@ async function list_stations_devices(stations) {
             }
             r2.innerHTML += `
                     <div class="divTableCell">${item.type}</div>
-                    <div class="divTableCell"><input type="checkbox" class="ignore_devices" id="dev_${item.uniqueId}" name="${item.uniqueId}"${checked} /></div>
+                    <div class="divTableCell"><input type="checkbox" class="ignore_devices" id="ds_${item.uniqueId}" name="${item.uniqueId}"${checked} /></div>
                 `;
-            b1.appendChild(r2);
+            document.getElementById('list_body').appendChild(r2);
         });
-
-        t1.appendChild(b1);
     });
 
-    s_div.appendChild(t1);
-
-    var st = 0;
+    let st = 0;
 
     stations.forEach(function (s_item) {
 
-        var ds = 0;
+        let ds = 0;
+        let st_ele = document.getElementById(`st_${s_item.uniqueId}`);
 
-        document.getElementById(`st_${s_item.uniqueId}`).addEventListener('change', async e => {
+        st_ele.addEventListener('change', async e => {
             if (e.target.checked) {
-                document.getElementById(`s_${s_item.uniqueId}`).setAttribute('class', 'divTableRow checked');
+                st_ele.parentElement.parentElement.classList.add('checked');
             } else {
-                document.getElementById(`s_${s_item.uniqueId}`).setAttribute('class', 'divTableRow');
+                st_ele.parentElement.parentElement.classList.remove('checked');
             }
+            console.log(s_item.uniqueId);
             await AddOrRemoveStationsIgnoreList(s_item.uniqueId);
         });
 
         s_item.devices.forEach(function (item) {
+            let ds_ele = document.getElementById(`ds_${item.uniqueId}`);
 
-            document.getElementById(`dev_${item.uniqueId}`).addEventListener('change', async e => {
+            ds_ele.addEventListener('change', async e => {
                 if (e.target.checked) {
-                    document.getElementById(`d_${item.uniqueId}`).setAttribute('class', 'divTableRow checked');
-
+                    ds_ele.parentElement.parentElement.classList.add('checked');
                 } else {
-                    document.getElementById(`d_${item.uniqueId}`).setAttribute('class', 'divTableRow');
+                    ds_ele.parentElement.parentElement.classList.remove('checked');
                 }
+                console.log(s_item.uniqueId);
                 await AddOrRemoveDevicesIgnoreList(item.uniqueId);
             });
             if (isCamera.includes(item.type)) {
@@ -242,42 +485,171 @@ async function list_stations_devices(stations) {
     });
 }
 
-(async () => {
-    // get the plugin config blocks (this returns an array)
-    const pluginConfigBlocks = await homebridge.getPluginConfig();
+function display_box(display) {
+    const bloc_main = ['setupComplete', 'setupRequired', 'reset-box', 'camera-config-box'];
+    const bloc_setup = ['step1', 'step2-captcha', 'step2-otp', 'step3'];
 
-    if (!pluginConfigBlocks.length || !pluginConfigBlocks[0].username || !pluginConfigBlocks[0].password) {
-        display_box('step1');
-        if (pluginConfigBlocks[0])
-            pluginConfig = pluginConfigBlocks[0];
-        updateFormFromConfig();
-    } else {
-        pluginConfig = pluginConfigBlocks[0];
-        updateFormFromConfig();
-        await homebridge.request('/init', { username: pluginConfig.username, password: pluginConfig.password, country: pluginConfig.country });
-        display_box('setupComplete');
+    bloc_main.forEach(e => {
+        document.getElementById(e).style.display = (e === display) ? 'block' : 'none';
+    });
+
+    bloc_setup.forEach(e => {
+        if (e === display) {
+            document.getElementById('setupRequired').style.display = 'block';
+        }
+        document.getElementById(e).style.display = (e === display) ? 'block' : 'none';
+    });
+
+}
+
+async function refreshData() {
+    try {
+
+        homebridge.toast.info('Refreshing Data....');
+        await hb_request('/refreshData');
+
+    } catch (e) {
+
+        homebridge.toast.error(e.message, 'Error');
+    }
+}
+
+async function getStations() {
+    try {
+
+        homebridge.toast.info('Getting Devices....');
+        const response = await hb_request('/getStations');
+
+        await list_stations_devices(response.stations);
+    } catch (e) {
+
+        homebridge.toast.error(e.message, 'Error');
+    }
+}
+
+function getConfigCamera(uniqueId) {
+
+    if (!pluginConfig.cameras) pluginConfig.cameras = [];
+
+    var pos = pluginConfig.cameras.map(function (e) { return e.serialNumber; }).indexOf(uniqueId);
+
+    if (pos === -1) {
+        return CameraConfig;
     }
 
-    adjustPollingValue();
-    adjustCMLDPollingValue();
+    var d = pluginConfig.cameras[pos];
+    var c = CameraConfig;
 
-})();
+    d.videoConfig = { ...CameraConfig.videoConfig, ...pluginConfig.cameras[pos].videoConfig };
+    return { ...c, ...d };
+}
+
+function ConfigCameraFill(camera) {
+
+    var config = getConfigCamera(camera.uniqueId);
+
+    document.getElementById('cc-name').value = camera.displayName;
+    document.getElementById('cc-serialnumber').value = camera.uniqueId;
+
+    Object.entries(config).forEach(([k, v]) => {
+        if (typeof config[k] === 'boolean') {
+            document.getElementById('cc-' + k).checked = v;
+        }
+    });
+
+    Object.entries(config.videoConfig).forEach(([k, v]) => {
+        if (typeof config.videoConfig[k] === 'boolean') {
+            document.getElementById('cc-videoConfig-' + k).checked = v;
+        }
+        if (typeof CameraConfig.videoConfig[k] === 'number') {
+            document.getElementById('cc-videoConfig-' + k).value = v;
+        }
+        if (typeof config.videoConfig[k] === 'string') {
+            document.getElementById('cc-videoConfig-' + k).value = v;
+        }
+    });
+
+    document.getElementById('cc-enableCamera-btn-false').checked = !config.enableCamera;
+    document.getElementById('cc-enableCamera-btn-true').checked = config.enableCamera;
+
+    if (config.enableCamera) {
+        document.getElementById('cc-enableCamera-btn-false').parentElement.classList.remove('active');
+        document.getElementById('cc-enableCamera-btn-true').parentElement.classList.add('active');
+    } else {
+        document.getElementById('cc-enableCamera-btn-false').parentElement.classList.add('active');
+        document.getElementById('cc-enableCamera-btn-true').parentElement.classList.remove('active');
+    }
+
+    document.getElementById('camera-adv').style.display = (config.enableCamera) ? 'block' : 'none';
+
+    display_box('camera-config-box');
+}
+
+async function save_camera_config() {
+    var c = { ...{ serialNumber: '' }, ...CameraConfig };
+
+    c['serialNumber'] = document.getElementById('cc-serialnumber').value;
+
+    Object.entries(CameraConfig).forEach(([k, v]) => {
+        if (typeof CameraConfig[k] === 'boolean') {
+            c[k] = document.getElementById('cc-' + k).checked;
+        }
+    });
+
+    Object.entries(CameraConfig.videoConfig).forEach(([k, v]) => {
+        if (typeof CameraConfig.videoConfig[k] === 'boolean') {
+            c.videoConfig[k] = document.getElementById('cc-videoConfig-' + k).checked;
+        }
+        if (typeof CameraConfig.videoConfig[k] === 'number') {
+            c.videoConfig[k] = parseInt(document.getElementById('cc-videoConfig-' + k).value);
+        }
+        if (typeof CameraConfig.videoConfig[k] === 'string') {
+            c.videoConfig[k] = document.getElementById('cc-videoConfig-' + k).value;
+        }
+    });
+
+    if (!pluginConfig.cameras) pluginConfig.cameras = [];
+
+    var pos = pluginConfig.cameras.map(function (e) { return e.serialNumber; }).indexOf(c['serialNumber']);
+
+    if (pos === -1) {
+        pluginConfig.cameras.push(c);
+    }
+
+    pluginConfig.cameras[pos] = c;
+
+    await homebridge.updatePluginConfig([pluginConfig]);
+    await homebridge.savePluginConfig();
+}
+
+async function whatsnext(url, params) {
+    const response = await hb_request(url, params);
+
+    switch (response.result) {
+        case 1:
+            display_box('step2-captcha');
+            break;
+        case 2:
+            display_box('step2-otp');
+            break;
+        case 3:
+            await refreshData();
+            await getStations();
+            break;
+        default:
+            homebridge.toast.error("Wrong!");
+    }
+
+}
 
 // watch for changes to the config form
 document.getElementById('configForm').addEventListener('change', async () => {
     // extract the values from the form - stored in var pluginConfig.
     updateConfigFromForm();
-    adjustPollingValue();
-    adjustCMLDPollingValue();
 
     // send the current value to the UI.
     await homebridge.updatePluginConfig([pluginConfig]);
 });
-
-
-document.getElementById('pollingIntervalMinutes').addEventListener('input', adjustPollingValue);
-document.getElementById('CameraMaxLivestreamDuration').addEventListener('input', adjustCMLDPollingValue);
-
 
 // step 1 submit handler
 document.getElementById('advanced').addEventListener('click', async (e) => {
@@ -311,6 +683,11 @@ document.getElementById('listDevices').addEventListener('click', async () => {
     await getStations();
 });
 
+// list-devices
+document.getElementById('skip-camera-config').addEventListener('click', async () => {
+    await getStations();
+});
+
 // Reset
 document.getElementById('reset').addEventListener('click', async () => {
     display_box('reset-box');
@@ -320,107 +697,87 @@ document.getElementById('reset').addEventListener('click', async () => {
 document.querySelectorAll('.startover').forEach(item => {
     item.addEventListener('click', async event => {
 
-        homebridge.showSpinner();
-
         const usernameValue = document.getElementById('usernameInput1').value;
         const passwordValue = document.getElementById('passwordInput1').value;
         const countryValue = document.getElementById('countryInput1').value;
 
         if (!usernameValue || !passwordValue) {
             homebridge.toast.error('Please enter your username and password.', 'Error');
-            homebridge.hideSpinner();
             return;
         }
 
         try {
             whatsnext('/auth', { username: usernameValue, password: passwordValue, country: countryValue });
         } catch (e) {
-            homebridge.hideSpinner()
             homebridge.toast.error(e.message, 'Error');
         }
     })
 });
 
-function display_box(display) {
-    const bloc_main = ['setupComplete', 'setupRequired', 'reset-box', 'camera-config-box'];
-    const bloc_setup = ['step1', 'step2-captcha', 'step2-otp', 'step3'];
+document.getElementById('confirm-camera-config').addEventListener('click', async () => {
+    save_camera_config();
+});
 
-    bloc_main.forEach(e => {
-        document.getElementById(e).style.display = (e === display) ? 'block' : 'none';
-    });
+// step 2 captcha submit handler
+document.getElementById('step2-captcha-Submit').addEventListener('click', async () => {
 
-    bloc_setup.forEach(e => {
-        if (e === display) {
-            document.getElementById('setupRequired').style.display = 'block';
+    const captchaInput = document.getElementById('captchaInput').value;
+    const captchaID = document.getElementById('captcha-id').value;
+
+    if (!captchaInput || !captchaID) {
+        homebridge.toast.error('Please enter a valid captcha code.', 'Error');
+        return;
+    }
+
+    try {
+        await whatsnext('/check-captcha', { id: captchaID, captcha: captchaInput });
+    } catch (e) {
+        homebridge.toast.error(e.error || e.message, 'Error');
+    }
+
+});
+
+// step 2 otp submit handler
+document.getElementById('step2-otp-Submit').addEventListener('click', async () => {
+
+    const otpInput = document.getElementById('otpInput').value;
+
+    if (!otpInput) {
+        homebridge.toast.error('Please enter a valid OTP code.', 'Error');
+        return;
+    }
+
+    try {
+        await whatsnext('/check-otp', { code: otpInput });
+    } catch (e) {
+        homebridge.toast.error(e.error || e.message, 'Error');
+    }
+
+});
+
+// step reset submit handler
+document.getElementById('reset-confirm-btn').addEventListener('click', async () => {
+
+    try {
+        const response = await hb_request('/reset', {});
+
+        if (response.result == 0) {
+            homebridge.toast.error("First install or already resetted");
         }
-        document.getElementById(e).style.display = (e === display) ? 'block' : 'none';
-    });
+        if (response.result == 1) {
+            homebridge.toast.success("Success");
+        }
 
-}
-
-async function refreshData() {
-    try {
-        homebridge.showSpinner();
-        homebridge.toast.info('Refreshing Data....');
-        await homebridge.request('/refreshData');
-        homebridge.hideSpinner();
-    } catch (e) {
-        homebridge.hideSpinner();
-        homebridge.toast.error(e.message, 'Error');
-    }
-}
-
-async function getStations() {
-    try {
-
-        homebridge.showSpinner();
-        homebridge.toast.info('Getting Devices....');
-        const response = await homebridge.request('/getStations');
-        homebridge.hideSpinner();
-
-        await list_stations_devices(response.stations);
-    } catch (e) {
-        homebridge.hideSpinner();
-        homebridge.toast.error(e.message, 'Error');
-    }
-}
-
-async function ConfigCamera() {
-    try {
-
-        homebridge.showSpinner();
-        homebridge.toast.info('Getting Devices....');
-        const response = await homebridge.request('/getStations');
-        homebridge.hideSpinner();
-
-        var camera_id = 0;
-        var cameras = pluginConfig.cameras;
-        var stations = response.stations;
-
-        ConfigCameraFill(cameras[camera_id]);
+        await homebridge.updatePluginConfig([]);
+        await homebridge.savePluginConfig();
+        homebridge.closeSettings();
 
     } catch (e) {
-        homebridge.hideSpinner();
-        homebridge.toast.error(e.message, 'Error');
-    }
-}
 
-function getConfigCamera(uniqueId) {
-
-    if (!pluginConfig.cameras) pluginConfig.cameras = [];
-
-    var pos = pluginConfig.cameras.map(function (e) { return e.serialNumber; }).indexOf(uniqueId);
-
-    if (pos === -1) {
-        return CameraConfig;
+        homebridge.toast.error(e.error || e.message, 'Error');
     }
 
-    var d = pluginConfig.cameras[pos];
-    var c = CameraConfig;
-
-    d.videoConfig = { ...CameraConfig.videoConfig, ...pluginConfig.cameras[pos].videoConfig };
-    return { ...c, ...d };
-}
+});
 
 document.querySelectorAll('input[type=radio]').forEach(item => {
     item.addEventListener('change', event => {
@@ -439,172 +796,30 @@ document.querySelectorAll('input[type=radio]').forEach(item => {
     })
 });
 
-function ConfigCameraFill(camera) {
-
-    var config = getConfigCamera(camera.uniqueId);
-
-    document.getElementById('cc-name').value = camera.displayName;
-    document.getElementById('cc-serialnumber').value = camera.uniqueId;
-
-    Object.entries(config).forEach(([key, value]) => {
-        if (typeof config[key] === 'boolean') {
-            document.getElementById('cc-' + key).checked = value;
-        }
-    });
-
-    Object.entries(config.videoConfig).forEach(([key, value]) => {
-        if (typeof config.videoConfig[key] === 'boolean') {
-            document.getElementById('cc-videoConfig-' + key).checked = value;
-        }
-        if (typeof CameraConfig.videoConfig[key] === 'number') {
-            document.getElementById('cc-videoConfig-' + key).value = value;
-        }
-        if (typeof config.videoConfig[key] === 'string') {
-            document.getElementById('cc-videoConfig-' + key).value = value;
-        }
-    });
-
-    document.getElementById('cc-enableCamera-btn-false').checked = !config.enableCamera;
-    document.getElementById('cc-enableCamera-btn-true').checked = config.enableCamera;
-
-    if (config.enableCamera) {
-        document.getElementById('cc-enableCamera-btn-false').parentElement.classList.remove('active');
-        document.getElementById('cc-enableCamera-btn-true').parentElement.classList.add('active');
-    } else {
-        document.getElementById('cc-enableCamera-btn-false').parentElement.classList.add('active');
-        document.getElementById('cc-enableCamera-btn-true').parentElement.classList.remove('active');
-    }
-
-    document.getElementById('camera-adv').style.display = (config.enableCamera) ? 'block' : 'none';
-
-    display_box('camera-config-box');
-}
-
-document.getElementById('confirm-camera-config').addEventListener('click', async () => {
-
-    var c = {...CameraConfig};
-
-    c['serialNumber'] = document.getElementById('cc-serialnumber').value;
-
-    Object.entries(CameraConfig).forEach(([key, value]) => {
-        if (typeof CameraConfig[key] === 'boolean') {
-            c[key] = document.getElementById('cc-' + key).checked;
-        }
-    });
-
-    Object.entries(CameraConfig.videoConfig).forEach(([key, value]) => {
-        if (typeof CameraConfig.videoConfig[key] === 'boolean') {
-            c.videoConfig[key] = document.getElementById('cc-videoConfig-' + key).checked;
-        }
-        if (typeof CameraConfig.videoConfig[key] === 'number') {
-            c.videoConfig[key] = parseInt(document.getElementById('cc-videoConfig-' + key).value);
-        }
-        if (typeof CameraConfig.videoConfig[key] === 'string') {
-            c.videoConfig[key] = document.getElementById('cc-videoConfig-' + key).value;
-        }
-    });
-
-    if (!pluginConfig.cameras) pluginConfig.cameras = [];
-
-    var pos = pluginConfig.cameras.map(function (e) { return e.serialNumber; }).indexOf(c['serialNumber']);
-
-    if (pos === -1) {
-        pluginConfig.cameras.push(c);
-    }
-
-    pluginConfig.cameras[pos] = c;
-    
-    await homebridge.updatePluginConfig([pluginConfig]);
-    await homebridge.savePluginConfig();
-
-});
-
-async function whatsnext(url, params) {
-    const response = await homebridge.request(url, params);
-
-    homebridge.hideSpinner();
-    if (response.result == 0) {
-        homebridge.toast.error("Wrong OTP");
-    } else {
-        if (response.result == 1)
-            display_box('step2-captcha');
-        if (response.result == 2)
-            display_box('step2-otp');
-        if (response.result == 3) {
-            await refreshData();
-            await getStations();
-        }
-    }
-}
-
-// step 2 captcha submit handler
-document.getElementById('step2-captcha-Submit').addEventListener('click', async () => {
-    homebridge.showSpinner();
-    const captchaInput = document.getElementById('captchaInput').value;
-    const captchaID = document.getElementById('captcha-id').value;
-
-    if (!captchaInput || !captchaID) {
-        homebridge.toast.error('Please enter a valid captcha code.', 'Error');
-        homebridge.hideSpinner();
-        return;
-    }
-
-    try {
-        await whatsnext('/check-captcha', { id: captchaID, captcha: captchaInput });
-    } catch (e) {
-        homebridge.hideSpinner()
-        homebridge.toast.error(e.error || e.message, 'Error');
-    }
-
-});
-
-// step 2 otp submit handler
-document.getElementById('step2-otp-Submit').addEventListener('click', async () => {
-    homebridge.showSpinner();
-    const otpInput = document.getElementById('otpInput').value;
-
-    if (!otpInput) {
-        homebridge.toast.error('Please enter a valid OTP code.', 'Error');
-        homebridge.hideSpinner();
-        return;
-    }
-
-    try {
-        await whatsnext('/check-otp', { code: otpInput });
-    } catch (e) {
-        homebridge.hideSpinner()
-        homebridge.toast.error(e.error || e.message, 'Error');
-    }
-
-});
-
-// step reset submit handler
-document.getElementById('reset-confirm-btn').addEventListener('click', async () => {
-
-    try {
-        homebridge.showSpinner();
-        const response = await homebridge.request('/reset', {});
-
-        homebridge.hideSpinner();
-        if (response.result == 0) {
-            homebridge.toast.error("First install or already resetted");
-        }
-        if (response.result == 1) {
-            homebridge.toast.success("Success");
-        }
-
-        await homebridge.updatePluginConfig([]);
-        await homebridge.savePluginConfig();
-        homebridge.closeSettings();
-
-    } catch (e) {
-        homebridge.hideSpinner()
-        homebridge.toast.error(e.error || e.message, 'Error');
-    }
-
-});
-
 homebridge.addEventListener('captcha', (e) => {
     document.getElementById('captcha-id').value = e.data.id;
     document.getElementById('captcha-img').innerHTML = '<img src="' + e.data.captcha + '" />';
 });
+
+
+
+(async () => {
+    // get the plugin config blocks (this returns an array)
+    const pluginConfigBlocks = await homebridge.getPluginConfig();
+
+    generate_country_selector('epc-country');
+    generate_country_selector('countryInput1');
+
+    if (!pluginConfigBlocks.length || !pluginConfigBlocks[0].username || !pluginConfigBlocks[0].password) {
+        display_box('step1');
+        if (pluginConfigBlocks[0])
+            pluginConfig = pluginConfigBlocks[0];
+        updateFormFromConfig();
+    } else {
+        pluginConfig = pluginConfigBlocks[0];
+        updateFormFromConfig();
+        await hb_request('/init', { username: pluginConfig.username, password: pluginConfig.password, country: pluginConfig.country });
+        display_box('setupComplete');
+    }
+
+})();

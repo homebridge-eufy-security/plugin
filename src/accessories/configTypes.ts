@@ -14,6 +14,7 @@ export type CameraConfig = {
   enableButton: boolean;
   motionButton: boolean;
   rtsp: boolean;
+  videoConfigEna: boolean;
   enableCamera: boolean;
 };
 
