@@ -20,6 +20,12 @@
     font-style: italic;
 }
 
+.disabled {
+    color: #888;
+    text-decoration: line-through;
+    font-style: italic;
+}
+
 div.logo {
     text-align: center;
     margin: 0 0 5px 0;

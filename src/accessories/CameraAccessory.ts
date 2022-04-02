@@ -61,22 +61,21 @@ export class CameraAccessory extends DeviceAccessory {
 
       try {
         this.CameraService = this.cameraFunction(accessory);
-        this.service = this.motionFunction(accessory);
-
         this.CameraService.setPrimaryService(true);
-
         const delegate = new StreamingDelegate(this.platform, eufyDevice, this.cameraConfig, this.platform.api, this.platform.api.hap);
         accessory.configureController(delegate.controller);
       } catch (Error) {
         this.platform.log.error(this.accessory.displayName, 'raise error to check and attach livestream function.', Error);
       }
+      
     } else {
       this.platform.log.debug(this.accessory.displayName, 'has a motion sensor.');
-      try {
-        this.service = this.motionFunction(accessory);
-      } catch (Error) {
-        this.platform.log.error(this.accessory.displayName, 'raise error to check and attach motion function.', Error);
-      }
+    }
+
+    try {
+      this.service = this.motionFunction(accessory);
+    } catch (Error) {
+      this.platform.log.error(this.accessory.displayName, 'raise error to check and attach motion function.', Error);
     }
 
     try {
@@ -219,12 +218,12 @@ export class CameraAccessory extends DeviceAccessory {
         .onSet(this.handleHomeKitCameraOperatingModeIndicatorSet.bind(this));
     }
 
-    // if (this.eufyDevice.hasProperty('nightvision')) {
-    //   service
-    //     .getCharacteristic(this.characteristic.NightVision)
-    //     .onGet(this.handleHomeKitNightVisionGet.bind(this))
-    //     .onSet(this.handleHomeKitNightVisionSet.bind(this));
-    // }
+    if (this.eufyDevice.hasProperty('nightvision')) {
+      service
+        .getCharacteristic(this.characteristic.NightVision)
+        .onGet(this.handleHomeKitNightVisionGet.bind(this))
+        .onSet(this.handleHomeKitNightVisionSet.bind(this));
+    }
 
     return service as Service;
   }
@@ -267,7 +266,7 @@ export class CameraAccessory extends DeviceAccessory {
       this.platform.log.debug(this.accessory.displayName, 'GET DeviceStatusLed:', currentValue);
       return currentValue.value as boolean;
     } catch {
-      this.platform.log.error(this.accessory.displayName, 'handleHomeKitCameraOperatingModeIndicatorGet', 'Wrong return value');
+      this.platform.log.debug(this.accessory.displayName, 'handleHomeKitCameraOperatingModeIndicatorGet', 'Wrong return value');
       return false;
     }
   }
@@ -291,7 +290,7 @@ export class CameraAccessory extends DeviceAccessory {
       this.platform.log.debug(this.accessory.displayName, 'GET DeviceNightvision:', currentValue);
       return currentValue.value as boolean;
     } catch {
-      this.platform.log.error(this.accessory.displayName, 'handleHomeKitNightVisionGet', 'Wrong return value');
+      this.platform.log.debug(this.accessory.displayName, 'handleHomeKitNightVisionGet', 'Wrong return value');
       return false;
     }
   }
@@ -343,7 +342,7 @@ export class CameraAccessory extends DeviceAccessory {
       this.platform.log.debug(this.accessory.displayName, 'GET DeviceMotionDetected:', currentValue);
       return currentValue.value as boolean;
     } catch {
-      this.platform.log.error(this.accessory.displayName, 'handleMotionDetectedGet', 'Wrong return value');
+      this.platform.log.debug(this.accessory.displayName, 'handleMotionDetectedGet', 'Wrong return value');
       return false;
     }
   }
@@ -364,7 +363,7 @@ export class CameraAccessory extends DeviceAccessory {
       this.platform.log.debug(this.accessory.displayName, 'GET DeviceEnabled:', currentValue);
       return currentValue.value as boolean;
     } catch {
-      this.platform.log.error(this.accessory.displayName, 'handleEnableGet', 'Wrong return value');
+      this.platform.log.debug(this.accessory.displayName, 'handleEnableGet', 'Wrong return value');
       return false;
     }
   }
@@ -375,7 +374,7 @@ export class CameraAccessory extends DeviceAccessory {
       this.platform.log.debug(this.accessory.displayName, 'GET DeviceEnabled:', currentValue);
       return !currentValue.value as boolean;
     } catch {
-      this.platform.log.error(this.accessory.displayName, 'handleManuallyDisabledGet', 'Wrong return value');
+      this.platform.log.debug(this.accessory.displayName, 'handleManuallyDisabledGet', 'Wrong return value');
       return false;
     }
   }
@@ -393,7 +392,7 @@ export class CameraAccessory extends DeviceAccessory {
       this.platform.log.debug(this.accessory.displayName, 'GET DeviceMotionDetection:', currentValue);
       return currentValue.value as boolean;
     } catch {
-      this.platform.log.error(this.accessory.displayName, 'handleMotionOnGet', 'Wrong return value');
+      this.platform.log.debug(this.accessory.displayName, 'handleMotionOnGet', 'Wrong return value');
       return false;
     }
   }
@@ -410,7 +409,7 @@ export class CameraAccessory extends DeviceAccessory {
       this.platform.log.debug(this.accessory.displayName, 'GET DeviceLight:', currentValue);
       return currentValue.value as boolean;
     } catch {
-      this.platform.log.error(this.accessory.displayName, 'handleLightOnGet', 'Wrong return value');
+      this.platform.log.debug(this.accessory.displayName, 'handleLightOnGet', 'Wrong return value');
       return false;
     }
   }

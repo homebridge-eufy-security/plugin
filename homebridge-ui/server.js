@@ -70,6 +70,7 @@ class UiServer extends HomebridgePluginUiServer {
   }
 
   async authenticate(verifyCodeOrCaptcha = null, captchaId = null) {
+    
     try {
       let retries = 0;
       await this.driver.api.loadApiBase().catch((error) => {
@@ -108,7 +109,7 @@ class UiServer extends HomebridgePluginUiServer {
       }
 
     } catch (e) {
-      this.log.info('Error:', e.message);
+      this.log.info('Error authenticate:', e.message);
       return { result: 0 }; // Wrong username and/or password
     }
   }
@@ -149,23 +150,6 @@ class UiServer extends HomebridgePluginUiServer {
     return await this.authenticate(body.captcha, body.id);
   }
 
-  async isNeedRefreshStationsCache() {
-    let endTime, now, stat;
-
-    try {
-      stat = fs.statSync(this.stations_file);
-      now = new Date().getTime();
-      endTime = new Date(stat.ctime).getTime() + 3600000;
-
-      if (now > endTime) return true;
-
-    } catch {
-      return true;
-    }
-
-    return false;
-  }
-
   async getCachedStations() {
     try {
       return JSON.parse(fs.readFileSync(this.stations_file, { encoding: 'utf-8' }));
@@ -174,13 +158,36 @@ class UiServer extends HomebridgePluginUiServer {
     }
   }
 
+  async isNeedRefreshStationsCache() {
+    let endTime, now, stat;
+
+    try {
+      stat = fs.statSync(this.stations_file);
+      now = new Date().getTime();
+      endTime = new Date(stat.ctime).getTime() + 3600000;
+      if (now > endTime) return true;
+    } catch {
+      return true;
+    }
+
+    try {
+      const c = await this.getCachedStations();
+      if (c.length === 0) return true;
+    } catch {
+      return true;
+    }
+
+    return false;
+  }
+
   async refreshDevices() {
 
     try {
+      await this.refreshData();
       const Eufy_stations = await this.driver.getStations();
       const Eufy_devices = await this.driver.getDevices();
 
-      const stations = [];
+      let stations = [];
 
       for (const station of Eufy_stations) {
 
@@ -211,7 +218,7 @@ class UiServer extends HomebridgePluginUiServer {
 
       }
 
-      if (stations !== []) {
+      if (stations.length) {
         fs.writeFileSync(this.stations_file, JSON.stringify(stations));
       }
 
@@ -253,7 +260,7 @@ class UiServer extends HomebridgePluginUiServer {
 
     // Do we really need to ask Eufy ? cached is enough ?
     if (!await this.isNeedRefreshStationsCache()) {
-      this.log.debug('No need to refresh the devices list');
+      this.log.info('No need to refresh the devices list');
       try {
         const stations = await this.getCachedStations();
         return { result: 1, stations: stations }; // Connected
@@ -261,10 +268,9 @@ class UiServer extends HomebridgePluginUiServer {
         this.log.error('Error:', e.message);
         return { result: 0 }; // Error
       }
-
     }
 
-    this.log.debug('Need to refresh the devices list');
+    this.log.info('Need to refresh the devices list');
     try {
       const r = await this.auth();
       if (r.result = 3) {

@@ -344,7 +344,7 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
           || type === DeviceType.DOORBELL
           || type === DeviceType.BATTERY_DOORBELL
           || type === DeviceType.BATTERY_DOORBELL_2)) {
-          this.log.warn(accessory.displayName, 'looks station but it\'s not could imply some errors', 'Type:', type);
+          // this.log.warn(accessory.displayName, 'looks station but it\'s not could imply some errors', 'Type:', type);
           new StationAccessory(this, accessory, device as Station);
         } else {
           return;
@@ -431,9 +431,6 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
   }
 
   public async refreshData(client: EufySecurity): Promise<void> {
-    this.log.debug(
-      `PollingInterval: ${this.eufyConfig.pollingIntervalMinutes}`,
-    );
     if (client) {
       this.log.debug('Refresh data from cloud and schedule next refresh.');
       try {

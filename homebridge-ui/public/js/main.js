@@ -26,7 +26,6 @@ var CameraConfig = {
     "motionButton": true,
     "rtsp": true,
     "unbridge": true,
-    "videoConfigEna": false,
     "videoConfig": {
         "debug": false,
         "audio": true,
@@ -562,9 +561,17 @@ function ConfigCameraFill(camera) {
             document.getElementById('cc-videoConfig-' + k).checked = v;
         }
         if (typeof CameraConfig.videoConfig[k] === 'number') {
+            if (v !== 0) {
+                document.getElementById('cc-videoConfig-' + k).classList.remove('disabled');
+                document.getElementById('cc-videoConfig-' + k + '-ena').checked = true;
+            }
             document.getElementById('cc-videoConfig-' + k).value = v;
         }
         if (typeof config.videoConfig[k] === 'string') {
+            if (v !== '') {
+                document.getElementById('cc-videoConfig-' + k).classList.remove('disabled');
+                document.getElementById('cc-videoConfig-' + k + '-ena').checked = true;
+            }
             document.getElementById('cc-videoConfig-' + k).value = v;
         }
     });
@@ -591,21 +598,29 @@ async function save_camera_config() {
     c['serialNumber'] = document.getElementById('cc-serialnumber').value;
 
     Object.entries(CameraConfig).forEach(([k, v]) => {
-        if (typeof CameraConfig[k] === 'boolean') {
-            c[k] = document.getElementById('cc-' + k).checked;
-        }
+        const vc = document.getElementById('cc-' + k);
+        if (typeof CameraConfig[k] === 'boolean')
+            if (vc.checked)
+                c[k] = vc.checked;
     });
 
+    c.videoConfig = {};
+
     Object.entries(CameraConfig.videoConfig).forEach(([k, v]) => {
-        if (typeof CameraConfig.videoConfig[k] === 'boolean') {
-            c.videoConfig[k] = document.getElementById('cc-videoConfig-' + k).checked;
-        }
-        if (typeof CameraConfig.videoConfig[k] === 'number') {
-            c.videoConfig[k] = parseInt(document.getElementById('cc-videoConfig-' + k).value);
-        }
-        if (typeof CameraConfig.videoConfig[k] === 'string') {
-            c.videoConfig[k] = document.getElementById('cc-videoConfig-' + k).value;
-        }
+        const vc = document.getElementById('cc-videoConfig-' + k);
+
+        if (typeof CameraConfig.videoConfig[k] === 'boolean')
+            if (vc.checked)
+                c.videoConfig[k] = vc.checked;
+
+        if (typeof CameraConfig.videoConfig[k] === 'number')
+            if (document.getElementById('cc-videoConfig-' + k + '-ena').checked)
+                c.videoConfig[k] = parseInt(vc.value);
+
+        if (typeof CameraConfig.videoConfig[k] === 'string')
+            if (document.getElementById('cc-videoConfig-' + k + '-ena').checked)
+                c.videoConfig[k] = vc.value;
+
     });
 
     if (!pluginConfig.cameras) pluginConfig.cameras = [];
@@ -793,7 +808,18 @@ document.querySelectorAll('input[type=radio]').forEach(item => {
             document.getElementById('cc-enableCamera').checked = (item.id === "cc-enableCamera-btn-true") ? true : false;
         }
 
-    })
+    });
+});
+
+document.querySelectorAll('input[type=checkbox].ena').forEach(item => {
+    document.getElementById(item.id.slice(0, -4)).classList.add('disabled');
+    item.addEventListener('change', event => {
+        if (item.checked) {
+            document.getElementById(item.id.slice(0, -4)).classList.remove('disabled');
+        } else {
+            document.getElementById(item.id.slice(0, -4)).classList.add('disabled');
+        }
+    });
 });
 
 homebridge.addEventListener('captcha', (e) => {

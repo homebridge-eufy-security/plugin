@@ -277,7 +277,7 @@
                         <div class="divTableBody" id="list_body"></div>
                     </div>
                 </div>
-                
+
                 <a class="btn btn-elegant skip">Skip</a>
             </div>
         </div>
@@ -415,33 +415,44 @@
                         <label for="staticEmail" class="col-sm-3 col-form-label">Advanced VideoConfig:</label>
                         <div class="col-sm-9">
 
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" id="cc-videoConfigEna">
-                                <label class="form-check-label" for="cc-videoConfigEna">Enable Advanced VideoConfig</label>
+                            <div class="form-group mb-1">
+                                <div class="input-group">
+                                    <div class="input-group-prepend">
+                                        <div class="input-group-text">
+                                            <input type="checkbox" id="cc-videoConfig-debug" />
+                                        </div>
+                                    </div>
+                                    <span class="form-control">ffmpeg debug</span>
+                                </div>
                             </div>
 
-                            <hr />
-
-                            <div class="form-check">
-                                <input class="form-check-input videoConfig" type="checkbox" id="cc-videoConfig-debug"
-                                    name="cc-videoConfig-debug">
-                                <label class="form-check-label" for="cc-videoConfig-debug">ffmpeg debug</label>
+                            <div class="form-group mb-1">
+                                <div class="input-group">
+                                    <div class="input-group-prepend">
+                                        <div class="input-group-text">
+                                            <input type="checkbox" id="cc-videoConfig-audio" />
+                                        </div>
+                                    </div>
+                                    <span class="form-control">Enable Audio</span>
+                                </div>
                             </div>
 
-                            <div class="form-check">
-                                <input class="form-check-input videoConfig" type="checkbox" id="cc-videoConfig-audio"
-                                    name="cc-videoConfig-audio" checked>
-                                <label class="form-check-label" for="cc-videoConfig-audio">Enable Audio</label>
-                            </div>
-
-                            <div class="form-check">
-                                <input class="form-check-input videoConfig" type="checkbox" id="cc-videoConfig-readRate"
-                                    name="cc-videoConfig-readRate">
-                                <label class="form-check-label" for="cc-videoConfig-readRate">readRate</label>
+                            <div class="form-group mb-1">
+                                <div class="input-group">
+                                    <div class="input-group-prepend">
+                                        <div class="input-group-text">
+                                            <input type="checkbox" id="cc-videoConfig-readRate" />
+                                        </div>
+                                    </div>
+                                    <span class="form-control">readRate</span>
+                                </div>
                             </div>
 
                             <div class="input-group mb-1">
                                 <div class="input-group-prepend">
+                                    <div class="input-group-text">
+                                        <input type="checkbox" id="cc-videoConfig-vcodec-ena" class="ena" />
+                                    </div>
                                     <span class="input-group-text">vcodec</span>
                                 </div>
                                 <input type="text" class="form-control videoConfig" id="cc-videoConfig-vcodec"
@@ -450,6 +461,9 @@
 
                             <div class="input-group mb-1">
                                 <div class="input-group-prepend">
+                                    <div class="input-group-text">
+                                        <input type="checkbox" id="cc-videoConfig-acodec-ena" class="ena" />
+                                    </div>
                                     <span class="input-group-text">acodec</span>
                                 </div>
                                 <input type="text" class="form-control videoConfig" id="cc-videoConfig-acodec"
@@ -458,6 +472,9 @@
 
                             <div class="input-group mb-1">
                                 <div class="input-group-prepend">
+                                    <div class="input-group-text">
+                                        <input type="checkbox" id="cc-videoConfig-videoFilter-ena" class="ena" />
+                                    </div>
                                     <span class="input-group-text">videoFilter</span>
                                 </div>
                                 <input type="text" class="form-control videoConfig" id="cc-videoConfig-videoFilter"
@@ -466,6 +483,9 @@
 
                             <div class="input-group mb-1">
                                 <div class="input-group-prepend">
+                                    <div class="input-group-text">
+                                        <input type="checkbox" id="cc-videoConfig-encoderOptions-ena" class="ena" />
+                                    </div>
                                     <span class="input-group-text">encoderOptions</span>
                                 </div>
                                 <input type="text" class="form-control videoConfig" id="cc-videoConfig-encoderOptions"
@@ -474,6 +494,9 @@
 
                             <div class="input-group mb-1">
                                 <div class="input-group-prepend">
+                                    <div class="input-group-text">
+                                        <input type="checkbox" id="cc-videoConfig-probeSize-ena" class="ena" />
+                                    </div>
                                     <span class="input-group-text">probeSize</span>
                                 </div>
                                 <input type="number" class="form-control videoConfig" id="cc-videoConfig-probeSize"
@@ -482,6 +505,9 @@
 
                             <div class="input-group mb-1">
                                 <div class="input-group-prepend">
+                                    <div class="input-group-text">
+                                        <input type="checkbox" id="cc-videoConfig-analyzeDuration-ena" class="ena" />
+                                    </div>
                                     <span class="input-group-text">analyzeDuration</span>
                                 </div>
                                 <input type="number" class="form-control videoConfig"
@@ -491,6 +517,9 @@
 
                             <div class="input-group mb-1">
                                 <div class="input-group-prepend">
+                                    <div class="input-group-text">
+                                        <input type="checkbox" id="cc-videoConfig-mapvideo-ena" class="ena" />
+                                    </div>
                                     <span class="input-group-text">mapvideo</span>
                                 </div>
                                 <input type="text" class="form-control videoConfig" id="cc-videoConfig-mapvideo"
@@ -499,20 +528,31 @@
 
                             <div class="input-group mb-1">
                                 <div class="input-group-prepend">
+                                    <div class="input-group-text">
+                                        <input type="checkbox" id="cc-videoConfig-mapaudio-ena" class="ena" />
+                                    </div>
                                     <span class="input-group-text">mapaudio</span>
                                 </div>
                                 <input type="text" class="form-control videoConfig" id="cc-videoConfig-mapaudio"
                                     name="cc-videoConfig-mapaudio" placeholder="leave blank if you don't know">
                             </div>
 
-                            <div class="form-check">
-                                <input class="form-check-input videoConfig" type="checkbox" id="cc-videoConfig-forceMax"
-                                    name="cc-videoConfig-forceMax">
-                                <label class="form-check-label" for="cc-videoConfig-forceMax">forceMax</label>
+                            <div class="form-group mb-1">
+                                <div class="input-group">
+                                    <div class="input-group-prepend">
+                                        <div class="input-group-text">
+                                            <input type="checkbox" id="cc-videoConfig-forceMax" />
+                                        </div>
+                                    </div>
+                                    <span class="form-control">forceMax</span>
+                                </div>
                             </div>
 
                             <div class="input-group mb-1">
                                 <div class="input-group-prepend">
+                                    <div class="input-group-text">
+                                        <input type="checkbox" id="cc-videoConfig-maxDelay-ena" class="ena" />
+                                    </div>
                                     <span class="input-group-text">maxDelay</span>
                                 </div>
                                 <input type="number" class="form-control videoConfig" id="cc-videoConfig-maxDelay"
@@ -521,6 +561,9 @@
 
                             <div class="input-group mb-1">
                                 <div class="input-group-prepend">
+                                    <div class="input-group-text">
+                                        <input type="checkbox" id="cc-videoConfig-maxStreams-ena" class="ena" />
+                                    </div>
                                     <span class="input-group-text">maxStreams</span>
                                 </div>
                                 <input type="number" class="form-control videoConfig" id="cc-videoConfig-maxStreams"
@@ -529,6 +572,9 @@
 
                             <div class="input-group mb-1">
                                 <div class="input-group-prepend">
+                                    <div class="input-group-text">
+                                        <input type="checkbox" id="cc-videoConfig-maxWidth-ena" class="ena" />
+                                    </div>
                                     <span class="input-group-text">maxWidth</span>
                                 </div>
                                 <input type="number" class="form-control videoConfig" id="cc-videoConfig-maxWidth"
@@ -537,6 +583,9 @@
 
                             <div class="input-group mb-1">
                                 <div class="input-group-prepend">
+                                    <div class="input-group-text">
+                                        <input type="checkbox" id="cc-videoConfig-maxHeight-ena" class="ena" />
+                                    </div>
                                     <span class="input-group-text">maxHeight</span>
                                 </div>
                                 <input type="number" class="form-control videoConfig" id="cc-videoConfig-maxHeight"
@@ -545,6 +594,9 @@
 
                             <div class="input-group mb-1">
                                 <div class="input-group-prepend">
+                                    <div class="input-group-text">
+                                        <input type="checkbox" id="cc-videoConfig-maxFPS-ena" class="ena" />
+                                    </div>
                                     <span class="input-group-text">maxFPS</span>
                                 </div>
                                 <input type="number" class="form-control videoConfig" id="cc-videoConfig-maxFPS"
@@ -553,6 +605,9 @@
 
                             <div class="input-group mb-1">
                                 <div class="input-group-prepend">
+                                    <div class="input-group-text">
+                                        <input type="checkbox" id="cc-videoConfig-maxBitrate-ena" class="ena" />
+                                    </div>
                                     <span class="input-group-text">maxBitrate</span>
                                 </div>
                                 <input type="number" class="form-control videoConfig" id="cc-videoConfig-maxBitrate"
