@@ -10,7 +10,7 @@
 -   Provide a clear/reset wizard in order to clean persistent data
 -   Add a config value to remove enable/motion homekit buttons #320
 -   Handling captcha request
--   Adding config setting to force codec and force debug on ffmpeg
+-   Adding videoconfig setting per camera
 
 ### Fixed
 -   Updating some dep for security reason
