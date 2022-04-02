@@ -325,7 +325,7 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
     let unbridge = false;
 
     const station = container.deviceIdentifier.station;
-    const type = container.deviceIdentifier.type;
+    let type = container.deviceIdentifier.type;
     const device = container.eufyDevice;
 
     /* Under development area
@@ -345,7 +345,7 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
           || type === DeviceType.BATTERY_DOORBELL
           || type === DeviceType.BATTERY_DOORBELL_2)) {
           // this.log.warn(accessory.displayName, 'looks station but it\'s not could imply some errors', 'Type:', type);
-          new StationAccessory(this, accessory, device as Station);
+          type = DeviceType.STATION;
         } else {
           return;
         }
