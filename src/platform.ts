@@ -395,9 +395,6 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
       case DeviceType.SENSOR:
         new EntrySensorAccessory(this, accessory, device as EntrySensor);
         break;
-      case DeviceType.KEYPAD:
-        new KeypadAccessory(this, accessory, device as Keypad);
-        break;
       case DeviceType.LOCK_BASIC:
       case DeviceType.LOCK_ADVANCED:
       case DeviceType.LOCK_BASIC_NO_FINGER:
@@ -414,7 +411,7 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
         this.log.info('Updating accessory:', accessory.displayName);
         this.api.updatePlatformAccessories([accessory]);
         return;
-      } else{
+      } else {
         this.log.info(`Removing cached accessory ${accessory.UUID} ${accessory.displayName}`);
         this.api.unregisterPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [accessory]);
       }

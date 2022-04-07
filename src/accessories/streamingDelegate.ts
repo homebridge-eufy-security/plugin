@@ -576,7 +576,7 @@ export class StreamingDelegate implements CameraStreamingDelegate {
 
                 let url = this.device.getPropertyValue(PropertyName.DeviceRTSPStreamUrl).value;
 
-                this.platform.log.debug(this.cameraName, 'RSTP URL: ' + url);
+                this.platform.log.debug(this.cameraName, 'RTSP URL: ' + url);
 
                 this.videoConfig.source = '' + url;
 

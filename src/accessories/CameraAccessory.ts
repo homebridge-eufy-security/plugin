@@ -46,7 +46,7 @@ export class CameraAccessory extends DeviceAccessory {
       try {
         if (this.cameraConfig.rtsp && this.eufyDevice.hasProperty('rtspStream')) {
           if (this.eufyDevice.getPropertyValue(PropertyName.DeviceRTSPStream)) {
-            this.platform.log.debug(this.accessory.displayName, ': RTSP capabilities already enabled');
+            this.platform.log.debug(this.accessory.displayName, ': RTSP capabilities is enabled');
           } else {
             this.platform.log.debug(this.accessory.displayName, ': RTSP capabilities not enabled. You will need to do it manually!');
             this.cameraConfig.rtsp = false;
@@ -170,11 +170,7 @@ export class CameraAccessory extends DeviceAccessory {
     config.enableButton = config.enableButton ??= true;
     config.motionButton = config.motionButton ??= true;
     config.rtsp = config.rtsp ??= false;
-    config.videoConfigEna = config.videoConfigEna ??= false;
     config.videoConfig = config.videoConfig ??= {};
-
-    if (config.videoConfigEna === false)
-      config.videoConfig = {};
 
     return config;
   }

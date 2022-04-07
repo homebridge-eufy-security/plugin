@@ -4,7 +4,8 @@ const { HomebridgePluginUiServer, RequestError } = require('@homebridge/plugin-u
 const bunyan = require('bunyan');
 const bunyanDebugStream = require('bunyan-debug-stream');
 const plugin = require('../package.json');
-const fs = require('fs')
+const fs = require('fs');
+const zlib = require('zlib');
 
 
 class UiServer extends HomebridgePluginUiServer {
@@ -51,9 +52,9 @@ class UiServer extends HomebridgePluginUiServer {
     this.onRequest('/auth', this.auth.bind(this));
     this.onRequest('/check-captcha', this.checkCaptcha.bind(this));
     this.onRequest('/check-otp', this.checkOtp.bind(this));
-    this.onRequest('/refreshData', this.refreshData.bind(this));
     this.onRequest('/getStations', this.getStations.bind(this));
     this.onRequest('/reset', this.reset.bind(this));
+    this.onRequest('/get-lib-logs', this.getLibLogs.bind(this));
 
     // must be called when the script is ready to accept connections
     this.ready();
@@ -70,7 +71,7 @@ class UiServer extends HomebridgePluginUiServer {
   }
 
   async authenticate(verifyCodeOrCaptcha = null, captchaId = null) {
-    
+
     try {
       let retries = 0;
       await this.driver.api.loadApiBase().catch((error) => {
@@ -155,6 +156,30 @@ class UiServer extends HomebridgePluginUiServer {
       return JSON.parse(fs.readFileSync(this.stations_file, { encoding: 'utf-8' }));
     } catch {
       return null;
+    }
+  }
+
+  async compressFile(filePath) {
+    return new Promise((resolve, reject) => {
+      const stream = fs.createReadStream(filePath);
+      stream
+        .pipe(zlib.createGzip())
+        .pipe(fs.createWriteStream(`${filePath}.gz`))
+        .on("finish", () => {
+          console.log(`Successfully compressed the file at ${filePath}`);
+          resolve(fs.readFileSync(`${filePath}.gz`), { flag: "r" });
+        });
+
+    });
+  }
+
+  async getLibLogs() {
+    try {
+      const gzip = await this.compressFile(this.storagePath + '/log-lib.log');
+      return { result: 1, data: gzip };
+    } catch (err) {
+      this.log.error(err);
+      return { result: 0 };
     }
   }
 
@@ -256,10 +281,12 @@ class UiServer extends HomebridgePluginUiServer {
   /**
    * Handle requests sent to /getStations
    */
-  async getStations() {
+  async getStations(r = false) {
+
+    console.log(JSON.stringify(r.refresh));
 
     // Do we really need to ask Eufy ? cached is enough ?
-    if (!await this.isNeedRefreshStationsCache()) {
+    if (!(await this.isNeedRefreshStationsCache() || r.refresh)) {
       this.log.info('No need to refresh the devices list');
       try {
         const stations = await this.getCachedStations();

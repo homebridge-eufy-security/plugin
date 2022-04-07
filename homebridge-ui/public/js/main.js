@@ -501,23 +501,11 @@ function display_box(display) {
 
 }
 
-async function refreshData() {
-    try {
-
-        homebridge.toast.info('Refreshing Data....');
-        await hb_request('/refreshData');
-
-    } catch (e) {
-
-        homebridge.toast.error(e.message, 'Error');
-    }
-}
-
-async function getStations() {
+async function getStations(refresh = false) {
     try {
 
         homebridge.toast.info('Getting Devices....');
-        const response = await hb_request('/getStations');
+        const response = await hb_request('/getStations', { 'refresh': refresh });
 
         await list_stations_devices(response.stations);
     } catch (e) {
@@ -576,15 +564,18 @@ function ConfigCameraFill(camera) {
         }
     });
 
-    document.getElementById('cc-enableCamera-btn-false').checked = !config.enableCamera;
-    document.getElementById('cc-enableCamera-btn-true').checked = config.enableCamera;
+    const ecf = document.getElementById('cc-enableCamera-btn-false');
+    const ect = document.getElementById('cc-enableCamera-btn-true');
+
+    ecf.checked = !config.enableCamera;
+    ect.checked = config.enableCamera;
 
     if (config.enableCamera) {
-        document.getElementById('cc-enableCamera-btn-false').parentElement.classList.remove('active');
-        document.getElementById('cc-enableCamera-btn-true').parentElement.classList.add('active');
+        ecf.parentElement.classList.remove('active');
+        ect.parentElement.classList.add('active');
     } else {
-        document.getElementById('cc-enableCamera-btn-false').parentElement.classList.add('active');
-        document.getElementById('cc-enableCamera-btn-true').parentElement.classList.remove('active');
+        ecf.parentElement.classList.add('active');
+        ect.parentElement.classList.remove('active');
     }
 
     document.getElementById('camera-adv').style.display = (config.enableCamera) ? 'block' : 'none';
@@ -593,15 +584,13 @@ function ConfigCameraFill(camera) {
 }
 
 async function save_camera_config() {
-    var c = { ...{ serialNumber: '' }, ...CameraConfig };
+    var c = { ...{ serialNumber: '' } };
 
     c['serialNumber'] = document.getElementById('cc-serialnumber').value;
 
     Object.entries(CameraConfig).forEach(([k, v]) => {
         const vc = document.getElementById('cc-' + k);
-        if (typeof CameraConfig[k] === 'boolean')
-            if (vc.checked)
-                c[k] = vc.checked;
+        if (typeof CameraConfig[k] === 'boolean') c[k] = vc.checked;
     });
 
     c.videoConfig = {};
@@ -627,9 +616,7 @@ async function save_camera_config() {
 
     var pos = pluginConfig.cameras.map(function (e) { return e.serialNumber; }).indexOf(c['serialNumber']);
 
-    if (pos === -1) {
-        pluginConfig.cameras.push(c);
-    }
+    if (pos === -1) pluginConfig.cameras.push(c);
 
     pluginConfig.cameras[pos] = c;
 
@@ -648,8 +635,7 @@ async function whatsnext(url, params) {
             display_box('step2-otp');
             break;
         case 3:
-            await refreshData();
-            await getStations();
+            await getStations(true);
             break;
         default:
             homebridge.toast.error("Wrong!");
@@ -788,11 +774,76 @@ document.getElementById('reset-confirm-btn').addEventListener('click', async () 
         homebridge.closeSettings();
 
     } catch (e) {
-
         homebridge.toast.error(e.error || e.message, 'Error');
     }
 
 });
+
+function download(strData, strFileName, strMimeType) {
+    var D = document,
+        A = arguments,
+        a = D.createElement("a"),
+        d = A[0],
+        n = A[1],
+        t = A[2] || "text/plain";
+
+    //build download link:
+    a.href = "data:" + strMimeType + "charset=utf-8," + escape(strData);
+
+
+    if (window.MSBlobBuilder) { // IE10
+        var bb = new MSBlobBuilder();
+        bb.append(strData);
+        return navigator.msSaveBlob(bb, strFileName);
+    } /* end if(window.MSBlobBuilder) */
+
+
+
+    if ('download' in a) { //FF20, CH19
+        a.setAttribute("download", n);
+        a.innerHTML = "downloading...";
+        D.body.appendChild(a);
+        setTimeout(function () {
+            var e = D.createEvent("MouseEvents");
+            e.initMouseEvent("click", true, false, window, 0, 0, 0, 0, 0, false, false, false, false, 0, null);
+            a.dispatchEvent(e);
+            D.body.removeChild(a);
+        }, 66);
+        return true;
+    }; /* end if('download' in a) */
+
+
+
+    //do iframe dataURL download: (older W3)
+    var f = D.createElement("iframe");
+    D.body.appendChild(f);
+    f.src = "data:" + (A[2] ? A[2] : "application/octet-stream") + (window.btoa ? ";base64" : "") + "," + (window.btoa ? window.btoa : escape)(strData);
+    setTimeout(function () {
+        D.body.removeChild(f);
+    }, 333);
+    return true;
+}
+
+// step reset submit handler
+document.getElementById('get-lib-log').addEventListener('click', async () => {
+
+    try {
+        const response = await hb_request('/get-lib-logs', {});
+
+        if (response.result == 0) {
+            homebridge.toast.error("Unable to get it (did you run this plugin at least once?)");
+        }
+        if (response.result == 1) {
+            homebridge.toast.success("Success");
+            download(response.data, 'log-lib.log.gz', 'application/x-gzip')
+        }
+
+    } catch (e) {
+        homebridge.toast.error(e.error || e.message, 'Error');
+    }
+
+});
+
 
 document.querySelectorAll('input[type=radio]').forEach(item => {
     item.addEventListener('change', event => {
