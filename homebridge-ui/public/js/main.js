@@ -26,6 +26,7 @@ var CameraConfig = {
     "motionButton": true,
     "rtsp": true,
     "unbridge": true,
+    "forcerefreshsnap": false,
     "videoConfig": {
         "debug": false,
         "audio": true,

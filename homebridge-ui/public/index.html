@@ -402,11 +402,23 @@
                             <hr />
 
                             <div class="form-check">
-                                <input class="form-check-input" type="checkbox" id="cc-rtsp">
-                                <label class="form-check-label" for="cc-rtsp">Force RTSP</label>
+                                <input class="form-check-input" type="checkbox" id="cc-forcerefreshsnap">
+                                <label class="form-check-label" for="cc-forcerefreshsnap">Force Refresh Snapshot</label>
                             </div>
 
-                            <small id="cc-help-rtsp" class="form-text text-muted">Improve getting live stream</small>
+                            <small class="form-text text-muted">When enabled, we will start stream for one frame and use
+                                as a snapshot (this can affect the battery life). If it's disabled, we will use the Eufy
+                                Cloud API one (which could be really old).</small>
+
+                            <hr />
+
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="cc-rtsp">
+                                <label class="form-check-label" for="cc-rtsp">Use RTSP</label>
+                            </div>
+
+                            <small id="cc-help-rtsp" class="form-text text-muted">Improve getting live stream by using
+                                RTSP</small>
                         </div>
                     </div>
 
@@ -643,4 +655,4 @@
 
 </div>
 
-<script type="text/javascript" src="js/main.js?v=1.1.1-beta.39"></script>
+<script type="text/javascript" src="js/main.js?v=1.1.1-beta.46"></script>

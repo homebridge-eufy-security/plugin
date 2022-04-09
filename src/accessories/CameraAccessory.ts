@@ -44,22 +44,6 @@ export class CameraAccessory extends DeviceAccessory {
       this.platform.log.debug(this.accessory.displayName, 'has a camera');
 
       try {
-        if (this.cameraConfig.rtsp && this.eufyDevice.hasProperty('rtspStream')) {
-          if (this.eufyDevice.getPropertyValue(PropertyName.DeviceRTSPStream)) {
-            this.platform.log.debug(this.accessory.displayName, ': RTSP capabilities is enabled');
-          } else {
-            this.platform.log.debug(this.accessory.displayName, ': RTSP capabilities not enabled. You will need to do it manually!');
-            this.cameraConfig.rtsp = false;
-          }
-        } else {
-          this.platform.log.debug(this.accessory.displayName, 'Looks like not compatible with RTSP or this has been disabled within configuration');
-          this.cameraConfig.rtsp = false;
-        }
-      } catch (Error) {
-        this.platform.log.error(this.accessory.displayName, 'raise error while enabling RTSP capabilities.', Error);
-      }
-
-      try {
         this.CameraService = this.cameraFunction(accessory);
         this.CameraService.setPrimaryService(true);
         const delegate = new StreamingDelegate(this.platform, eufyDevice, this.cameraConfig, this.platform.api, this.platform.api.hap);
@@ -170,6 +154,7 @@ export class CameraAccessory extends DeviceAccessory {
     config.enableButton = config.enableButton ??= true;
     config.motionButton = config.motionButton ??= true;
     config.rtsp = config.rtsp ??= false;
+    config.forcerefreshsnap =  config.forcerefreshsnap ??= false;
     config.videoConfig = config.videoConfig ??= {};
 
     return config;

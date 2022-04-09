@@ -16,6 +16,7 @@ export type CameraConfig = {
   rtsp: boolean;
   videoConfigEna: boolean;
   enableCamera: boolean;
+  forcerefreshsnap: boolean;
 };
 
 export type VideoConfig = {

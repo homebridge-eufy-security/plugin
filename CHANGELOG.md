@@ -1,6 +1,6 @@
 # Change Log
 
-## BETA (18/02/2022)
+## BETA (09/04/2022)
 
 ### Added
 -   Local Livestream
@@ -11,6 +11,7 @@
 -   Add a config value to remove enable/motion homekit buttons #320
 -   Handling captcha request
 -   Adding videoconfig setting per camera
+-   Adding a new button to force or not using live stream to create snapshot
 
 ### Fixed
 -   Updating some dep for security reason
@@ -20,6 +21,7 @@
 -   Fix Arming stuck while using Schedule or Geo #342
 -   Streaming issue while using Docker #308 (thanks @alternativ)
 -   Fix issue on video stream while debug is disabled #356
+-   Improve selecting Static Image / Local Live Stream / RTSP
 
 ## 1.0.1 (18/10/2021)
 

@@ -90,7 +90,6 @@ export class StreamingDelegate implements CameraStreamingDelegate {
     private readonly api: API;
     private readonly log: Logger;
     private readonly cameraName: string;
-    private readonly unbridge: boolean;
     private cameraConfig: CameraConfig;
     private videoConfig: VideoConfig;
     private readonly videoProcessor: string;
@@ -115,7 +114,7 @@ export class StreamingDelegate implements CameraStreamingDelegate {
         this.device = device;
 
         this.cameraName = device.getName()!;
-        this.unbridge = false;
+
         this.cameraConfig = cameraConfig;
         this.videoConfig = cameraConfig.videoConfig!;
         this.videoProcessor = ffmpegPath || 'ffmpeg';
@@ -224,14 +223,55 @@ export class StreamingDelegate implements CameraStreamingDelegate {
 
         return new Promise(async (resolve, reject) => {
 
+            let inputChanged = false;
+            let uVideoStream;
+            let ffmpegInput;
+
+            const rtsp = this.is_rtsp_ready();
+
             try {
 
-                try {
-                    this.videoConfig.stillImageSource = '-i ' + this.device.getPropertyValue(PropertyName.DevicePictureUrl).value as string;
-                } catch {
-                    this.log.warn(this.cameraName + ' fetchSnapshot: ' + 'No Snapshot found');
-                    resolve(await readFileAsync(SnapshotUnavailablePath));
+                if (false) {
+                    ffmpegInput = ['-re', '-loop', '1', '-i', offlineImage];
+                    inputChanged = true;
+                } else if (false) {
+                    ffmpegInput = ['-re', '-loop', '1', '-i', privacyImage];
+                    inputChanged = true;
+                } else if (!this.cameraConfig.forcerefreshsnap) {
+                    try {
+                        const url = this.device.getPropertyValue(PropertyName.DevicePictureUrl).value as string;
+                        this.videoConfig.stillImageSource = '-i ' + url;
+                        this.platform.log.debug(this.cameraName, 'EUFY CLOUD URL: ' + url);
+                    } catch {
+                        this.log.warn(this.cameraName + ' fetchSnapshot: ' + 'No Snapshot found');
+                        resolve(await readFileAsync(SnapshotUnavailablePath));
+                    }
+                } else if (rtsp) {
+                    try {
+                        const url = this.device.getPropertyValue(PropertyName.DeviceRTSPStreamUrl).value;
+                        this.platform.log.debug(this.cameraName, 'RTSP URL: ' + url);
+                        this.videoConfig.source = '-i ' + url;
+                        ffmpegInput = this.generateInputSource(this.videoConfig, this.videoConfig.source).split(/\s+/);
+                    } catch {
+                        this.log.warn(this.cameraName + ' fetchSnapshot: ' + 'No Snapshot found');
+                        resolve(await readFileAsync(SnapshotUnavailablePath));
+                    }
+                } else {
+                    try {
+                        const streamData = await this.getLocalLiveStream().catch(err => {
+                            throw err;
+                        });
+                        uVideoStream = StreamInput(streamData.videostream, this.cameraName + '_video', this.platform.eufyPath, this.log);
+                        this.videoConfig.source = '-i ' + uVideoStream.url;
+                        ffmpegInput = this.generateInputSource(this.videoConfig, this.videoConfig.source).split(/\s+/);
+
+                    } catch (err) {
+                        this.log.error(this.cameraName + ' Unable to start the livestream: ' + err as string);
+                        resolve(await readFileAsync(SnapshotUnavailablePath));
+                    }
                 }
+
+                this.videoConfig = this.generateVideoConfigSnapShot(this.videoConfig);
 
                 const startTime = Date.now();
                 const ffmpegArgs = (this.videoConfig.stillImageSource || this.videoConfig.source!) + // Still
@@ -243,25 +283,6 @@ export class StreamingDelegate implements CameraStreamingDelegate {
 
                 this.log.debug(this.cameraName, 'Snapshot command: ' + this.videoProcessor + ' ' + ffmpegArgs, this.videoConfig.debug);
                 const ffmpeg = spawn(this.videoProcessor, ffmpegArgs.split(/\s+/), { env: process.env });
-
-                // const streamData = await this.getLocalLiveStream().catch(err => {
-                //     throw err;
-                // });
-
-                // this.log.debug('Received local livestream.');
-
-                // const startTime = Date.now();
-                // const ffmpegArgs = '-probesize 3000 -analyzeduration 0 -ss 00:00:00.500 -i pipe: -frames:v 1 -c:v copy' +
-                //     (snapFilter ? ' -filter:v ' + snapFilter : '') +
-                //     ' -f image2 -' +
-                //     ' -hide_banner' +
-                //     ' -loglevel ' + (this.platform.config.enableDetailedLogging >= 1 ? '+verbose' : 'error');
-
-                // this.log.debug(this.cameraName, 'Snapshot command: ' + this.videoProcessor + ' ' + ffmpegArgs, this.videoConfig.debug);
-                // const ffmpeg = spawn(this.videoProcessor, ffmpegArgs.split(/\s+/), { env: process.env });
-                // streamData.videostream.pipe(ffmpeg.stdin).on('error', (err) => {
-                //     this.log.error(err.message, this.cameraName);
-                // });
 
                 let snapshotBuffer = Buffer.alloc(0);
                 ffmpeg.stdout.on('data', (data) => {
@@ -296,7 +317,7 @@ export class StreamingDelegate implements CameraStreamingDelegate {
                     if (runtime < 5) {
                         this.log.debug(message, this.cameraName, this.videoConfig.debug);
                     } else {
-                        if (!this.unbridge) {
+                        if (!this.cameraConfig.unbridge) {
                             message += ' It is highly recommended you switch to unbridge mode.';
                         }
                         if (runtime < 22) {
@@ -350,14 +371,6 @@ export class StreamingDelegate implements CameraStreamingDelegate {
                 this.cameraName, this.videoConfig.debug);
 
             const snapshot = await (this.snapshotPromise || this.fetchSnapshot(resolution.snapFilter));
-            // let snapshot;
-            // if(this.snapshotPromise) {
-            //     this.log.debug('Awaiting promise');
-            //     snapshot = await this.snapshotPromise;
-            // } else{
-            //     this.log.debug('Calling fetchSnapshot');
-            //     snapshot = await this.fetchSnapshot(resolution.snapFilter);
-            // }
 
             this.log.debug('snapshot byte lenght: ' + snapshot?.byteLength);
 
@@ -555,6 +568,35 @@ export class StreamingDelegate implements CameraStreamingDelegate {
         return inputSource;
     }
 
+    private is_rtsp_ready(): boolean {
+
+        this.platform.log.debug(this.cameraName, 'RTSP rtspStream:' + JSON.stringify(this.device.hasProperty('rtspStream')));
+        if (!this.device.hasProperty('rtspStream')) {
+            this.platform.log.debug(this.cameraName, 'Looks like not compatible with RTSP');
+            return false;
+        }
+
+        this.platform.log.debug(this.cameraName, 'RTSP cameraConfig: ' + JSON.stringify(this.cameraConfig.rtsp));
+        if (!this.cameraConfig.rtsp) {
+            this.platform.log.debug(this.cameraName, 'Looks like RTSP is not enabled on camera config');
+            return false;
+        }
+
+        this.platform.log.debug(this.cameraName, 'RTSP ' + JSON.stringify(this.device.getPropertyValue(PropertyName.DeviceRTSPStream)));
+        if (!this.device.getPropertyValue(PropertyName.DeviceRTSPStream).value) {
+            this.platform.log.debug(this.cameraName, ': RTSP capabilities not enabled. You will need to do it manually!');
+            return false;
+        }
+
+        this.platform.log.debug(this.cameraName, 'RTSP ' + JSON.stringify(this.device.getPropertyValue(PropertyName.DeviceRTSPStreamUrl)));
+        if (this.device.getPropertyValue(PropertyName.DeviceRTSPStreamUrl).value === '') {
+            this.platform.log.debug(this.cameraName, ': RTSP URL is unknow');
+            return false;
+        }
+
+        return true;
+    }
+
     private async startStream(request: StartStreamRequest, callback: StreamRequestCallback): Promise<void> {
 
         const sessionInfo = this.pendingSessions.get(request.sessionID);
@@ -566,22 +608,19 @@ export class StreamingDelegate implements CameraStreamingDelegate {
             let uAudioStream;
             let ffmpegInput;
 
+            const rtsp = this.is_rtsp_ready();
+
             if (false) {
                 ffmpegInput = ['-re', '-loop', '1', '-i', offlineImage];
                 inputChanged = true;
             } else if (false) {
                 ffmpegInput = ['-re', '-loop', '1', '-i', privacyImage];
                 inputChanged = true;
-            } else if (this.cameraConfig.rtsp) {
-
-                let url = this.device.getPropertyValue(PropertyName.DeviceRTSPStreamUrl).value;
-
+            } else if (rtsp) {
+                const url = this.device.getPropertyValue(PropertyName.DeviceRTSPStreamUrl).value;
                 this.platform.log.debug(this.cameraName, 'RTSP URL: ' + url);
-
-                this.videoConfig.source = '' + url;
-
-                ffmpegInput = this.generateInputSource(this.videoConfig, '-i ' + this.videoConfig.source).split(/\s+/);
-
+                this.videoConfig.source = '-i ' + url;
+                ffmpegInput = this.generateInputSource(this.videoConfig, this.videoConfig.source).split(/\s+/);
             } else {
                 try {
                     const streamData = await this.getLocalLiveStream().catch(err => {
@@ -589,7 +628,8 @@ export class StreamingDelegate implements CameraStreamingDelegate {
                     });
                     uVideoStream = StreamInput(streamData.videostream, this.cameraName + '_video', this.platform.eufyPath, this.log);
                     uAudioStream = StreamInput(streamData.audiostream, this.cameraName + '_audio', this.platform.eufyPath, this.log);
-                    ffmpegInput = this.generateInputSource(this.videoConfig, '-i ' + uVideoStream.url).split(/\s+/);
+                    this.videoConfig.source = '-i ' + uVideoStream.url;
+                    ffmpegInput = this.generateInputSource(this.videoConfig, this.videoConfig.source).split(/\s+/);
                 } catch (err) {
                     this.log.error(this.cameraName + ' Unable to start the livestream: ' + err as string);
                 }
@@ -687,7 +727,7 @@ export class StreamingDelegate implements CameraStreamingDelegate {
 
             if (request.audio.codec === AudioStreamingCodecType.OPUS || request.audio.codec === AudioStreamingCodecType.AAC_ELD) {
 
-                if (!this.cameraConfig.rtsp) {
+                if (!rtsp) {
                     ffmpegArgs.push(`-i ${uAudioStream.url}`);
                 }
 
