@@ -21,7 +21,7 @@
 -   Fix Arming stuck while using Schedule or Geo #342
 -   Streaming issue while using Docker #308 (thanks @alternativ)
 -   Fix issue on video stream while debug is disabled #356
--   Improve selecting Static Image / Local Live Stream / RTSP
+-   Improve selecting Static Image / Local Live Stream / RTSP #382
 
 ## 1.0.1 (18/10/2021)
 
