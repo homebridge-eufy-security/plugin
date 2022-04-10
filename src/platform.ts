@@ -106,6 +106,8 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
       this.log = hblog;
     }
 
+    this.log.warn('warning: planned changes, see https://github.com/homebridge-eufy-security/plugin/issues/1');
+
     this.clean_config();
 
     if (!fs.existsSync(this.eufyPath)) {
