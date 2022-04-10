@@ -67,25 +67,6 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
 
     this.eufyPath = this.api.user.storagePath() + '/eufysecurity';
 
-    if (!fs.existsSync(this.eufyPath)) {
-      fs.mkdirSync(this.eufyPath);
-    }
-
-    this.eufyConfig = {
-      username: this.config.username,
-      password: this.config.password,
-      country: this.config.country ?? 'US',
-      language: 'en',
-      persistentDir: this.eufyPath,
-      p2pConnectionSetup: 0,
-      pollingIntervalMinutes: this.config.pollingIntervalMinutes ?? 10,
-      eventDurationSeconds: 10,
-    } as EufySecurityConfig;
-
-    this.config.ignoreStations = this.config.ignoreStations ??= [];
-    this.config.ignoreDevices = this.config.ignoreDevices ??= [];
-    this.config.cleanCache = this.config.cleanCache ??= true;
-
     if (this.config.enableDetailedLogging >= 1) {
 
       const plugin = require('../package.json');
@@ -126,6 +107,25 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
     }
 
     this.clean_config();
+
+    if (!fs.existsSync(this.eufyPath)) {
+      fs.mkdirSync(this.eufyPath);
+    }
+
+    this.eufyConfig = {
+      username: this.config.username,
+      password: this.config.password,
+      country: this.config.country ?? 'US',
+      language: 'en',
+      persistentDir: this.eufyPath,
+      p2pConnectionSetup: 0,
+      pollingIntervalMinutes: this.config.pollingIntervalMinutes ?? 10,
+      eventDurationSeconds: 10,
+    } as EufySecurityConfig;
+
+    this.config.ignoreStations = this.config.ignoreStations ??= [];
+    this.config.ignoreDevices = this.config.ignoreDevices ??= [];
+    this.config.cleanCache = this.config.cleanCache ??= true;
 
     this.log.info('Country set:', this.config.country ?? 'US');
 
