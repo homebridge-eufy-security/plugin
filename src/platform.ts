@@ -467,7 +467,7 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
 
       // Cleaning space
 
-      const i = ['hkHome', 'hkAway', 'hkNight', 'hkOff', 'pollingIntervalMinutes', 'pollingIntervalMinutes', 'CameraMaxLivestreamDuration'];
+      const i = ['hkHome', 'hkAway', 'hkNight', 'hkOff', 'pollingIntervalMinutes', 'CameraMaxLivestreamDuration'];
 
       Object.entries(pluginConfig).forEach(([key, value]) => {
         if (!i.includes(key)) {
