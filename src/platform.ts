@@ -470,7 +470,9 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
       const i = ['hkHome', 'hkAway', 'hkNight', 'hkOff', 'pollingIntervalMinutes', 'pollingIntervalMinutes', 'CameraMaxLivestreamDuration'];
 
       Object.entries(pluginConfig).forEach(([key, value]) => {
-        if (!i.includes(key)) return;
+        if (!i.includes(key)) {
+          return;
+        }
         pluginConfig[key] = (typeof pluginConfig[key] === 'string') ? parseInt(value as string) : value;
       });
 
@@ -480,7 +482,7 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
       this.config = pluginConfig;
       fs.writeFileSync(this.api.user.configPath(), JSON.stringify(currentConfig, null, 4));
 
-    } catch (e: any) {
+    } catch (e) {
       this.log.error('Error cleaning config:', e);
     }
   }
