@@ -50,7 +50,7 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
 
   // this is used to track restored cached accessories
   public readonly accessories: PlatformAccessory[] = [];
-  public readonly config: EufySecurityPlatformConfig;
+  public config: EufySecurityPlatformConfig;
   private eufyConfig: EufySecurityConfig;
 
   public log;
@@ -124,6 +124,8 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
     } else {
       this.log = hblog;
     }
+
+    this.clean_config();
 
     this.log.info('Country set:', this.config.country ?? 'US');
 
@@ -447,5 +449,39 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
 
   public getStationById(id: string) {
     return this.eufyClient.getStation(id);
+  }
+
+  private clean_config() {
+    try {
+      const currentConfig = JSON.parse(fs.readFileSync(this.api.user.configPath(), 'utf8'));
+      // check the platforms section is an array before we do array things on it
+      if (!Array.isArray(currentConfig.platforms)) {
+        throw new Error('Cannot find platforms array in config');
+      }
+      // find this plugins current config
+      const pluginConfig = currentConfig.platforms.find((x: { platform: string }) => x.platform === PLATFORM_NAME);
+
+      if (!pluginConfig) {
+        throw new Error(`Cannot find config for ${PLATFORM_NAME} in platforms array`);
+      }
+
+      // Cleaning space
+
+      const i = ['hkHome', 'hkAway', 'hkNight', 'hkOff'];
+
+      Object.entries(pluginConfig).forEach(([key, value]) => {
+        if (!i.includes(key)) return;
+        pluginConfig[key] = (typeof pluginConfig[key] === 'string') ? parseInt(value as string) : value;
+      });
+
+      // End of Cleaning space
+
+      // Applying clean and save it
+      this.config = pluginConfig;
+      fs.writeFileSync(this.api.user.configPath(), JSON.stringify(currentConfig, null, 4));
+
+    } catch (e: any) {
+      this.log.error('Error cleaning config:', e);
+    }
   }
 }
