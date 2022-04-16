@@ -135,7 +135,10 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
     // moving persistent into our dedicated folder (this need to be removed after few release of 1.1.x)
     if (fs.existsSync(this.api.user.storagePath() + '/persistent.json')) {
       this.log.debug('An old persistent file have been found');
-      fs.copyFileSync(this.api.user.storagePath() + '/persistent.json', this.eufyPath + '/persistent.json', fs.constants.COPYFILE_EXCL);
+      if (!fs.existsSync(this.eufyPath + '/persistent.json')) {
+        this.log.debug('but the new one is already present');
+        fs.copyFileSync(this.api.user.storagePath() + '/persistent.json', this.eufyPath + '/persistent.json', fs.constants.COPYFILE_EXCL);
+      }
       fs.unlinkSync(this.api.user.storagePath() + '/persistent.json');
     }
 
