@@ -283,8 +283,6 @@ class UiServer extends HomebridgePluginUiServer {
    */
   async getStations(r = false) {
 
-    console.log(JSON.stringify(r.refresh));
-
     // Do we really need to ask Eufy ? cached is enough ?
     if (!(await this.isNeedRefreshStationsCache() || r.refresh)) {
       this.log.info('No need to refresh the devices list');
@@ -299,8 +297,13 @@ class UiServer extends HomebridgePluginUiServer {
 
     this.log.info('Need to refresh the devices list');
     try {
-      const r = await this.auth();
-      if (r.result = 3) {
+      if (this.driver.isConnected()) {
+        await this.refreshData();
+        const stations = await this.refreshDevices();
+        return { result: 1, stations: stations }; // Connected
+      }
+      const a = await this.auth();
+      if (a.result = 3) {
         await this.refreshData();
         const stations = await this.refreshDevices();
         return { result: 1, stations: stations }; // Connected
