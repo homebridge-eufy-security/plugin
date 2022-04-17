@@ -12,6 +12,7 @@
 -   Handling captcha request
 -   Adding videoconfig setting per camera
 -   Adding a new button to force or not using live stream to create snapshot
+-   Warn if user is using primary Eufy account instead of guest admin one
 
 ### Fixed
 -   Updating some dep for security reason

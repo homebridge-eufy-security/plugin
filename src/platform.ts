@@ -212,6 +212,14 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
         station.getLANIPAddress(),
       );
 
+      if (station.getRawStation().member.member_type === 1) {
+        this.log.info('You\'re using guest admin account with this plugin! This is recommanded way!');
+      } else {
+        this.log.warn('You\'re not using guest admin account with this plugin! This is not recommanded way!');
+        this.log.warn('Please look here for more details: https://github.com/homebridge-eufy-security/plugin/wiki/Create-a-dedicated-admin-account-for-Homebridge-Eufy-Security-Plugin');
+        this.log.warn(station.getSerial() + ' type: ' + station.getRawStation().member.member_type);
+      }
+
       if (this.config.ignoreStations.indexOf(station.getSerial()) !== -1) {
         this.log.debug('Device ignored');
         continue;
