@@ -13,6 +13,7 @@ import { Station, DeviceType, PropertyName, PropertyValue, AlarmEvent } from 'eu
 export class StationAccessory {
   private service: Service;
   private alarm_triggered: boolean;
+  private modes;
 
   protected characteristic;
 
@@ -25,6 +26,8 @@ export class StationAccessory {
     // set accessory information
 
     this.characteristic = this.platform.Characteristic;
+
+    this.mappingHKEufy();
 
     this.alarm_triggered = false;
 
@@ -139,31 +142,29 @@ export class StationAccessory {
     }
   }
 
-  mappingHKEufy() {
-    const modes = [
+  private mappingHKEufy(): void {
+    this.modes = [
       { hk: 0, eufy: this.platform.config.hkHome ?? 1 }, // Home
       { hk: 1, eufy: this.platform.config.hkAway ?? 0 }, // Away
       { hk: 2, eufy: this.platform.config.hkNight ?? 3 } // Night
     ];
 
-    // If keypad attached to the station
+    // If a keypad attached to the station
     if (this.eufyStation.hasDeviceWithType(DeviceType.KEYPAD)) {
-      modes.push({ hk: 3, eufy: this.platform.config.hkOff ?? 63 });
-      modes.push({ hk: 3, eufy: ((modes.filter((m) => { return m.eufy === 6; })[0]) ? 63 : 6) });
+      this.modes.push({ hk: 3, eufy: this.platform.config.hkOff ?? 63 });
+      this.modes.push({ hk: 3, eufy: ((this.modes.filter((m) => { return m.eufy === 6; })[0]) ? 63 : 6) });
     } else {
-      modes.push({ hk: 3, eufy: (this.platform.config.hkOff == 6) ? 63 : this.platform.config.hkOff }); // Enforce 63 if keypad has been selected but not attached to the station
+      this.modes.push({ hk: 3, eufy: (this.platform.config.hkOff == 6) ? 63 : this.platform.config.hkOff }); // Enforce 63 if keypad has been selected but not attached to the station
     }
-
-    return modes;
   }
 
   convertHKtoEufy(hkMode): number {
-    const modeObj = this.mappingHKEufy().filter((m) => { return m.hk === hkMode; });
+    const modeObj = this.modes.filter((m) => { return m.hk === hkMode; });
     return parseInt(modeObj[0] ? modeObj[0].eufy : hkMode);
   }
 
   convertEufytoHK(eufyMode): number {
-    const modeObj = this.mappingHKEufy().filter((m) => { return m.eufy === eufyMode; });
+    const modeObj = this.modes.filter((m) => { return m.eufy === eufyMode; });
     return parseInt(modeObj[0] ? modeObj[0].hk : eufyMode);
   }
 
