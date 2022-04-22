@@ -216,7 +216,8 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
         this.log.info('You\'re using guest admin account with this plugin! This is recommanded way!');
       } else {
         this.log.warn('You\'re not using guest admin account with this plugin! This is not recommanded way!');
-        this.log.warn('Please look here for more details: https://github.com/homebridge-eufy-security/plugin/wiki/Create-a-dedicated-admin-account-for-Homebridge-Eufy-Security-Plugin');
+        this.log.warn('Please look here for more details:');
+        this.log.warn('https://github.com/homebridge-eufy-security/plugin/wiki/Installation');
         this.log.warn(station.getSerial() + ' type: ' + station.getRawStation().member.member_type);
       }
 
