@@ -1,5 +1,5 @@
 <p align="center">
-   <a href="https://github.com/samemory/homebridge-eufy-security"><img src="https://raw.githubusercontent.com/wiki/homebridge-eufy-security/plugin/img/homebridge-eufy-security.png" width="456px"></a>
+   <a href="https://github.com/homebridge-eufy-security/plugin"><img src="https://raw.githubusercontent.com/wiki/homebridge-eufy-security/plugin/img/homebridge-eufy-security.png" width="456px"></a>
 </p>
 <span align="center">
 
@@ -26,38 +26,32 @@ Homebridge plugin to control certain Eufy Security devices
 ### Prerequisites
 
 - To use this plugin, you will need to already have [Homebridge](https://homebridge.io) (at least v1.3.4)  installed. Refer to the links for more information and installation instructions.
-- It is recommended to use the current LTS version of Node, currently v16, however Node v14 is also supported.
+- It is recommended to use the current LTS version of Node, currently v14, however Node v12 is also supported.
 
 ### Setup
 
-- [Installation](https://github.com/samemory/homebridge-eufy-security/wiki/Installation)
-- [Configuration](https://github.com/samemory/homebridge-eufy-security/wiki/Configuration)
-- [Beta Version](https://github.com/samemory/homebridge-eufy-security/wiki/Beta-Version)
-- [Node Version](https://github.com/samemory/homebridge-eufy-security/wiki/Node-Version)
-- [Uninstallation](https://github.com/samemory/homebridge-eufy-security/wiki/Uninstallation)
+- [Installation](https://github.com/homebridge-eufy-security/plugin/wiki/Installation)
+- [Configuration](https://github.com/homebridge-eufy-security/plugin/wiki/Configuration)
+- [Beta Version](https://github.com/homebridge-eufy-security/plugin/wiki/Beta-Version)
+- [Node Version](https://github.com/homebridge-eufy-security/plugin/wiki/Node-Version)
+- [Uninstallation](https://github.com/homebridge-eufy-security/plugin/wiki/Uninstallation)
 
 ### Features
 
-- [Supported Devices](https://github.com/samemory/homebridge-eufy-security/wiki/Supported-Devices)
+- [Supported Devices](https://github.com/homebridge-eufy-security/plugin/wiki/Supported-Devices)
 
 ### Help
 
-- [Common Issues](https://github.com/samemory/homebridge-eufy-security/wiki/Common-Issues)
-- [Basic Troubleshooting](https://github.com/samemory/homebridge-eufy-security/wiki/Basic-Troubleshooting)
-- [Support Request](https://github.com/samemory/homebridge-eufy-security/issues/new/choose)
-- [Changelog](https://github.com/samemory/homebridge-eufy-security/blob/master/CHANGELOG.md)
+- [Common Issues](https://github.com/homebridge-eufy-security/plugin/wiki/Common-Issues)
+- [Basic Troubleshooting](https://github.com/homebridge-eufy-security/plugin/wiki/Basic-Troubleshooting)
+- [Support Request](https://github.com/homebridge-eufy-security/plugin/issues/new/choose)
+- [Changelog](https://github.com/homebridge-eufy-security/plugin/blob/master/CHANGELOG.md)
 
 ### Supporting
 
-If you appreciate this plugin and want to support me, you can do it here:
-
-[![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/S6S24XCVJ)
-
-Also consider supporting the other contributors:
-
+-   **[samemory](https://github.com/samemory)**
 -   **[schliemann](https://github.com/schliemann)**
 -   **[lenoxys](https://github.com/lenoxys)**
-
 
 Big thanks to **[bropat](https://github.com/bropat)** who made this possible. Please consider buying a coffee for him over here: https://ko-fi.com/bropat
 
