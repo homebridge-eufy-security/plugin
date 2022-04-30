@@ -46,7 +46,7 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
   public readonly Service: typeof Service = this.api.hap.Service;
   public readonly Characteristic: typeof Characteristic = this.api.hap.Characteristic;
 
-  public eufyClient: EufySecurity;
+  public eufyClient;
 
   // this is used to track restored cached accessories
   public readonly accessories: PlatformAccessory[] = [];
@@ -143,21 +143,39 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
       fs.unlinkSync(this.api.user.storagePath() + '/persistent.json');
     }
 
-    this.eufyClient = (this.config.enableDetailedLogging >= 1)
-      ? new EufySecurity(this.eufyConfig, this.logLib)
-      : new EufySecurity(this.eufyConfig);
-
-    // When this event is fired it means Homebridge has restored all cached accessories from disk.
-    // Dynamic Platform plugins should only register new accessories after this event was fired,
-    // in order to ensure they weren't added to homebridge already. This event can also be used
-    // to start discovery of new accessories.
     this.api.on('didFinishLaunching', async () => {
-      // await this.createConnection();
-      // run the method to discover / register your devices as accessories
-      await this.discoverDevices();
+      await this.pluginSetup();
+    });
+    this.api.on('shutdown', async () => {
+      await this.pluginShutdown();
     });
 
-    this.log.info('Finished initializing Eufy Security Platform');
+    this.log.info('Finished initializing!');
+  }
+
+  private async pluginSetup() {
+
+    try {
+      this.eufyClient = (this.config.enableDetailedLogging >= 1)
+        ? await EufySecurity.initialize(this.eufyConfig, this.logLib)
+        : await EufySecurity.initialize(this.eufyConfig);
+    } catch (e) {
+      this.log.error('Error while setup : ', e);
+      this.log.error('Not connected can\'t continue!');
+      return;
+    }
+
+    await this.discoverDevices();
+
+  }
+
+  private async pluginShutdown() {
+    try {
+      this.eufyClient.close();
+      this.log.info('Finished shutdown!');
+    } catch (e) {
+      this.log.error('Error while shutdown : ', e);
+    }
   }
 
   /**

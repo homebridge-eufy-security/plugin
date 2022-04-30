@@ -245,7 +245,7 @@ export class CameraAccessory extends DeviceAccessory {
     try {
       const currentValue = this.eufyDevice.getPropertyValue(PropertyName.DeviceStatusLed);
       this.platform.log.debug(this.accessory.displayName, 'GET DeviceStatusLed:', currentValue);
-      return currentValue.value as boolean;
+      return currentValue as boolean;
     } catch {
       this.platform.log.debug(this.accessory.displayName, 'handleHomeKitCameraOperatingModeIndicatorGet', 'Wrong return value');
       return false;
@@ -269,7 +269,7 @@ export class CameraAccessory extends DeviceAccessory {
     try {
       const currentValue = this.eufyDevice.getPropertyValue(PropertyName.DeviceNightvision);
       this.platform.log.debug(this.accessory.displayName, 'GET DeviceNightvision:', currentValue);
-      return currentValue.value as boolean;
+      return currentValue as boolean;
     } catch {
       this.platform.log.debug(this.accessory.displayName, 'handleHomeKitNightVisionGet', 'Wrong return value');
       return false;
@@ -321,7 +321,7 @@ export class CameraAccessory extends DeviceAccessory {
     try {
       const currentValue = this.eufyDevice.getPropertyValue(PropertyName.DeviceMotionDetected);
       this.platform.log.debug(this.accessory.displayName, 'GET DeviceMotionDetected:', currentValue);
-      return currentValue.value as boolean;
+      return currentValue as boolean;
     } catch {
       this.platform.log.debug(this.accessory.displayName, 'handleMotionDetectedGet', 'Wrong return value');
       return false;
@@ -342,7 +342,7 @@ export class CameraAccessory extends DeviceAccessory {
     try {
       const currentValue = this.eufyDevice.getPropertyValue(PropertyName.DeviceEnabled);
       this.platform.log.debug(this.accessory.displayName, 'GET DeviceEnabled:', currentValue);
-      return currentValue.value as boolean;
+      return currentValue as boolean;
     } catch {
       this.platform.log.debug(this.accessory.displayName, 'handleEnableGet', 'Wrong return value');
       return false;
@@ -353,7 +353,7 @@ export class CameraAccessory extends DeviceAccessory {
     try {
       const currentValue = this.eufyDevice.getPropertyValue(PropertyName.DeviceEnabled);
       this.platform.log.debug(this.accessory.displayName, 'GET DeviceEnabled:', currentValue);
-      return !currentValue.value as boolean;
+      return !currentValue as boolean;
     } catch {
       this.platform.log.debug(this.accessory.displayName, 'handleManuallyDisabledGet', 'Wrong return value');
       return false;
@@ -371,7 +371,7 @@ export class CameraAccessory extends DeviceAccessory {
     try {
       const currentValue = await this.eufyDevice.getPropertyValue(PropertyName.DeviceMotionDetection);
       this.platform.log.debug(this.accessory.displayName, 'GET DeviceMotionDetection:', currentValue);
-      return currentValue.value as boolean;
+      return currentValue as boolean;
     } catch {
       this.platform.log.debug(this.accessory.displayName, 'handleMotionOnGet', 'Wrong return value');
       return false;
@@ -388,7 +388,7 @@ export class CameraAccessory extends DeviceAccessory {
     try {
       const currentValue = await this.eufyDevice.getPropertyValue(PropertyName.DeviceLight);
       this.platform.log.debug(this.accessory.displayName, 'GET DeviceLight:', currentValue);
-      return currentValue.value as boolean;
+      return currentValue as boolean;
     } catch {
       this.platform.log.debug(this.accessory.displayName, 'handleLightOnGet', 'Wrong return value');
       return false;

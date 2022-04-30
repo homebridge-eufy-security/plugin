@@ -50,7 +50,7 @@ export class KeypadAccessory extends DeviceAccessory {
   async getCurrentDeviceState() {
     const state = this.Keypad.getState();
 
-    return state.value as number;
+    return state as number;
   }
 
   /**

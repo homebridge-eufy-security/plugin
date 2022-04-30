@@ -79,7 +79,7 @@ export class SmartLockAccessory extends DeviceAccessory {
 
   getLockStatus(current = true) {
     const lockStatus = this.SmartLock.isLocked();
-    return this.convertlockStatusCode(lockStatus.value, current);
+    return this.convertlockStatusCode(lockStatus, current);
   }
 
   convertlockStatusCode(lockStatus, current = true) {

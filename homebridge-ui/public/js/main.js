@@ -874,9 +874,21 @@ document.querySelectorAll('input[type=checkbox].ena').forEach(item => {
     });
 });
 
-homebridge.addEventListener('captcha', (e) => {
+homebridge.addEventListener('CAPTCHA_NEEDED', (e) => {
+    display_box('step2-captcha');
     document.getElementById('captcha-id').value = e.data.id;
     document.getElementById('captcha-img').innerHTML = '<img src="' + e.data.captcha + '" />';
+    homebridge.hideSpinner();
+});
+
+homebridge.addEventListener('SEND_VERIFY_CODE', () => {
+    display_box('step2-otp');
+    homebridge.hideSpinner();
+});
+
+homebridge.addEventListener('CONNECTED', () => {
+    getStations();
+    homebridge.hideSpinner();
 });
 
 

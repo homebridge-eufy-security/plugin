@@ -239,7 +239,7 @@ export class StreamingDelegate implements CameraStreamingDelegate {
                     inputChanged = true;
                 } else if (!this.cameraConfig.forcerefreshsnap) {
                     try {
-                        const url = this.device.getPropertyValue(PropertyName.DevicePictureUrl).value as string;
+                        const url = this.device.getPropertyValue(PropertyName.DevicePictureUrl) as string;
                         this.videoConfig.stillImageSource = '-i ' + url;
                         this.platform.log.debug(this.cameraName, 'EUFY CLOUD URL: ' + url);
                     } catch {
@@ -248,7 +248,7 @@ export class StreamingDelegate implements CameraStreamingDelegate {
                     }
                 } else if (rtsp) {
                     try {
-                        const url = this.device.getPropertyValue(PropertyName.DeviceRTSPStreamUrl).value;
+                        const url = this.device.getPropertyValue(PropertyName.DeviceRTSPStreamUrl);
                         this.platform.log.debug(this.cameraName, 'RTSP URL: ' + url);
                         this.videoConfig.source = '-i ' + url;
                         ffmpegInput = this.generateInputSource(this.videoConfig, this.videoConfig.source).split(/\s+/);
@@ -583,13 +583,13 @@ export class StreamingDelegate implements CameraStreamingDelegate {
         }
 
         this.platform.log.debug(this.cameraName, 'RTSP ' + JSON.stringify(this.device.getPropertyValue(PropertyName.DeviceRTSPStream)));
-        if (!this.device.getPropertyValue(PropertyName.DeviceRTSPStream).value) {
+        if (!this.device.getPropertyValue(PropertyName.DeviceRTSPStream)) {
             this.platform.log.debug(this.cameraName, ': RTSP capabilities not enabled. You will need to do it manually!');
             return false;
         }
 
         this.platform.log.debug(this.cameraName, 'RTSP ' + JSON.stringify(this.device.getPropertyValue(PropertyName.DeviceRTSPStreamUrl)));
-        if (this.device.getPropertyValue(PropertyName.DeviceRTSPStreamUrl).value === '') {
+        if (this.device.getPropertyValue(PropertyName.DeviceRTSPStreamUrl) === '') {
             this.platform.log.debug(this.cameraName, ': RTSP URL is unknow');
             return false;
         }
@@ -617,7 +617,7 @@ export class StreamingDelegate implements CameraStreamingDelegate {
                 ffmpegInput = ['-re', '-loop', '1', '-i', privacyImage];
                 inputChanged = true;
             } else if (rtsp) {
-                const url = this.device.getPropertyValue(PropertyName.DeviceRTSPStreamUrl).value;
+                const url = this.device.getPropertyValue(PropertyName.DeviceRTSPStreamUrl);
                 this.platform.log.debug(this.cameraName, 'RTSP URL: ' + url);
                 this.videoConfig.source = '-i ' + url;
                 ffmpegInput = this.generateInputSource(this.videoConfig, this.videoConfig.source).split(/\s+/);

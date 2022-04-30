@@ -63,54 +63,35 @@ class UiServer extends HomebridgePluginUiServer {
   async init(body) {
 
     if (body) {
-      this.config['username'] = body.username;
-      this.config['password'] = body.password;
-      this.config['country'] = body.country ??= 'US';
+      this.auth(body);
     }
 
   }
 
-  async authenticate(verifyCodeOrCaptcha = null, captchaId = null) {
+  async authenticate(options = null) {
 
     try {
-      let retries = 0;
-      await this.driver.api.loadApiBase().catch((error) => {
-        this.log.error("Load Api base Error", error);
+
+      return new Promise(async (resolve, reject) => {
+        await this.driver.connect(options);
+        this.driver.on('captcha request', (id, captcha) => {
+          this.log.info('AuthResult.CAPTCHA_NEEDED');
+          this.pushEvent('CAPTCHA_NEEDED', { id: id, captcha: captcha });
+          resolve({ result: 1 });
+        });
+        this.driver.on('tfa request', () => {
+          this.log.info('AuthResult.SEND_VERIFY_CODE');
+          this.pushEvent('SEND_VERIFY_CODE', null);
+          resolve({ result: 2 });
+        });
+        this.driver.on('connect', () => {
+          this.log.info('AuthResult.OK');
+          resolve({ result: 3 });
+        });
       });
 
-      while (true) {
-        switch (await this.driver.api.authenticate(verifyCodeOrCaptcha, captchaId)) {
-          case AuthResult.CAPTCHA_NEEDED:
-            this.log.info('AuthResult.CAPTCHA_NEEDED');
-            return { result: 1 };
-          case AuthResult.SEND_VERIFY_CODE:
-            this.log.info('AuthResult.SEND_VERIFY_CODE');
-            return { result: 2 };
-          case AuthResult.OK:
-            this.log.info('AuthResult.OK');
-            return { result: 3 };
-          case AuthResult.RENEW:
-            this.log.info('AuthResult.RENEW');
-            break;
-          case AuthResult.ERROR:
-            this.log.info('AuthResult.ERROR');
-            return { result: 0 };
-          default:
-            this.log.info('AuthResult.UNKNOW');
-            return { result: 0 };
-        }
-
-        if (retries > 4) {
-          this.log.error("Max connect attempts reached, interrupt");
-          return { result: 0 };
-        } else {
-          retries += 1;
-        }
-
-      }
-
     } catch (e) {
-      this.log.info('Error authenticate:', e.message);
+      this.log.error('Error authenticate:', e.message);
       return { result: 0 }; // Wrong username and/or password
     }
   }
@@ -126,11 +107,21 @@ class UiServer extends HomebridgePluginUiServer {
       this.config['country'] = body.country ??= 'US';
     }
 
-    this.driver = new EufySecurity(this.config, this.log);
+    this.driver = await EufySecurity.initialize(this.config, this.log);
 
-    this.driver.api.on('captcha request', (id, captcha) => {
-      this.log.debug('captcha request:', id, captcha);
-      this.pushEvent('captcha', { id: id, captcha: captcha });
+    this.driver.on('captcha request', (id, captcha) => {
+      this.log.info('captcha request:', id, captcha);
+      this.pushEvent('CAPTCHA_NEEDED', { id: id, captcha: captcha });
+    });
+
+    this.driver.on('tfa request', () => {
+      this.log.info('tfa request');
+      this.pushEvent('SEND_VERIFY_CODE', null);
+    });
+
+    this.driver.on('connect', () => {
+      this.log.info('connected!');
+      this.pushEvent('CONNECTED', null);
     });
 
     return await this.authenticate();
@@ -141,14 +132,14 @@ class UiServer extends HomebridgePluginUiServer {
    * Handle requests sent to /check-otp
    */
   async checkOtp(body) {
-    return await this.authenticate(body.code);
+    return await this.authenticate({ verifyCode: body.code });
   }
 
   /**
    * Handle requests sent to /check-otp
    */
   async checkCaptcha(body) {
-    return await this.authenticate(body.captcha, body.id);
+    return await this.authenticate({ captcha: { captchaCode: body.captcha, captchaId: body.id } });
   }
 
   async getCachedStations() {
@@ -258,7 +249,7 @@ class UiServer extends HomebridgePluginUiServer {
       return stations;
 
     } catch (e) {
-      this.log.error('Error:', e.message);
+      this.log.error('Error refreshDevices():', e.message);
       return null; // Error
     } finally {
       this.driver.close();
@@ -275,7 +266,7 @@ class UiServer extends HomebridgePluginUiServer {
         await this.driver.refreshCloudData();
         return { result: 1 }; // Connected
       } catch (e) {
-        this.log.error('Error:', e.message);
+        this.log.error('Error refreshData():', e.message);
         return { result: 0 }; // Error
       }
     }
@@ -298,12 +289,15 @@ class UiServer extends HomebridgePluginUiServer {
         const stations = await this.getCachedStations();
         return { result: 1, stations: stations }; // Connected
       } catch (e) {
-        this.log.error('Error:', e.message);
+        this.log.error('Error getStations():', e.message);
         return { result: 0 }; // Error
       }
     }
 
     this.log.info('Need to refresh the devices list');
+
+    this.driver.isConnected();
+
     try {
       if (this.driver.isConnected()) {
         await this.refreshData();
@@ -319,7 +313,7 @@ class UiServer extends HomebridgePluginUiServer {
         return { result: r.result };
       }
     } catch (e) {
-      this.log.error('Error:', e.message);
+      this.log.error('Error getStations():', e.message);
       return { result: 0 }; // Error
     }
 

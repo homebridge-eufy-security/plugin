@@ -79,8 +79,8 @@ export class StationAccessory {
     );
 
     if (this.platform.config.enableDetailedLogging) {
-      this.eufyStation.on('raw property changed', (device: Station, type: number, value: string, modified: number) =>
-        this.handleRawPropertyChange(device, type, value, modified),
+      this.eufyStation.on('raw property changed', (device: Station, type: number, value: string) =>
+        this.handleRawPropertyChange(device, type, value),
       );
       this.eufyStation.on('property changed', (device: Station, name: string, value: PropertyValue) =>
         this.handlePropertyChange(device, name, value),
@@ -177,9 +177,9 @@ export class StationAccessory {
     }
     try {
       const currentValue = this.eufyStation.getPropertyValue(PropertyName.StationCurrentMode);
-      if (currentValue.value === -1) throw 'Something wrong with this device';
+      if (currentValue === -1) throw 'Something wrong with this device';
       this.platform.log.debug(this.accessory.displayName, 'GET StationCurrentMode:', currentValue);
-      return this.convertEufytoHK(currentValue.value);
+      return this.convertEufytoHK(currentValue);
     } catch {
       this.platform.log.error(this.accessory.displayName, 'handleSecuritySystemCurrentStateGet', 'Wrong return value');
       return false;
@@ -192,9 +192,9 @@ export class StationAccessory {
   handleSecuritySystemTargetStateGet(): CharacteristicValue {
     try {
       const currentValue = this.eufyStation.getPropertyValue(PropertyName.StationCurrentMode);
-      if (currentValue.value === -1) throw 'Something wrong with this device';
+      if (currentValue === -1) throw 'Something wrong with this device';
       this.platform.log.debug(this.accessory.displayName, 'GET StationCurrentMode:', currentValue);
-      return this.convertEufytoHK(currentValue.value);
+      return this.convertEufytoHK(currentValue);
     } catch {
       this.platform.log.error(this.accessory.displayName, 'handleSecuritySystemTargetStateGet', 'Wrong return value');
       return false;
@@ -218,14 +218,12 @@ export class StationAccessory {
     device: Station,
     type: number,
     value: string,
-    modified: number,
   ): void {
     this.platform.log.debug(this.accessory.displayName,
       'ON handleRawPropertyChange:',
       {
         type,
         value,
-        modified,
       },
     );
   }

@@ -64,7 +64,7 @@ export class EntrySensorAccessory extends DeviceAccessory {
     try {
       const currentValue = this.EntrySensor.getPropertyValue(PropertyName.DeviceSensorOpen);
       this.platform.log.debug(this.accessory.displayName, 'GET DeviceSensorOpen:', currentValue);
-      return currentValue.value as boolean;
+      return currentValue as boolean;
     } catch {
       this.platform.log.error(this.accessory.displayName, 'handleContactSensorStateGet', 'Wrong return value');
       return false;
