@@ -1,6 +1,6 @@
 # Change Log
 
-## BETA (09/04/2022)
+## Beta 2.0 (30/04/2022)
 
 ### Added
 -   Local Livestream
@@ -14,6 +14,9 @@
 -   Adding a new button to force or not using live stream to create snapshot
 -   Warn if user is using primary Eufy account instead of guest admin one
 
+### Changed
+-   Upgrade to the latest bropat/eufy-security-client lib (2.0.0)
+
 ### Fixed
 -   Updating some dep for security reason
 -   Fix keypad issue while using off/disarmed mode (#88, #147, #197)
@@ -23,6 +26,9 @@
 -   Streaming issue while using Docker #308 (thanks @alternativ)
 -   Fix issue on video stream while debug is disabled #356
 -   Improve selecting Static Image / Local Live Stream / RTSP #382
+
+### Removed
+-   Selecting Camera or Motion Sensor is now per camera
 
 ## 1.0.1 (18/10/2021)
 
