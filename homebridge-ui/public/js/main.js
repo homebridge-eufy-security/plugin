@@ -834,24 +834,24 @@ function download(strData, strFileName, strMimeType) {
 }
 
 // step reset submit handler
-document.getElementById('get-lib-log').addEventListener('click', async () => {
+// document.getElementById('get-lib-log').addEventListener('click', async () => {
 
-    try {
-        const response = await hb_request('/get-lib-logs', {});
+//     try {
+//         const response = await hb_request('/get-lib-logs', {});
 
-        if (response.result == 0) {
-            homebridge.toast.error("Unable to get it (did you run this plugin at least once?)");
-        }
-        if (response.result == 1) {
-            homebridge.toast.success("Success");
-            download(response.data, 'log-lib.log.gz', 'application/x-gzip')
-        }
+//         if (response.result == 0) {
+//             homebridge.toast.error("Unable to get it (did you run this plugin at least once?)");
+//         }
+//         if (response.result == 1) {
+//             homebridge.toast.success("Success");
+//             download(response.data, 'log-lib.log.gz', 'application/x-gzip')
+//         }
 
-    } catch (e) {
-        homebridge.toast.error(e.error || e.message, 'Error');
-    }
+//     } catch (e) {
+//         homebridge.toast.error(e.error || e.message, 'Error');
+//     }
 
-});
+// });
 
 
 document.querySelectorAll('input[type=radio]').forEach(item => {
