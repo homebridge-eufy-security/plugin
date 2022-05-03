@@ -204,8 +204,9 @@ export class StationAccessory {
   /**
    * Handle requests to set the 'Security System Target State' characteristic
    */
-  handleSecuritySystemTargetStateSet(value: CharacteristicValue) {
+  private handleSecuritySystemTargetStateSet(value: CharacteristicValue) {
     try {
+      this.alarm_triggered = false;
       const mode = this.convertHKtoEufy(value);
       this.platform.log.debug(this.accessory.displayName, 'SET StationGuardMode:' + mode);
       this.eufyStation.setGuardMode(mode);
