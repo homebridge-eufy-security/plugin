@@ -378,7 +378,9 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
           || type === DeviceType.LOCK_ADVANCED_NO_FINGER
           || type === DeviceType.DOORBELL
           || type === DeviceType.BATTERY_DOORBELL
-          || type === DeviceType.BATTERY_DOORBELL_2)) {
+          || type === DeviceType.BATTERY_DOORBELL_2
+          || type === DeviceType.BATTERY_DOORBELL_PLUS
+          || type === DeviceType.DOORBELL_SOLO)) {
           // this.log.warn(accessory.displayName, 'looks station but it\'s not could imply some errors', 'Type:', type);
           type = DeviceType.STATION;
         } else {
