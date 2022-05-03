@@ -1,6 +1,6 @@
 <link rel="stylesheet" href="css/style.css" />
 
-<div class="card card-body">
+<div class="card card-body" style="width: 99%;">
 
     <div class="logo">
         <img class="logo" src="images/homebridge-eufy-security.png" />
@@ -347,9 +347,9 @@
                         </div>
 
                         <small class="form-text text-muted">Camera seen as Motion Sensor by
-                            default,
-                            enable this
-                            setting to transform as Camera</small>
+                            default, enable this setting to transform as Camera</small>
+                        <small class="form-text text-muted">Doorbell are forced with camera enabled this can't be
+                            change</small>
 
                     </div>
                 </div>
@@ -395,7 +395,8 @@
                                 <label class="form-check-label" for="cc-unbridge">Unbridge Camera</label>
                             </div>
 
-                            <small class="form-text text-muted">Bridged cameras can cause slowdowns of the entire
+                            <small class="form-text text-muted">Bridged cameras can cause slowdowns of the
+                                entire
                                 Homebridge instance. If unbridged, the camera will need to be added to HomeKit
                                 manually.</small>
 
@@ -406,7 +407,8 @@
                                 <label class="form-check-label" for="cc-forcerefreshsnap">Force Refresh Snapshot</label>
                             </div>
 
-                            <small class="form-text text-muted">When enabled, we will start stream for one frame and use
+                            <small class="form-text text-muted">When enabled, we will start stream for one
+                                frame and use
                                 as a snapshot (this can affect the battery life). If it's disabled, we will use the Eufy
                                 Cloud API one (which could be really old).</small>
 
@@ -419,6 +421,9 @@
 
                             <small id="cc-help-rtsp" class="form-text text-muted">Improve getting live stream by using
                                 RTSP</small>
+                            <small id="cc-help-rtsp" class="form-text text-muted">RTSP must be enable within Eufy App first</small>
+                            <small id="cc-help-rtsp" class="form-text text-muted">This setting may not be working with
+                                no compatible device such as Doorbell or Floodlight</small>
                         </div>
                     </div>
 
@@ -655,4 +660,4 @@
 
 </div>
 
-<script type="text/javascript" src="js/main.js?v=1.1.1-beta.56"></script>
+<script type="text/javascript" src="js/main.js?v=2.0.0-beta.2"></script>

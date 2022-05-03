@@ -571,6 +571,9 @@ function ConfigCameraFill(camera) {
 
     if (isDoorBell.includes(camera.type)) {
         config.enableCamera = true;
+        ecf.parentElement.classList.add('disabled');
+    } else {
+        ecf.parentElement.classList.remove('disabled');
     }
 
     ecf.checked = !config.enableCamera;
