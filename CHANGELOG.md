@@ -15,7 +15,7 @@
 -   Warn if user is using primary Eufy account instead of guest admin one
 
 ### Changed
--   Upgrade to the latest bropat/eufy-security-client lib (2.0.0)
+-   Upgrade to the latest bropat/eufy-security-client lib (2.0.1)
 
 ### Fixed
 -   Updating some dep for security reason
