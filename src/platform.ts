@@ -67,44 +67,43 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
 
     this.eufyPath = this.api.user.storagePath() + '/eufysecurity';
 
-    if (this.config.enableDetailedLogging >= 1) {
+    const plugin = require('../package.json');
 
-      const plugin = require('../package.json');
+    this.log = bunyan.createLogger({
+      name: '[EufySecurity-' + plugin.version + ']',
+      hostname: '',
+      streams: [{
+        level: (this.config.enableDetailedLogging) ? 'debug' : 'info',
+        type: 'raw',
+        stream: bunyanDebugStream({
+          forceColor: true,
+          showProcess: false,
+          showPid: false,
+          showDate: (time) => {
+            return '[' + time.toLocaleString('en-US') + ']';
+          },
+        }),
+      }, {
+        level: (this.config.enableDetailedLogging) ? 'debug' : 'info',
+        type: 'rotating-file',
+        path: this.eufyPath + '/log-lib.log',
+        period: '1d',   // daily rotation
+        count: 3,        // keep 3 back copies
+      }],
+      serializers: bunyanDebugStream.stdSerializers,
+    });
 
-      this.log = bunyan.createLogger({
-        name: '[EufySecurity-' + plugin.version + ']',
-        hostname: '',
-        streams: [{
-          level: (this.config.enableDetailedLogging === 2) ? 'trace' : 'debug',
-          type: 'raw',
-          stream: bunyanDebugStream({
-            forceColor: true,
-            showProcess: false,
-            showPid: false,
-            showDate: (time) => {
-              return '[' + time.toLocaleString('en-US') + ']';
-            },
-          }),
-        }],
-        serializers: bunyanDebugStream.stdSerializers,
-      });
-
-      this.logLib = bunyan.createLogger({
-        name: '[EufySecurity-' + plugin.version + ']',
-        hostname: '',
-        streams: [{
-          level: (this.config.enableDetailedLogging === 2) ? 'trace' : 'debug',
-          type: 'rotating-file',
-          path: this.eufyPath + '/log-lib.log',
-          period: '1d',   // daily rotation
-          count: 3,        // keep 3 back copies
-        }],
-      });
-
-      this.log.info('enableDetailedLogging on');
-    } else {
-      this.log = hblog;
-    }
+    this.logLib = bunyan.createLogger({
+      name: '[EufySecurity-' + plugin.version + ']',
+      hostname: '',
+      streams: [{
+        level: (this.config.enableDetailedLogging) ? 'debug' : 'info',
+        type: 'rotating-file',
+        path: this.eufyPath + '/log-lib.log',
+        period: '1d',   // daily rotation
+        count: 3,        // keep 3 back copies
+      }],
+    });
 
     this.log.warn('warning: planned changes, see https://github.com/homebridge-eufy-security/plugin/issues/1');
 
@@ -156,7 +155,7 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
   private async pluginSetup() {
 
     try {
-      this.eufyClient = (this.config.enableDetailedLogging >= 1)
+      this.eufyClient = (this.config.enableDetailedLogging)
         ? await EufySecurity.initialize(this.eufyConfig, this.logLib)
         : await EufySecurity.initialize(this.eufyConfig);
     } catch (e) {
