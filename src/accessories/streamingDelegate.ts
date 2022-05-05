@@ -28,7 +28,7 @@ import { CameraConfig, VideoConfig } from './configTypes';
 import { FfmpegProcess } from './ffmpeg';
 import { Logger } from './logger';
 
-import { Station, Camera, PropertyName, StreamMetadata, VideoCodec } from 'eufy-security-client';
+import { Station, Device, Camera, PropertyName, StreamMetadata, VideoCodec } from 'eufy-security-client';
 import { EufySecurityPlatform } from '../platform';
 
 import { Readable } from 'stream';
@@ -79,7 +79,7 @@ type ActiveSession = {
 
 type StationStream = {
     station: Station;
-    channel: number;
+    device: Device;
     metadata: StreamMetadata;
     videostream: Readable;
     audiostream: Readable;
@@ -95,7 +95,6 @@ export class StreamingDelegate implements CameraStreamingDelegate {
     private readonly videoProcessor: string;
     readonly controller: CameraController;
     private snapshotPromise?: Promise<Buffer>;
-    private stationStream: StationStream | undefined;
 
     private readonly platform: EufySecurityPlatform;
     private readonly device: Camera;
@@ -205,14 +204,11 @@ export class StreamingDelegate implements CameraStreamingDelegate {
 
     private async getLocalLiveStream(): Promise<StationStream> {
         return new Promise((resolve, reject) => {
-            const station = this.platform.getStationById(this.device.getStationSerial());
             this.platform.eufyClient.startStationLivestream(this.device.getSerial());
-
-            station.on('livestream start', (station: Station, channel: number, metadata: StreamMetadata,
+            this.platform.eufyClient.on('station livestream start', (station: Station, device: Device, metadata: StreamMetadata,
                 videostream: Readable, audiostream: Readable) => {
-                if (this.platform.eufyClient.getStationDevice(station.getSerial(), channel).getSerial() === this.device.getSerial()) {
-                    const stationStream: StationStream = { station, channel, metadata, videostream, audiostream };
-                    this.stationStream = stationStream;
+                if (device.getSerial() === this.device.getSerial()) {
+                    const stationStream: StationStream = { station, device, metadata, videostream, audiostream };
                     resolve(stationStream);
                 }
             });
