@@ -52,7 +52,8 @@ body:
       label: HomeBridge Version
       description: What version of homebridge are you running?
       options:
-        - v1.3.x (Supported)
+        - v1.4.x (Supported)
+        - v1.3.x (UnSupported)
         - v1.2.x (UnSupported)
         - other (UnSupported)
     validations:
@@ -77,13 +78,13 @@ body:
       label: Operating System
       description: What OS used to run homebridge?
       options:
-        - Raspbian
-        - Ubuntu
-        - Debian
-        - Windows
-        - Mac OS X
-        - Docker
-        - Other
+        - Raspbian 10+ (Supported)
+        - Ubuntu 18.04+ (Supported)
+        - Debian 10+ (Supported)
+        - Windows 10+ (Supported)
+        - Mac OS X 11+ (Supported)
+        - Docker (UnSupported)
+        - Other (UnSupported)
     validations:
       required: true
 
