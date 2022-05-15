@@ -1,5 +1,7 @@
 import { PlatformConfig } from 'homebridge';
 
+import { CameraConfig } from './accessories/configTypes';
+
 /**
  * HomebridgePlatform
  * This class is the main constructor for your plugin, this is where you should
@@ -10,6 +12,7 @@ export interface EufySecurityPlatformConfig extends PlatformConfig {
   password: string;
   enableDetailedLogging: number;
   enableCamera: boolean;
+  CameraMaxLivestreamDuration: number;
   pollingIntervalMinutes: number;
   hkHome: number;
   hkAway: number;
@@ -17,4 +20,8 @@ export interface EufySecurityPlatformConfig extends PlatformConfig {
   hkOff: number;
   ignoreStations: string[];
   ignoreDevices: string[];
+  country: string;
+  ffmpegdebug: boolean;
+  cameras: CameraConfig[];
+  cleanCache: boolean;
 }

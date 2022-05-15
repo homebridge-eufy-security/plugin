@@ -40,19 +40,23 @@ import {
 
 import bunyan from 'bunyan';
 import bunyanDebugStream from 'bunyan-debug-stream';
+import fs from 'fs';
 
 export class EufySecurityPlatform implements DynamicPlatformPlugin {
   public readonly Service: typeof Service = this.api.hap.Service;
   public readonly Characteristic: typeof Characteristic = this.api.hap.Characteristic;
 
-  public eufyClient: EufySecurity;
+  public eufyClient;
 
   // this is used to track restored cached accessories
   public readonly accessories: PlatformAccessory[] = [];
-  public readonly config: EufySecurityPlatformConfig;
+  public config: EufySecurityPlatformConfig;
   private eufyConfig: EufySecurityConfig;
 
   public log;
+  public logLib;
+
+  public readonly eufyPath: string;
 
   constructor(
     public readonly hblog: Logger,
@@ -61,65 +65,116 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
   ) {
     this.config = config as EufySecurityPlatformConfig;
 
+    this.eufyPath = this.api.user.storagePath() + '/eufysecurity';
+
+    const plugin = require('../package.json');
+
+    this.log = bunyan.createLogger({
+      name: '[EufySecurity-' + plugin.version + ']',
+      hostname: '',
+      streams: [{
+        level: (this.config.enableDetailedLogging) ? 'debug' : 'info',
+        type: 'raw',
+        stream: bunyanDebugStream({
+          forceColor: true,
+          showProcess: false,
+          showPid: false,
+          showDate: (time) => {
+            return '[' + time.toLocaleString('en-US') + ']';
+          },
+        }),
+      }, {
+        level: (this.config.enableDetailedLogging) ? 'debug' : 'info',
+        type: 'rotating-file',
+        path: this.eufyPath + '/log-lib.log',
+        period: '1d',   // daily rotation
+        count: 3,        // keep 3 back copies
+      }],
+      serializers: bunyanDebugStream.stdSerializers,
+    });
+
+    this.logLib = bunyan.createLogger({
+      name: '[EufySecurity-' + plugin.version + ']',
+      hostname: '',
+      streams: [{
+        level: (this.config.enableDetailedLogging) ? 'debug' : 'info',
+        type: 'rotating-file',
+        path: this.eufyPath + '/log-lib.log',
+        period: '1d',   // daily rotation
+        count: 3,        // keep 3 back copies
+      }],
+    });
+
+    this.log.warn('warning: planned changes, see https://github.com/homebridge-eufy-security/plugin/issues/1');
+
+    this.clean_config();
+
+    if (!fs.existsSync(this.eufyPath)) {
+      fs.mkdirSync(this.eufyPath);
+    }
+
     this.eufyConfig = {
       username: this.config.username,
       password: this.config.password,
-      country: 'US',
+      country: this.config.country ?? 'US',
       language: 'en',
-      persistentDir: api.user.storagePath(),
+      persistentDir: this.eufyPath,
       p2pConnectionSetup: 0,
       pollingIntervalMinutes: this.config.pollingIntervalMinutes ?? 10,
       eventDurationSeconds: 10,
     } as EufySecurityConfig;
 
+    this.config.ignoreStations = this.config.ignoreStations ??= [];
+    this.config.ignoreDevices = this.config.ignoreDevices ??= [];
+    this.config.cleanCache = this.config.cleanCache ??= true;
 
-    this.config.ignoreStations = this.config.ignoreStations || [];
-    this.config.ignoreDevices = this.config.ignoreDevices || [];
+    this.log.info('Country set:', this.config.country ?? 'US');
 
-    if (this.config.enableDetailedLogging >= 1) {
-
-      const plugin = require('../package.json');
-
-      this.log = bunyan.createLogger({
-        name: '[EufySecurity-' + plugin.version + ']',
-        hostname: '',
-        streams: [{
-          level: (this.config.enableDetailedLogging === 2) ? 'trace' : 'debug',
-          type: 'raw',
-          stream: bunyanDebugStream({
-            forceColor: true,
-            showProcess: false,
-            showPid: false,
-            showDate: (time) => {
-              return '[' + time.toLocaleString('en-US') + ']';
-            },
-          }),
-        }],
-        serializers: bunyanDebugStream.serializers,
-      });
-      this.log.info('Eufy Security Plugin: enableDetailedLogging on');
-    } else {
-      this.log = hblog;
+    // This function is here to avoid any break while moving from 1.0.x to 1.1.x
+    // moving persistent into our dedicated folder (this need to be removed after few release of 1.1.x)
+    if (fs.existsSync(this.api.user.storagePath() + '/persistent.json')) {
+      this.log.debug('An old persistent file have been found');
+      if (!fs.existsSync(this.eufyPath + '/persistent.json')) {
+        fs.copyFileSync(this.api.user.storagePath() + '/persistent.json', this.eufyPath + '/persistent.json', fs.constants.COPYFILE_EXCL);
+      } else {
+        this.log.debug('but the new one is already present');
+      }
+      fs.unlinkSync(this.api.user.storagePath() + '/persistent.json');
     }
 
-    this.eufyClient = (this.config.enableDetailedLogging === 2)
-      ? new EufySecurity(this.eufyConfig, this.log)
-      : new EufySecurity(this.eufyConfig);
-
-    // Removing the ability to set Off(6) waiting Bropat feedback bropat/eufy-security-client#27
-    this.config.hkOff = (this.config.hkOff === 6) ? 63 : this.config.hkOff;
-
-    // When this event is fired it means Homebridge has restored all cached accessories from disk.
-    // Dynamic Platform plugins should only register new accessories after this event was fired,
-    // in order to ensure they weren't added to homebridge already. This event can also be used
-    // to start discovery of new accessories.
     this.api.on('didFinishLaunching', async () => {
-      // await this.createConnection();
-      // run the method to discover / register your devices as accessories
-      await this.discoverDevices();
+      await this.pluginSetup();
+    });
+    this.api.on('shutdown', async () => {
+      await this.pluginShutdown();
     });
 
-    this.log.info('Finished initializing Eufy Security Platform');
+    this.log.info('Finished initializing!');
+  }
+
+  private async pluginSetup() {
+
+    try {
+      this.eufyClient = (this.config.enableDetailedLogging)
+        ? await EufySecurity.initialize(this.eufyConfig, this.logLib)
+        : await EufySecurity.initialize(this.eufyConfig);
+    } catch (e) {
+      this.log.error('Error while setup : ', e);
+      this.log.error('Not connected can\'t continue!');
+      return;
+    }
+
+    await this.discoverDevices();
+
+  }
+
+  private async pluginShutdown() {
+    try {
+      this.eufyClient.close();
+      this.log.info('Finished shutdown!');
+    } catch (e) {
+      this.log.error('Error while shutdown : ', e);
+    }
   }
 
   /**
@@ -157,6 +212,9 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
       this.log.warn('Push Closed!');
     });
 
+    this.eufyClient.setCameraMaxLivestreamDuration(this.config.CameraMaxLivestreamDuration ?? 30);
+    this.log.debug('CameraMaxLivestreamDuration:', this.eufyClient.getCameraMaxLivestreamDuration());
+
     const eufyStations = await this.eufyClient.getStations();
     this.log.debug('Found ' + eufyStations.length + ' stations.');
 
@@ -170,6 +228,15 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
         DeviceType[station.getDeviceType()],
         station.getLANIPAddress(),
       );
+
+      if (station.getRawStation().member.member_type === 1) {
+        this.log.info('You\'re using guest admin account with this plugin! This is recommanded way!');
+      } else {
+        this.log.warn('You\'re not using guest admin account with this plugin! This is not recommanded way!');
+        this.log.warn('Please look here for more details:');
+        this.log.warn('https://github.com/homebridge-eufy-security/plugin/wiki/Installation');
+        this.log.warn(station.getSerial() + ' type: ' + station.getRawStation().member.member_type);
+      }
 
       if (this.config.ignoreStations.indexOf(station.getSerial()) !== -1) {
         this.log.debug('Device ignored');
@@ -199,10 +266,10 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
         DeviceType[device.getDeviceType()],
       );
 
-      if (this.config.ignoreStations.indexOf(device.getStationSerial()) !== -1) {
-        this.log.debug('Device ignored because station is ignored');
-        continue;
-      }
+      // if (this.config.ignoreStations.indexOf(device.getStationSerial()) !== -1) {
+      //   this.log.debug('Device ignored because station is ignored');
+      //   continue;
+      // }
 
       if (this.config.ignoreDevices.indexOf(device.getSerial()) !== -1) {
         this.log.debug('Device ignored');
@@ -242,30 +309,10 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
 
       // see if an accessory with the same uuid has already been registered and restored from
       // the cached devices we stored in the `configureAccessory` method above
-      const existingAccessory = this.accessories.find(
-        (accessory) => accessory.UUID === uuid,
-      );
+      const cachedAccessory = this.accessories.find((accessory) => accessory.UUID === uuid);
 
-      if (existingAccessory) {
-        // the accessory already exists
+      if (!cachedAccessory) {
 
-        if (this.register_accessory(
-          existingAccessory,
-          device.deviceIdentifier.type,
-          device.eufyDevice,
-          device.deviceIdentifier.station,
-        )
-        ) {
-          this.log.info(
-            'Restoring existing accessory from cache:',
-            existingAccessory.displayName,
-          );
-
-          // update accessory cache with any changes to the accessory details and information
-          this.api.updatePlatformAccessories([existingAccessory]);
-        }
-
-      } else {
         // the accessory does not yet exist, so we need to create it
 
         // create a new accessory
@@ -280,48 +327,40 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
 
         // create the accessory handler for the newly create accessory
         // this is imported from `platformAccessory.ts`
-        if (
-          this.register_accessory(
-            accessory,
-            device.deviceIdentifier.type,
-            device.eufyDevice,
-            device.deviceIdentifier.station,
-          )
-        ) {
-          this.log.info(
-            'Adding new accessory:',
-            device.deviceIdentifier.displayName,
-          );
 
-          // link the accessory to your platform
-          this.api.registerPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [
-            accessory,
-          ]);
-        }
+        this.register_accessory(accessory, device, false);
+      } else {
+        this.register_accessory(cachedAccessory, device, true);
       }
     }
 
     // Cleaning cached accessory which are no longer exist
 
-    const staleAccessories = this.accessories.filter((item) => {
-      return activeAccessoryIds.indexOf(item.UUID) === -1;
-    });
+    if (this.config.cleanCache) {
+      const staleAccessories = this.accessories.filter((item) => {
+        return activeAccessoryIds.indexOf(item.UUID) === -1;
+      });
 
-    staleAccessories.forEach((staleAccessory) => {
-      this.log.info(`Removing cached accessory ${staleAccessory.UUID} ${staleAccessory.displayName}`);
-      this.api.unregisterPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [staleAccessory]);
-    });
-
+      staleAccessories.forEach((staleAccessory) => {
+        this.log.info(`Removing cached accessory ${staleAccessory.UUID} ${staleAccessory.displayName}`);
+        this.api.unregisterPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [staleAccessory]);
+      });
+    }
   }
 
   private register_accessory(
     accessory: PlatformAccessory,
-    type: number,
-    device,
-    station: boolean,
+    container: DeviceContainer,
+    exist: boolean,
   ) {
 
     this.log.debug(accessory.displayName, 'UUID:', accessory.UUID);
+
+    let unbridge = false;
+
+    const station = container.deviceIdentifier.station;
+    let type = container.deviceIdentifier.type;
+    const device = container.eufyDevice;
 
     /* Under development area
 
@@ -338,15 +377,18 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
           || type === DeviceType.LOCK_ADVANCED_NO_FINGER
           || type === DeviceType.DOORBELL
           || type === DeviceType.BATTERY_DOORBELL
-          || type === DeviceType.BATTERY_DOORBELL_2)) {
-          this.log.warn(accessory.displayName, 'looks station but it\'s not could imply some errors', 'Type:', type);
-          new StationAccessory(this, accessory, device as Station);
-          return true;
+          || type === DeviceType.BATTERY_DOORBELL_2
+          || type === DeviceType.BATTERY_DOORBELL_PLUS
+          || type === DeviceType.DOORBELL_SOLO)) {
+          // this.log.warn(accessory.displayName, 'looks station but it\'s not could imply some errors', 'Type:', type);
+          type = DeviceType.STATION;
         } else {
-          return false;
+          return;
         }
       }
     }
+
+    let a;
 
     switch (type) {
       case DeviceType.STATION:
@@ -377,18 +419,17 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
       case DeviceType.FLOODLIGHT_CAMERA_8422:
       case DeviceType.FLOODLIGHT_CAMERA_8423:
       case DeviceType.FLOODLIGHT_CAMERA_8424:
-        new CameraAccessory(this, accessory, device as Camera);
+        a = new CameraAccessory(this, accessory, device as Camera);
+        unbridge = (a.cameraConfig.enableCamera) ? a.cameraConfig.unbridge ??= false : false;
         break;
       case DeviceType.DOORBELL:
       case DeviceType.BATTERY_DOORBELL:
       case DeviceType.BATTERY_DOORBELL_2:
-        new DoorbellCameraAccessory(this, accessory, device as DoorbellCamera);
+        a = new DoorbellCameraAccessory(this, accessory, device as DoorbellCamera);
+        unbridge = (a.cameraConfig.enableCamera) ? a.cameraConfig.unbridge ??= false : false;
         break;
       case DeviceType.SENSOR:
         new EntrySensorAccessory(this, accessory, device as EntrySensor);
-        break;
-      case DeviceType.KEYPAD:
-        new KeypadAccessory(this, accessory, device as Keypad);
         break;
       case DeviceType.LOCK_BASIC:
       case DeviceType.LOCK_ADVANCED:
@@ -397,21 +438,32 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
         new SmartLockAccessory(this, accessory, device as Lock);
         break;
       default:
-        this.log.warn(
-          'This accessory is not compatible with HomeBridge Eufy Security plugin:',
-          accessory.displayName,
-          'Type:',
-          type,
-        );
-        return false;
+        this.log.warn('This accessory is not compatible with HomeBridge Eufy Security plugin:', accessory.displayName, 'Type:', type);
+        return;
     }
-    return true;
+
+    if (exist) {
+      if (!unbridge) {
+        this.log.info('Updating accessory:', accessory.displayName);
+        this.api.updatePlatformAccessories([accessory]);
+        return;
+      } else {
+        this.log.info(`Removing cached accessory ${accessory.UUID} ${accessory.displayName}`);
+        this.api.unregisterPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [accessory]);
+      }
+    }
+
+    if (unbridge) {
+      this.log.info('Adding new bridged accessory:', accessory.displayName);
+      this.api.publishExternalAccessories(PLUGIN_NAME, [accessory]);
+    } else {
+      this.log.info('Adding new accessory:', accessory.displayName);
+      this.api.registerPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [accessory]);
+    }
+
   }
 
   public async refreshData(client: EufySecurity): Promise<void> {
-    this.log.debug(
-      `PollingInterval: ${this.eufyConfig.pollingIntervalMinutes}`,
-    );
     if (client) {
       this.log.debug('Refresh data from cloud and schedule next refresh.');
       try {
@@ -431,5 +483,41 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
 
   public getStationById(id: string) {
     return this.eufyClient.getStation(id);
+  }
+
+  private clean_config() {
+    try {
+      const currentConfig = JSON.parse(fs.readFileSync(this.api.user.configPath(), 'utf8'));
+      // check the platforms section is an array before we do array things on it
+      if (!Array.isArray(currentConfig.platforms)) {
+        throw new Error('Cannot find platforms array in config');
+      }
+      // find this plugins current config
+      const pluginConfig = currentConfig.platforms.find((x: { platform: string }) => x.platform === PLATFORM_NAME);
+
+      if (!pluginConfig) {
+        throw new Error(`Cannot find config for ${PLATFORM_NAME} in platforms array`);
+      }
+
+      // Cleaning space
+
+      const i = ['hkHome', 'hkAway', 'hkNight', 'hkOff', 'pollingIntervalMinutes', 'CameraMaxLivestreamDuration'];
+
+      Object.entries(pluginConfig).forEach(([key, value]) => {
+        if (!i.includes(key)) {
+          return;
+        }
+        pluginConfig[key] = (typeof pluginConfig[key] === 'string') ? parseInt(value as string) : value;
+      });
+
+      // End of Cleaning space
+
+      // Applying clean and save it
+      this.config = pluginConfig;
+      fs.writeFileSync(this.api.user.configPath(), JSON.stringify(currentConfig, null, 4));
+
+    } catch (e) {
+      this.log.error('Error cleaning config:', e);
+    }
   }
 }

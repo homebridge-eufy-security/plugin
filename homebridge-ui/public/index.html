@@ -1,11 +1,10 @@
-<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/style.css" />
 
-<div class="card card-body">
+<div class="card card-body" style="width: 99%;">
 
     <div class="logo">
-        <img class="logo" src="images/homebridge-eufy-security.png" width="150px" />
+        <img class="logo" src="images/homebridge-eufy-security.png" />
     </div>
-    <br /><br />
 
     <h3 class="text-center">
         Welcome to<br />
@@ -17,24 +16,14 @@
     <!-- shown when setup is complete or the plugin is already configured -->
     <div id="setupComplete" style="display:none;">
         <form id="configForm">
-            <div class="form-group">
-                <label for="usernameInput">Eufy Username</label>
-                <input type="text" class="form-control" id="usernameInput" />
-            </div>
-            <div class="form-group">
-                <label for="passwordInput">Eufy Password</label>
-                <input type="password" class="form-control" id="passwordInput" />
-            </div>
-
+            <center>
+                <a id="startOver" class="btn btn-info">Refresh</a> |
+                <a id="listDevices" class="btn btn-success">List Devices</a>
+            </center>
             <hr />
-            <a id="startOver" class="btn btn-success">Startover the wizard process</a>
-            <hr />
-
-            <div class="custom-control custom-checkbox form-group">
-                <input type="checkbox" class="custom-control-input" id="enableCamera" />
-                <label class="custom-control-label" for="enableCamera">Livestream from Camera device</label>
-                <small id="help" class="form-text text-muted">Camera seen as Motion Sensor by default, enable this
-                    setting to transform as Camera</small>
+            <div class="alert alert-primary" role="alert">
+                <b>Looking for enable camera button?</b>
+                Look at the editable camera while clicking on List Devices button above!
             </div>
 
             <div class="schema-form-fieldset form-group">
@@ -42,98 +31,174 @@
                 </h4>
                 <p>Don't change these, unless you understand what you're doing.</p>
                 <div id="expandable" class="hidden">
-                    <div class="form-group">
-                        <label for="pollingIntervalMinutes">Polling Interval (in minutes)</label>
-                        <input type="range" class="custom-range" id="pollingIntervalMinutes" min="0" max="30" value="5"
-                            step="1" />
-                        <span id="pollingValue">5 minutes</span>
-                        <small id="help" class="form-text text-muted">Time in minutes between each status polling of the
-                            devices
-                            (set to 0 for no polling)</small>
+
+                    <div class="input-group mb-1">
+                        <div class="input-group-prepend w-25">
+                            <span class="input-group-text col">Eufy Username</span>
+                        </div>
+                        <input type="text" class="form-control" id="epc-username" autocomplete="off" />
                     </div>
+
+                    <div class="input-group mb-1">
+                        <div class="input-group-prepend w-25">
+                            <span class="input-group-text col">Eufy Password</span>
+                        </div>
+                        <input type="password" class="form-control " id="epc-password" autocomplete="off" />
+                    </div>
+
+                    <div class="form-group mb-1">
+                        <div class="input-group">
+                            <div class="input-group-prepend w-25">
+                                <span class="input-group-text col">Country</span>
+                            </div>
+                            <select class="custom-select" id="epc-country"></select>
+                        </div>
+                        <small, class="form-text text-muted"><i>Select the same country that's the one selected
+                                on Eufy APP</i></small>
+                    </div>
+
                     <hr />
-                    <div class="custom-control custom-checkbox form-group">
-                        <input type="checkbox" class="custom-control-input" id="enableDetailedLogging" />
-                        <label class="custom-control-label" for="enableDetailedLogging">Enable Debug</label>
-                        <small id="help" class="form-text text-muted">Helping plugin team to understand what's going
-                            on.</small>
+
+                    <div class="form-group mb-1">
+                        <div class="input-group">
+                            <div class="input-group-prepend w-25">
+                                <span class="input-group-text col">Polling Interval</span>
+                            </div>
+                            <input type="number" class="form-control" id="epc-pollingIntervalMinutes" min="0" max="30"
+                                value="5" />
+                            <div class="input-group-append">
+                                <span class="input-group-text">minutes</span>
+                            </div>
+                        </div>
+
+                        <small, class="form-text text-muted"><i>Time in minutes before polling
+                                the devices (set to 0 for no polling)</i></small>
                     </div>
+
+                    <div class="form-group mb-1">
+                        <div class="input-group">
+                            <div class="input-group-prepend w-25">
+                                <span class="input-group-text col">Livestream Duration</span>
+                            </div>
+                            <input type="number" class="form-control" id="epc-CameraMaxLivestreamDuration" min="10"
+                                max="300" value="30" />
+                            <div class="input-group-append">
+                                <span class="input-group-text">seconds</span>
+                            </div>
+                        </div>
+
+                        <small, class="form-text text-muted"><i>Time in second before ending the livestream
+                                (longer livestream imply shorten batterylife)</i></small>
+                    </div>
+
                     <hr />
-                    <div class="form-group">
-                        <label for="hkHome">HomeKit Home</label>
-                        <select class="form-control" id="hkHome">
-                            <option value="1">Eufy Home</option>
-                            <option value="0">Eufy Away</option>
-                            <option value="2">Eufy Schedule</option>
-                            <option value="3">Eufy Custom 1</option>
-                            <option value="4">Eufy Custom 2</option>
-                            <option value="5">Eufy Custom 3</option>
-                            <option value="47">Eufy Geofencing</option>
-                            <!-- <option value="6">Eufy Off</option> // Removing the ability to set Off(6) waiting Bropat feedback bropat/eufy-security-client#27 -->
-                            <option value="63">Eufy Disarmed</option>
-                        </select>
-                        <small id="help" class="form-text text-muted">Change how each mode in the HomeKit security
-                            system is mapped to the modes in the Eufy App</small>
+
+                    <div class="form-group mb-1">
+                        <div class="input-group">
+                            <div class="input-group-prepend">
+                                <div class="input-group-text">
+                                    <input type="checkbox" id="epc-enableDetailedLogging" />
+                                </div>
+                            </div>
+                            <span class="form-control">Enable Debug</span>
+                        </div>
+                        <small, class="form-text text-muted"><i>Helping plugin team to understand what's going
+                                on.</i></small>
                     </div>
-                    <div class="form-group">
-                        <label for="hkAway">HomeKit Away</label>
-                        <select class="form-control" id="hkAway">
-                            <option value="1">Eufy Home</option>
-                            <option value="0">Eufy Away</option>
-                            <option value="2">Eufy Schedule</option>
-                            <option value="3">Eufy Custom 1</option>
-                            <option value="4">Eufy Custom 2</option>
-                            <option value="5">Eufy Custom 3</option>
-                            <option value="47">Eufy Geofencing</option>
-                            <!-- <option value="6">Eufy Off</option> // Removing the ability to set Off(6) waiting Bropat feedback bropat/eufy-security-client#27 -->
-                            <option value="63">Eufy Disarmed</option>
-                        </select>
-                        <small id="help" class="form-text text-muted">Change how each mode in the HomeKit security
-                            system is mapped to the modes in the Eufy App</small>
+
+                    <div class="form-group mb-1">
+                        <div class="input-group">
+                            <div class="input-group-prepend">
+                                <div class="input-group-text">
+                                    <input type="checkbox" id="epc-cleanCache" />
+                                </div>
+                            </div>
+                            <span class="form-control">Clean Cache
+                                automatically</span>
+                        </div>
+                        <small, class="form-text text-muted"><i>When enabled, you let the plugin clean accessory when
+                                removed from the Eufy app.</i></small>
                     </div>
-                    <div class="form-group">
-                        <label for="hkNight">HomeKit Night</label>
-                        <select class="form-control" id="hkNight">
-                            <option value="1">Eufy Home</option>
-                            <option value="0">Eufy Away</option>
-                            <option value="2">Eufy Schedule</option>
-                            <option value="3">Eufy Custom 1</option>
-                            <option value="4">Eufy Custom 2</option>
-                            <option value="5">Eufy Custom 3</option>
-                            <option value="47">Eufy Geofencing</option>
-                            <!-- <option value="6">Eufy Off</option> // Removing the ability to set Off(6) waiting Bropat feedback bropat/eufy-security-client#27 -->
-                            <option value="63">Eufy Disarmed</option>
-                        </select>
-                        <small id="help" class="form-text text-muted">Change how each mode in the HomeKit security
-                            system is mapped to the modes in the Eufy App</small>
+
+                    <hr />
+
+                    <div class="form-group mb-1">
+                        <div class="input-group mb-1">
+                            <div class="input-group-prepend w-25">
+                                <span class="input-group-text col">HomeKit Home</span>
+                            </div>
+                            <select class="custom-select" id="epc-hkHome">
+                                <option value="1">Eufy Home</option>
+                                <option value="0">Eufy Away</option>
+                                <option value="2">Eufy Schedule</option>
+                                <option value="3">Eufy Custom 1 (Night)</option>
+                                <option value="4">Eufy Custom 2</option>
+                                <option value="5">Eufy Custom 3</option>
+                                <option value="47">Eufy Geofencing</option>
+                                <!-- <option value="6">Eufy Off</option> // Removing the ability to set Off(6) waiting Bropat feedback bropat/eufy-security-client#27 -->
+                                <option value="63">Eufy Disarmed</option>
+                            </select>
+                        </div>
+                        <div class="input-group mb-1">
+                            <div class="input-group-prepend w-25">
+                                <span class="input-group-text col">HomeKit Away</span>
+                            </div>
+                            <select class="custom-select" id="epc-hkAway">
+                                <option value="1">Eufy Home</option>
+                                <option value="0">Eufy Away</option>
+                                <option value="2">Eufy Schedule</option>
+                                <option value="3">Eufy Custom 1 (Night)</option>
+                                <option value="4">Eufy Custom 2</option>
+                                <option value="5">Eufy Custom 3</option>
+                                <option value="47">Eufy Geofencing</option>
+                                <!-- <option value="6">Eufy Off</option> // Removing the ability to set Off(6) waiting Bropat feedback bropat/eufy-security-client#27 -->
+                                <option value="63">Eufy Disarmed</option>
+                            </select>
+                        </div>
+                        <div class="input-group mb-1">
+                            <div class="input-group-prepend w-25">
+                                <span class="input-group-text col">HomeKit Night</span>
+                            </div>
+                            <select class="custom-select" id="epc-hkNight">
+                                <option value="1">Eufy Home</option>
+                                <option value="0">Eufy Away</option>
+                                <option value="2">Eufy Schedule</option>
+                                <option value="3">Eufy Custom 1 (Night)</option>
+                                <option value="4">Eufy Custom 2</option>
+                                <option value="5">Eufy Custom 3</option>
+                                <option value="47">Eufy Geofencing</option>
+                                <!-- <option value="6">Eufy Off</option> // Removing the ability to set Off(6) waiting Bropat feedback bropat/eufy-security-client#27 -->
+                                <option value="63">Eufy Disarmed</option>
+                            </select>
+                        </div>
+                        <div class="input-group mb-1">
+                            <div class="input-group-prepend w-25">
+                                <span class="input-group-text col">HomeKit Off</span>
+                            </div>
+                            <select class="custom-select" id="epc-hkOff">
+                                <option value="1">Eufy Home</option>
+                                <option value="0">Eufy Away</option>
+                                <option value="2">Eufy Schedule</option>
+                                <option value="3">Eufy Custom 1 (Night)</option>
+                                <option value="4">Eufy Custom 2</option>
+                                <option value="5">Eufy Custom 3</option>
+                                <option value="47">Eufy Geofencing</option>
+                                <!-- <option value="6">Eufy Off</option> // Removing the ability to set Off(6) waiting Bropat feedback bropat/eufy-security-client#27 -->
+                                <option value="63">Eufy Disarmed</option>
+                            </select>
+                        </div>
+                        <small, class="form-text text-muted"><i>Change how each mode in the HomeKit security
+                                system is mapped to the modes in the Eufy App</i></small>
                     </div>
-                    <div class="form-group">
-                        <label for="hkOff">HomeKit Off</label>
-                        <select class="form-control" id="hkOff">
-                            <option value="1">Eufy Home</option>
-                            <option value="0">Eufy Away</option>
-                            <option value="2">Eufy Schedule</option>
-                            <option value="3">Eufy Custom 1</option>
-                            <option value="4">Eufy Custom 2</option>
-                            <option value="5">Eufy Custom 3</option>
-                            <option value="47">Eufy Geofencing</option>
-                            <!-- <option value="6">Eufy Off</option> // Removing the ability to set Off(6) waiting Bropat feedback bropat/eufy-security-client#27 -->
-                            <option value="63">Eufy Disarmed</option>
-                        </select>
-                        <small id="help" class="form-text text-muted">Change how each mode in the HomeKit security
-                            system is mapped to the modes in the Eufy App</small>
-                    </div>
-                    <div class="form-group">
-                        <label for="ignoreStations">Ignore Stations</label>
-                        <input type="text" class="form-control" id="ignoreStations" />
-                        <small id="help" class="form-text text-muted">Ignoring stations listed here (separated by a
-                            comma)</small>
-                    </div>
-                    <div class="form-group">
-                        <label for="ignoreDevices">Ignore Devices</label>
-                        <input type="text" class="form-control" id="ignoreDevices" />
-                        <small id="help" class="form-text text-muted">Ignoring devices listed here (separated by a
-                            comma)</small>
+
+                    <input type="text" class="hidden" id="epc-ignoreStations" />
+                    <input type="text" class="hidden" id="epc-ignoreDevices" />
+
+                    <hr />
+
+                    <div class="row">
+                        <!-- <div class="col text-right"><a id="get-lib-log" class="btn btn-warning">Get Lib Logs</a></div> -->
+                        <div class="col text-left"><a id="reset" class="btn btn-danger">Reset</a></div>
                     </div>
 
                 </div>
@@ -145,45 +210,454 @@
     <!-- shown when the plugin is not configured -->
     <div id="setupRequired" style="display:none;">
 
-        <div id="step1">
+        <div id="step1" style="display:none;">
             <div class="form-group">
                 <label for="usernameInput1">Eufy Username</label>
-                <input type="text" class="form-control" id="usernameInput1" aria-describedby="usernameHelp"
-                    required /><small id="usernameHelp" class="form-text text-muted">Please enter your eufy
+                <input type="email" class="form-control" id="usernameInput1" aria-describedby="usernameHelp"
+                    autocomplete="off" required /><small id="usernameHelp" class="form-text text-muted">Please enter
+                    your eufy
                     username.</small>
                 <label for="passwordInput1">Eufy Password</label>
                 <input type="password" class="form-control" id="passwordInput1" aria-describedby="passwordHelp"
                     required /><small id="passwordHelp" class="form-text text-muted">Please
                     enter your eufy
                     password.</small>
+
+                <label for="country">Country</label>
+                <select class="form-control" id="countryInput1" aria-describedby="countryHelp" required></select>
+                <small id="countryHelp" class="form-text text-muted">Select the same country that's the one selected on
+                    Eufy APP</small>
             </div>
             <div class="text-center">
-                <a id="skip" class="btn btn-elegant">Skip</a>
-                <button id="step1Submit" type="submit" class="btn btn-primary">Next</button>
+                <a id="skip" class="btn btn-elegant skip">Skip</a>
+                <button id="step1Submit" type="submit" class="btn btn-primary startover">Next</button>
             </div>
         </div>
 
-        <div id="step2" style="display:none;">
+        <div id="step2-captcha" style="display:none;">
             <div class="form-group">
-                <label for="otpInput">OTP Code</label>
-                <input type="text" class="form-control" id="otpInput" aria-describedby="otpHelp" />
+                <label for="captchaInput">Captcha Code</label>
+                <p id="captcha-img" class="text-center"></p>
+                <input type="hidden" id="captcha-id" name="captcha-id" />
+                <input type="text" class="form-control" id="captchaInput" aria-describedby="captchaHelp"
+                    autocomplete="off" />
+                <small id="captchaHelp" class="form-text text-muted">Please enter the captcha you're seeing.</small>
+            </div>
+            <div class="text-center">
+                <a id="skip2" class="btn btn-elegant skip">Skip</a>
+                <button id="step2-captcha-Submit" type="submit" class="btn btn-primary">Next</button>
+            </div>
+        </div>
+
+        <div id="step2-otp" style="display:none;">
+            <div class="form-group">
+                <label for="otpInput">OTP</label>
+                <input type="number" class="form-control" id="otpInput" aria-describedby="otpHelp" autocomplete="off" />
                 <small id="otpHelp" class="form-text text-muted">Please enter the OTP password received at your
                     email.</small>
             </div>
             <div class="text-center">
-                <a id="skip2" class="btn btn-elegant">Skip</a>
-                <button id="step2Submit" type="submit" class="btn btn-primary">Next</button>
+                <a id="skip2" class="btn btn-elegant skip">Skip</a>
+                <button id="step2-otp-Submit" type="submit" class="btn btn-primary">Next</button>
             </div>
         </div>
+        <!-- shown when the plugin is not configured -->
 
         <div id="step3" style="display:none;">
             <div class="form-group">
-                <div id="stations"></div>
+                <div id="stations">
+                    <div class="divTable">
+                        <div class="divTableHeading">
+                            <div class="divTableRow">
+                                <div class="divTableCell">Name</div>
+                                <div class="divTableCell">Serial Number</div>
+                                <div class="divTableCell">Type</div>
+                                <div class="divTableCell">Ignore?</div>
+                            </div>
+                        </div>
+                        <div class="divTableBody" id="list_body"></div>
+                    </div>
+                </div>
+
+                <a class="btn btn-elegant skip">Skip</a>
             </div>
         </div>
 
     </div>
 
+    <!-- shown when the plugin is not configured -->
+    <div id="reset-box" style="display:none;">
+
+        <div id="reset-confirmation">
+            <div class="text-center">
+
+                <h3 class="text-center">
+                    <b style="font-weight: 800;">This action will clear persistent data and configuration of this
+                        plugin.</b>
+                </h3>
+
+                <a id="skip-reset" class="btn btn-info skip">Cancel</a>
+                <button id="reset-confirm-btn" type="submit" class="btn btn-red">Reset Everything</button>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- shown when the plugin is not configured -->
+    <div id="camera-config-box" style="display:none;">
+
+        <div id="camera-config-confirmation">
+
+            <form>
+
+                <div class="form-group row">
+                    <label for="staticEmail" class="col-sm-3 col-form-label">Camera Name:</label>
+                    <div class="col-sm-9">
+                        <input type="text" readonly class="form-control-plaintext" id="cc-name" value="Camera name" />
+                    </div>
+                </div>
+
+                <div class="form-group row">
+                    <label for="staticEmail" class="col-sm-3 col-form-label">Serial Number:</label>
+                    <div class="col-sm-9">
+                        <input type="text" readonly class="form-control-plaintext" id="cc-serialnumber"
+                            value="Serial Number" />
+                    </div>
+                </div>
+
+                <div class="form-group row">
+                    <label for="staticEmail" class="col-sm-3 col-form-label">Type:</label>
+
+                    <div class="col-sm-9">
+                        <div class="btn-group btn-group-toggle" data-toggle="buttons">
+                            <label class="btn btn-secondary">
+                                <input type="radio" name="cc-enableCamera-btn" id="cc-enableCamera-btn-false"
+                                    autocomplete="off"> Motion
+                                Sensor
+                            </label>
+                            <label class="btn btn-secondary">
+                                <input type="radio" name="cc-enableCamera-btn" id="cc-enableCamera-btn-true"
+                                    autocomplete="off"> Camera
+                            </label>
+                        </div>
+
+                        <div class="form-check hidden">
+                            <input class="form-check-input" type="checkbox" id="cc-enableCamera">
+                            <label class="form-check-label" for="cc-enableCamera">Enable Camera</label>
+                        </div>
+
+                        <small class="form-text text-muted">Camera seen as Motion Sensor by
+                            default, enable this setting to transform as Camera</small>
+                        <small class="form-text text-muted">Doorbell are forced with camera enabled this can't be
+                            change</small>
+
+                    </div>
+                </div>
+                <div id="camera-adv" style="display: none;">
+                    <div class="form-group row">
+                        <label for="staticEmail" class="col-sm-3 col-form-label">Homekit Behaviour:</label>
+                        <div class="col-sm-9">
+
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="cc-enableButton">
+                                <label class="form-check-label" for="cc-enableButton">Display Homekit Enable Button
+                                    <a href="javascript:void(0)" class="showhim"><i
+                                            class="fas fa-info-circle primary-text"></i>
+                                    </a>
+                                    <div class="popover bs-popover-right showme">
+                                        <div class="tooltip-inner">Display homekit button to switch on/off camera</div>
+                                    </div>
+                                </label>
+                            </div>
+
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="cc-motionButton">
+                                <label class="form-check-label" for="cc-motionButton">Display Homekit Motion Button
+                                    <a href="javascript:void(0)" class="showhim"><i
+                                            class="fas fa-info-circle primary-text"></i>
+                                    </a>
+                                    <div class="popover bs-popover-right showme">
+                                        <div class="tooltip-inner">Display homekit button to switch on/off motion on
+                                            camera
+                                        </div>
+                                    </div>
+                                </label>
+                            </div>
+
+                            <small class="form-text text-muted">When disabling theses buttons you
+                                might need to clear accessory cache (homebridge settings) so it can take effect into
+                                homekit.</small>
+
+                            <hr />
+
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="cc-unbridge">
+                                <label class="form-check-label" for="cc-unbridge">Unbridge Camera</label>
+                            </div>
+
+                            <small class="form-text text-muted">Bridged cameras can cause slowdowns of the
+                                entire
+                                Homebridge instance. If unbridged, the camera will need to be added to HomeKit
+                                manually.</small>
+
+                            <hr />
+
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="cc-forcerefreshsnap">
+                                <label class="form-check-label" for="cc-forcerefreshsnap">Force Refresh Snapshot</label>
+                            </div>
+
+                            <small class="form-text text-muted">When enabled, we will start stream for one
+                                frame and use
+                                as a snapshot (this can affect the battery life). If it's disabled, we will use the Eufy
+                                Cloud API one (which could be really old).</small>
+
+                            <hr />
+
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="cc-rtsp">
+                                <label class="form-check-label" for="cc-rtsp">Use RTSP</label>
+                            </div>
+
+                            <small id="cc-help-rtsp" class="form-text text-muted">Improve getting live stream by using
+                                RTSP</small>
+                            <small id="cc-help-rtsp" class="form-text text-muted">RTSP must be enable within Eufy App first</small>
+                            <small id="cc-help-rtsp" class="form-text text-muted">This setting may not be working with
+                                no compatible device such as Doorbell or Floodlight</small>
+                        </div>
+                    </div>
+
+                    <hr />
+
+                    <div class="form-group row">
+                        <label for="staticEmail" class="col-sm-3 col-form-label">Advanced VideoConfig:</label>
+                        <div class="col-sm-9">
+
+                            <div class="form-group mb-1">
+                                <div class="input-group">
+                                    <div class="input-group-prepend">
+                                        <div class="input-group-text">
+                                            <input type="checkbox" id="cc-videoConfig-debug" />
+                                        </div>
+                                    </div>
+                                    <span class="form-control">ffmpeg debug</span>
+                                </div>
+                            </div>
+
+                            <div class="form-group mb-1">
+                                <div class="input-group">
+                                    <div class="input-group-prepend">
+                                        <div class="input-group-text">
+                                            <input type="checkbox" id="cc-videoConfig-audio" />
+                                        </div>
+                                    </div>
+                                    <span class="form-control">Enable Audio</span>
+                                </div>
+                            </div>
+
+                            <div class="form-group mb-1">
+                                <div class="input-group">
+                                    <div class="input-group-prepend">
+                                        <div class="input-group-text">
+                                            <input type="checkbox" id="cc-videoConfig-readRate" />
+                                        </div>
+                                    </div>
+                                    <span class="form-control">readRate</span>
+                                </div>
+                            </div>
+
+                            <div class="input-group mb-1">
+                                <div class="input-group-prepend">
+                                    <div class="input-group-text">
+                                        <input type="checkbox" id="cc-videoConfig-vcodec-ena" class="ena" />
+                                    </div>
+                                    <span class="input-group-text">vcodec</span>
+                                </div>
+                                <input type="text" class="form-control videoConfig" id="cc-videoConfig-vcodec"
+                                    name="cc-videoConfig-vcodec" placeholder="leave blank if you don't know">
+                            </div>
+
+                            <div class="input-group mb-1">
+                                <div class="input-group-prepend">
+                                    <div class="input-group-text">
+                                        <input type="checkbox" id="cc-videoConfig-acodec-ena" class="ena" />
+                                    </div>
+                                    <span class="input-group-text">acodec</span>
+                                </div>
+                                <input type="text" class="form-control videoConfig" id="cc-videoConfig-acodec"
+                                    name="cc-videoConfig-acodec" placeholder="leave blank if you don't know">
+                            </div>
+
+                            <div class="input-group mb-1">
+                                <div class="input-group-prepend">
+                                    <div class="input-group-text">
+                                        <input type="checkbox" id="cc-videoConfig-videoFilter-ena" class="ena" />
+                                    </div>
+                                    <span class="input-group-text">videoFilter</span>
+                                </div>
+                                <input type="text" class="form-control videoConfig" id="cc-videoConfig-videoFilter"
+                                    name="cc-videoConfig-videoFilter" placeholder="leave blank if you don't know">
+                            </div>
+
+                            <div class="input-group mb-1">
+                                <div class="input-group-prepend">
+                                    <div class="input-group-text">
+                                        <input type="checkbox" id="cc-videoConfig-encoderOptions-ena" class="ena" />
+                                    </div>
+                                    <span class="input-group-text">encoderOptions</span>
+                                </div>
+                                <input type="text" class="form-control videoConfig" id="cc-videoConfig-encoderOptions"
+                                    name="cc-videoConfig-encoderOptions" placeholder="leave blank if you don't know">
+                            </div>
+
+                            <div class="input-group mb-1">
+                                <div class="input-group-prepend">
+                                    <div class="input-group-text">
+                                        <input type="checkbox" id="cc-videoConfig-probeSize-ena" class="ena" />
+                                    </div>
+                                    <span class="input-group-text">probeSize</span>
+                                </div>
+                                <input type="number" class="form-control videoConfig" id="cc-videoConfig-probeSize"
+                                    name="cc-videoConfig-probeSize" placeholder="leave blank if you don't know">
+                            </div>
+
+                            <div class="input-group mb-1">
+                                <div class="input-group-prepend">
+                                    <div class="input-group-text">
+                                        <input type="checkbox" id="cc-videoConfig-analyzeDuration-ena" class="ena" />
+                                    </div>
+                                    <span class="input-group-text">analyzeDuration</span>
+                                </div>
+                                <input type="number" class="form-control videoConfig"
+                                    name="cc-videoConfig-analyzeDuration" id="cc-videoConfig-analyzeDuration"
+                                    placeholder="leave blank if you don't know">
+                            </div>
+
+                            <div class="input-group mb-1">
+                                <div class="input-group-prepend">
+                                    <div class="input-group-text">
+                                        <input type="checkbox" id="cc-videoConfig-mapvideo-ena" class="ena" />
+                                    </div>
+                                    <span class="input-group-text">mapvideo</span>
+                                </div>
+                                <input type="text" class="form-control videoConfig" id="cc-videoConfig-mapvideo"
+                                    name="cc-videoConfig-mapvideo" placeholder="leave blank if you don't know">
+                            </div>
+
+                            <div class="input-group mb-1">
+                                <div class="input-group-prepend">
+                                    <div class="input-group-text">
+                                        <input type="checkbox" id="cc-videoConfig-mapaudio-ena" class="ena" />
+                                    </div>
+                                    <span class="input-group-text">mapaudio</span>
+                                </div>
+                                <input type="text" class="form-control videoConfig" id="cc-videoConfig-mapaudio"
+                                    name="cc-videoConfig-mapaudio" placeholder="leave blank if you don't know">
+                            </div>
+
+                            <div class="form-group mb-1">
+                                <div class="input-group">
+                                    <div class="input-group-prepend">
+                                        <div class="input-group-text">
+                                            <input type="checkbox" id="cc-videoConfig-forceMax" />
+                                        </div>
+                                    </div>
+                                    <span class="form-control">forceMax</span>
+                                </div>
+                            </div>
+
+                            <div class="input-group mb-1">
+                                <div class="input-group-prepend">
+                                    <div class="input-group-text">
+                                        <input type="checkbox" id="cc-videoConfig-maxDelay-ena" class="ena" />
+                                    </div>
+                                    <span class="input-group-text">maxDelay</span>
+                                </div>
+                                <input type="number" class="form-control videoConfig" id="cc-videoConfig-maxDelay"
+                                    name="cc-videoConfig-maxDelay" placeholder="leave blank if you don't know">
+                            </div>
+
+                            <div class="input-group mb-1">
+                                <div class="input-group-prepend">
+                                    <div class="input-group-text">
+                                        <input type="checkbox" id="cc-videoConfig-maxStreams-ena" class="ena" />
+                                    </div>
+                                    <span class="input-group-text">maxStreams</span>
+                                </div>
+                                <input type="number" class="form-control videoConfig" id="cc-videoConfig-maxStreams"
+                                    name="cc-videoConfig-maxStreams" placeholder="leave blank if you don't know">
+                            </div>
+
+                            <div class="input-group mb-1">
+                                <div class="input-group-prepend">
+                                    <div class="input-group-text">
+                                        <input type="checkbox" id="cc-videoConfig-maxWidth-ena" class="ena" />
+                                    </div>
+                                    <span class="input-group-text">maxWidth</span>
+                                </div>
+                                <input type="number" class="form-control videoConfig" id="cc-videoConfig-maxWidth"
+                                    name="cc-videoConfig-maxWidth" placeholder="leave blank if you don't know">
+                            </div>
+
+                            <div class="input-group mb-1">
+                                <div class="input-group-prepend">
+                                    <div class="input-group-text">
+                                        <input type="checkbox" id="cc-videoConfig-maxHeight-ena" class="ena" />
+                                    </div>
+                                    <span class="input-group-text">maxHeight</span>
+                                </div>
+                                <input type="number" class="form-control videoConfig" id="cc-videoConfig-maxHeight"
+                                    name="cc-videoConfig-maxHeight" placeholder="leave blank if you don't know">
+                            </div>
+
+                            <div class="input-group mb-1">
+                                <div class="input-group-prepend">
+                                    <div class="input-group-text">
+                                        <input type="checkbox" id="cc-videoConfig-maxFPS-ena" class="ena" />
+                                    </div>
+                                    <span class="input-group-text">maxFPS</span>
+                                </div>
+                                <input type="number" class="form-control videoConfig" id="cc-videoConfig-maxFPS"
+                                    name="cc-videoConfig-maxFPS" placeholder="leave blank if you don't know">
+                            </div>
+
+                            <div class="input-group mb-1">
+                                <div class="input-group-prepend">
+                                    <div class="input-group-text">
+                                        <input type="checkbox" id="cc-videoConfig-maxBitrate-ena" class="ena" />
+                                    </div>
+                                    <span class="input-group-text">maxBitrate</span>
+                                </div>
+                                <input type="number" class="form-control videoConfig" id="cc-videoConfig-maxBitrate"
+                                    name="cc-videoConfig-maxBitrate" placeholder="leave blank if you don't know">
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+
+
+            </form>
+
+            <div class="text-center">
+                <hr />
+                <b style="font-weight: 800;">Make sure to confirm before doing anything else</b>
+                <br />
+                <a id="skip-camera-config" class="btn btn-info">Back</a>
+                <a id="confirm-camera-config" class="btn btn-success">Confirm</a>
+            </div>
+        </div>
+
+    </div>
+
+    <hr />
+
+    <div class="footer">We are not affiliated, associated, authorized, endorsed by, or in any way officially
+        connected
+        with Anker Innovations Technology Co.LTd, and Shenzhen Oceanwing Smart Innovations Technology Co., Ltd, and
+        its
+        affiliated companies within the Anker Group, or any of its subsidiaries or its affiliates.</div>
+
 </div>
 
-<script type="text/javascript" src="js/main.js"></script>
+<script type="text/javascript" src="js/main.js?v=2.0.0-beta.2"></script>

@@ -68,15 +68,15 @@ export abstract class DeviceAccessory {
         }
 
       } else {
-        this.platform.log.warn(this.accessory.displayName, 'has no battery');
+        this.platform.log.debug(this.accessory.displayName, 'has no battery');
       }
     } catch (Error) {
       this.platform.log.error(this.accessory.displayName, 'raise error to check and attach a battery.', Error);
     }
 
     if (this.platform.config.enableDetailedLogging) {
-      this.eufyDevice.on('raw property changed', (device: Device, type: number, value: string, modified: number) =>
-        this.handleRawPropertyChange(device, type, value, modified),
+      this.eufyDevice.on('raw property changed', (device: Device, type: number, value: string) =>
+        this.handleRawPropertyChange(device, type, value),
       );
       this.eufyDevice.on('property changed', (device: Device, name: string, value: PropertyValue) =>
         this.handlePropertyChange(device, name, value),
@@ -88,14 +88,12 @@ export abstract class DeviceAccessory {
     device: Device,
     type: number,
     value: string,
-    modified: number,
   ): void {
     this.platform.log.debug(
       this.accessory.displayName,
       'Raw Property Changes:',
       type,
       value,
-      modified,
     );
   }
 
@@ -119,7 +117,7 @@ export abstract class DeviceAccessory {
     try {
       const currentValue = await this.eufyDevice.getPropertyValue(PropertyName.DeviceBatteryLow);
       this.platform.log.debug(this.accessory.displayName, 'GET DeviceBatteryLow:', currentValue);
-      return currentValue.value as boolean;
+      return currentValue as boolean;
     } catch {
       this.platform.log.error(this.accessory.displayName, 'handleStatusLowBatteryGet', 'Wrong return value');
       return false;
@@ -133,7 +131,7 @@ export abstract class DeviceAccessory {
     try {
       const currentValue = this.eufyDevice.getPropertyValue(PropertyName.DeviceBattery);
       this.platform.log.debug(this.accessory.displayName, 'GET DeviceBattery:', currentValue);
-      return currentValue.value as number;
+      return currentValue as number;
     } catch {
       this.platform.log.error(this.accessory.displayName, 'handleBatteryLevelGet', 'Wrong return value');
       return 0;

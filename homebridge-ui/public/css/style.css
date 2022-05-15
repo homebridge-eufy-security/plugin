@@ -4,7 +4,10 @@
 
 .divTable {
     display: table;
-    width: 100%;
+    table-layout: fixed;
+    max-width: none;
+    width: auto;
+    min-width: 100%;
 }
 
 .divTableRow {
@@ -17,18 +20,31 @@
     font-style: italic;
 }
 
+.disabled {
+    color: #888;
+    text-decoration: line-through;
+    font-style: italic;
+}
+
 div.logo {
     text-align: center;
     margin: 0 0 5px 0;
 }
 
-image.logo {
-    width: 40%;
+img.logo {
     text-align: center;
     margin: 0 auto;
+    max-width: 75%;
+    height: auto;
+    object-fit: cover;
 }
 
-.text-center{
+.footer {
+    font-size: small;
+    color: #888;
+}
+
+.text-center {
     text-align: center !important;
 }
 
@@ -47,9 +63,9 @@ image.logo {
 }
 
 .divTableCell, .divTableHead {
-    border: 1px solid #eee;
+    border: 0.05rem solid #eee;
     display: table-cell;
-    padding: 3px 10px;
+    padding: 0.25rem;
 }
 
 .divTableHeading {
@@ -67,4 +83,12 @@ image.logo {
 
 .divTableBody {
     display: table-row-group;
+}
+
+.showme {
+    display: none;
+}
+
+.showhim:hover ~ .showme {
+    display: block;
 }

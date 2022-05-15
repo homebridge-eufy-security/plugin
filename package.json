@@ -1,19 +1,23 @@
 {
   "displayName": "Homebridge Eufy Security",
   "name": "homebridge-eufy-security",
+<<<<<<< HEAD
+  "version": "2.0.0-beta.5",
+=======
   "version": "1.0.8",
+>>>>>>> master
   "description": "Control Eufy Security from homebridge.",
   "license": "Apache-2.0",
   "repository": {
     "type": "git",
-    "url": "git://github.com/samemory/homebridge-eufy-security.git"
+    "url": "git://github.com/homebridge-eufy-security/plugin.git"
   },
   "bugs": {
-    "url": "https://github.com/samemory/homebridge-eufy-security/issues"
+    "url": "https://github.com/homebridge-eufy-security/plugin/issues"
   },
   "engines": {
-    "node": ">=12.0.0",
-    "homebridge": ">=1.3.0"
+    "node": ">=14.17.0",
+    "homebridge": ">=1.4.1"
   },
   "main": "dist/index.js",
   "scripts": {
@@ -33,28 +37,28 @@
   "dependencies": {
     "@homebridge/plugin-ui-utils": "0.0.19",
     "bunyan": "^1.8.15",
-    "bunyan-debug-stream": "^2.0.0",
-    "eufy-security-client": "~1.5.0",
-    "ffmpeg-for-homebridge": "0.0.9",
+    "bunyan-debug-stream": "^2.0.1",
+    "eufy-security-client": "^2.0.1",
+    "ffmpeg-for-homebridge": "0.1.0",
     "pick-port": "^1.0.0"
   },
   "devDependencies": {
-    "@types/bunyan": "^1.8.7",
-    "@types/node": "^16.11.6",
-    "@typescript-eslint/eslint-plugin": "^5.2.0",
-    "@typescript-eslint/parser": "^5.2.0",
-    "eslint": "^8.1.0",
-    "homebridge": "^1.3.5",
-    "nodemon": "^2.0.14",
+    "@types/bunyan": "^1.8.8",
+    "@types/node": "^17.0.33",
+    "@typescript-eslint/eslint-plugin": "^5.23.0",
+    "@typescript-eslint/parser": "^5.23.0",
+    "eslint": "^8.15.0",
+    "homebridge": "^1.4.1",
+    "nodemon": "^2.0.16",
     "rimraf": "^3.0.2",
-    "ts-node": "^10.4.0",
-    "typescript": "^4.4.4"
+    "ts-node": "^10.7.0",
+    "typescript": "^4.6.4"
   },
   "eslintConfig": {
     "rules": {
       "ban-ts-comment": 0
     }
   },
-  "homepage": "https://github.com/samemory/homebridge-eufy-security/wiki",
-  "author": "Sam Emory"
+  "homepage": "https://github.com/homebridge-eufy-security/plugin/wiki",
+  "author": "homebridge-eufy-security"
 }

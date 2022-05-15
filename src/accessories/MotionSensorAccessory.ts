@@ -64,7 +64,7 @@ export class MotionSensorAccessory extends DeviceAccessory {
     try {
       const currentValue = this.MotionSensor.getPropertyValue(PropertyName.DeviceMotionDetected);
       this.platform.log.debug(this.accessory.displayName, 'GET DeviceMotionDetected:', currentValue);
-      return currentValue.value as boolean;
+      return currentValue as boolean;
     } catch {
       this.platform.log.error(this.accessory.displayName, 'handleMotionDetectedGet', 'Wrong return value');
       return false;
