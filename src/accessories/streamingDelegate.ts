@@ -33,6 +33,8 @@ import { EufySecurityPlatform } from '../platform';
 
 import { Readable } from 'stream';
 import { NamePipeStream, StreamInput } from './UniversalStream';
+import { StationStream } from './LocalLivestreamCache';
+import { LocalLivestreamCache } from './LocalLivestreamCache';
 
 import { readFile } from 'fs';
 import path from 'path';
@@ -77,14 +79,6 @@ type ActiveSession = {
     uAudioStream?: NamePipeStream;
 };
 
-type StationStream = {
-    station: Station;
-    device: Device;
-    metadata: StreamMetadata;
-    videostream: Readable;
-    audiostream: Readable;
-};
-
 export class StreamingDelegate implements CameraStreamingDelegate {
     private readonly hap: HAP;
     private readonly api: API;
@@ -99,6 +93,8 @@ export class StreamingDelegate implements CameraStreamingDelegate {
     private readonly platform: EufySecurityPlatform;
     private readonly device: Camera;
 
+    private localLivestreamCache: LocalLivestreamCache;
+
     // keep track of sessions
     pendingSessions: Map<string, SessionInfo> = new Map();
     ongoingSessions: Map<string, ActiveSession> = new Map();
@@ -111,6 +107,8 @@ export class StreamingDelegate implements CameraStreamingDelegate {
 
         this.platform = platform;
         this.device = device;
+
+        this.localLivestreamCache = new LocalLivestreamCache(this.platform, this.device, this.log);
 
         this.cameraName = device.getName()!;
 
@@ -202,19 +200,6 @@ export class StreamingDelegate implements CameraStreamingDelegate {
         return resInfo;
     }
 
-    private async getLocalLiveStream(): Promise<StationStream> {
-        return new Promise((resolve, reject) => {
-            this.platform.eufyClient.startStationLivestream(this.device.getSerial());
-            this.platform.eufyClient.on('station livestream start', (station: Station, device: Device, metadata: StreamMetadata,
-                videostream: Readable, audiostream: Readable) => {
-                if (device.getSerial() === this.device.getSerial()) {
-                    const stationStream: StationStream = { station, device, metadata, videostream, audiostream };
-                    resolve(stationStream);
-                }
-            });
-        });
-    }
-
     fetchSnapshot(snapFilter?: string): Promise<Buffer> {
 
         return new Promise(async (resolve, reject) => {
@@ -254,7 +239,7 @@ export class StreamingDelegate implements CameraStreamingDelegate {
                     }
                 } else {
                     try {
-                        const streamData = await this.getLocalLiveStream().catch(err => {
+                        const streamData = await this.localLivestreamCache.getLocalLivestream().catch(err => {
                             throw err;
                         });
                         uVideoStream = StreamInput(streamData.videostream, this.cameraName + '_video', this.platform.eufyPath, this.log);
@@ -301,7 +286,7 @@ export class StreamingDelegate implements CameraStreamingDelegate {
                         reject('Failed to fetch snapshot.');
                     }
 
-                    this.platform.eufyClient.stopStationLivestream(this.device.getSerial());
+                    this.localLivestreamCache.releaseLivestream();
 
                     setTimeout(() => {
                         this.log.debug('Setting snapshotPromise to undefined.');
@@ -619,7 +604,7 @@ export class StreamingDelegate implements CameraStreamingDelegate {
                 ffmpegInput = this.generateInputSource(this.videoConfig, this.videoConfig.source).split(/\s+/);
             } else {
                 try {
-                    const streamData = await this.getLocalLiveStream().catch(err => {
+                    const streamData = await this.localLivestreamCache.getLocalLivestream().catch(err => {
                         throw err;
                     });
                     uVideoStream = StreamInput(streamData.videostream, this.cameraName + '_video', this.platform.eufyPath, this.log);
@@ -861,7 +846,7 @@ export class StreamingDelegate implements CameraStreamingDelegate {
             }
             try {
                 if (!this.cameraConfig.rtsp) {
-                    this.platform.eufyClient.stopStationLivestream(this.device.getSerial());
+                    this.localLivestreamCache.releaseLivestream();
                 }
             } catch (err) {
                 this.log.error(this.cameraName, 'Error occurred terminating Eufy Station livestream: ' + err);
