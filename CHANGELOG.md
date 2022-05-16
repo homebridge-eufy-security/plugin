@@ -16,6 +16,7 @@
 
 ### Changed
 -   Upgrade to the latest bropat/eufy-security-client lib (2.0.1)
+-   Added livestream cache for local streaming (no rtsp) thanks @thieren
 
 ### Fixed
 -   Updating some dep for security reason
