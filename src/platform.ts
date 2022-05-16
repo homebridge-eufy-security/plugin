@@ -425,6 +425,8 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
       case DeviceType.DOORBELL:
       case DeviceType.BATTERY_DOORBELL:
       case DeviceType.BATTERY_DOORBELL_2:
+      case DeviceType.BATTERY_DOORBELL_PLUS:
+      case DeviceType.DOORBELL_SOLO:
         a = new DoorbellCameraAccessory(this, accessory, device as DoorbellCamera);
         unbridge = (a.cameraConfig.enableCamera) ? a.cameraConfig.unbridge ??= false : false;
         break;
