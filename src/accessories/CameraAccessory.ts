@@ -156,6 +156,7 @@ export class CameraAccessory extends DeviceAccessory {
     config.rtsp = config.rtsp ??= false;
     config.forcerefreshsnap =  config.forcerefreshsnap ??= false;
     config.videoConfig = config.videoConfig ??= {};
+    config.useCachedLocalLivestream = config.useCachedLocalLivestream ??= false;
 
     return config;
   }

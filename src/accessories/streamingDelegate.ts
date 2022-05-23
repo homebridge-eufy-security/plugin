@@ -109,13 +109,18 @@ export class StreamingDelegate implements CameraStreamingDelegate {
         this.platform = platform;
         this.device = device;
 
-        this.localLivestreamCache = new LocalLivestreamCache(this.platform, this.device, this.log);
-
         this.cameraName = device.getName()!;
 
         this.cameraConfig = cameraConfig;
         this.videoConfig = cameraConfig.videoConfig!;
         this.videoProcessor = ffmpegPath || 'ffmpeg';
+
+        this.localLivestreamCache = new LocalLivestreamCache(
+            this.platform,
+            this.device,
+            this.cameraConfig.useCachedLocalLivestream,
+            this.log,
+            );
 
         this.api.on(APIEvent.SHUTDOWN, () => {
             for (const session in this.ongoingSessions) {

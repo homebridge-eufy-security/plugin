@@ -148,15 +148,14 @@ export class LocalLivestreamCache extends EventEmitter {
   private readonly platform: EufySecurityPlatform;
   private readonly device: Camera;
   
-  constructor(platform: EufySecurityPlatform, device: Camera, log: Logger) {    
+  constructor(platform: EufySecurityPlatform, device: Camera, cacheEnabled: boolean, log: Logger) {    
     super();
 
     this.log = log;
     this.platform = platform;
     this.device = device;
 
-    // TODO add configuration option for caching
-    this.cacheEnabled = true;
+    this.cacheEnabled = cacheEnabled;
     if (this.cacheEnabled) {
       this.log.debug('Livestream caching for ' + this.device.getName() + ' is enabled.');
     }
