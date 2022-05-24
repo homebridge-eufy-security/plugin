@@ -33,7 +33,7 @@ import { EufySecurityPlatform } from '../platform';
 
 import { Readable } from 'stream';
 import { NamePipeStream, StreamInput } from './UniversalStream';
-import { LocalLivestreamCache } from './LocalLivestreamCache';
+import { LocalLivestreamManager } from './LocalLivestreamManager';
 
 import { readFile } from 'fs';
 import path from 'path';
@@ -94,7 +94,7 @@ export class StreamingDelegate implements CameraStreamingDelegate {
     private readonly platform: EufySecurityPlatform;
     private readonly device: Camera;
 
-    private localLivestreamCache: LocalLivestreamCache;
+    private localLivestreamManager: LocalLivestreamManager;
 
     // keep track of sessions
     pendingSessions: Map<string, SessionInfo> = new Map();
@@ -115,7 +115,7 @@ export class StreamingDelegate implements CameraStreamingDelegate {
         this.videoConfig = cameraConfig.videoConfig!;
         this.videoProcessor = ffmpegPath || 'ffmpeg';
 
-        this.localLivestreamCache = new LocalLivestreamCache(
+        this.localLivestreamManager = new LocalLivestreamManager(
             this.platform,
             this.device,
             this.cameraConfig.useCachedLocalLivestream,
@@ -126,7 +126,7 @@ export class StreamingDelegate implements CameraStreamingDelegate {
             for (const session in this.ongoingSessions) {
                 this.stopStream(session);
             }
-            this.localLivestreamCache.stopLocalLiveStream();
+            this.localLivestreamManager.stopLocalLiveStream();
         });
 
         const options: CameraControllerOptions = {
@@ -248,7 +248,7 @@ export class StreamingDelegate implements CameraStreamingDelegate {
                     }
                 } else {
                     try {
-                        const streamData = await this.localLivestreamCache.getLocalLivestream().catch(err => {
+                        const streamData = await this.localLivestreamManager.getLocalLivestream().catch(err => {
                             throw err;
                         });
                         livestreamIdToRelease = streamData.id;
@@ -297,7 +297,7 @@ export class StreamingDelegate implements CameraStreamingDelegate {
                     }
 
                     if (livestreamIdToRelease !== null) {
-                        this.localLivestreamCache.stopCachedStream(livestreamIdToRelease);
+                        this.localLivestreamManager.stopProxyStream(livestreamIdToRelease);
                     }
 
                     setTimeout(() => {
@@ -590,6 +590,13 @@ export class StreamingDelegate implements CameraStreamingDelegate {
         return true;
     }
 
+    public async prepareCachedStream(): Promise<void> {
+        if (!this.is_rtsp_ready()) {
+            const proxyStream = await this.localLivestreamManager.getLocalLivestream();
+            this.localLivestreamManager.stopProxyStream(proxyStream.id);
+        }
+    }
+
     private async startStream(request: StartStreamRequest, callback: StreamRequestCallback): Promise<void> {
 
         const sessionInfo = this.pendingSessions.get(request.sessionID);
@@ -617,7 +624,7 @@ export class StreamingDelegate implements CameraStreamingDelegate {
                 ffmpegInput = this.generateInputSource(this.videoConfig, this.videoConfig.source).split(/\s+/);
             } else {
                 try {
-                    const streamData = await this.localLivestreamCache.getLocalLivestream().catch(err => {
+                    const streamData = await this.localLivestreamManager.getLocalLivestream().catch(err => {
                         throw err;
                     });
                     cachedStreamId = streamData.id;
@@ -883,7 +890,7 @@ export class StreamingDelegate implements CameraStreamingDelegate {
             }
             try {
                 if (!this.cameraConfig.rtsp && session.cachedStreamId) {
-                    this.localLivestreamCache.stopCachedStream(session.cachedStreamId);
+                    this.localLivestreamManager.stopProxyStream(session.cachedStreamId);
                 }
             } catch (err) {
                 this.log.error(this.cameraName, 'Error occurred terminating Eufy Station livestream: ' + err);

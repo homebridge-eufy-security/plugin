@@ -13,7 +13,7 @@ type StationStream = {
   audiostream: Readable;
 };
 
-class AudioCache extends Readable {
+class AudiostreamProxy extends Readable {
 
   private cacheData: Array<Buffer> = [];
   private pushNewDataImmediately = false;
@@ -31,7 +31,7 @@ class AudioCache extends Readable {
     }
   }
 
-  public stopCachedStream(): void {
+  public stopProxyStream(): void {
     this.unpipe();
     this.destroy();
   }
@@ -48,9 +48,9 @@ class AudioCache extends Readable {
   }
 }
 
-class VideoCache extends Readable {
+class VideostreamProxy extends Readable {
 
-  private cacheManager: LocalLivestreamCache;
+  private manager: LocalLivestreamManager;
   private livestreamId: number;
 
   private cacheData: Array<Buffer> = [];
@@ -60,11 +60,11 @@ class VideoCache extends Readable {
 
   private pushNewDataImmediately = false;
 
-  constructor(id: number, cacheData: Array<Buffer>, manager: LocalLivestreamCache, log: Logger) {
+  constructor(id: number, cacheData: Array<Buffer>, manager: LocalLivestreamManager, log: Logger) {
     super();
 
     this.livestreamId = id;
-    this.cacheManager = manager;
+    this.manager = manager;
     this.cacheData = cacheData;
     this.log = log;
     this.resetKillTimeout();
@@ -86,7 +86,7 @@ class VideoCache extends Readable {
     }
   }
 
-  public stopCachedStream(): void {
+  public stopProxyStream(): void {
     this.unpipe();
     this.destroy();
     if (this.killTimeout) {
@@ -99,8 +99,8 @@ class VideoCache extends Readable {
       clearTimeout(this.killTimeout);
     }
     this.killTimeout = setTimeout(() => {
-      this.log.warn('Cached Stream (id: ' + this.livestreamId + ') was terminated due to inactivity.');
-      this.cacheManager.stopCachedStream(this.livestreamId);
+      this.log.warn('Proxy Stream (id: ' + this.livestreamId + ') was terminated due to inactivity.');
+      this.manager.stopProxyStream(this.livestreamId);
     }, 15000);
   }
 
@@ -118,13 +118,13 @@ class VideoCache extends Readable {
 
 }
 
-type CachedStream = {
+type ProxyStream = {
   id: number;
-  videostream: VideoCache;
-  audiostream: AudioCache;
+  videostream: VideostreamProxy;
+  audiostream: AudiostreamProxy;
 };
 
-export class LocalLivestreamCache extends EventEmitter {
+export class LocalLivestreamManager extends EventEmitter {
   
   private readonly SECONDS_UNTIL_TERMINATION_AFTER_LAST_USED = 45;
   private readonly CONNECTION_ESTABLISHED_TIMEOUT = 5;
@@ -135,7 +135,7 @@ export class LocalLivestreamCache extends EventEmitter {
   private livestreamCount = 0;
   private iFrameCache: Array<Buffer> = [];
 
-  private cachedStreams: Set<CachedStream> = new Set<CachedStream>();
+  private proxyStreams: Set<ProxyStream> = new Set<ProxyStream>();
 
   private cacheEnabled: boolean;
 
@@ -193,23 +193,23 @@ export class LocalLivestreamCache extends EventEmitter {
     }
   }
 
-  public async getLocalLivestream(): Promise<CachedStream> {
+  public async getLocalLivestream(): Promise<ProxyStream> {
     this.log.debug('New instance requests livestream. There were ' +
-                    this.cachedStreams.size + ' instance(s) using the livestream until now.');
+                    this.proxyStreams.size + ' instance(s) using the livestream until now.');
     if (this.terminationTimeout) {
       clearTimeout(this.terminationTimeout);
     }
-    const cachedStream = await this.getCachedStream();
-    if (cachedStream) {
+    const proxyStream = await this.getProxyStream();
+    if (proxyStream) {
       const runtime = (Date.now() - this.livestreamStartedAt!) / 1000;
-      this.log.debug('Using livestream that was started ' + runtime + ' seconds ago. The cached stream has id: ' + cachedStream.id + '.');
-      return cachedStream;
+      this.log.debug('Using livestream that was started ' + runtime + ' seconds ago. The cached stream has id: ' + proxyStream.id + '.');
+      return proxyStream;
     } else {
       return await this.startAndGetLocalLiveStream();
     }
   }
   
-  private async startAndGetLocalLiveStream(): Promise<CachedStream> {
+  private async startAndGetLocalLiveStream(): Promise<ProxyStream> {
     return new Promise((resolve, reject) => {
       this.log.debug('Start new local livestream...');
       if (!this.livestreamIsStarting) { // prevent multiple stream starts from eufy station
@@ -222,7 +222,7 @@ export class LocalLivestreamCache extends EventEmitter {
       }
       this.connectionTimeout = setTimeout(() => {
         this.livestreamIsStarting = false;
-        this.log.error('Local livestream didn\'t start in time. Abort livestream cache request.');
+        this.log.error('Local livestream didn\'t start in time. Abort livestream request.');
         reject('no started livestream found');
       }, this.CONNECTION_ESTABLISHED_TIMEOUT * 1000);
 
@@ -230,11 +230,11 @@ export class LocalLivestreamCache extends EventEmitter {
         if (this.connectionTimeout) {
           clearTimeout(this.connectionTimeout);
         }
-        const cachedStream = await this.getCachedStream();
-        if (cachedStream !== null) {
-          this.log.debug('New livestream started. Cached stream has id: ' + cachedStream.id + '.');
+        const proxyStream = await this.getProxyStream();
+        if (proxyStream !== null) {
+          this.log.debug('New livestream started. Proxy stream has id: ' + proxyStream.id + '.');
           this.livestreamIsStarting = false;
-          resolve(cachedStream);
+          resolve(proxyStream);
         } else {
           reject('no started livestream found');
         }
@@ -248,7 +248,7 @@ export class LocalLivestreamCache extends EventEmitter {
       clearTimeout(this.terminationTimeout);
     }
     this.terminationTimeout = setTimeout(() => {
-      if (this.cachedStreams.size <= 0) {
+      if (this.proxyStreams.size <= 0) {
         this.stopLocalLiveStream();
       }
     }, this.SECONDS_UNTIL_TERMINATION_AFTER_LAST_USED * 1000);
@@ -262,10 +262,10 @@ export class LocalLivestreamCache extends EventEmitter {
   private onStationLivestreamStop(station: Station, device: Device) {
     if (device.getSerial() === this.device.getSerial()) {
       this.log.info(station.getName() + ' livestream for ' + device.getName() + ' has stopped.');
-      this.cachedStreams.forEach((cachedStream) => {
-        cachedStream.audiostream.stopCachedStream();
-        cachedStream.videostream.stopCachedStream();
-        this.removeCachedStream(cachedStream.id);
+      this.proxyStreams.forEach((proxyStream) => {
+        proxyStream.audiostream.stopProxyStream();
+        proxyStream.videostream.stopProxyStream();
+        this.removeProxyStream(proxyStream.id);
       });
       this.initialize();
     }
@@ -280,7 +280,6 @@ export class LocalLivestreamCache extends EventEmitter {
   ) {
     if (device.getSerial() === this.device.getSerial()) {
       this.initialize(); // important to prevent unwanted behaviour when the eufy station emits the 'livestream start' event multiple times
-      // TODO: events for error, close, etc.
       videostream.on('data', (data) => {
         if(this.isIFrame(data)) { // cache iFrames to speed up livestream encoding
           this.iFrameCache = [data];
@@ -288,14 +287,39 @@ export class LocalLivestreamCache extends EventEmitter {
           this.iFrameCache.push(data);
         }
 
-        this.cachedStreams.forEach((cachedStream) => {
-          cachedStream.videostream.newVideoData(data);
+        this.proxyStreams.forEach((proxyStream) => {
+          proxyStream.videostream.newVideoData(data);
         });
       });
+      videostream.on('error', (error) => {
+        this.log.error('Local videostream had Error: ' + error);
+        this.stopAllProxyStreams();
+        this.stopLocalLiveStream();
+        this.initialize();
+      });
+      videostream.on('end', () => {
+        this.log.debug('Local videostream has ended. Clean up.');
+        this.stopAllProxyStreams();
+        this.stopLocalLiveStream();
+        this.initialize();
+      });
+
       audiostream.on('data', (data) => {       
-        this.cachedStreams.forEach((cachedStream) => {
-          cachedStream.audiostream.newAudioData(data);
+        this.proxyStreams.forEach((proxyStream) => {
+          proxyStream.audiostream.newAudioData(data);
         });
+      });
+      audiostream.on('error', (error) => {
+        this.log.error('Local audiostream had Error: ' + error);
+        this.stopAllProxyStreams();
+        this.stopLocalLiveStream();
+        this.initialize();
+      });
+      audiostream.on('end', () => {
+        this.log.debug('Local audiostream has ended. Clean up.');
+        this.stopAllProxyStreams();
+        this.stopLocalLiveStream();
+        this.initialize();
       });
 
       this.log.info(station.getName() + ' livestream for ' + device.getName() + ' has started.');
@@ -307,47 +331,53 @@ export class LocalLivestreamCache extends EventEmitter {
     }
   }
 
-  private getCachedStream(): CachedStream | null {
+  private getProxyStream(): ProxyStream | null {
     if (this.stationStream) {
       const id = this.livestreamCount;
       this.livestreamCount++;
       if (this.livestreamCount > 1024) {
         this.livestreamCount = 0;
       }
-      const videostream = new VideoCache(id, this.iFrameCache, this, this.log);
-      const audiostream = new AudioCache();
-      const cachedStream = { id, videostream, audiostream };
-      this.cachedStreams.add(cachedStream);
-      return cachedStream;
+      const videostream = new VideostreamProxy(id, this.iFrameCache, this, this.log);
+      const audiostream = new AudiostreamProxy();
+      const proxyStream = { id, videostream, audiostream };
+      this.proxyStreams.add(proxyStream);
+      return proxyStream;
     } else {
       return null;
     }
   }
 
-  public stopCachedStream(id: number): void {
-    this.cachedStreams.forEach((cStream) => {
-      if (cStream.id === id) {
-        cStream.audiostream.stopCachedStream();
-        cStream.videostream.stopCachedStream();
-        this.removeCachedStream(id);
+  public stopProxyStream(id: number): void {
+    this.proxyStreams.forEach((pStream) => {
+      if (pStream.id === id) {
+        pStream.audiostream.stopProxyStream();
+        pStream.videostream.stopProxyStream();
+        this.removeProxyStream(id);
       }
     });
   }
 
-  private removeCachedStream(id: number): void {
-    let cachedStream: CachedStream | null = null;
-    this.cachedStreams.forEach((cStream) => {
-      if (cStream.id === id) {
-        cachedStream = cStream;
+  private stopAllProxyStreams(): void {
+    this.proxyStreams.forEach((proxyStream) => {
+      this.stopProxyStream(proxyStream.id);
+    });
+  }
+
+  private removeProxyStream(id: number): void {
+    let proxyStream: ProxyStream | null = null;
+    this.proxyStreams.forEach((pStream) => {
+      if (pStream.id === id) {
+        proxyStream = pStream;
       }
     });
-    if (cachedStream !== null) {
-      this.cachedStreams.delete(cachedStream);
+    if (proxyStream !== null) {
+      this.proxyStreams.delete(proxyStream);
 
-      this.log.debug('One cached instance (id: ' + id + ') released livestream. There are now ' +
-                    this.cachedStreams.size + ' instance(s) using the livestream.');
-      if(this.cachedStreams.size === 0) {
-        this.log.debug('All cached instances have terminated.');
+      this.log.debug('One stream instance (id: ' + id + ') released livestream. There are now ' +
+                    this.proxyStreams.size + ' instance(s) using the livestream.');
+      if(this.proxyStreams.size === 0) {
+        this.log.debug('All stream instances have terminated.');
         // check if minimum remaining livestream duration is more than 20 percent
         // of maximum streaming duration or at least 20 seconds
         // if so the termination of the livestream is scheduled
