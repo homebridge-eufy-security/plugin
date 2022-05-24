@@ -61,7 +61,7 @@ export class DoorbellCameraAccessory extends CameraAccessory {
     if (!this.ring_triggered) {
       this.ring_triggered = true;
       this.platform.log.debug(this.accessory.displayName, 'DoorBell ringing');
-      if (this.cameraConfig.useCachedLocalLivestream) {
+      if (this.cameraConfig.useCachedLocalLivestream && this.streamingDelegate) {
         this.streamingDelegate.prepareCachedStream();
       }
       this.doorbellService

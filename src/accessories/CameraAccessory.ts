@@ -24,7 +24,7 @@ export class CameraAccessory extends DeviceAccessory {
 
   public readonly cameraConfig: CameraConfig;
 
-  protected streamingDelegate: StreamingDelegate;
+  protected streamingDelegate: StreamingDelegate | null = null;
 
   constructor(
     platform: EufySecurityPlatform,
@@ -337,7 +337,7 @@ export class CameraAccessory extends DeviceAccessory {
     motion: boolean,
   ): void {
     this.platform.log.debug(this.accessory.displayName, 'ON DeviceMotionDetected:', motion);
-    if (this.cameraConfig.useCachedLocalLivestream) {
+    if (this.cameraConfig.useCachedLocalLivestream && this.streamingDelegate) {
       this.streamingDelegate.prepareCachedStream();
     }
     this.service
