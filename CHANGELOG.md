@@ -1,6 +1,6 @@
 # Change Log
 
-## 2.0 (15/05/2022)
+## 2.0 (25/05/2022)
 
 ### Added
 -   Local Livestream
