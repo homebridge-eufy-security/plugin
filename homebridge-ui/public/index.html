@@ -407,10 +407,25 @@
                                 <label class="form-check-label" for="cc-forcerefreshsnap">Force Refresh Snapshot</label>
                             </div>
 
-                            <small class="form-text text-muted">When enabled, we will start stream for one
-                                frame and use
+                            <small class="form-text text-muted">When enabled, we will start stream for one frame and use
                                 as a snapshot (this can affect the battery life). If it's disabled, we will use the Eufy
                                 Cloud API one (which could be really old).</small>
+
+                            <hr />
+
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="cc-useCachedLocalLivestream">
+                                <label class="form-check-label" for="cc-useCachedLocalLivestream">Improve livestream
+                                    caching</label>
+                            </div>
+
+                            <small class="form-text text-muted">Improvements for local livestream caching and
+                                bugfixes.Local livestreams will be kept alive for a fixed duration (up to 45 seconds at
+                                the moment) after the last instance ended the transmission. This allows consecutive
+                                transmissions to start up much faster, but also may increase power consumption for
+                                battery powered devices. Also local livestreams will be started immediately after an
+                                event (motion, person, doorbell) was triggered, so that start up times are
+                                decreased.</small>
 
                             <hr />
 
@@ -421,7 +436,8 @@
 
                             <small id="cc-help-rtsp" class="form-text text-muted">Improve getting live stream by using
                                 RTSP</small>
-                            <small id="cc-help-rtsp" class="form-text text-muted">RTSP must be enable within Eufy App first</small>
+                            <small id="cc-help-rtsp" class="form-text text-muted">RTSP must be enable within Eufy App
+                                first</small>
                             <small id="cc-help-rtsp" class="form-text text-muted">This setting may not be working with
                                 no compatible device such as Doorbell or Floodlight</small>
                         </div>
@@ -660,4 +676,4 @@
 
 </div>
 
-<script type="text/javascript" src="js/main.js?v=2.0.0-beta.2"></script>
+<script type="text/javascript" src="js/main.js?v=2.0.0-beta.8"></script>
