@@ -28,6 +28,7 @@ var CameraConfig = {
     "rtsp": true,
     "unbridge": true,
     "forcerefreshsnap": false,
+    "useCachedLocalLivestream": false,
     "videoConfig": {
         "debug": false,
         "audio": true,

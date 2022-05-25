@@ -24,6 +24,8 @@ export class CameraAccessory extends DeviceAccessory {
 
   public readonly cameraConfig: CameraConfig;
 
+  protected streamingDelegate: StreamingDelegate | null = null;
+
   constructor(
     platform: EufySecurityPlatform,
     accessory: PlatformAccessory,
@@ -47,6 +49,7 @@ export class CameraAccessory extends DeviceAccessory {
         this.CameraService = this.cameraFunction(accessory);
         this.CameraService.setPrimaryService(true);
         const delegate = new StreamingDelegate(this.platform, eufyDevice, this.cameraConfig, this.platform.api, this.platform.api.hap);
+        this.streamingDelegate = delegate;
         accessory.configureController(delegate.controller);
       } catch (Error) {
         this.platform.log.error(this.accessory.displayName, 'raise error to check and attach livestream function.', Error);
@@ -156,6 +159,7 @@ export class CameraAccessory extends DeviceAccessory {
     config.rtsp = config.rtsp ??= false;
     config.forcerefreshsnap =  config.forcerefreshsnap ??= false;
     config.videoConfig = config.videoConfig ??= {};
+    config.useCachedLocalLivestream = config.useCachedLocalLivestream ??= false;
 
     return config;
   }
@@ -333,6 +337,9 @@ export class CameraAccessory extends DeviceAccessory {
     motion: boolean,
   ): void {
     this.platform.log.debug(this.accessory.displayName, 'ON DeviceMotionDetected:', motion);
+    if (this.cameraConfig.useCachedLocalLivestream && this.streamingDelegate) {
+      this.streamingDelegate.prepareCachedStream();
+    }
     this.service
       .getCharacteristic(this.characteristic.MotionDetected)
       .updateValue(motion);

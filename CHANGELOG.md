@@ -16,6 +16,7 @@
 
 ### Changed
 -   Upgrade to the latest bropat/eufy-security-client lib (2.0.1)
+-   Added livestream cache for local streaming (no rtsp) thanks @thieren
 
 ### Fixed
 -   Updating some dep for security reason
@@ -26,6 +27,7 @@
 -   Streaming issue while using Docker #308 (thanks @alternativ)
 -   Fix issue on video stream while debug is disabled #356
 -   Improve selecting Static Image / Local Live Stream / RTSP #382
+-   Improvements for local livestream caching and bugfixes #37 thanks @thieren
 
 ### Removed
 -   Selecting Camera or Motion Sensor is now per camera
