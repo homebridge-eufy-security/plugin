@@ -17,6 +17,7 @@ export type CameraConfig = {
   videoConfigEna: boolean;
   enableCamera: boolean;
   forcerefreshsnap: boolean;
+  useCachedLocalLivestream: boolean;
 };
 
 export type VideoConfig = {
