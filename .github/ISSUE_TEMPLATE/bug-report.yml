@@ -39,8 +39,7 @@ body:
       label: Plugin Version
       description: What version of homebridge are you running?
       options:
-        - v1.0.x (Supported)
-        - v0.2.x (Supported)
+        - v2.0.x (Supported)
         - beta (Best Effort)
         - other (UnSupported)
     validations:
@@ -54,7 +53,6 @@ body:
       options:
         - v1.4.x (Supported)
         - v1.3.x (UnSupported)
-        - v1.2.x (UnSupported)
         - other (UnSupported)
     validations:
       required: true
@@ -94,3 +92,5 @@ body:
       label: Relevant log output
       description: Please copy and paste any relevant log output. This will be automatically formatted into code, so no need for backticks.
       render: shell
+    validations:
+      required: true
