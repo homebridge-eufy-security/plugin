@@ -27,6 +27,7 @@
 -   Streaming issue while using Docker #308 (thanks @alternativ)
 -   Fix issue on video stream while debug is disabled #356
 -   Improve selecting Static Image / Local Live Stream / RTSP #382
+-   Improvements for local livestream caching and bugfixes #37 thanks @thieren
 
 ### Removed
 -   Selecting Camera or Motion Sensor is now per camera
