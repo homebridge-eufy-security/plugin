@@ -17,6 +17,13 @@ export class StationAccessory {
 
   protected characteristic;
 
+  private hkStateNames = {
+    0: 'Home',
+    1: 'Away',
+    2: 'Night',
+    3: 'Off',
+  }
+
   constructor(
     private readonly platform: EufySecurityPlatform,
     private readonly accessory: PlatformAccessory,
@@ -209,6 +216,7 @@ export class StationAccessory {
       this.alarm_triggered = false;
       const mode = this.convertHKtoEufy(value);
       this.platform.log.debug(this.accessory.displayName, 'SET StationGuardMode:' + mode);
+      this.platform.log.info(this.accessory.displayName, 'Request to change station guard mode to: ' + this.hkStateNames[value as number] + '.');
       this.eufyStation.setGuardMode(mode);
     } catch (error) {
       this.platform.log.error('Error Setting security mode!', error);
