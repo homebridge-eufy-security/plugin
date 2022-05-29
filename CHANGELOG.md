@@ -1,5 +1,11 @@
 # Change Log
 
+## 2.0.1 (beta) (29/05/2022)
+
+### Fixed
+-   Small additions and bugfix on the local livestream
+-   Typo fix
+
 ## 2.0 (25/05/2022)
 
 ### Added
