@@ -104,7 +104,11 @@ class UiServer extends HomebridgePluginUiServer {
     if (body) {
       this.config['username'] = body.username;
       this.config['password'] = body.password;
-      this.config['country'] = body.country ??= 'US';
+      if (body.country !== null && body.country !== void 0) {
+        this.config['country'] = body.country;
+      } else {
+        this.config['country'] = 'US';
+      }
     }
 
     this.driver = await EufySecurity.initialize(this.config, this.log);

@@ -415,17 +415,16 @@
 
                             <div class="form-check">
                                 <input class="form-check-input" type="checkbox" id="cc-useCachedLocalLivestream">
-                                <label class="form-check-label" for="cc-useCachedLocalLivestream">Improve livestream
-                                    caching</label>
+                                <label class="form-check-label" for="cc-useCachedLocalLivestream">Cache local livestream
+                                    </label>
                             </div>
 
-                            <small class="form-text text-muted">Improvements for local livestream caching and
-                                bugfixes.Local livestreams will be kept alive for a fixed duration (up to 45 seconds at
-                                the moment) after the last instance ended the transmission. This allows consecutive
-                                transmissions to start up much faster, but also may increase power consumption for
-                                battery powered devices. Also local livestreams will be started immediately after an
-                                event (motion, person, doorbell) was triggered, so that start up times are
-                                decreased.</small>
+                            <small class="form-text text-muted">If enabled local livestreams will be kept alive for a
+                                short time after the user stops streaming or a snapshot is refreshed (see 'Force Refresh
+                                Snapshot' also). This allows subsequent streams to start up much faster, but also may
+                                increase power consumption for battery powered devices.<br>Additionally a livestream
+                                will be started (cached) immediately after an event (motion, person, doorbell) occurs,
+                                so that start up times are decreased.</small>
 
                             <hr />
 
