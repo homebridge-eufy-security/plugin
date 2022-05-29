@@ -2,9 +2,14 @@
 
 ## 2.0.1 (beta) (29/05/2022)
 
+### Changed
+-   Additional log output when station guard mode is changed (see [enhancement]: Logging basic operations such as guard mode change on the UI without debug mode #39)
+-   Edited description for livestream caching in configuration wizard
+-   Changed log output messages for better understanding
+
 ### Fixed
--   Small additions and bugfix on the local livestream
--   Typo fix
+-   [Bug]: package.json reqiures the wrong node version #44
+- Bug where a local livestream cache may not have been shutdown properly and so subsequent livestreams would not be started
 
 ## 2.0 (25/05/2022)
 
