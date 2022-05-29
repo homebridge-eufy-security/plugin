@@ -15,23 +15,35 @@ type StationStream = {
 
 class AudiostreamProxy extends Readable {
 
+  private log: Logger;
+
   private cacheData: Array<Buffer> = [];
   private pushNewDataImmediately = false;
 
-  constructor() {
+  private dataFramesCount = 0;
+
+  constructor(log: Logger) {
     super();
+
+    this.log = log;
+  }
+
+  private transmitData(data: Buffer | undefined): boolean {
+    this.dataFramesCount++;
+    return this.push(data);
   }
 
   public newAudioData(data: Buffer): void {
     if (this.pushNewDataImmediately) {
       this.pushNewDataImmediately = false;
-      this.push(data);
+      this.transmitData(data);
     } else {
       this.cacheData.push(data);
     }
   }
 
   public stopProxyStream(): void {
+    this.log.debug('Audiostream was stopped after transmission of ' + this.dataFramesCount + ' data frames.');
     this.unpipe();
     this.destroy();
   }
@@ -40,7 +52,7 @@ class AudiostreamProxy extends Readable {
     let pushReturn = true;
     while (this.cacheData.length > 0 && pushReturn) {
       const data = this.cacheData.shift();
-      pushReturn = this.push(data);
+      pushReturn = this.transmitData(data);
     }
     if (pushReturn) {
       this.pushNewDataImmediately = true;
@@ -59,6 +71,7 @@ class VideostreamProxy extends Readable {
   private killTimeout: NodeJS.Timeout | null = null;
 
   private pushNewDataImmediately = false;
+  private dataFramesCount = 0;
 
   constructor(id: number, cacheData: Array<Buffer>, manager: LocalLivestreamManager, log: Logger) {
     super();
@@ -70,12 +83,17 @@ class VideostreamProxy extends Readable {
     this.resetKillTimeout();
   }
 
+  private transmitData(data: Buffer | undefined): boolean {
+    this.dataFramesCount++;
+    return this.push(data);
+  }
+
   public newVideoData(data: Buffer): void {
 
     if (this.pushNewDataImmediately) {
       this.pushNewDataImmediately = false;
       try {
-        if(this.push(data)) {
+        if(this.transmitData(data)) {
           this.resetKillTimeout();
         }
       } catch (err) {
@@ -87,6 +105,7 @@ class VideostreamProxy extends Readable {
   }
 
   public stopProxyStream(): void {
+    this.log.debug('Videostream was stopped after transmission of ' + this.dataFramesCount + ' data frames.');
     this.unpipe();
     this.destroy();
     if (this.killTimeout) {
@@ -99,7 +118,7 @@ class VideostreamProxy extends Readable {
       clearTimeout(this.killTimeout);
     }
     this.killTimeout = setTimeout(() => {
-      this.log.warn('Proxy Stream (id: ' + this.livestreamId + ') was terminated due to inactivity.');
+      this.log.warn('Proxy Stream (id: ' + this.livestreamId + ') was terminated due to inactivity. (no data transmitted in 15 seconds)');
       this.manager.stopProxyStream(this.livestreamId);
     }, 15000);
   }
@@ -109,7 +128,7 @@ class VideostreamProxy extends Readable {
     let pushReturn = true;
     while (this.cacheData.length > 0 && pushReturn) {
       const data = this.cacheData.shift();
-      pushReturn = this.push(data);
+      pushReturn = this.transmitData(data);
     }
     if (pushReturn) {
       this.pushNewDataImmediately = true;
@@ -202,7 +221,7 @@ export class LocalLivestreamManager extends EventEmitter {
     const proxyStream = await this.getProxyStream();
     if (proxyStream) {
       const runtime = (Date.now() - this.livestreamStartedAt!) / 1000;
-      this.log.debug('Using livestream that was started ' + runtime + ' seconds ago. The cached stream has id: ' + proxyStream.id + '.');
+      this.log.debug('Using livestream that was started ' + runtime + ' seconds ago. The proxy stream has id: ' + proxyStream.id + '.');
       return proxyStream;
     } else {
       return await this.startAndGetLocalLiveStream();
@@ -211,7 +230,7 @@ export class LocalLivestreamManager extends EventEmitter {
   
   private async startAndGetLocalLiveStream(): Promise<ProxyStream> {
     return new Promise((resolve, reject) => {
-      this.log.debug('Start new local livestream...');
+      this.log.debug('Start new station livestream (P2P Session)...');
       if (!this.livestreamIsStarting) { // prevent multiple stream starts from eufy station
         this.livestreamIsStarting = true;
         this.platform.eufyClient.startStationLivestream(this.device.getSerial());
@@ -224,7 +243,7 @@ export class LocalLivestreamManager extends EventEmitter {
         this.livestreamIsStarting = false;
         this.log.error('Local livestream didn\'t start in time. Abort livestream request.');
         reject('no started livestream found');
-      }, this.CONNECTION_ESTABLISHED_TIMEOUT * 1000);
+      }, this.CONNECTION_ESTABLISHED_TIMEOUT * 2000);
 
       this.once('livestream start', async () => {
         if (this.connectionTimeout) {
@@ -255,13 +274,14 @@ export class LocalLivestreamManager extends EventEmitter {
   }
 
   public stopLocalLiveStream(): void {
-    this.log.debug('Stopping local livestream.');
+    this.log.debug('Stopping station livestream.');
     this.platform.eufyClient.stopStationLivestream(this.device.getSerial());
+    this.initialize();
   }
 
   private onStationLivestreamStop(station: Station, device: Device) {
     if (device.getSerial() === this.device.getSerial()) {
-      this.log.info(station.getName() + ' livestream for ' + device.getName() + ' has stopped.');
+      this.log.info(station.getName() + ' station livestream for ' + device.getName() + ' has stopped.');
       this.proxyStreams.forEach((proxyStream) => {
         proxyStream.audiostream.stopProxyStream();
         proxyStream.videostream.stopProxyStream();
@@ -295,13 +315,11 @@ export class LocalLivestreamManager extends EventEmitter {
         this.log.error('Local videostream had Error: ' + error);
         this.stopAllProxyStreams();
         this.stopLocalLiveStream();
-        this.initialize();
       });
       videostream.on('end', () => {
         this.log.debug('Local videostream has ended. Clean up.');
         this.stopAllProxyStreams();
         this.stopLocalLiveStream();
-        this.initialize();
       });
 
       audiostream.on('data', (data) => {       
@@ -313,16 +331,14 @@ export class LocalLivestreamManager extends EventEmitter {
         this.log.error('Local audiostream had Error: ' + error);
         this.stopAllProxyStreams();
         this.stopLocalLiveStream();
-        this.initialize();
       });
       audiostream.on('end', () => {
         this.log.debug('Local audiostream has ended. Clean up.');
         this.stopAllProxyStreams();
         this.stopLocalLiveStream();
-        this.initialize();
       });
 
-      this.log.info(station.getName() + ' livestream for ' + device.getName() + ' has started.');
+      this.log.info(station.getName() + ' station livestream (P2P session) for ' + device.getName() + ' has started.');
       this.livestreamStartedAt = Date.now();
       this.stationStream = {station, device, metadata, videostream, audiostream};
       this.log.debug('Stream metadata: ' + JSON.stringify(this.stationStream.metadata));
@@ -339,7 +355,7 @@ export class LocalLivestreamManager extends EventEmitter {
         this.livestreamCount = 0;
       }
       const videostream = new VideostreamProxy(id, this.iFrameCache, this, this.log);
-      const audiostream = new AudiostreamProxy();
+      const audiostream = new AudiostreamProxy(this.log);
       const proxyStream = { id, videostream, audiostream };
       this.proxyStreams.add(proxyStream);
       return proxyStream;
@@ -377,7 +393,7 @@ export class LocalLivestreamManager extends EventEmitter {
       this.log.debug('One stream instance (id: ' + id + ') released livestream. There are now ' +
                     this.proxyStreams.size + ' instance(s) using the livestream.');
       if(this.proxyStreams.size === 0) {
-        this.log.debug('All stream instances have terminated.');
+        this.log.debug('All proxy instances to the livestream have terminated.');
         // check if minimum remaining livestream duration is more than 20 percent
         // of maximum streaming duration or at least 20 seconds
         // if so the termination of the livestream is scheduled
@@ -387,7 +403,7 @@ export class LocalLivestreamManager extends EventEmitter {
         const maxStreamingDuration = this.platform.eufyClient.getCameraMaxLivestreamDuration();
         const runtime = (Date.now() - ((this.livestreamStartedAt !== null) ? this.livestreamStartedAt! : Date.now())) / 1000;
         if (((maxStreamingDuration - runtime) > maxStreamingDuration*0.2) && (maxStreamingDuration - runtime) > 20 && this.cacheEnabled) {
-          this.log.debug('Sufficient remaining livestream duration available.');
+          this.log.debug('Sufficient remaining livestream duration available. (' + (maxStreamingDuration - runtime) + ' seconds left)');
           this.scheduleLivestreamCacheTermination();
         } else {
           // stop livestream immediately
