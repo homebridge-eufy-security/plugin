@@ -224,21 +224,31 @@ export class StationAccessory {
     try {
       this.alarm_triggered = false;
       const mode = this.convertHKtoEufy(value);
+      if (isNaN(mode)) {
+        throw new Error('Could not convert guard mode value to valid number. Aborting guard mode change...');
+      }
       this.platform.log.debug(this.accessory.displayName, 'SET StationGuardMode:' + mode);
-      this.platform.log.info(this.accessory.displayName, 'Request to change station guard mode to: ' +
-                                this.hkStateNames[value as number] + '.');
+      this.platform.log.info(this.accessory.displayName, 'Request to change station guard mode to: ' + this.getGuardModeName(value) + '.');
       this.eufyStation.setGuardMode(mode);
 
       this.guardModeChangeTimeout = setTimeout(() => {
-        this.platform.log.warn('Changing guard mode to ' + this.hkStateNames[value as number] + 'did not complete. Retry...');
+        this.platform.log.warn('Changing guard mode to ' + this.getGuardModeName(value) + 'did not complete. Retry...');
         this.eufyStation.setGuardMode(mode);
 
         this.retryGuardModeChangeTimeout = setTimeout(() => {
-          this.platform.log.error('Changing guard mode to ' + this.hkStateNames[value as number] + ' timed out!');
+          this.platform.log.error('Changing guard mode to ' + this.getGuardModeName(value) + ' timed out!');
         }, 5000);
       }, 5000);
     } catch (error) {
       this.platform.log.error('Error Setting security mode!', error);
+    }
+  }
+
+  private getGuardModeName(value: CharacteristicValue): string {
+    try {
+      return this.hkStateNames[value as number];
+    } catch (error) {
+      return 'Unknown';
     }
   }
 
