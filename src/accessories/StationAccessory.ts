@@ -22,7 +22,10 @@ export class StationAccessory {
     1: 'Away',
     2: 'Night',
     3: 'Off',
-  }
+  };
+
+  private guardModeChangeTimeout: NodeJS.Timeout | null = null;
+  private retryGuardModeChangeTimeout: NodeJS.Timeout | null = null;
 
   constructor(
     private readonly platform: EufySecurityPlatform,
@@ -110,6 +113,12 @@ export class StationAccessory {
     station: Station,
     currentMode: number,
   ): void {
+    if (this.guardModeChangeTimeout) {
+      clearTimeout(this.guardModeChangeTimeout);
+    }
+    if (this.retryGuardModeChangeTimeout) {
+      clearTimeout(this.retryGuardModeChangeTimeout);
+    }
     this.platform.log.debug(this.accessory.displayName, 'ON SecuritySystemCurrentState:', currentMode);
     const homekitCurrentMode = this.convertEufytoHK(currentMode);
     this.service
@@ -216,8 +225,18 @@ export class StationAccessory {
       this.alarm_triggered = false;
       const mode = this.convertHKtoEufy(value);
       this.platform.log.debug(this.accessory.displayName, 'SET StationGuardMode:' + mode);
-      this.platform.log.info(this.accessory.displayName, 'Request to change station guard mode to: ' + this.hkStateNames[value as number] + '.');
+      this.platform.log.info(this.accessory.displayName, 'Request to change station guard mode to: ' +
+                                this.hkStateNames[value as number] + '.');
       this.eufyStation.setGuardMode(mode);
+
+      this.guardModeChangeTimeout = setTimeout(() => {
+        this.platform.log.warn('Changing guard mode to ' + this.hkStateNames[value as number] + 'did not complete. Retry...');
+        this.eufyStation.setGuardMode(mode);
+
+        this.retryGuardModeChangeTimeout = setTimeout(() => {
+          this.platform.log.error('Changing guard mode to ' + this.hkStateNames[value as number] + ' timed out!');
+        }, 5000);
+      }, 5000);
     } catch (error) {
       this.platform.log.error('Error Setting security mode!', error);
     }
