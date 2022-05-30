@@ -207,9 +207,6 @@ export class LocalLivestreamManager extends EventEmitter {
     if (this.connectionTimeout) {
       clearTimeout(this.connectionTimeout);
     }
-    if (this.terminationTimeout) {
-      clearTimeout(this.terminationTimeout);
-    }
   }
 
   public async getLocalLivestream(): Promise<ProxyStream> {
