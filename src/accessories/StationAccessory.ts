@@ -133,6 +133,7 @@ export class StationAccessory {
     switch (alarmEvent) {
       case 2: // Alarm triggered by GSENSOR
       case 3: // Alarm triggered by PIR
+      case 4: // Alarm triggered by EUFY_APP
       case 6: // Alarm triggered by DOOR
       case 7: // Alarm triggered by CAMERA_PIR
       case 8: // Alarm triggered by MOTION_SENSOR
