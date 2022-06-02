@@ -98,10 +98,8 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
       hostname: '',
       streams: [{
         level: (this.config.enableDetailedLogging) ? 'debug' : 'info',
-        type: 'rotating-file',
+        type: 'file',
         path: this.eufyPath + '/log-lib.log',
-        period: '1d',   // daily rotation
-        count: 3,        // keep 3 back copies
       }],
     });
 
