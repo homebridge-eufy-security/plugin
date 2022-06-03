@@ -163,25 +163,36 @@ export class StationAccessory {
     this.modes = [
       { hk: 0, eufy: this.platform.config.hkHome ?? 1 }, // Home
       { hk: 1, eufy: this.platform.config.hkAway ?? 0 }, // Away
-      { hk: 2, eufy: this.platform.config.hkNight ?? 3 } // Night
+      { hk: 2, eufy: this.platform.config.hkNight ?? 3 }, // Night
     ];
 
     // If a keypad attached to the station
     if (this.eufyStation.hasDeviceWithType(DeviceType.KEYPAD)) {
       this.modes.push({ hk: 3, eufy: this.platform.config.hkOff ?? 63 });
-      this.modes.push({ hk: 3, eufy: ((this.modes.filter((m) => { return m.eufy === 6; })[0]) ? 63 : 6) });
+      this.modes.push({ hk: 3, eufy: ((this.modes.filter((m) => {
+        return m.eufy === 6;
+      })[0]) ? 63 : 6) });
     } else {
-      this.modes.push({ hk: 3, eufy: (this.platform.config.hkOff == 6) ? 63 : this.platform.config.hkOff }); // Enforce 63 if keypad has been selected but not attached to the station
+      this.modes.push({
+        hk: 3,
+        eufy: (this.platform.config.hkOff === 6) ? 63 : this.platform.config.hkOff,
+      }); // Enforce 63 if keypad has been selected but not attached to the station
     }
+
+    this.platform.log.debug(this.accessory.displayName, 'Mapping for station modes: ' + JSON.stringify(this.modes));
   }
 
   convertHKtoEufy(hkMode): number {
-    const modeObj = this.modes.filter((m) => { return m.hk === hkMode; });
+    const modeObj = this.modes.filter((m) => {
+      return m.hk === hkMode;
+    });
     return parseInt(modeObj[0] ? modeObj[0].eufy : hkMode);
   }
 
   convertEufytoHK(eufyMode): number {
-    const modeObj = this.modes.filter((m) => { return m.eufy === eufyMode; });
+    const modeObj = this.modes.filter((m) => {
+      return m.eufy === eufyMode;
+    });
     return parseInt(modeObj[0] ? modeObj[0].hk : eufyMode);
   }
 
@@ -194,7 +205,9 @@ export class StationAccessory {
     }
     try {
       const currentValue = this.eufyStation.getPropertyValue(PropertyName.StationCurrentMode);
-      if (currentValue === -1) throw 'Something wrong with this device';
+      if (currentValue === -1) {
+        throw 'Something wrong with this device';
+      }
       this.platform.log.debug(this.accessory.displayName, 'GET StationCurrentMode:', currentValue);
       return this.convertEufytoHK(currentValue);
     } catch {
@@ -209,7 +222,9 @@ export class StationAccessory {
   handleSecuritySystemTargetStateGet(): CharacteristicValue {
     try {
       const currentValue = this.eufyStation.getPropertyValue(PropertyName.StationCurrentMode);
-      if (currentValue === -1) throw 'Something wrong with this device';
+      if (currentValue === -1) {
+        throw 'Something wrong with this device';
+      }
       this.platform.log.debug(this.accessory.displayName, 'GET StationCurrentMode:', currentValue);
       return this.convertEufytoHK(currentValue);
     } catch {
@@ -224,24 +239,27 @@ export class StationAccessory {
   private handleSecuritySystemTargetStateSet(value: CharacteristicValue) {
     try {
       this.alarm_triggered = false;
+      this.platform.log.debug(this.accessory.displayName, 'SET StationGuardMode (raw value homekit):' + value);
       const mode = this.convertHKtoEufy(value);
       if (isNaN(mode)) {
-        throw new Error('Could not convert guard mode value to valid number. Aborting guard mode change...');
+        throw new Error(this.accessory.displayName + ': Could not convert guard mode value to valid number. Aborting guard mode change...');
       }
       this.platform.log.debug(this.accessory.displayName, 'SET StationGuardMode:' + mode);
       this.platform.log.info(this.accessory.displayName, 'Request to change station guard mode to: ' + this.getGuardModeName(value) + '.');
       this.eufyStation.setGuardMode(mode);
 
       this.guardModeChangeTimeout = setTimeout(() => {
-        this.platform.log.warn('Changing guard mode to ' + this.getGuardModeName(value) + 'did not complete. Retry...');
+        this.platform.log.warn(
+          this.accessory.displayName,
+          'Changing guard mode to ' + this.getGuardModeName(value) + 'did not complete. Retry...');
         this.eufyStation.setGuardMode(mode);
 
         this.retryGuardModeChangeTimeout = setTimeout(() => {
-          this.platform.log.error('Changing guard mode to ' + this.getGuardModeName(value) + ' timed out!');
+          this.platform.log.error(this.accessory.displayName, 'Changing guard mode to ' + this.getGuardModeName(value) + ' timed out!');
         }, 5000);
       }, 5000);
     } catch (error) {
-      this.platform.log.error('Error Setting security mode!', error);
+      this.platform.log.error(this.accessory.displayName + ': Error Setting security mode!', error);
     }
   }
 
