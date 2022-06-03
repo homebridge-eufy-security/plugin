@@ -13,6 +13,7 @@
 -   [Bug]: package.json reqiures the wrong node version #44
 - Bug where a local livestream cache may not have been shutdown properly and so subsequent livestreams would not be started
 - A problem where motion events prevented the livestream cache to terminate properly (see [Bug]: Snapshot updates problem #43)
+- Changed log file rotation behaviour to prevent race conditions with already moved log files (fix for #56)
 
 ## 2.0 (25/05/2022)
 
