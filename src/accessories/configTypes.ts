@@ -18,6 +18,11 @@ export type CameraConfig = {
   enableCamera: boolean;
   forcerefreshsnap: boolean;
   useCachedLocalLivestream: boolean;
+  useEnhancedSnapshotBehaviour?: boolean;
+  refreshSnapshotIntervalMinutes?: number;
+  snapshotHandlingMethod?: number;
+  immediateRingNotificationWithoutSnapshot?: boolean;
+  delayCameraSnapshot?:boolean;
 };
 
 export type VideoConfig = {

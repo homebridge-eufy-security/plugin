@@ -29,6 +29,11 @@ var CameraConfig = {
     "unbridge": true,
     "forcerefreshsnap": false,
     "useCachedLocalLivestream": false,
+    "useEnhancedSnapshotBehaviour": true,
+    "refreshSnapshotIntervalMinutes": 0,
+    "snapshotHandlingMethod": 0,
+    "immediateRingNotificationWithoutSnapshot": false,
+    "delayCameraSnapshot": false,
     "videoConfig": {
         "debug": false,
         "audio": true,
@@ -538,12 +543,23 @@ function ConfigCameraFill(camera) {
 
     var config = getConfigCamera(camera.uniqueId);
 
+    if (!config.snapshotHandlingMethod) {
+        config.snapshotHandlingMethod = (config.forcerefreshsnap) ? 1 : 3;
+    }
+
     document.getElementById('cc-name').value = camera.displayName;
     document.getElementById('cc-serialnumber').value = camera.uniqueId;
 
     Object.entries(config).forEach(([k, v]) => {
         if (typeof config[k] === 'boolean') {
-            document.getElementById('cc-' + k).checked = v;
+            if (document.getElementById('cc-' + k)) document.getElementById('cc-' + k).checked = v;
+        }
+        if (typeof config[k] === 'number' && document.getElementById('cc-' + k)) {
+            if (v !== 0) {
+                document.getElementById('cc-' + k).classList.remove('disabled');
+                document.getElementById('cc-' + k + '-ena').checked = true;
+            }
+            document.getElementById('cc-' + k).value = v;
         }
     });
 
@@ -588,7 +604,42 @@ function ConfigCameraFill(camera) {
         ect.parentElement.classList.remove('active');
     }
 
+    const sh1 = document.getElementById('cc-snapshotHandlingMethod-btn-1');
+    const sh2 = document.getElementById('cc-snapshotHandlingMethod-btn-2');
+    const sh3 = document.getElementById('cc-snapshotHandlingMethod-btn-3');
+
+    switch (config.snapshotHandlingMethod) {
+        case 1:
+            sh1.checked = true;
+            sh2.checked = false;
+            sh3.checked = false;
+            sh1.parentElement.classList.add('active');
+            sh2.parentElement.classList.remove('active');
+            sh3.parentElement.classList.remove('active'); 
+        break;
+        case 2:
+            sh1.checked = false;
+            sh2.checked = true;
+            sh3.checked = false;
+            sh1.parentElement.classList.remove('active');
+            sh2.parentElement.classList.add('active');
+            sh3.parentElement.classList.remove('active'); 
+        break;
+    
+        default:
+            sh1.checked = false;
+            sh2.checked = false;
+            sh3.checked = true;
+            sh1.parentElement.classList.remove('active');
+            sh2.parentElement.classList.remove('active');
+            sh3.parentElement.classList.add('active'); 
+            break;
+    }
+
+
     document.getElementById('camera-adv').style.display = (config.enableCamera) ? 'block' : 'none';
+    document.getElementById('camera-snapshot-enh').style.display = (config.useEnhancedSnapshotBehaviour) ? 'block' : 'none';
+    document.getElementById('camera-snapshot-old').style.display = (!config.useEnhancedSnapshotBehaviour) ? 'block' : 'none';
 
     display_box('camera-config-box');
 }
@@ -601,6 +652,10 @@ async function save_camera_config() {
     Object.entries(CameraConfig).forEach(([k, v]) => {
         const vc = document.getElementById('cc-' + k);
         if (typeof CameraConfig[k] === 'boolean') c[k] = vc.checked;
+
+        if (typeof CameraConfig[k] === 'number' && document.getElementById('cc-' + k))
+            if (document.getElementById('cc-' + k + '-ena').checked)
+                c[k] = parseInt(vc.value);
     });
 
     c.videoConfig = {};
@@ -869,6 +924,13 @@ document.querySelectorAll('input[type=radio]').forEach(item => {
             document.getElementById('cc-enableCamera').checked = (item.id === "cc-enableCamera-btn-true") ? true : false;
         }
 
+        if (item.name === "cc-snapshotHandlingMethod-switch") {
+            var v = 3;
+            if (document.getElementById('cc-snapshotHandlingMethod-btn-1').checked) v = 1;
+            if (document.getElementById('cc-snapshotHandlingMethod-btn-2').checked) v = 2;
+            document.getElementById('cc-snapshotHandlingMethod').value = v;
+        }
+
     });
 });
 
@@ -879,6 +941,15 @@ document.querySelectorAll('input[type=checkbox].ena').forEach(item => {
             document.getElementById(item.id.slice(0, -4)).classList.remove('disabled');
         } else {
             document.getElementById(item.id.slice(0, -4)).classList.add('disabled');
+        }
+    });
+});
+
+document.querySelectorAll('input[type=checkbox]').forEach(item => {
+    item.addEventListener('change', event => {
+        if (item.id === "cc-useEnhancedSnapshotBehaviour") {
+            document.getElementById('camera-snapshot-enh').style.display = (item.checked) ? 'block' : 'none';
+            document.getElementById('camera-snapshot-old').style.display = (!item.checked) ? 'block' : 'none';
         }
     });
 });

@@ -34,6 +34,7 @@ import { EufySecurityPlatform } from '../platform';
 import { Readable } from 'stream';
 import { NamePipeStream, StreamInput } from './UniversalStream';
 import { LocalLivestreamManager } from './LocalLivestreamManager';
+import { SnapshotManager } from './SnapshotManager';
 
 import { readFile } from 'fs';
 import path from 'path';
@@ -95,12 +96,14 @@ export class StreamingDelegate implements CameraStreamingDelegate {
     private readonly device: Camera;
 
     private localLivestreamManager: LocalLivestreamManager;
+    private snapshotManager?: SnapshotManager;
 
     // keep track of sessions
     pendingSessions: Map<string, SessionInfo> = new Map();
     ongoingSessions: Map<string, ActiveSession> = new Map();
     timeouts: Map<string, NodeJS.Timeout> = new Map();
 
+    // eslint-disable-next-line max-len
     constructor(platform: EufySecurityPlatform, device: Camera, cameraConfig: CameraConfig, api: API, hap: HAP) { // eslint-disable-line @typescript-eslint/explicit-module-boundary-types
         this.log = platform.log;
         this.hap = hap;
@@ -121,6 +124,18 @@ export class StreamingDelegate implements CameraStreamingDelegate {
             this.cameraConfig.useCachedLocalLivestream,
             this.log,
             );
+        
+        if (this.cameraConfig.useEnhancedSnapshotBehaviour) {
+            this.snapshotManager = new SnapshotManager(
+                this.platform,
+                this.device,
+                this.cameraConfig,
+                this.localLivestreamManager,
+                this.log,
+            );
+        } else {
+            this.log.warn('Using deprecated snapshot handling method.');
+        }
 
         this.api.on(APIEvent.SHUTDOWN, () => {
             for (const session in this.ongoingSessions) {
@@ -207,6 +222,7 @@ export class StreamingDelegate implements CameraStreamingDelegate {
         return resInfo;
     }
 
+    // deprecated - will be deleted in future versions
     fetchSnapshot(snapFilter?: string): Promise<Buffer> {
 
         return new Promise(async (resolve, reject) => {
@@ -363,7 +379,12 @@ export class StreamingDelegate implements CameraStreamingDelegate {
             this.log.debug('Snapshot requested: ' + request.width + ' x ' + request.height,
                 this.cameraName, this.videoConfig.debug);
 
-            const snapshot = await (this.snapshotPromise || this.fetchSnapshot(resolution.snapFilter));
+            let snapshot;
+            if (this.cameraConfig.useEnhancedSnapshotBehaviour && this.snapshotManager) {
+                snapshot = await (this.snapshotPromise || this.snapshotManager.getSnapshotBuffer());
+            } else {
+                snapshot = await (this.snapshotPromise || this.fetchSnapshot(resolution.snapFilter));
+            }
 
             this.log.debug('snapshot byte lenght: ' + snapshot?.byteLength);
 
@@ -561,6 +582,8 @@ export class StreamingDelegate implements CameraStreamingDelegate {
         return inputSource;
     }
 
+    // duplicate in ../utils
+    // TODO: remove
     private is_rtsp_ready(): boolean {
 
         this.platform.log.debug(this.cameraName, 'RTSP rtspStream:' + JSON.stringify(this.device.hasProperty('rtspStream')));

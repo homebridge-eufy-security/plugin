@@ -403,17 +403,6 @@
                             <hr />
 
                             <div class="form-check">
-                                <input class="form-check-input" type="checkbox" id="cc-forcerefreshsnap">
-                                <label class="form-check-label" for="cc-forcerefreshsnap">Force Refresh Snapshot</label>
-                            </div>
-
-                            <small class="form-text text-muted">When enabled, we will start stream for one frame and use
-                                as a snapshot (this can affect the battery life). If it's disabled, we will use the Eufy
-                                Cloud API one (which could be really old).</small>
-
-                            <hr />
-
-                            <div class="form-check">
                                 <input class="form-check-input" type="checkbox" id="cc-useCachedLocalLivestream">
                                 <label class="form-check-label" for="cc-useCachedLocalLivestream">Cache local livestream
                                     </label>
@@ -439,6 +428,131 @@
                                 first</small>
                             <small id="cc-help-rtsp" class="form-text text-muted">This setting may not be working with
                                 no compatible device such as Doorbell or Floodlight</small>
+
+                            
+                            <hr />
+                        </div>
+                    </div>
+
+                    <div class="form-group row">
+                        <label for="staticEmail" class="col-sm-3 col-form-label">Snapshot Behaviour:</label>
+                        <div class="col-sm-9">
+
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="cc-useEnhancedSnapshotBehaviour">
+                                <label class="form-check-label" for="cc-useEnhancedSnapshotBehaviour">Use enhanced Snapshot handling
+                                </label>
+                            </div>
+
+                            <small class="form-text text-muted">If you're encountering problems with the new
+                                snapshot handling process, you can disable this option.<p></small>
+                            
+                            <div id="camera-snapshot-enh" style="display: none;">
+                            
+                            <div class="btn-group btn-group-toggle" data-toggle="buttons">
+                            <label class="btn btn-secondary">
+                                <input type="radio" name="cc-snapshotHandlingMethod-switch" id="cc-snapshotHandlingMethod-btn-1"
+                                    autocomplete="off"> Force Snapshots
+                            </label>
+                            <label class="btn btn-secondary">
+                                <input type="radio" name="cc-snapshotHandlingMethod-switch" id="cc-snapshotHandlingMethod-btn-2"
+                                    autocomplete="off"> Balanced
+                            </label>
+                            <label class="btn btn-secondary">
+                                <input type="radio" name="cc-snapshotHandlingMethod-switch" id="cc-snapshotHandlingMethod-btn-3"
+                                    autocomplete="off"> Speed
+                            </label>
+                            </div>
+
+                            <div class="form-check hidden">
+                                <div class="input-group-prepend">
+                                    <div class="input-group-text">
+                                        <input type="checkbox" id="cc-snapshotHandlingMethod-ena" class="ena" checked />
+                                    </div>
+                                    <span class="input-group-text">periodic snapshot refresh</span>
+                                </div>
+                                <input type="number" class="form-control" id="cc-snapshotHandlingMethod"
+                                    name="cc-snapshotHandlingMethod" placeholder="leave blank if you don't know">
+                                <label class="form-check-label" for="cc-snapshotHandlingMethod">Snapshot Handling Method</label>
+                            </div><br>
+
+                            <small class="form-text text-muted"><b>Force Snapshots:</b>
+                            The plugin will try to get the latest possible snapshot. If none is present the plugin will
+                            start a livestream to fetch one frame.<br>
+                            This process might take a few seconds and can slow down your homebridge instance for this
+                            time. If you encounter problems with this method please try another.</small>
+                            <small class="form-text text-muted"><b>Balanced:</b>
+                            This mode combines the other two. When a snapshot is requested the plugin will start to get
+                            a new snapshot from the camera.<br>
+                            After one second the snapshot will be delivered - if necessary by using an old snapshot.
+                            For events the plugin will wait on a new snapshot.</small>
+                            <small class="form-text text-muted"><b>Speed:</b>
+                            The plugin will preferablly use cloud snapshots from eufy to fulfill snapshots requests as
+                            fast as possible.<br>
+                            If an event, like motion or doorbell ring detection, the plugin will try to wait for a cloud
+                            snapshot to be provided.
+                            But the periodic snapshots in homekit will most likely be outdated.</small><p></p>
+
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="cc-immediateRingNotificationWithoutSnapshot">
+                                <label class="form-check-label" for="cc-immediateRingNotificationWithoutSnapshot">
+                                    Force immediate notification on ring events (with empty snapshot)
+                                </label>
+                            </div>
+
+                            <small class="form-text text-muted">In general Homekit will try to get a snapshot to show
+                                it in it's push notifications. Since the process to genereate a snapshot takes some
+                                time the push notification will be delayed by this time difference.
+                                This option allows to generate an empty snapshot on ringing events to speed up
+                                the push notification. This can safe up to 10 seconds between the event and the
+                                corresponding notification on your device.</small><p></p>
+                            
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="cc-delayCameraSnapshot">
+                                <label class="form-check-label" for="cc-delayCameraSnapshot">
+                                    Enable Night-vision Improvement
+                                </label>
+                            </div>
+
+                            <small class="form-text text-muted">Force night vision on dark snapshots to improve
+                                the image.
+                                The snapshot request will be delayed by half a second if you use this setting.
+                            </small><p></p>
+                            
+                            <div class="input-group mb-1">
+                                <div class="input-group-prepend">
+                                    <div class="input-group-text">
+                                        <input type="checkbox" id="cc-refreshSnapshotIntervalMinutes-ena" class="ena" />
+                                    </div>
+                                    <span class="input-group-text">periodic snapshot refresh</span>
+                                </div>
+                                <input type="number" class="form-control videoConfig" id="cc-refreshSnapshotIntervalMinutes"
+                                    name="cc-refreshSnapshotIntervalMinutes" placeholder="leave blank if you don't know">
+                            </div>
+
+                            <small class="form-text text-muted">This option will force a snapshot to be generated every
+                                x minutes. This snapshot will then be used for homekit.<br>
+                                Best used with 'Speed' handling method.<br>
+                                Every setting below 5 minutes will be discarded due to performance reasons.<br>
+                                Don't use this with the 'Force Snapshot' method, since it will have negligible effects other
+                                than slowing down homebridge and decreasing possible battery life.</small><p></p>
+
+                            </div>
+
+                            <div id="camera-snapshot-old" style="display: none;">
+                            <hr />
+
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="cc-forcerefreshsnap">
+                                <label class="form-check-label" for="cc-forcerefreshsnap">Force Refresh Snapshot (Deprecated)</label>
+                            </div>
+
+                            <small class="form-text text-muted">When enabled, we will start stream for one frame and use
+                                as a snapshot (this can affect the battery life). If it's disabled, we will use the Eufy
+                                Cloud API one (which could be really old).<br>
+                                This option is only used if you have disabled enhanced snapshot handling.</small>
+
+                            </div>
                         </div>
                     </div>
 
