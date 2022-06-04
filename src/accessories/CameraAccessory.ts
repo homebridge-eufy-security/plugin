@@ -157,9 +157,15 @@ export class CameraAccessory extends DeviceAccessory {
     config.enableButton = config.enableButton ??= true;
     config.motionButton = config.motionButton ??= true;
     config.rtsp = config.rtsp ??= false;
-    config.forcerefreshsnap =  config.forcerefreshsnap ??= false;
+    config.forcerefreshsnap = config.forcerefreshsnap ??= false;
     config.videoConfig = config.videoConfig ??= {};
     config.useCachedLocalLivestream = config.useCachedLocalLivestream ??= false;
+    config.immediateRingNotificationWithoutSnapshot = config.immediateRingNotificationWithoutSnapshot ??= false;
+    config.useEnhancedSnapshotBehaviour = config.useEnhancedSnapshotBehaviour ??= true;
+
+    if (!config.snapshotHandlingMethod) {
+      config.snapshotHandlingMethod = (config.forcerefreshsnap) ? 1 : 3;
+    }
 
     return config;
   }
