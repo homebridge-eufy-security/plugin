@@ -11,6 +11,7 @@ type StationStream = {
   metadata: StreamMetadata;
   videostream: Readable;
   audiostream: Readable;
+  createdAt: number;
 };
 
 class AudiostreamProxy extends Readable {
@@ -151,7 +152,7 @@ export class LocalLivestreamManager extends EventEmitter {
   private stationStream: StationStream | null;
   private log: Logger;
 
-  private livestreamCount = 0;
+  private livestreamCount = 1;
   private iFrameCache: Array<Buffer> = [];
 
   private proxyStreams: Set<ProxyStream> = new Set<ProxyStream>();
@@ -300,6 +301,13 @@ export class LocalLivestreamManager extends EventEmitter {
     audiostream: Readable,
   ) {
     if (device.getSerial() === this.device.getSerial()) {
+      if (this.stationStream) {
+        const diff = (Date.now() - this.stationStream.createdAt) / 1000;
+        if (diff < 5) {
+          this.log.warn(this.device.getName(), 'Second livestream was started from station. Ignore.');
+          return;
+        }
+      }
       this.initialize(); // important to prevent unwanted behaviour when the eufy station emits the 'livestream start' event multiple times
       videostream.on('data', (data) => {
         if(this.isIFrame(data)) { // cache iFrames to speed up livestream encoding
@@ -341,7 +349,8 @@ export class LocalLivestreamManager extends EventEmitter {
 
       this.log.info(station.getName() + ' station livestream (P2P session) for ' + device.getName() + ' has started.');
       this.livestreamStartedAt = Date.now();
-      this.stationStream = {station, device, metadata, videostream, audiostream};
+      const createdAt = Date.now();
+      this.stationStream = {station, device, metadata, videostream, audiostream, createdAt};
       this.log.debug(this.device.getName(), 'Stream metadata: ' + JSON.stringify(this.stationStream.metadata));
       
       this.emit('livestream start');
@@ -353,7 +362,7 @@ export class LocalLivestreamManager extends EventEmitter {
       const id = this.livestreamCount;
       this.livestreamCount++;
       if (this.livestreamCount > 1024) {
-        this.livestreamCount = 0;
+        this.livestreamCount = 1;
       }
       const videostream = new VideostreamProxy(id, this.iFrameCache, this, this.log);
       const audiostream = new AudiostreamProxy(this.log);
