@@ -162,6 +162,7 @@ export class CameraAccessory extends DeviceAccessory {
     config.useCachedLocalLivestream = config.useCachedLocalLivestream ??= false;
     config.immediateRingNotificationWithoutSnapshot = config.immediateRingNotificationWithoutSnapshot ??= false;
     config.useEnhancedSnapshotBehaviour = config.useEnhancedSnapshotBehaviour ??= true;
+    config.delayCameraSnapshot = config.delayCameraSnapshot ??= false;
 
     if (!config.snapshotHandlingMethod) {
       config.snapshotHandlingMethod = (config.forcerefreshsnap) ? 1 : 3;

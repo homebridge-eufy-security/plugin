@@ -22,6 +22,7 @@ export type CameraConfig = {
   refreshSnapshotIntervalMinutes?: number;
   snapshotHandlingMethod?: number;
   immediateRingNotificationWithoutSnapshot?: boolean;
+  delayCameraSnapshot?:boolean;
 };
 
 export type VideoConfig = {

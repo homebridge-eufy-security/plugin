@@ -33,6 +33,7 @@ var CameraConfig = {
     "refreshSnapshotIntervalMinutes": 0,
     "snapshotHandlingMethod": 0,
     "immediateRingNotificationWithoutSnapshot": false,
+    "delayCameraSnapshot": false,
     "videoConfig": {
         "debug": false,
         "audio": true,

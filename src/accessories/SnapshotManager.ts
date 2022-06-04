@@ -413,6 +413,7 @@ export class SnapshotManager extends EventEmitter {
       const url = '-i ' + source.url;
       const ffmpegArgs = (this.cameraConfig.videoConfig!.stillImageSource || url) + // Still
                       ' -frames:v 1' +
+                      ((this.cameraConfig.delayCameraSnapshot) ? ' -ss 00:00:00.500' : '') +
                       ' -f image2 -' +
                       ' -hide_banner' +
                       ' -loglevel error';
