@@ -103,6 +103,10 @@ export class SnapshotManager extends EventEmitter {
     if (this.cameraConfig.snapshotHandlingMethod === 1) {
       // eslint-disable-next-line max-len
       this.log.info(this.device.getName(), 'is set to generate new snapshots on events every time. This might reduce homebridge performance and increase power consumption.');
+      if (this.cameraConfig.refreshSnapshotIntervalMinutes) {
+        // eslint-disable-next-line max-len
+        this.log.warn(this.device.getName(), 'You have enabled automatic snapshot refreshing. It is recommened not to use this setting with forced snapshot refreshing.');
+      }
     } else if (this.cameraConfig.snapshotHandlingMethod === 2) {
       this.log.info(this.device.getName(), 'is set to balanced snapshot handling.');
     } else if (this.cameraConfig.snapshotHandlingMethod === 3) {
@@ -269,7 +273,7 @@ export class SnapshotManager extends EventEmitter {
   private async handlePictureUrl(url: string): Promise<void> {
     this.log.debug(this.device.getName(), 'Got picture Url from eufy cloud: ' + url);
     if (!this.lastCloudSnapshot ||
-        (this.lastCloudSnapshot && this.lastCloudSnapshot.sourceUrl && this.lastCloudSnapshot.sourceUrl !== url)) {
+        (this.lastCloudSnapshot && this.lastCloudSnapshot.sourceUrl && !this.urlsAreEqual(this.lastCloudSnapshot.sourceUrl, url))) {
       try {
         const timestamp = Date.now();
         const response = await this.downloadImageData(url);
@@ -293,6 +297,7 @@ export class SnapshotManager extends EventEmitter {
       }
     } else {
       this.log.debug(this.device.getName(), 'picture Url was already known. Ignore it.');
+      this.lastCloudSnapshot.sourceUrl = url;
     }
   }
 
@@ -468,5 +473,17 @@ export class SnapshotManager extends EventEmitter {
         return null;
       }
     }
+  }
+
+  private urlsAreEqual(url1: string, url2: string) {
+    return (this.getUrlWithoutParameters(url1) === this.getUrlWithoutParameters(url2));
+  }
+
+  private getUrlWithoutParameters(url: string): string {
+    const endIndex = url.indexOf('.jpg');
+    if (endIndex === -1) {
+      return '';
+    }
+    return url.substring(0, endIndex);
   }
 }
