@@ -96,7 +96,7 @@ export class StreamingDelegate implements CameraStreamingDelegate {
     private readonly device: Camera;
 
     private localLivestreamManager: LocalLivestreamManager;
-    private snapshotManager: SnapshotManager;
+    private snapshotManager?: SnapshotManager;
 
     // keep track of sessions
     pendingSessions: Map<string, SessionInfo> = new Map();
@@ -125,13 +125,17 @@ export class StreamingDelegate implements CameraStreamingDelegate {
             this.log,
             );
         
-        this.snapshotManager = new SnapshotManager(
-            this.platform,
-            this.device,
-            this.cameraConfig,
-            this.localLivestreamManager,
-            this.log,
-        );
+        if (this.cameraConfig.useEnhancedSnapshotBehaviour) {
+            this.snapshotManager = new SnapshotManager(
+                this.platform,
+                this.device,
+                this.cameraConfig,
+                this.localLivestreamManager,
+                this.log,
+            );
+        } else {
+            this.log.warn('Using deprecated snapshot handling method.');
+        }
 
         this.api.on(APIEvent.SHUTDOWN, () => {
             for (const session in this.ongoingSessions) {
@@ -376,10 +380,10 @@ export class StreamingDelegate implements CameraStreamingDelegate {
                 this.cameraName, this.videoConfig.debug);
 
             let snapshot;
-            if (!this.cameraConfig.useEnhancedSnapshotBehaviour) {
-                snapshot = await (this.snapshotPromise || this.fetchSnapshot(resolution.snapFilter));
-            } else {
+            if (this.cameraConfig.useEnhancedSnapshotBehaviour && this.snapshotManager) {
                 snapshot = await (this.snapshotPromise || this.snapshotManager.getSnapshotBuffer());
+            } else {
+                snapshot = await (this.snapshotPromise || this.fetchSnapshot(resolution.snapFilter));
             }
 
             this.log.debug('snapshot byte lenght: ' + snapshot?.byteLength);

@@ -22,12 +22,6 @@ type Snapshot = {
   sourceUrl?: string;
 };
 
-type SnapshotManagerRequest = {
-  timestamp: number;
-  resolveTimeout?: NodeJS.Timeout;
-  promiseCallback: (boolean) => void;
-};
-
 type ImageDataResponse = {
   url: string;
   image: Buffer;
@@ -68,8 +62,6 @@ export class SnapshotManager extends EventEmitter {
   private lastCloudSnapshot?: Snapshot;
   private currentSnapshot?: Snapshot;
   private blackSnapshot?: Buffer;
-  // private unfulfilledSnapshotRequests: Map<number, SnapshotManagerRequest> = new Map<number, SnapshotManagerRequest>();
-  // private snapShotRequestCounter = 1;
 
   private refreshProcessRunning = false;
   private lastEvent = 0;
