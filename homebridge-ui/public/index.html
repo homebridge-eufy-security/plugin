@@ -484,14 +484,14 @@
                             <small class="form-text text-muted"><b>Balanced:</b>
                             This mode combines the other two. When a snapshot is requested the plugin will start to get
                             a new snapshot from the camera.<br>
-                            After one second the snapshot will be delivered - if necessary by using an old snapshot.
+                            After one second the snapshot will be delivered - if necessary by using an older snapshot.
                             For events the plugin will wait on a new snapshot.</small>
                             <small class="form-text text-muted"><b>Speed:</b>
                             The plugin will preferablly use cloud snapshots from eufy to fulfill snapshots requests as
                             fast as possible.<br>
-                            If an event, like motion or doorbell ring detection, the plugin will try to wait for a cloud
+                            If an event, like motion or doorbell ring oocurs, the plugin will try to wait for a cloud
                             snapshot to be provided.
-                            But the periodic snapshots in homekit will most likely be outdated.</small><p></p>
+                            But the periodic snapshots in homekit will likely be outdated.</small><p></p>
 
                             <div class="form-check">
                                 <input class="form-check-input" type="checkbox" id="cc-immediateRingNotificationWithoutSnapshot">
@@ -515,8 +515,8 @@
                             </div>
 
                             <small class="form-text text-muted">Force night vision on dark snapshots to improve
-                                the image.
-                                The snapshot request will be delayed by half a second if you use this setting.
+                                the image.<br>
+                                The snapshot request will be delayed by half a second if you enable this setting.
                             </small><p></p>
                             
                             <div class="input-group mb-1">
