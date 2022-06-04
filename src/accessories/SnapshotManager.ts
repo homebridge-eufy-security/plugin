@@ -13,6 +13,8 @@ import { Logger } from './logger';
 import { StreamInput } from './UniversalStream';
 
 import { is_rtsp_ready } from '../utils/utils';
+import { resolve } from 'node:path';
+import { rejects } from 'node:assert';
 
 const SnapshotBlackPath = require.resolve('../../media/Snapshot-black.png');
 
@@ -37,7 +39,8 @@ type StreamSource = {
  * 1. snapshots as current as possible (weak homebridge performance) -> forceRefreshSnapshot
  *    - always get a new image from cloud or cam
  * 2. balanced
- *    - option to decide what time difference is ok
+ *    - start snapshot refresh but return snapshot as fast as possible
+ *      if request takes too long old snapshot will be returned
  * 3. get an old snapshot immediately -> !forceRefreshSnapshot
  *    - wait on cloud snapshot with new events
  * 
@@ -143,7 +146,7 @@ export class SnapshotManager extends EventEmitter {
     // return a new snapshot it it is recent enough (not more than 10 seconds)
     if (this.currentSnapshot) {
       const diff = Math.abs((Date.now() - this.currentSnapshot.timestamp) / 1000);
-      if (diff <= 10) {
+      if (diff <= 15) {
         return Promise.resolve(this.currentSnapshot.image);
       }
     }
@@ -163,8 +166,7 @@ export class SnapshotManager extends EventEmitter {
       return this.getNewestSnapshotBuffer();
     } else if (this.cameraConfig.snapshotHandlingMethod === 2) {
       // balanced method
-      // TODO
-      return Promise.reject('balanced method not implemented yet');
+      return this.getBalancedSnapshot();
     } else if (this.cameraConfig.snapshotHandlingMethod === 3) {
       // fastest method with potentially old snapshots
       return this.getNewestCloudSnapshot();
@@ -175,12 +177,6 @@ export class SnapshotManager extends EventEmitter {
 
   private async getNewestSnapshotBuffer(): Promise<Buffer> {
     return new Promise((resolve, reject) => {
-      // const latestSnapshotTimestamp = (this.currentSnapshot) ? this.currentSnapshot.timestamp : 0;
-      // const diff = (Date.now() - latestSnapshotTimestamp) / 1000;
-      // if (diff < 5) { // snapshot is not older than 5 seconds: use it!
-      //   resolve(this.currentSnapshot!.image);
-      //   return;
-      // }
 
       if (!this.refreshProcessRunning) {
         this.fetchCurrentCameraSnapshot();
@@ -204,14 +200,51 @@ export class SnapshotManager extends EventEmitter {
     });
   }
 
+  private async getBalancedSnapshot(): Promise<Buffer> {
+    return new Promise((resolve, reject) => {
+
+      let snapshotTimeout = setTimeout(() => {
+        if (this.currentSnapshot) {
+          resolve(this.currentSnapshot.image);
+        } else {
+          reject('No snapshot in memory');
+        }
+      }, 1000);
+
+      this.fetchCurrentCameraSnapshot();
+
+      const newestEvent = (this.lastRingEvent > this.lastEvent) ? this.lastRingEvent : this.lastEvent;
+      const diff = (Date.now() - newestEvent) / 1000;
+      if (diff < 15) { // wait for cloud or camera snapshot
+        this.log.debug(this.device.getName(), 'Waiting on cloud snapshot...');
+        if (snapshotTimeout) {
+          clearTimeout(snapshotTimeout);
+        }
+        snapshotTimeout = setTimeout(() => {
+          if (this.currentSnapshot) {
+            resolve(this.currentSnapshot.image);
+          } else {
+            reject('No snapshot in memory');
+          }
+        }, 15000);
+      }
+
+      this.once('new snapshot', () => {
+        if (snapshotTimeout) {
+          clearTimeout(snapshotTimeout);
+        }
+
+        if (this.currentSnapshot) {
+          resolve(this.currentSnapshot.image);
+        } else {
+          reject('No snapshot in memory');
+        }
+      });
+    });
+  }
+
   private async getNewestCloudSnapshot(): Promise<Buffer> {
     return new Promise((resolve, reject) => {
-      // const latestSnapshotTimestamp = (this.currentSnapshot) ? this.currentSnapshot.timestamp : 0;
-      // let diff = (Date.now() - latestSnapshotTimestamp) / 1000;
-      // if (diff < 5) { // snapshot is not older than 5 seconds: use it!
-      //   resolve(this.currentSnapshot!.image);
-      //   return;
-      // }
 
       const newestEvent = (this.lastRingEvent > this.lastEvent) ? this.lastRingEvent : this.lastEvent;
       const diff = (Date.now() - newestEvent) / 1000;
@@ -241,10 +274,6 @@ export class SnapshotManager extends EventEmitter {
       }
     });
   }
-
-  // private removeSnapshotRequest(id: number): void {
-  //   this.unfulfilledSnapshotRequests.delete(id);
-  // }
 
   private automaticSnapshotRefresh() {
     this.log.debug(this.device.getName(), 'Automatic snapshot refresh triggered.');

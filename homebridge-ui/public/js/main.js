@@ -604,33 +604,33 @@ function ConfigCameraFill(camera) {
     }
 
     const sh1 = document.getElementById('cc-snapshotHandlingMethod-btn-1');
-    // const sh2 = document.getElementById('cc-snapshotHandlingMethod-btn-2');
+    const sh2 = document.getElementById('cc-snapshotHandlingMethod-btn-2');
     const sh3 = document.getElementById('cc-snapshotHandlingMethod-btn-3');
 
     switch (config.snapshotHandlingMethod) {
         case 1:
             sh1.checked = true;
-            // sh2.checked = false;
+            sh2.checked = false;
             sh3.checked = false;
             sh1.parentElement.classList.add('active');
-            // sh2.parentElement.classList.remove('active');
+            sh2.parentElement.classList.remove('active');
             sh3.parentElement.classList.remove('active'); 
         break;
         case 2:
             sh1.checked = false;
-            // sh2.checked = true;
+            sh2.checked = true;
             sh3.checked = false;
             sh1.parentElement.classList.remove('active');
-            // sh2.parentElement.classList.add('active');
+            sh2.parentElement.classList.add('active');
             sh3.parentElement.classList.remove('active'); 
         break;
     
         default:
             sh1.checked = false;
-            // sh2.checked = false;
+            sh2.checked = false;
             sh3.checked = true;
             sh1.parentElement.classList.remove('active');
-            // sh2.parentElement.classList.remove('active');
+            sh2.parentElement.classList.remove('active');
             sh3.parentElement.classList.add('active'); 
             break;
     }

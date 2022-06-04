@@ -454,10 +454,10 @@
                                 <input type="radio" name="cc-snapshotHandlingMethod-switch" id="cc-snapshotHandlingMethod-btn-1"
                                     autocomplete="off"> Force Snapshots
                             </label>
-                            <!-- <label class="btn btn-secondary">
+                            <label class="btn btn-secondary">
                                 <input type="radio" name="cc-snapshotHandlingMethod-switch" id="cc-snapshotHandlingMethod-btn-2"
                                     autocomplete="off"> Balanced
-                            </label> -->
+                            </label>
                             <label class="btn btn-secondary">
                                 <input type="radio" name="cc-snapshotHandlingMethod-switch" id="cc-snapshotHandlingMethod-btn-3"
                                     autocomplete="off"> Speed
@@ -481,8 +481,11 @@
                             start a livestream to fetch one frame.<br>
                             This process might take a few seconds and can slow down your homebridge instance for this
                             time. If you encounter problems with this method please try another.</small>
-                            <!-- <small class="form-text text-muted"><b>Balanced:</b>
-                            - NOT YET IMPLEMENTED -<br></small> -->
+                            <small class="form-text text-muted"><b>Balanced:</b>
+                            This mode combines the other two. When a snapshot is requested the plugin will start to get
+                            a new snapshot from the camera.<br>
+                            After one second the snapshot will be delivered - if necessary by using an old snapshot.
+                            For events the plugin will wait on a new snapshot.</small>
                             <small class="form-text text-muted"><b>Speed:</b>
                             The plugin will preferablly use cloud snapshots from eufy to fulfill snapshots requests as
                             fast as possible.<br>
