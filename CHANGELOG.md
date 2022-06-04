@@ -1,6 +1,6 @@
 # Change Log
 
-## 2.0.1 (beta) (29/05/2022)
+## 2.0.1 (beta) (04/06/2022)
 
 ### Changed
 -   Additional log output when station guard mode is changed (see [enhancement]: Logging basic operations such as guard mode change on the UI without debug mode #39)
@@ -8,6 +8,7 @@
 -   Changed log output messages for better understanding
 -   Added error handling for misconfigured guard modes (possible fix [Bug]: Disarming Dufy Security Fails and Crashes Homebridge Server #52)
 -   Added timeouts for guard mode changes with corresponding log messages and one retry (possible fix for [Bug]: Eufy Indoor Cam 2k alarm state issue #38 and [enhancement]: Logging basic operations such as guard mode change on the UI without debug mode #39)
+-   Improved snapshot handling
 
 ### Fixed
 -   [Bug]: package.json reqiures the wrong node version #44
