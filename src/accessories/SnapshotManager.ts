@@ -383,6 +383,8 @@ export class SnapshotManager extends EventEmitter {
     const timestamp = Date.now();
     try {
       const snapshotBuffer = await this.getCurrentCameraSnapshot();
+      this.refreshProcessRunning = false;
+      this.log.debug(this.device.getName(), 'Unlocked refresh process.');
 
       if (!this.currentSnapshot || (this.currentSnapshot && this.currentSnapshot.timestamp < timestamp)) {
         this.log.debug(this.device.getName(), 'stored new snapshot from camera in memory. Using this for future use.');
@@ -391,8 +393,6 @@ export class SnapshotManager extends EventEmitter {
           image: snapshotBuffer,
         };
         this.emit('new snapshot');
-        this.refreshProcessRunning = false;
-        this.log.debug(this.device.getName(), 'Unlocked refresh process.');
       }
       return Promise.resolve();
     } catch (err) {
