@@ -1,6 +1,6 @@
 # Change Log
 
-## 2.0.1 (beta) (04/06/2022)
+## 2.0.1 (beta) (05/06/2022)
 
 ### Changed
 -   Additional log output when station guard mode is changed (see [enhancement]: Logging basic operations such as guard mode change on the UI without debug mode #39)
@@ -15,6 +15,7 @@
 - Bug where a local livestream cache may not have been shutdown properly and so subsequent livestreams would not be started
 - A problem where motion events prevented the livestream cache to terminate properly (see [Bug]: Snapshot updates problem #43)
 - Changed log file rotation behaviour to prevent race conditions with already moved log files (fix for #56)
+- Sometimes motion events were not reset correctly, this will now be prevented
 
 ## 2.0 (25/05/2022)
 
