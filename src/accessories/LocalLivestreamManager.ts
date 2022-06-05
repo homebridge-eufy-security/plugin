@@ -44,7 +44,7 @@ class AudiostreamProxy extends Readable {
   }
 
   public stopProxyStream(): void {
-    this.log.debug('Audiostream was stopped after transmission of ' + this.dataFramesCount + ' data frames.');
+    this.log.debug('Audiostream was stopped after transmission of ' + this.dataFramesCount + ' data chunks.');
     this.unpipe();
     this.destroy();
   }
@@ -106,7 +106,7 @@ class VideostreamProxy extends Readable {
   }
 
   public stopProxyStream(): void {
-    this.log.debug('Videostream was stopped after transmission of ' + this.dataFramesCount + ' data frames.');
+    this.log.debug('Videostream was stopped after transmission of ' + this.dataFramesCount + ' data chunks.');
     this.unpipe();
     this.destroy();
     if (this.killTimeout) {
@@ -261,10 +261,12 @@ export class LocalLivestreamManager extends EventEmitter {
     });
   }
 
-  private scheduleLivestreamCacheTermination(): void {
+  private scheduleLivestreamCacheTermination(streamingTimeLeft: number): void {
+    // eslint-disable-next-line max-len
+    const terminationTime = ((streamingTimeLeft - this.SECONDS_UNTIL_TERMINATION_AFTER_LAST_USED) > 20) ? this.SECONDS_UNTIL_TERMINATION_AFTER_LAST_USED : streamingTimeLeft - 20;
     this.log.debug(
       this.device.getName(),
-      'Schedule livestream termination in ' + this.SECONDS_UNTIL_TERMINATION_AFTER_LAST_USED + ' seconds.');
+      'Schedule livestream termination in ' + terminationTime + ' seconds.');
     if (this.terminationTimeout) {
       clearTimeout(this.terminationTimeout);
     }
@@ -272,7 +274,7 @@ export class LocalLivestreamManager extends EventEmitter {
       if (this.proxyStreams.size <= 0) {
         this.stopLocalLiveStream();
       }
-    }, this.SECONDS_UNTIL_TERMINATION_AFTER_LAST_USED * 1000);
+    }, terminationTime * 1000);
   }
 
   public stopLocalLiveStream(): void {
@@ -416,7 +418,7 @@ export class LocalLivestreamManager extends EventEmitter {
           this.log.debug(
             this.device.getName(),
             'Sufficient remaining livestream duration available. (' + (maxStreamingDuration - runtime) + ' seconds left)');
-          this.scheduleLivestreamCacheTermination();
+          this.scheduleLivestreamCacheTermination(Math.floor(maxStreamingDuration - runtime));
         } else {
           // stop livestream immediately
           if (this.cacheEnabled) {

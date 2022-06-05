@@ -408,6 +408,11 @@
                                     </label>
                             </div>
 
+                            <small class="form-text text-muted"><b>This setting seems only useful if you are able to set
+                                the video codec / video compression for the camera in the eufy app to 'low' (aka. H264 codec).
+                                If you can, we recommened to do so, since there will be a significant performance boost.
+                            </b></small>
+
                             <small class="form-text text-muted">If enabled local livestreams will be kept alive for a
                                 short time after the user stops streaming or a snapshot is refreshed (see 'Force Refresh
                                 Snapshot' also). This allows subsequent streams to start up much faster, but also may
@@ -481,17 +486,36 @@
                             start a livestream to fetch one frame.<br>
                             This process might take a few seconds and can slow down your homebridge instance for this
                             time. If you encounter problems with this method please try another.</small>
+                            <small class="form-text text-muted">
+                            <i class="fas fa-plus-circle" style="color: #7FFF00"></i> Up-to-date Snapshots<br>
+                            <i class="fas fa-minus-circle" style="color: #B22222"></i> Performance<br>
+                            <i class="fas fa-minus-circle" style="color: #B22222"></i> Battery life
+                            </small>
                             <small class="form-text text-muted"><b>Balanced:</b>
                             This mode combines the other two. When a snapshot is requested the plugin will start to get
                             a new snapshot from the camera.<br>
                             After one second the snapshot will be delivered - if necessary by using an older snapshot.
                             For events the plugin will wait on a new snapshot.</small>
+                            <small class="form-text text-muted">
+                                <i class="fas fa-plus-circle" style="color: #7FFF00"></i> Up-to-date Snapshots (events)<br>
+                                <i class="fas fa-circle" style="color: #FF8C00"></i> Up-to-date Snapshots (homekit view)<br>
+                                <i class="fas fa-plus-circle" style="color: #7FFF00"></i> Performance<br>
+                                <i class="fas fa-circle" style="color: #FF8C00"></i> Battery life
+                            </small>
                             <small class="form-text text-muted"><b>Speed:</b>
                             The plugin will preferablly use cloud snapshots from eufy to fulfill snapshots requests as
                             fast as possible.<br>
                             If an event, like motion or doorbell ring oocurs, the plugin will try to wait for a cloud
                             snapshot to be provided.
-                            But the periodic snapshots in homekit will likely be outdated.</small><p></p>
+                            But the periodic snapshots in homekit will likely be outdated.</small>
+                            <small class="form-text text-muted">
+                                <i class="fas fa-plus-circle" style="color: #7FFF00"></i> Up-to-date Snapshots (events)<br>
+                                <i class="fas fa-minus-circle" style="color: #B22222"></i> Up-to-date Snapshots (homekit view)<br>
+                                <i class="fas fa-plus-circle" style="color: #7FFF00"></i> Performance<br>
+                                <i class="fas fa-plus-circle" style="color: #7FFF00"></i> Battery life
+                            </small>
+
+                            <hr />
 
                             <div class="form-check">
                                 <input class="form-check-input" type="checkbox" id="cc-immediateRingNotificationWithoutSnapshot">
@@ -505,8 +529,10 @@
                                 time the push notification will be delayed by this time difference.
                                 This option allows to generate an empty snapshot on ringing events to speed up
                                 the push notification. This can safe up to 10 seconds between the event and the
-                                corresponding notification on your device.</small><p></p>
+                                corresponding notification on your device.</small>
                             
+                            <hr />
+
                             <div class="form-check">
                                 <input class="form-check-input" type="checkbox" id="cc-delayCameraSnapshot">
                                 <label class="form-check-label" for="cc-delayCameraSnapshot">
@@ -517,7 +543,9 @@
                             <small class="form-text text-muted">Force night vision on dark snapshots to improve
                                 the image.<br>
                                 The snapshot request will be delayed by half a second if you enable this setting.
-                            </small><p></p>
+                            </small>
+
+                            <hr />
                             
                             <div class="input-group mb-1">
                                 <div class="input-group-prepend">

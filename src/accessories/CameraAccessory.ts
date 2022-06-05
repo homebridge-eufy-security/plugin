@@ -26,6 +26,8 @@ export class CameraAccessory extends DeviceAccessory {
 
   protected streamingDelegate: StreamingDelegate | null = null;
 
+  private motionTimeout?: NodeJS.Timeout;
+
   constructor(
     platform: EufySecurityPlatform,
     accessory: PlatformAccessory,
@@ -343,8 +345,20 @@ export class CameraAccessory extends DeviceAccessory {
     device: Device,
     motion: boolean,
   ): void {
+    if (motion) {
+      this.motionTimeout = setTimeout(() => {
+        this.platform.log.debug(this.accessory.displayName, 'Reseting motion through timout.');
+        this.service
+          .getCharacteristic(this.characteristic.MotionDetected)
+          .updateValue(false);
+      }, 15000);
+    } else {
+      if (this.motionTimeout) {
+        clearTimeout(this.motionTimeout);
+      }
+    }
     this.platform.log.debug(this.accessory.displayName, 'ON DeviceMotionDetected:', motion);
-    if (this.cameraConfig.useCachedLocalLivestream && this.streamingDelegate) {
+    if (this.cameraConfig.useCachedLocalLivestream && this.streamingDelegate && motion) {
       this.streamingDelegate.prepareCachedStream();
     }
     this.service

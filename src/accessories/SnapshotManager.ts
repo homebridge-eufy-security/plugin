@@ -121,7 +121,7 @@ export class SnapshotManager extends EventEmitter {
     try {
       this.blackSnapshot = readFileSync(SnapshotBlackPath);
       if (this.cameraConfig.immediateRingNotificationWithoutSnapshot) {
-        this.log.info(this.device.getName(), 'Empty snapshot will be sent on ring events immediately to spped up homekit notifications.');
+        this.log.info(this.device.getName(), 'Empty snapshot will be sent on ring events immediately to speed up homekit notifications.');
       }
     } catch (err) {
       this.log.error(this.device.getName(), 'could not cache black snapshot file for further use: ' + err);
@@ -178,9 +178,7 @@ export class SnapshotManager extends EventEmitter {
   private async getNewestSnapshotBuffer(): Promise<Buffer> {
     return new Promise((resolve, reject) => {
 
-      if (!this.refreshProcessRunning) {
-        this.fetchCurrentCameraSnapshot();
-      }
+      this.fetchCurrentCameraSnapshot();
 
       const requestTimeout = setTimeout(() => {
         reject('snapshot request timed out');
@@ -288,11 +286,6 @@ export class SnapshotManager extends EventEmitter {
     }
   }
 
-  // private fulfillUnresolvedSnapshotRequests(): void {
-  //   // A new 
-  //   // TODO
-  // }
-
   private async onPropertyValueChanged(device: Device, name: string, value: PropertyValue): Promise<void> {
     if (name === 'pictureUrl') {
       this.handlePictureUrl(value as string);
@@ -306,20 +299,24 @@ export class SnapshotManager extends EventEmitter {
       try {
         const timestamp = Date.now();
         const response = await this.downloadImageData(url);
-        if (!this.lastCloudSnapshot ||
-            (this.lastCloudSnapshot && this.lastCloudSnapshot.timestamp < timestamp)) {
-          this.log.debug(this.device.getName(), 'stored new snapshot from cloud in memory.');
-          this.lastCloudSnapshot = {
-            timestamp: timestamp,
-            sourceUrl: response.url,
-            image: response.image,
-          };
-          if (!this.currentSnapshot ||
-              (this.currentSnapshot && this.currentSnapshot.timestamp < timestamp)) {
-            this.log.debug(this.device.getName(), 'cloud snapshot is most recent one. Storing this for future use.');
-            this.currentSnapshot = this.lastCloudSnapshot;
+        if (!(response.image.length < 20000 && this.refreshProcessRunning)) {
+          if (!this.lastCloudSnapshot ||
+              (this.lastCloudSnapshot && this.lastCloudSnapshot.timestamp < timestamp)) {
+            this.log.debug(this.device.getName(), 'stored new snapshot from cloud in memory.');
+            this.lastCloudSnapshot = {
+              timestamp: timestamp,
+              sourceUrl: response.url,
+              image: response.image,
+            };
+            if (!this.currentSnapshot ||
+                (this.currentSnapshot && this.currentSnapshot.timestamp < timestamp)) {
+              this.log.debug(this.device.getName(), 'cloud snapshot is most recent one. Storing this for future use.');
+              this.currentSnapshot = this.lastCloudSnapshot;
+            }
+            this.emit('new snapshot');
           }
-          this.emit('new snapshot');
+        } else {
+          this.log.debug(this.device.getName(), 'cloud snapshot had to low resolution. Waiting for snapshot from camera.');
         }
       } catch (err) {
         this.log.debug(this.device.getName(), 'image data could not be retireved: ' + err);
@@ -377,23 +374,25 @@ export class SnapshotManager extends EventEmitter {
   }
 
   private async fetchCurrentCameraSnapshot(): Promise<void> {
+    if (this.refreshProcessRunning) {
+      return Promise.resolve();
+    }
     this.refreshProcessRunning = true;
     this.log.debug(this.device.getName(), 'Locked refresh process.');
     this.log.debug(this.device.getName(), 'Fetching new snapshot from camera.');
     const timestamp = Date.now();
     try {
       const snapshotBuffer = await this.getCurrentCameraSnapshot();
+      this.refreshProcessRunning = false;
+      this.log.debug(this.device.getName(), 'Unlocked refresh process.');
 
-      if (!this.currentSnapshot || (this.currentSnapshot && this.currentSnapshot.timestamp < timestamp)) {
-        this.log.debug(this.device.getName(), 'stored new snapshot from camera in memory. Using this for future use.');
-        this.currentSnapshot = {
-          timestamp: timestamp,
-          image: snapshotBuffer,
-        };
-        this.emit('new snapshot');
-        this.refreshProcessRunning = false;
-        this.log.debug(this.device.getName(), 'Unlocked refresh process.');
-      }
+      this.log.debug(this.device.getName(), 'store new snapshot from camera in memory. Using this for future use.');
+      this.currentSnapshot = {
+        timestamp: timestamp,
+        image: snapshotBuffer,
+      };
+      this.emit('new snapshot');
+
       return Promise.resolve();
     } catch (err) {
       this.refreshProcessRunning = false;
