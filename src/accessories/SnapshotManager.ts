@@ -126,6 +126,8 @@ export class SnapshotManager extends EventEmitter {
     } catch (err) {
       this.log.error(this.device.getName(), 'could not cache black snapshot file for further use: ' + err);
     }
+
+    this.getSnapshotFromCloud(); // get current cloud snapshot for balanced mode scenarios -> first snapshot can be resolved
   }
 
   private onRingEvent(device: Device, state: boolean) {
@@ -289,6 +291,29 @@ export class SnapshotManager extends EventEmitter {
   private async onPropertyValueChanged(device: Device, name: string, value: PropertyValue): Promise<void> {
     if (name === 'pictureUrl') {
       this.handlePictureUrl(value as string);
+    }
+  }
+
+  private async getSnapshotFromCloud(): Promise<void> {
+    try {
+      const url = this.device.getPropertyValue(PropertyName.DevicePictureUrl) as string;
+      this.log.debug(this.device.getName(), 'trying to download latest cloud snapshot for future use from: ' + url);
+      const snapshot = await this.downloadImageData(url, 0);
+      if (!this.lastCloudSnapshot && !this.currentSnapshot) {
+        this.lastCloudSnapshot = {
+          // eslint-disable-next-line max-len
+          timestamp: Date.now() - 60*60*1000, // set snapshot an hour old so future requests try to get a more recent one since we don't know how old it really is
+          image: snapshot.image,
+          sourceUrl: url,
+        };
+        this.currentSnapshot = this.lastCloudSnapshot;
+        this.log.debug(this.device.getName(), 'Stored cloud snapshot for future use.');
+        this.emit('new snapshot');
+      }
+      return Promise.resolve();
+    } catch (err) {
+      this.log.warn(this.device.getName(), 'Couldt not get cloud snapshot: ' + err);
+      return Promise.reject(err);
     }
   }
 
