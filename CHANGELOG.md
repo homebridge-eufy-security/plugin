@@ -16,6 +16,7 @@
 - A problem where motion events prevented the livestream cache to terminate properly (see [Bug]: Snapshot updates problem #43)
 - Changed log file rotation behaviour to prevent race conditions with already moved log files (fix for #56)
 - Sometimes motion events were not reset correctly, this will now be prevented
+-   Fix issue while New Config UI (2.0.0 and above) causes Push Notification to not work properly #59
 
 ## 2.0 (25/05/2022)
 
