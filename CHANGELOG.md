@@ -1,6 +1,6 @@
 # Change Log
 
-## 2.0.1 (beta) (05/06/2022)
+## 2.0.1 (beta) (06/06/2022)
 
 ### Changed
 -   Additional log output when station guard mode is changed (see [enhancement]: Logging basic operations such as guard mode change on the UI without debug mode #39)
@@ -17,6 +17,8 @@
 - Changed log file rotation behaviour to prevent race conditions with already moved log files (fix for #56)
 - Sometimes motion events were not reset correctly, this will now be prevented
 -   Fix issue while New Config UI (2.0.0 and above) causes Push Notification to not work properly #59
+- Livestreams could fail if videoconfig was wrongly updated by plugin
+- First snapshots in balanced mode were failing since there weren't snapshots available
 
 ## 2.0 (25/05/2022)
 
