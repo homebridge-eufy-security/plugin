@@ -191,17 +191,20 @@ export class StreamingDelegate implements CameraStreamingDelegate {
             height: request.height
         };
         if (!isSnapshot) {
-            if (this.videoConfig.maxWidth !== undefined &&
+            if (this.videoConfig.maxWidth !== undefined && this.videoConfig.maxWidth > 0 &&
                 (this.videoConfig.forceMax || request.width > this.videoConfig.maxWidth)) {
                 resInfo.width = this.videoConfig.maxWidth;
             }
-            if (this.videoConfig.maxHeight !== undefined &&
+            if (this.videoConfig.maxHeight !== undefined && this.videoConfig.maxHeight > 0 &&
                 (this.videoConfig.forceMax || request.height > this.videoConfig.maxHeight)) {
                 resInfo.height = this.videoConfig.maxHeight;
             }
         }
 
-        const filters: Array<string> = this.videoConfig.videoFilter?.split(',') || [];
+        let filters: Array<string> = [];
+        if (this.videoConfig.videoFilter && this.videoConfig.videoFilter !== '') {
+            filters = this.videoConfig.videoFilter?.split(',');
+        }
         const noneFilter = filters.indexOf('none');
         if (noneFilter >= 0) {
             filters.splice(noneFilter, 1);
@@ -459,7 +462,9 @@ export class StreamingDelegate implements CameraStreamingDelegate {
         config.maxFPS = config.maxFPS >= 4 ? videoConfig.maxFPS : 10;
         config.maxStreams = config.maxStreams >= 2 ? videoConfig.maxStreams : 2;
         config.maxBitrate = config.maxBitrate || 99;
-        config.vcodec = config.vcodec || 'libx264';
+        if (!(config.vcodec && config.vcodec !== '')) {
+            config.vcodec = 'libx264';
+        }
         config.packetSize = config.packetSize || 188;
 
         return config;
@@ -468,9 +473,15 @@ export class StreamingDelegate implements CameraStreamingDelegate {
     private generateVideoConfig(videoConfig, request, appleDevice = "") {
         let config = { ...videoConfig };
 
-        config.vcodec = config.vcodec ??= 'libx264';
-        config.acodec = config.acodec ??= 'libfdk_aac';
-        config.encoderOptions = config.encoderOptions ??= '-preset ultrafast -tune zerolatency';
+        if (!(config.vcodec && config.vcodec !== '')) {
+            config.vcodec = 'libx264';
+        }
+        if (!(config.acodec && config.acodec !== '')) {
+            config.acodec = 'libfdk_aac';
+        }
+        if (!(config.encoderOptions && config.encoderOptions !== '')) {
+            config.encoderOptions = '-preset ultrafast -tune zerolatency';
+        }
         config.packetSize = config.packetSize ??= 1128;
         config.forceMax = config.forceMax ??= false;
 
@@ -699,7 +710,7 @@ export class StreamingDelegate implements CameraStreamingDelegate {
                 ...ffmpegInput,
             ];
 
-            if (!inputChanged && !prebufferInput && this.videoConfig.mapvideo) {
+            if (!inputChanged && !prebufferInput && this.videoConfig.mapvideo && this.videoConfig.mapvideo !== '') {
                 ffmpegVideoArgs.push('-map', this.videoConfig.mapvideo);
             } else {
                 ffmpegVideoArgs.push('-an', '-sn', '-dn');

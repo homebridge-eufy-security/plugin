@@ -52,6 +52,7 @@ Homebridge plugin to control certain Eufy Security devices
 -   **[samemory](https://github.com/samemory)**
 -   **[schliemann](https://github.com/schliemann)**
 -   **[lenoxys](https://github.com/lenoxys)**
+-   **[thieren](https://github.com/thieren)**
 
 Big thanks to **[bropat](https://github.com/bropat)** who made this possible. Please consider buying a coffee for him over here: https://ko-fi.com/bropat
 
