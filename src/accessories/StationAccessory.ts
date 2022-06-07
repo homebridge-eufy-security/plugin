@@ -172,11 +172,16 @@ export class StationAccessory {
       this.modes.push({ hk: 3, eufy: ((this.modes.filter((m) => {
         return m.eufy === 6;
       })[0]) ? 63 : 6) });
-    } else {
+    } else if (this.platform.config.hkOff !== undefined && this.platform.config.hkOff !== null) {
       this.modes.push({
         hk: 3,
         eufy: (this.platform.config.hkOff === 6) ? 63 : this.platform.config.hkOff,
       }); // Enforce 63 if keypad has been selected but not attached to the station
+    } else {
+      this.modes.push({
+        hk: 3,
+        eufy:  63,
+      }); // Enforce 63 if hkOff is not set
     }
 
     this.platform.log.debug(this.accessory.displayName, 'Mapping for station modes: ' + JSON.stringify(this.modes));
