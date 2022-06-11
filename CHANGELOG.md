@@ -1,6 +1,6 @@
 # Change Log
 
-## 2.0.1 (beta) (07/06/2022)
+## 2.0.1 (beta) (11/06/2022)
 
 ### Changed
 -   Additional log output when station guard mode is changed (see [enhancement]: Logging basic operations such as guard mode change on the UI without debug mode #39)
@@ -20,6 +20,7 @@
 - Livestreams could fail if videoconfig was wrongly updated by plugin
 - First snapshots in balanced mode were failing since there weren't snapshots available
 - Plugin crashed when station mode was set to off/disarmed and config was not setup with guard modes correctly
+- Fix #48 Options enableCamera and enableMotion were not working in specific configuration situations
 
 ## 2.0 (25/05/2022)
 
