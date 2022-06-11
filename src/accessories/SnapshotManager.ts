@@ -180,7 +180,7 @@ export class SnapshotManager extends EventEmitter {
   private async getNewestSnapshotBuffer(): Promise<Buffer> {
     return new Promise((resolve, reject) => {
 
-      this.fetchCurrentCameraSnapshot();
+      this.fetchCurrentCameraSnapshot().catch((err) => reject(err));
 
       const requestTimeout = setTimeout(() => {
         reject('snapshot request timed out');
@@ -211,7 +211,7 @@ export class SnapshotManager extends EventEmitter {
         }
       }, 1000);
 
-      this.fetchCurrentCameraSnapshot();
+      this.fetchCurrentCameraSnapshot().catch((err) => this.log.warn(this.device.getName(), err));
 
       const newestEvent = (this.lastRingEvent > this.lastEvent) ? this.lastRingEvent : this.lastEvent;
       const diff = (Date.now() - newestEvent) / 1000;
@@ -277,7 +277,7 @@ export class SnapshotManager extends EventEmitter {
 
   private automaticSnapshotRefresh() {
     this.log.debug(this.device.getName(), 'Automatic snapshot refresh triggered.');
-    this.fetchCurrentCameraSnapshot();
+    this.fetchCurrentCameraSnapshot().catch((err) => this.log.warn(this.device.getName(), err));
     if (this.snapshotRefreshTimer) {
       clearTimeout(this.snapshotRefreshTimer);
     }

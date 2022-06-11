@@ -69,7 +69,7 @@ export class CameraAccessory extends DeviceAccessory {
 
     try {
       this.platform.log.debug(this.accessory.displayName, 'enableButton config:', this.cameraConfig.enableButton);
-      if (this.cameraConfig.enableCamera
+      if ((this.cameraConfig.enableCamera || (typeof this.eufyDevice.isDoorbell === 'function' && this.eufyDevice.isDoorbell()))
         && this.cameraConfig.enableButton
         && this.eufyDevice.hasProperty('enabled')) {
         this.platform.log.debug(this.accessory.displayName, 'has a isEnabled, so append switchEnabledService characteristic to him.');
@@ -88,6 +88,7 @@ export class CameraAccessory extends DeviceAccessory {
           .onSet(this.handleEnableSet.bind(this));
 
       } else {
+        // eslint-disable-next-line max-len
         this.platform.log.debug(this.accessory.displayName, 'Looks like not compatible with isEnabled or this has been disabled within configuration');
       }
     } catch (Error) {
@@ -96,9 +97,10 @@ export class CameraAccessory extends DeviceAccessory {
 
     try {
       this.platform.log.debug(this.accessory.displayName, 'motionButton config:', this.cameraConfig.motionButton);
-      if (this.cameraConfig.enableCamera
+      if ((this.cameraConfig.enableCamera || (typeof this.eufyDevice.isDoorbell === 'function' && this.eufyDevice.isDoorbell()))
         && this.cameraConfig.motionButton
         && this.eufyDevice.hasProperty('motionDetection')) {
+        // eslint-disable-next-line max-len
         this.platform.log.debug(this.accessory.displayName, 'has a isMotionDetectionEnabled, so append switchMotionService characteristic to him.');
 
         const switchMotionService =
@@ -115,6 +117,7 @@ export class CameraAccessory extends DeviceAccessory {
           .onSet(this.handleMotionOnSet.bind(this));
 
       } else {
+        // eslint-disable-next-line max-len
         this.platform.log.debug(this.accessory.displayName, 'Looks like not compatible with isMotionDetectionEnabled or this has been disabled within configuration');
       }
     } catch (Error) {
@@ -148,10 +151,11 @@ export class CameraAccessory extends DeviceAccessory {
 
   private getCameraConfig() {
 
-    var config = {} as CameraConfig;
+    let config = {} as CameraConfig;
 
     if (typeof this.platform.config.cameras !== 'undefined') {
-      var pos = this.platform.config.cameras.map(function (e) { return e.serialNumber; }).indexOf(this.eufyDevice.getSerial());
+      // eslint-disable-next-line prefer-arrow-callback, brace-style
+      const pos = this.platform.config.cameras.map(function (e) { return e.serialNumber; }).indexOf(this.eufyDevice.getSerial());
       config = { ...this.platform.config.cameras[pos] };
     }
 
