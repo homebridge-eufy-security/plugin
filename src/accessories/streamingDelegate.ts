@@ -640,7 +640,7 @@ export class StreamingDelegate implements CameraStreamingDelegate {
             let prebufferInput = true;
             let uVideoStream;
             let uAudioStream;
-            let ffmpegInput;
+            let ffmpegInput: any = '';
             let cachedStreamId: number | null = null;
 
             const rtsp = this.is_rtsp_ready();
@@ -915,7 +915,7 @@ export class StreamingDelegate implements CameraStreamingDelegate {
                 this.log.error(this.cameraName, 'Error occurred closing socket: ' + err);
             }
             try {
-                if (!this.cameraConfig.rtsp) {
+                if (!this.is_rtsp_ready()) {
                     session.uVideoStream?.close();
                     session.uAudioStream?.close();
                 }
@@ -923,7 +923,7 @@ export class StreamingDelegate implements CameraStreamingDelegate {
                 this.log.error(this.cameraName, 'Error occurred Universal Stream: ' + err);
             }
             try {
-                if (!this.cameraConfig.rtsp && session.cachedStreamId) {
+                if (!this.is_rtsp_ready() && session.cachedStreamId) {
                     this.localLivestreamManager.stopProxyStream(session.cachedStreamId);
                 }
             } catch (err) {
