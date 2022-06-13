@@ -369,10 +369,10 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
     if (station) {
       if (type !== DeviceType.STATION) {
         // Allowing camera but not the lock nor doorbell for now
-        if (!(type === DeviceType.LOCK_BLE
-          || type === DeviceType.LOCK_WIFI
-          || type === DeviceType.LOCK_BLE_NO_FINGER
-          || type === DeviceType.LOCK_WIFI_NO_FINGER
+        if (!(type === DeviceType.LOCK_BASIC
+          || type === DeviceType.LOCK_ADVANCED
+          || type === DeviceType.LOCK_BASIC_NO_FINGER
+          || type === DeviceType.LOCK_ADVANCED_NO_FINGER
           || type === DeviceType.DOORBELL
           || type === DeviceType.BATTERY_DOORBELL
           || type === DeviceType.BATTERY_DOORBELL_2
@@ -432,10 +432,10 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
       case DeviceType.SENSOR:
         new EntrySensorAccessory(this, accessory, device as EntrySensor);
         break;
-      case DeviceType.LOCK_BLE:
-      case DeviceType.LOCK_WIFI:
-      case DeviceType.LOCK_BLE_NO_FINGER:
-      case DeviceType.LOCK_WIFI_NO_FINGER:
+      case DeviceType.LOCK_BASIC:
+      case DeviceType.LOCK_ADVANCED:
+      case DeviceType.LOCK_BASIC_NO_FINGER:
+      case DeviceType.LOCK_ADVANCED_NO_FINGER:
         new SmartLockAccessory(this, accessory, device as Lock);
         break;
       default:
