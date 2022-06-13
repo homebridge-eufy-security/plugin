@@ -746,7 +746,6 @@ document.getElementById('startOver').addEventListener('click', async () => {
 
 // list-devices
 document.getElementById('listDevices').addEventListener('click', async () => {
-    await hb_request('/init', { username: pluginConfig.username, password: pluginConfig.password, country: pluginConfig.country });
     await getStations();
 });
 
@@ -989,6 +988,7 @@ homebridge.addEventListener('CONNECTED', () => {
     } else {
         pluginConfig = pluginConfigBlocks[0];
         updateFormFromConfig();
+        await hb_request('/init', { username: pluginConfig.username, password: pluginConfig.password, country: pluginConfig.country });
         display_box('setupComplete');
     }
 
