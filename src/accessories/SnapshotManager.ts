@@ -145,7 +145,7 @@ export class SnapshotManager extends EventEmitter {
   }
 
   public async getSnapshotBuffer(): Promise<Buffer> {
-    // return a new snapshot it it is recent enough (not more than 10 seconds)
+    // return a new snapshot it it is recent enough (not more than 15 seconds)
     if (this.currentSnapshot) {
       const diff = Math.abs((Date.now() - this.currentSnapshot.timestamp) / 1000);
       if (diff <= 15) {
@@ -155,7 +155,7 @@ export class SnapshotManager extends EventEmitter {
 
     const diff = (Date.now() - this.lastRingEvent) / 1000;
     if (this.cameraConfig.immediateRingNotificationWithoutSnapshot && diff < 5) {
-      this.log.debug(this.device.getName(), 'Sending empty snapshot to spped up homekit notification for ring event.');
+      this.log.debug(this.device.getName(), 'Sending empty snapshot to speed up homekit notification for ring event.');
       if (this.blackSnapshot) {
         return Promise.resolve(this.blackSnapshot);
       } else {
@@ -352,7 +352,7 @@ export class SnapshotManager extends EventEmitter {
     }
   }
 
-  private downloadImageData(url: string, retries = 30): Promise<ImageDataResponse> {
+  private downloadImageData(url: string, retries = 40): Promise<ImageDataResponse> {
     return new Promise((resolve, reject) => {
       https.get(url, response => {
         if (response.headers.location) { // url forwarding; use new url
@@ -371,6 +371,7 @@ export class SnapshotManager extends EventEmitter {
                 image: imageBuffer,
               });
             } else if (retries <= 0) {
+              this.log.warn(this.device.getName(), 'Didn\'t retireve cloud snapshot in time. Reached max. retries.');
               reject('Could not get image data');
             } else {
               setTimeout(() => {

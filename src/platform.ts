@@ -401,6 +401,7 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
       case DeviceType.CAMERA2C:
       case DeviceType.INDOOR_CAMERA:
       case DeviceType.INDOOR_PT_CAMERA:
+      case DeviceType.INDOOR_COST_DOWN_CAMERA:
       case DeviceType.FLOODLIGHT:
       case DeviceType.CAMERA2C_PRO:
       case DeviceType.CAMERA2_PRO:
