@@ -37,7 +37,7 @@ jobs:
       - run: git config --global user.email '<>'
       - run: npm version prerelease --preid=beta -m "[BETA] %s"
       - run: npm update homebridge-eufy-security
-      - run: git push origin --tags
+      - run: git push --follow-tags
 
   publish:
     runs-on: ubuntu-latest
