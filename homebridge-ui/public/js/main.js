@@ -585,9 +585,11 @@ function ConfigCameraFill(camera) {
 
     const ecf = document.getElementById('cc-enableCamera-btn-false');
     const ect = document.getElementById('cc-enableCamera-btn-true');
+    const ech = document.getElementById('cc-enableCamera');
 
     if (isDoorBell.includes(camera.type)) {
         config.enableCamera = true;
+        ech.checked = true;
         ecf.parentElement.classList.add('disabled');
     } else {
         ecf.parentElement.classList.remove('disabled');
