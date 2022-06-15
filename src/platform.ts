@@ -26,6 +26,7 @@ import { SmartLockAccessory } from './accessories/SmartLockAccessory';
 import {
   EufySecurity,
   EufySecurityConfig,
+  Device,
   DeviceType,
   Station,
   EntrySensor,
@@ -141,6 +142,7 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
     }
 
     this.api.on('didFinishLaunching', async () => {
+      this.clean_config_after_init();
       await this.pluginSetup();
     });
     this.api.on('shutdown', async () => {
@@ -455,7 +457,7 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
     }
 
     if (unbridge) {
-      this.log.info('Adding new bridged accessory:', accessory.displayName);
+      this.log.info('Adding new unbridged accessory:', accessory.displayName);
       this.api.publishExternalAccessories(PLUGIN_NAME, [accessory]);
     } else {
       this.log.info('Adding new accessory:', accessory.displayName);
@@ -510,6 +512,55 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
         }
         pluginConfig[key] = (typeof pluginConfig[key] === 'string') ? parseInt(value as string) : value;
       });
+
+      // End of Cleaning space
+
+      // Applying clean and save it
+      this.config = pluginConfig;
+      fs.writeFileSync(this.api.user.configPath(), JSON.stringify(currentConfig, null, 4));
+
+    } catch (e) {
+      this.log.error('Error cleaning config:', e);
+    }
+  }
+
+  // this needs to be called after api did finished launching so that cached accessories are already loaded
+  private clean_config_after_init() {
+    try {
+      const currentConfig = JSON.parse(fs.readFileSync(this.api.user.configPath(), 'utf8'));
+      // check the platforms section is an array before we do array things on it
+      if (!Array.isArray(currentConfig.platforms)) {
+        throw new Error('Cannot find platforms array in config');
+      }
+      // find this plugins current config
+      const pluginConfig = currentConfig.platforms.find((x: { platform: string }) => x.platform === PLATFORM_NAME);
+
+      if (!pluginConfig) {
+        throw new Error(`Cannot find config for ${PLATFORM_NAME} in platforms array`);
+      }
+
+      // Cleaning space
+      // clean device specific parametes
+
+      const cameras = (Array.isArray(pluginConfig.cameras)) ? pluginConfig.cameras : null;
+
+      if (cameras && this.accessories.length > 0) {
+        for(let i=0; i<cameras.length; i++) {
+          const camera = cameras[i];
+          const cachedAccessory = this.accessories.find((acc) => camera.serialNumber === acc.context.device.uniqueId);
+          if (cachedAccessory && Device.isDoorbell(cachedAccessory.context.device.type) && !camera.enableCamera) {
+            // eslint-disable-next-line max-len
+            this.log.warn('Found camera ' + cachedAccessory.context.device.displayName + ' (' + cachedAccessory.context.device.uniqueId + ') with invalid camera configuration option enableCamera. Attempt to repair. This should only happen once per device...');
+            pluginConfig.cameras[i]['enableCamera'] = true;
+
+            if (camera.unbridge) {
+              // eslint-disable-next-line max-len
+              this.log.warn('Camera ' + cachedAccessory.context.device.displayName + ' (' + cachedAccessory.context.device.uniqueId + ') had camera configuration option \'unbridge\' set to true. This will be set to false to maintain functionality. See https://github.com/homebridge-eufy-security/plugin/issues/79 for more information.');
+              pluginConfig.cameras[i]['unbridge'] = false;
+            }
+          }
+        }
+      }
 
       // End of Cleaning space
 
