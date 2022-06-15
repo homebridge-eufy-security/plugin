@@ -21,6 +21,7 @@
 - First snapshots in balanced mode were failing since there weren't snapshots available
 - Plugin crashed when station mode was set to off/disarmed and config was not setup with guard modes correctly
 - Fix #48 Options enableCamera and enableMotion were not working in specific configuration situations
+- Fix #79 Unbridge setting not working for doorbell cameras
 
 ## 2.0 (25/05/2022)
 
