@@ -452,6 +452,10 @@ export class SnapshotManager extends EventEmitter {
       const ffmpeg = spawn(this.videoProcessor, ffmpegArgs.split(/\s+/), { env: process.env });
 
       const ffmpegTimeout = setTimeout(() => {
+        if (source.livestreamId) {
+          this.livestreamManager.stopProxyStream(source.livestreamId);
+        }
+
         reject('ffmpeg process timed out');
       }, 15000);
 
