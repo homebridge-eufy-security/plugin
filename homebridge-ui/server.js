@@ -22,6 +22,8 @@ class UiServer extends HomebridgePluginUiServer {
       fs.mkdirSync(this.storagePath);
     }
 
+    const logfileStream = fs.createWriteStream(this.storagePath + '/config_ui_log', { flags: 'w' });
+
     this.log = bunyan.createLogger({
       name: '[' + plugin.version + ']',
       hostname: '',
@@ -33,6 +35,7 @@ class UiServer extends HomebridgePluginUiServer {
           showProcess: false,
           showPid: false,
           showDate: false,
+          out: logfileStream,
         }),
       }],
       serializers: bunyanDebugStream.serializers,

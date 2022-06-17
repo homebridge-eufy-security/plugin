@@ -18,6 +18,8 @@ import { rejects } from 'node:assert';
 
 const SnapshotBlackPath = require.resolve('../../media/Snapshot-black.png');
 
+let MINUTES_TO_WAIT_FOR_AUTOMATIC_REFRESH_TO_BEGIN = 1; // should be incremented by 1 for every device
+
 type Snapshot = {
   timestamp: number;
   image: Buffer;
@@ -97,10 +99,11 @@ export class SnapshotManager extends EventEmitter {
         this.cameraConfig.refreshSnapshotIntervalMinutes = 5;
       }
       // eslint-disable-next-line max-len
-      this.log.info(this.device.getName(), 'Setting up automatic snapshot refresh every ' + this.cameraConfig.refreshSnapshotIntervalMinutes + ' minutes. This may decrease battery life dramatically.');
+      this.log.info(this.device.getName(), 'Setting up automatic snapshot refresh every ' + this.cameraConfig.refreshSnapshotIntervalMinutes + ' minutes. This may decrease battery life dramatically. The refresh process for ' + this.device.getName() + ' should begin in ' + MINUTES_TO_WAIT_FOR_AUTOMATIC_REFRESH_TO_BEGIN + ' minutes.');
       setTimeout(() => { // give homebridge some time to start up
         this.automaticSnapshotRefresh();
-      }, 60 * 1000);
+      }, MINUTES_TO_WAIT_FOR_AUTOMATIC_REFRESH_TO_BEGIN * 60 * 1000);
+      MINUTES_TO_WAIT_FOR_AUTOMATIC_REFRESH_TO_BEGIN++;
     }
 
     if (this.cameraConfig.snapshotHandlingMethod === 1) {
@@ -430,10 +433,11 @@ export class SnapshotManager extends EventEmitter {
   private async getCurrentCameraSnapshot(): Promise<Buffer> {
     const source = await this.getCameraSource();
 
+    if (!source) {
+      return Promise.reject('No camera source detected.');
+    }
+
     return new Promise((resolve, reject) => {
-      if (!source) {
-        return;
-      }
 
       const url = '-i ' + source.url;
       const ffmpegArgs = (this.cameraConfig.videoConfig!.stillImageSource || url) + // Still
@@ -452,6 +456,10 @@ export class SnapshotManager extends EventEmitter {
       const ffmpeg = spawn(this.videoProcessor, ffmpegArgs.split(/\s+/), { env: process.env });
 
       const ffmpegTimeout = setTimeout(() => {
+        if (source.livestreamId) {
+          this.livestreamManager.stopProxyStream(source.livestreamId);
+        }
+
         reject('ffmpeg process timed out');
       }, 15000);
 

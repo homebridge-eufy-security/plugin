@@ -234,6 +234,8 @@ export class LocalLivestreamManager extends EventEmitter {
       if (!this.livestreamIsStarting) { // prevent multiple stream starts from eufy station
         this.livestreamIsStarting = true;
         this.platform.eufyClient.startStationLivestream(this.device.getSerial());
+      } else {
+        this.log.debug(this.device.getName(), 'stream is already starting. waiting...');
       }
 
       if (this.connectionTimeout) {
