@@ -9,6 +9,7 @@
 -   Added error handling for misconfigured guard modes (possible fix [Bug]: Disarming Dufy Security Fails and Crashes Homebridge Server #52)
 -   Added timeouts for guard mode changes with corresponding log messages and one retry (possible fix for [Bug]: Eufy Indoor Cam 2k alarm state issue #38 and [enhancement]: Logging basic operations such as guard mode change on the UI without debug mode #39)
 -   Improved snapshot handling
+-   Allow enabling and disabling motion detection throug switch if camera is used as motion sensor only
 
 ### Fixed
 -   [Bug]: package.json reqiures the wrong node version #44
