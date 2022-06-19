@@ -97,9 +97,7 @@ export class CameraAccessory extends DeviceAccessory {
 
     try {
       this.platform.log.debug(this.accessory.displayName, 'motionButton config:', this.cameraConfig.motionButton);
-      if ((this.cameraConfig.enableCamera || (typeof this.eufyDevice.isDoorbell === 'function' && this.eufyDevice.isDoorbell()))
-        && this.cameraConfig.motionButton
-        && this.eufyDevice.hasProperty('motionDetection')) {
+      if (this.cameraConfig.motionButton && this.eufyDevice.hasProperty('motionDetection')) {
         // eslint-disable-next-line max-len
         this.platform.log.debug(this.accessory.displayName, 'has a isMotionDetectionEnabled, so append switchMotionService characteristic to him.');
 
