@@ -1,6 +1,6 @@
 # Change Log
 
-## 2.0.1 (beta) (17/06/2022)
+## 2.1.0 (beta) (21/06/2022)
 
 ### Changed
 -   Additional log output when station guard mode is changed (see [enhancement]: Logging basic operations such as guard mode change on the UI without debug mode #39)
@@ -24,6 +24,11 @@
 - Fix #48 Options enableCamera and enableMotion were not working in specific configuration situations
 - Fix #79 Unbridge setting not working for doorbell cameras
 - Fix #81 under certain conditions two cameras on the same station could not get automatic snapshot refreshes simultaneously
+
+## 2.0.1 (20.06.2022)
+
+### Fixed
+- locked dependency version to prevent breaking changes
 
 ## 2.0 (25/05/2022)
 
