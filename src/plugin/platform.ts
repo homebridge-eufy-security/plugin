@@ -566,6 +566,11 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
 
       // Applying clean and save it
       this.config = pluginConfig;
+
+      this.config.ignoreStations = this.config.ignoreStations ??= [];
+      this.config.ignoreDevices = this.config.ignoreDevices ??= [];
+      this.config.cleanCache = this.config.cleanCache ??= true;
+
       fs.writeFileSync(this.api.user.configPath(), JSON.stringify(currentConfig, null, 4));
 
     } catch (e) {
