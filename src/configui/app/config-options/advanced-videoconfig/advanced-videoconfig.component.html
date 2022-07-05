@@ -1,0 +1,149 @@
+<ngb-accordion #acc="ngbAccordion">
+  <ngb-panel>
+    <ng-template ngbPanelTitle class="accordion-header">
+      <span><b>Advanced Video Config</b></span>
+    </ng-template>
+    <ng-template ngbPanelHeader>
+      <button ngbPanelToggle class="accordion-button"><span><b>Advanced Video Config</b></span></button>
+    </ng-template>
+    <ng-template ngbPanelContent>
+
+      The following options directly change the way how ffmpeg is configured when a stream is started. If configured wrong these will most likely result in faulty streams or bad streaming performance.
+      <p></p>
+
+      <div class="input-group mb-1">
+        <div class="input-group-text">
+          <input class="form-check-input mt-0" type="checkbox" [(ngModel)]="debug" (change)="update()">
+        </div>
+        <span class="input-group-text" id="inputGroup-sizing-default">ffmpeg debug</span>
+      </div>
+
+      <div class="input-group mb-1">
+        <div class="input-group-text">
+          <input class="form-check-input mt-0" type="checkbox" [(ngModel)]="readRate" (change)="update()">
+        </div>
+        <span class="input-group-text" id="inputGroup-sizing-default">readRate</span>
+      </div>
+
+      <div class="input-group mb-1">
+        <div class="input-group-text">
+          <input class="form-check-input mt-0" type="checkbox" [value]="vcodec !== undefined" (change)="vcodec = (vcodec === undefined) ? '' : undefined; update();">
+        </div>
+        <span class="input-group-text" id="inputGroup-sizing-default">vcodec</span>
+        <input type="text" [(ngModel)]="vcodec" placeholder="leave blank if you don't know" class="form-control" [attr.disabled]="(vcodec === undefined) ? true : null" (change)="update()">
+      </div>
+
+      <div class="input-group mb-1">
+        <div class="input-group-text">
+          <input class="form-check-input mt-0" type="checkbox" [value]="acodec !== undefined" (change)="acodec = (acodec === undefined) ? '' : undefined; update();">
+        </div>
+        <span class="input-group-text" id="inputGroup-sizing-default">acodec</span>
+        <input type="text" [(ngModel)]="acodec" placeholder="leave blank if you don't know" class="form-control" [attr.disabled]="(acodec === undefined) ? true : null" (change)="update()">
+      </div>
+
+      <div class="input-group mb-1">
+        <div class="input-group-text">
+          <input class="form-check-input mt-0" type="checkbox" [value]="videoFilter !== undefined" (change)="videoFilter = (videoFilter === undefined) ? '' : undefined; update();">
+        </div>
+        <span class="input-group-text" id="inputGroup-sizing-default">videoFilter</span>
+        <input type="text" [(ngModel)]="videoFilter" placeholder="leave blank if you don't know" class="form-control" [attr.disabled]="(videoFilter === undefined) ? true : null" (change)="update()">
+      </div>
+
+      <div class="input-group mb-1">
+        <div class="input-group-text">
+          <input class="form-check-input mt-0" type="checkbox" [value]="encoderOptions !== undefined" (change)="encoderOptions = (encoderOptions === undefined) ? '' : undefined; update();">
+        </div>
+        <span class="input-group-text" id="inputGroup-sizing-default">encoderOptions</span>
+        <input type="text" [(ngModel)]="encoderOptions" placeholder="leave blank if you don't know" class="form-control" [attr.disabled]="(encoderOptions === undefined) ? true : null" (change)="update()">
+      </div>
+
+      <div class="input-group mb-1">
+        <div class="input-group-text">
+          <input class="form-check-input mt-0" type="checkbox" [value]="probeSize !== undefined" (change)="probeSize = (probeSize === undefined) ? 0 : undefined; update();">
+        </div>
+        <span class="input-group-text" id="inputGroup-sizing-default">probeSize</span>
+        <input type="number" [(ngModel)]="probeSize" placeholder="0" class="form-control" [attr.disabled]="(probeSize === undefined) ? true : null" (change)="update()">
+      </div>
+
+      <div class="input-group mb-1">
+        <div class="input-group-text">
+          <input class="form-check-input mt-0" type="checkbox" [value]="analyzeDuration !== undefined" (change)="analyzeDuration = (analyzeDuration === undefined) ? 0 : undefined; update();">
+        </div>
+        <span class="input-group-text" id="inputGroup-sizing-default">analyzeDuration</span>
+        <input type="number" [(ngModel)]="analyzeDuration" placeholder="0" class="form-control" [attr.disabled]="(analyzeDuration === undefined) ? true : null" (change)="update()">
+      </div>
+
+      <div class="input-group mb-1">
+        <div class="input-group-text">
+          <input class="form-check-input mt-0" type="checkbox" [value]="mapvideo !== undefined" (change)="mapvideo = (mapvideo === undefined) ? '' : undefined; update();">
+        </div>
+        <span class="input-group-text" id="inputGroup-sizing-default">mapvideo</span>
+        <input type="text" [(ngModel)]="mapvideo" placeholder="leave blank if you don't know" class="form-control" [attr.disabled]="(mapvideo === undefined) ? true : null" (change)="update()">
+      </div>
+
+      <div class="input-group mb-1">
+        <div class="input-group-text">
+          <input class="form-check-input mt-0" type="checkbox" [value]="mapaudio !== undefined" (change)="mapaudio = (mapaudio === undefined) ? '' : undefined; update();">
+        </div>
+        <span class="input-group-text" id="inputGroup-sizing-default">mapaudio</span>
+        <input type="text" [(ngModel)]="mapaudio" placeholder="leave blank if you don't know" class="form-control" [attr.disabled]="(mapaudio === undefined) ? true : null" (change)="update()">
+      </div>
+
+      <div class="input-group mb-1">
+        <div class="input-group-text">
+          <input class="form-check-input mt-0" type="checkbox" [(ngModel)]="forceMax" (change)="update()">
+        </div>
+        <span class="input-group-text" id="inputGroup-sizing-default">forceMax</span>
+      </div>
+
+      <div class="input-group mb-1">
+        <div class="input-group-text">
+          <input class="form-check-input mt-0" type="checkbox" [value]="maxDelay !== undefined" (change)="maxDelay = (maxDelay === undefined) ? 0 : undefined; update();">
+        </div>
+        <span class="input-group-text" id="inputGroup-sizing-default">maxDelay</span>
+        <input type="number" [(ngModel)]="maxDelay" placeholder="0" class="form-control" [attr.disabled]="(maxDelay === undefined) ? true : null" (change)="update()">
+      </div>
+
+      <div class="input-group mb-1">
+        <div class="input-group-text">
+          <input class="form-check-input mt-0" type="checkbox" [value]="maxStreams !== undefined" (change)="maxStreams = (maxStreams === undefined) ? 0 : undefined; update();">
+        </div>
+        <span class="input-group-text" id="inputGroup-sizing-default">maxStreams</span>
+        <input type="number" [(ngModel)]="maxStreams" placeholder="0" class="form-control" [attr.disabled]="(maxStreams === undefined) ? true : null" (change)="update()">
+      </div>
+
+      <div class="input-group mb-1">
+        <div class="input-group-text">
+          <input class="form-check-input mt-0" type="checkbox" [value]="maxWidth !== undefined" (change)="maxWidth = (maxWidth === undefined) ? 0 : undefined; update();">
+        </div>
+        <span class="input-group-text" id="inputGroup-sizing-default">maxWidth</span>
+        <input type="number" [(ngModel)]="maxWidth" placeholder="0" class="form-control" [attr.disabled]="(maxWidth === undefined) ? true : null" (change)="update()">
+      </div>
+
+      <div class="input-group mb-1">
+        <div class="input-group-text">
+          <input class="form-check-input mt-0" type="checkbox" [value]="maxHeight !== undefined" (change)="maxHeight = (maxHeight === undefined) ? 0 : undefined; update();">
+        </div>
+        <span class="input-group-text" id="inputGroup-sizing-default">maxHeight</span>
+        <input type="number" [(ngModel)]="maxHeight" placeholder="0" class="form-control" [attr.disabled]="(maxHeight === undefined) ? true : null" (change)="update()">
+      </div>
+
+      <div class="input-group mb-1">
+        <div class="input-group-text">
+          <input class="form-check-input mt-0" type="checkbox" [value]="maxFPS !== undefined" (change)="maxFPS = (maxFPS === undefined) ? 0 : undefined; update();">
+        </div>
+        <span class="input-group-text" id="inputGroup-sizing-default">maxFPS</span>
+        <input type="number" [(ngModel)]="maxFPS" placeholder="0" class="form-control" [attr.disabled]="(maxFPS === undefined) ? true : null" (change)="update()">
+      </div>
+
+      <div class="input-group mb-1">
+        <div class="input-group-text">
+          <input class="form-check-input mt-0" type="checkbox" [value]="maxBitrate !== undefined" (change)="maxBitrate = (maxBitrate === undefined) ? 0 : undefined; update();">
+        </div>
+        <span class="input-group-text" id="inputGroup-sizing-default">maxBitrate</span>
+        <input type="number" [(ngModel)]="maxBitrate" placeholder="0" class="form-control" [attr.disabled]="(maxBitrate === undefined) ? true : null" (change)="update()">
+      </div>
+
+    </ng-template>
+  </ngb-panel>
+</ngb-accordion>

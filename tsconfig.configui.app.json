@@ -1,0 +1,17 @@
+/* To learn more about this file see: https://angular.io/config/tsconfig. */
+{
+  "extends": "./tsconfig.configui.json",
+  "compilerOptions": {
+    "outDir": "./out-tsc/app",
+    "types": [
+      "node"
+    ]
+  },
+  "files": [
+    "src/configui/main.ts",
+    "src/configui/polyfills.ts"
+  ],
+  "include": [
+    "src/configui/**/*.d.ts"
+  ]
+}

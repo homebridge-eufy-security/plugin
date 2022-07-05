@@ -1,0 +1,14 @@
+<div class="settingsItem row p-3">
+  <div class="d-flex justify-content-between align-items-center mb-2">
+    <span>Debug Mode</span>
+
+    <div class="form-check form-switch">
+      <input class="form-check-input" type="checkbox" role="switch" [(ngModel)]="model" id="flexSwitchCheckDefault" (change)="update()">
+    </div>
+
+  </div>
+  <small><i>
+    This will output more information to the homebridge logs.
+    This helps the plugin team to understand what's going on.
+  </i></small>
+</div>

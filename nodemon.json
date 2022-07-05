@@ -1,10 +1,10 @@
 {
   "watch": [
-    "src"
+    "src/plugin"
   ],
   "ext": "ts",
   "ignore": [],
-  "exec": "tsc && homebridge -I -D",
+  "exec": "tsc --project tsconfig.plugin.json && homebridge -I -D",
   "signal": "SIGTERM",
   "env": {
     "NODE_OPTIONS": "--trace-warnings"

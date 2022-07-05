@@ -43,8 +43,8 @@ import { json } from 'stream/consumers';
 const readFileAsync = promisify(readFile),
     SnapshotUnavailablePath = require.resolve('../../media/Snapshot-Unavailable.png');
 
-const offlineImage = path.resolve(__dirname, '..', 'media', 'offline_cameraui.png');
-const privacyImage = path.resolve(__dirname, '..', 'media', 'privacy_cameraui.png');
+const offlineImage = path.resolve(__dirname, '../..', 'media', 'offline_cameraui.png');
+const privacyImage = path.resolve(__dirname, '../..', 'media', 'privacy_cameraui.png');
 
 type SessionInfo = {
     address: string; // address of the HAP controller
