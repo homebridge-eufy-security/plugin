@@ -114,7 +114,6 @@ export class PluginService extends EventTarget {
         cachedAccessory.context &&
         cachedAccessory.context['device'] &&
         cachedAccessory.context['device']['uniqueId'] === accessory.uniqueId &&
-        cachedAccessory.context['device']['type'] === accessory.type &&
         cachedAccessory.context['device']['station'] === accessory.station
       ) {
         name = cachedAccessory.context['device']['displayName'];
