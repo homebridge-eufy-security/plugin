@@ -2,8 +2,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { CachedAccessory, PluginConfig } from '@homebridge/plugin-ui-utils/dist/ui.interface';
 
-import { LoginResult, LoginFailReason } from './login.service';
-import { Accessory } from './accessory';
+import { LoginResult, LoginFailReason } from '../../app/util/types';
+import { Accessory } from '../../app/accessory';
 import { DEFAULT_CACHED_ACCESSORIES, DEFAULT_PLUGIN_CONFIG, DEFAULT_STORED_ACCESSORIES, CAPTCHA_DATA } from './mockData';
 
 const REASONABLE_RESPONSE_TIME = 0.5;

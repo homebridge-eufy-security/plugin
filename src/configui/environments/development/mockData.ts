@@ -1,5 +1,5 @@
 import { CachedAccessory, PluginConfig } from '@homebridge/plugin-ui-utils/dist/ui.interface';
-import { Accessory } from './accessory';
+import { Accessory } from '../../app/accessory';
 
 export const DEFAULT_CACHED_ACCESSORIES: CachedAccessory[] = [
   {

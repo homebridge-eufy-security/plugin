@@ -5,7 +5,7 @@
 import { IHomebridgePluginUi } from '@homebridge/plugin-ui-utils/dist/ui.interface';
 import '@homebridge/plugin-ui-utils/dist/ui.interface';
 
-import { PluginUiMock } from '../app/pluginUiMock';
+import { PluginUiMock } from './development/pluginUiMock';
 
   
 // here you can set up the plugin mock to mimic the behavior you like
