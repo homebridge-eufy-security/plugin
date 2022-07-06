@@ -4,6 +4,7 @@ import { EufySecurityPlatform } from '../platform';
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore  
 import { Station, DeviceType, PropertyName, PropertyValue, AlarmEvent } from 'eufy-security-client';
+import { StationConfig } from './configTypes';
 
 /**
  * Platform Accessory
@@ -11,11 +12,16 @@ import { Station, DeviceType, PropertyName, PropertyValue, AlarmEvent } from 'eu
  * Each accessory may expose multiple services of different service types.
  */
 export class StationAccessory {
+
+  private station: Station;
+
   private service: Service;
   private alarm_triggered: boolean;
   private modes;
 
   protected characteristic;
+
+  public readonly stationConfig: StationConfig;
 
   private hkStateNames = {
     0: 'Home',
@@ -35,7 +41,10 @@ export class StationAccessory {
     this.platform.log.debug(this.accessory.displayName, 'Constructed Station');
     // set accessory information
 
+    this.station = eufyStation;
     this.characteristic = this.platform.Characteristic;
+
+    this.stationConfig = this.getStationConfig();
 
     this.mappingHKEufy();
 
@@ -96,6 +105,32 @@ export class StationAccessory {
         this.handlePropertyChange(device, name, value),
       );
     }
+  }
+
+  private getStationConfig() {
+
+    let config = {} as StationConfig;
+
+    if (typeof this.platform.config.stations !== 'undefined') {
+      // eslint-disable-next-line prefer-arrow-callback, brace-style
+      const pos = this.platform.config.stations.map(function (e) { return e.serialNumber; }).indexOf(this.station.getSerial());
+      config = { ...this.platform.config.stations[pos] };
+    }
+
+    if (config.hkHome || this.platform.config.hkHome) {
+      config.hkHome = config.hkHome ??= this.platform.config.hkHome;
+    }
+    if (config.hkAway || this.platform.config.hkAway) {
+      config.hkAway = config.hkAway ??= this.platform.config.hkAway;
+    }
+    if (config.hkNight || this.platform.config.hkNight) {
+      config.hkNight = config.hkNight ??= this.platform.config.hkNight;
+    }
+    if (config.hkOff || this.platform.config.hkOff) {
+      config.hkOff = config.hkOff ??= this.platform.config.hkOff;
+    }
+
+    return config;
   }
 
   private onStationGuardModePushNotification(
@@ -161,21 +196,21 @@ export class StationAccessory {
 
   private mappingHKEufy(): void {
     this.modes = [
-      { hk: 0, eufy: this.platform.config.hkHome ?? 1 }, // Home
-      { hk: 1, eufy: this.platform.config.hkAway ?? 0 }, // Away
-      { hk: 2, eufy: this.platform.config.hkNight ?? 3 }, // Night
+      { hk: 0, eufy: this.stationConfig.hkHome ?? 1 }, // Home
+      { hk: 1, eufy: this.stationConfig.hkAway ?? 0 }, // Away
+      { hk: 2, eufy: this.stationConfig.hkNight ?? 3 }, // Night
     ];
 
     // If a keypad attached to the station
     if (this.eufyStation.hasDeviceWithType(DeviceType.KEYPAD)) {
-      this.modes.push({ hk: 3, eufy: this.platform.config.hkOff ?? 63 });
+      this.modes.push({ hk: 3, eufy: this.stationConfig.hkOff ?? 63 });
       this.modes.push({ hk: 3, eufy: ((this.modes.filter((m) => {
         return m.eufy === 6;
       })[0]) ? 63 : 6) });
-    } else if (this.platform.config.hkOff !== undefined && this.platform.config.hkOff !== null) {
+    } else if (this.stationConfig.hkOff !== undefined && this.stationConfig.hkOff !== null) {
       this.modes.push({
         hk: 3,
-        eufy: (this.platform.config.hkOff === 6) ? 63 : this.platform.config.hkOff,
+        eufy: (this.stationConfig.hkOff === 6) ? 63 : this.stationConfig.hkOff,
       }); // Enforce 63 if keypad has been selected but not attached to the station
     } else {
       this.modes.push({

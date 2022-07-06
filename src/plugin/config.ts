@@ -1,6 +1,6 @@
 import { PlatformConfig } from 'homebridge';
 
-import { CameraConfig } from './accessories/configTypes';
+import { CameraConfig, StationConfig } from './accessories/configTypes';
 
 /**
  * HomebridgePlatform
@@ -23,5 +23,6 @@ export interface EufySecurityPlatformConfig extends PlatformConfig {
   country: string;
   ffmpegdebug: boolean;
   cameras: CameraConfig[];
+  stations: StationConfig[];
   cleanCache: boolean;
 }

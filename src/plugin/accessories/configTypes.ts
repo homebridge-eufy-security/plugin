@@ -52,3 +52,11 @@ export type VideoConfig = {
   debug?: boolean;
   debugReturn?: boolean;
 };
+
+export type StationConfig = {
+  serialNumber?: string;
+  hkHome: number;
+  hkAway: number;
+  hkNight: number;
+  hkOff: number;
+};
