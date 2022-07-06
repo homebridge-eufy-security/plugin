@@ -36,11 +36,13 @@ export class NamePipeStream {
       this.log.debug('parent_dir', __dirname);
     }
 
-    try {
-      fs.statSync(path);
-      fs.unlinkSync(path);
-    } catch (err) {
-      this.log.error(err);
+    if (fs.existsSync(path)) { // if sock file already exists: try to delete it
+      try {
+        fs.statSync(path);
+        fs.unlinkSync(path);
+      } catch (err) {
+        this.log.error(err);   
+      }
     }
 
     this.server = net.createServer(writableStream);
