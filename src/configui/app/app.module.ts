@@ -36,6 +36,8 @@ import { AdvancedVideoconfigComponent } from './config-options/advanced-videocon
 import { HashLocationStrategy, LocationStrategy } from '@angular/common';
 import { StationConfigOptionsComponent } from './station-config-options/station-config-options.component';
 import { GuardModesMappingComponent } from './config-options/guard-modes-mapping/guard-modes-mapping.component';
+import { ResetPluginComponent } from './config-options/reset-plugin/reset-plugin.component';
+import { ResetConfirmationComponent } from './reset-confirmation/reset-confirmation.component';
 
 @NgModule({
   declarations: [
@@ -65,6 +67,8 @@ import { GuardModesMappingComponent } from './config-options/guard-modes-mapping
     AdvancedVideoconfigComponent,
     StationConfigOptionsComponent,
     GuardModesMappingComponent,
+    ResetPluginComponent,
+    ResetConfirmationComponent,
   ],
   imports: [BrowserModule, FormsModule, NgbModule, AppRoutingModule, FontAwesomeModule],
   providers: [{ provide: LocationStrategy, useClass: HashLocationStrategy }],
