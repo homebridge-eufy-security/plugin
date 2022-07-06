@@ -16,7 +16,7 @@ export const DEFAULT_CONFIG_VALUES = {
 };
 
 export const DEFAULT_CAMERACONFIG_VALUES = {
-  unbridge: true, // TODO: really?
+  unbridge: false,
   enableButton: true,
   motionButton: true,
   rtsp: false,

@@ -1,6 +1,7 @@
 import { Component, OnInit, Input } from '@angular/core';
 import { Accessory } from '../../../app/accessory';
 import { PluginService } from '../../../app/plugin.service';
+import { DEFAULT_CAMERACONFIG_VALUES } from '../../util/default-config-values';
 import { ConfigOptionsInterpreter } from '../config-options-interpreter';
 
 @Component({
@@ -24,7 +25,7 @@ export class UnbridgeAccessoryComponent extends ConfigOptionsInterpreter impleme
   /** updateConfig() takes an optional second parameter to specify the accessoriy for which the setting is changed */
 
   @Input() accessory?: Accessory;
-  value = true;
+  value = DEFAULT_CAMERACONFIG_VALUES.unbridge;
 
   async readValue() {
     const config = await this.getCameraConfig(this.accessory?.uniqueId || '');

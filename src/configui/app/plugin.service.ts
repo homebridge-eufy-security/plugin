@@ -90,8 +90,7 @@ export class PluginService extends EventTarget {
   }
 
   private async getPlatformConfig(): Promise<PluginConfig> {
-    // always use the first platform config
-    // TODO: implement way to use more than one
+    // always use the first platform config since there is only one supported
     try {
       const configs = await window.homebridge.getPluginConfig();
 
