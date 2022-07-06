@@ -17,7 +17,7 @@
   },
   "main": "dist/index.js",
   "scripts": {
-    "lint": "eslint src/**.ts --max-warnings=0",
+    "lint": "eslint src/** --max-warnings=0",
     "watch": "npm run build && npm link && nodemon",
     "build": "npm run build-plugin && npm run build-configui",
     "build-plugin": "rimraf ./dist && tsc --project tsconfig.plugin.json",

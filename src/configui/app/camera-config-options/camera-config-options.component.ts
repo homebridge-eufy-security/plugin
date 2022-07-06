@@ -15,9 +15,7 @@ export class CameraConfigOptionsComponent implements OnInit {
   showEnhancedSnapshotBehaviour = true;
   isDoorbell = false;
 
-  constructor(private pluginService: PluginService, private route: ActivatedRoute) {
-    console.log('testtest');
-  }
+  constructor(private pluginService: PluginService, private route: ActivatedRoute) { }
 
   ngOnInit(): void {
     const uniqueId = this.route.snapshot.paramMap.get('uniqueId');

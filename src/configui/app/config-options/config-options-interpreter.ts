@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { PluginConfig } from '@homebridge/plugin-ui-utils/dist/ui.interface';
 import { Accessory } from '../accessory';
@@ -13,7 +14,7 @@ export class ConfigOptionsInterpreter {
       .then((config) => {
         this.config = config;
       })
-      .catch((err) => console.log(err));
+      .catch((err) => console.log('Could not get config in config interpreter: ' + err));
   }
 
   protected async getCameraConfig(uniqueId: string): Promise<any> {

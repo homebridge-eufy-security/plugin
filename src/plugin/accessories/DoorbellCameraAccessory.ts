@@ -56,7 +56,8 @@ export class DoorbellCameraAccessory extends CameraAccessory {
 
   }
 
-  // We receive 2 push when Doorbell ring, mute the second by checking if we already send the event to HK then reset the marker when 2nd times occurs
+  // We receive 2 push when Doorbell ring, mute the second by checking if we already send
+  // the event to HK then reset the marker when 2nd times occurs
   private onDeviceRingsPushNotification(): void {
     if (!this.ring_triggered) {
       this.ring_triggered = true;

@@ -61,7 +61,7 @@ export class FfmpegProcess {
     });
     const stderr = readline.createInterface({
       input: this.process.stderr,
-      terminal: false
+      terminal: false,
     });
     stderr.on('line', (line: string) => {
       if (callback) {
@@ -90,7 +90,7 @@ export class FfmpegProcess {
 
       if (this.killTimeout && code === 0) {
         this.log.info(this.cameraName, message + ' (Expected)');
-      } else if (code == null || code === 255) {
+      } else if (code === null || code === 255) {
         if (this.process.killed) {
           this.log.info(this.cameraName, message + ' (Forced)');
         } else {
@@ -111,7 +111,7 @@ export class FfmpegProcess {
   parseProgress(data: Uint8Array): FfmpegProgress | undefined {
     const input = data.toString();
 
-    if (input.indexOf('frame=') == 0) {
+    if (input.indexOf('frame=') === 0) {
 
       try {
         const progress = new Map<string, string>();
@@ -131,7 +131,7 @@ export class FfmpegProcess {
           dup_frames: parseInt(progress.get('dup_frames')!),
           drop_frames: parseInt(progress.get('drop_frames')!),
           speed: parseFloat(progress.get('speed')!),
-          progress: progress.get('progress')!.trim()
+          progress: progress.get('progress')!.trim(),
         } as FfmpegProgress;
       } catch {
         return undefined;
