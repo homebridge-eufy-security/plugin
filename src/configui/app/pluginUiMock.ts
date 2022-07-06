@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { CachedAccessory, PluginConfig } from '@homebridge/plugin-ui-utils/dist/ui.interface';
 
@@ -74,9 +75,15 @@ export class PluginUiMock extends EventTarget {
         return this.login(body);
       case '/storedAccessories':
         return this.getStoredAccessories();
+      case '/reset':
+        return this.resetAll();
       default:
         return Promise.reject('unknown path');
     }
+  }
+
+  public closeSettings() {
+    console.log('settings closed');
   }
 
   private login(options: any): Promise<LoginResult> {
@@ -153,6 +160,11 @@ export class PluginUiMock extends EventTarget {
 
   private pushAccessory(accessory: Accessory) {
     this.dispatchEvent(new DataEvent('addAccessory', accessory));
+  }
+
+  private resetAll() {
+    this.mimicFirstLogin();
+    return Promise.resolve({ result: 1 });
   }
 }
 
