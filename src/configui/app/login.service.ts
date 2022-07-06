@@ -1,27 +1,10 @@
+/* eslint-disable no-console */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Injectable } from '@angular/core';
 import { PluginConfig } from '@homebridge/plugin-ui-utils/dist/ui.interface';
 
 import { PluginService } from './plugin.service';
-
-export type Credentials = {
-  username: string;
-  password: string;
-  country: string;
-};
-
-export enum LoginFailReason {
-  UNKNOWN = 0,
-  CAPTCHA = 1,
-  TFA = 2,
-  TIMEOUT = 3,
-}
-
-export type LoginResult = {
-  success: boolean;
-  failReason?: LoginFailReason;
-  data?: any;
-};
+import { Credentials, LoginResult, LoginFailReason } from './util/types';
 
 @Injectable({
   providedIn: 'root',

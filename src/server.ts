@@ -1,11 +1,12 @@
-import { EufySecurity, EufySecurityConfig } from 'eufy-security-client';
-import { HomebridgePluginUiServer, RequestError } from '@homebridge/plugin-ui-utils';
+/* eslint-disable @typescript-eslint/no-var-requires */
+import { EufySecurity, EufySecurityConfig, Device, Station } from 'eufy-security-client';
+import { HomebridgePluginUiServer } from '@homebridge/plugin-ui-utils';
 
 import fs from 'fs';
-import { Accessory } from './configui/app/accessory';
+import bunyan from 'bunyan';
 
-// TODO: add logging mechanism
-// TODO: add strict typing
+import { Accessory } from './configui/app/accessory';
+import { LoginResult, LoginFailReason } from './configui/app/util/types';
 
 class UiServer extends HomebridgePluginUiServer {
   storagePath: string;
@@ -15,6 +16,8 @@ class UiServer extends HomebridgePluginUiServer {
   config: EufySecurityConfig;
   eufyClient: EufySecurity | null;
 
+  private log: bunyan;
+
   constructor() {
     super();
 
@@ -22,6 +25,20 @@ class UiServer extends HomebridgePluginUiServer {
     this.storedAccessories_file = this.storagePath + '/accessories.json';
 
     this.eufyClient = null;
+
+    const plugin = require('../package.json');
+
+    this.log = bunyan.createLogger({
+      name: '[EufySecurity-' + plugin.version + ']',
+      hostname: '',
+      streams: [{
+        level: 'debug',
+        type: 'rotating-file',
+        path: this.storagePath + '/configui-server.log',
+        period: '1d',
+        count: 3,
+      }],
+    });
 
     if (!fs.existsSync(this.storagePath)) {
       fs.mkdirSync(this.storagePath);
@@ -40,24 +57,23 @@ class UiServer extends HomebridgePluginUiServer {
 
     this.onRequest('/login', this.login.bind(this));
     this.onRequest('/storedAccessories', this.loadStoredAccessories.bind(this));
+    this.onRequest('/reset', this.resetPlugin.bind(this));
 
     this.ready();
   }
 
-  async login(options) {
-    console.log('login method entry');
-    console.log(JSON.stringify(options));
+  async login(options): Promise<LoginResult> {
 
     if (!this.eufyClient && options && options.username && options.password && options.country) {
       this.accessories = []; // clear accessories array so that it can be filled with all devices after login
-      console.log('init eufyClient');
+      this.log.debug('init eufyClient');
       this.config.username = options.username;
       this.config.password = options.password;
       this.config.country = options.country;
       try {
-        this.eufyClient = await EufySecurity.initialize(this.config);
+        this.eufyClient = await EufySecurity.initialize(this.config, this.log);
       } catch (err) {
-        console.log(err);
+        this.log.error(err);
       }
       this.eufyClient?.on('station added', this.addStation.bind(this));
       this.eufyClient?.on('device added', this.addDevice.bind(this));
@@ -67,27 +83,25 @@ class UiServer extends HomebridgePluginUiServer {
       const connectionTimeout = setTimeout(() => {
         resolve({
           success: false,
-          failReason: 3, // timeout
+          failReason: LoginFailReason.TIMEOUT,
         });
       }, 25000);
 
       if (options && options.username && options.password && options.country) {
         // login with credentials
-        console.log('login with credentials');
+        this.log.debug('login with credentials');
         try {
           this.loginHandlers(resolve);
           this.eufyClient?.connect()
             .then(() => {
-              console.log('connected?: ' + this.eufyClient?.isConnected());
+              this.log.debug('connected?: ' + this.eufyClient?.isConnected());
             })
-            .catch((err) => console.log(err));
-          console.log('connect method called');
+            .catch((err) => this.log.error(err));
         } catch (err) {
-          console.log('Error!');
-          console.log(err);
+          this.log.error(err);
           resolve({
             success: false,
-            failReason: 0,
+            failReason: LoginFailReason.UNKNOWN,
             data: {
               error: err,
             },
@@ -104,7 +118,7 @@ class UiServer extends HomebridgePluginUiServer {
         } catch (err) {
           resolve({
             success: false,
-            failReason: 0,
+            failReason: LoginFailReason.UNKNOWN,
             data: {
               error: err,
             },
@@ -124,7 +138,7 @@ class UiServer extends HomebridgePluginUiServer {
         } catch (err) {
           resolve({
             success: false,
-            failReason: 0,
+            failReason: LoginFailReason.UNKNOWN,
             data: {
               error: err,
             },
@@ -136,30 +150,29 @@ class UiServer extends HomebridgePluginUiServer {
     });
   }
 
-  async loadStoredAccessories() {
+  async loadStoredAccessories(): Promise<Accessory[]> {
     try {
       const accessories = JSON.parse(fs.readFileSync(this.storedAccessories_file, { encoding: 'utf-8' }));
-      return Promise.resolve(accessories);
+      return Promise.resolve(accessories as Accessory[]);
     } catch (err) {
       return Promise.reject(err);
     }
   }
 
   loginHandlers(resolveCallback) {
-    console.log('loginHandlers');
     this.eufyClient?.once('tfa request', () => {
-      console.log('tfa request');
+      this.log.debug('tfa request event');
       resolveCallback({
         success: false,
-        failReason: 2, // TFA
+        failReason: LoginFailReason.TFA, // TFA
       });
     });
 
     this.eufyClient?.once('captcha request', (id, captcha) => {
-      console.log('captcha request');
+      this.log.debug('captcha request event');
       resolveCallback({
         success: false,
-        failReason: 1, // Captcha
+        failReason: LoginFailReason.CAPTCHA, // Captcha
         data: {
           id: id,
           captcha: captcha,
@@ -168,15 +181,15 @@ class UiServer extends HomebridgePluginUiServer {
     });
 
     this.eufyClient?.once('connect', () => {
-      console.log('connect');
+      this.log.debug('connect event');
       resolveCallback({
         success: true,
       });
     });
   }
 
-  addStation(station) {
-    const s = {
+  addStation(station: Station) {
+    const s: Accessory = {
       uniqueId: station.getSerial(),
       displayName: station.getName(),
       station: true,
@@ -187,8 +200,8 @@ class UiServer extends HomebridgePluginUiServer {
     this.pushEvent('addAccessory', s);
   }
 
-  addDevice(device) {
-    const d = {
+  addDevice(device: Device) {
+    const d: Accessory = {
       uniqueId: device.getSerial(),
       displayName: device.getName(),
       station: false,
@@ -202,9 +215,18 @@ class UiServer extends HomebridgePluginUiServer {
   storeAccessories() {
     fs.writeFileSync(this.storedAccessories_file, JSON.stringify(this.accessories));
   }
+
+  async resetPlugin() {
+    try {
+      fs.rmSync(this.storagePath, { recursive: true });
+      return { result: 1 }; //file removed
+    } catch (err) {
+      return { result: 0 }; //error while removing the file
+    }
+  }
 }
 
-// start the instance of the class
+// start the instance of the server
 (() => {
   return new UiServer();
 })();

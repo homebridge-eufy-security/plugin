@@ -1,11 +1,11 @@
+/* eslint-disable no-console */
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 
-import { LoginService, Credentials, LoginResult, LoginFailReason } from '../login.service';
+import { Credentials, LoginResult, LoginFailReason } from '../util/types';
+import { LoginService } from '../login.service';
 
 import { Country, COUNTRIES } from '../countries';
-
-// TODO: 'select the country you choose in eufy app'
 
 enum LoginStep {
   LOGIN = 1,
@@ -56,7 +56,7 @@ export class LoginComponent implements OnInit {
       .then((creds) => (this.credentials = creds))
       .catch((err) => {
         this.firstLoginAssumed = true;
-        console.log(err);
+        console.log('Could not get config in login component: ' + err);
       });
   }
 
@@ -132,7 +132,6 @@ export class LoginComponent implements OnInit {
     if (loginResult && loginResult.success) {
       this.loginService.updateConfigCredentials(this.credentials);
       this.routerService.navigate(['/accessories', { waitForAccessories: true }]);
-      // TODO: clear old accessories from plugin service || remove waitForAccessories
     } else {
       if (loginResult && loginResult.failReason && loginResult.failReason === LoginFailReason.TFA) {
         this.loginStep = LoginStep.TFA;
