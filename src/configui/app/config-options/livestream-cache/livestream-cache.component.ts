@@ -3,6 +3,8 @@ import { Accessory } from '../../../app/accessory';
 import { PluginService } from '../../../app/plugin.service';
 import { ConfigOptionsInterpreter } from '../config-options-interpreter';
 
+import { DEFAULT_CAMERACONFIG_VALUES } from '../../util/default-config-values';
+
 @Component({
   selector: 'app-livestream-cache',
   templateUrl: './livestream-cache.component.html',
@@ -24,7 +26,7 @@ export class LivestreamCacheComponent extends ConfigOptionsInterpreter implement
   /** updateConfig() takes an optional second parameter to specify the accessoriy for which the setting is changed */
 
   @Input() accessory?: Accessory;
-  value = true;
+  value = DEFAULT_CAMERACONFIG_VALUES.useCachedLocalLivestream;
 
   async readValue() {
     const config = await this.getCameraConfig(this.accessory?.uniqueId || '');

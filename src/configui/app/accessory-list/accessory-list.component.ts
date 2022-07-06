@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Component, OnInit, Input } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -53,6 +54,8 @@ export class AccessoryListComponent implements OnInit {
         if (!result) {
           this.routerService.navigateByUrl('/login');
         }
+      }).catch(err => {
+        this.routerService.navigateByUrl('/login');
       });
     }
   }
