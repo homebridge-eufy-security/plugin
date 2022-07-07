@@ -3,7 +3,7 @@ import { Service, PlatformAccessory, CharacteristicValue } from 'homebridge';
 import { EufySecurityPlatform } from '../platform';
 import { DeviceAccessory } from './Device';
 
-// import { HttpService, LocalLookupService, DeviceClientService, CommandType } from 'eufy-node-client';
+// TODO: timeout for target state change
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore  
@@ -53,6 +53,13 @@ export class SmartLockAccessory extends DeviceAccessory {
       this.onDeviceLockPushNotification(device, lock),
     );
     
+    // update the lock state at startup
+    const lockStatus = this.SmartLock.isLocked();
+    this.platform.log.debug(this.accessory.displayName, 'initial lock eufy state ' + lockStatus);
+    this.service
+      .getCharacteristic(this.platform.Characteristic.LockCurrentState)
+      .updateValue(this.convertlockStatusCode(lockStatus));
+
   }
 
   /**
@@ -71,10 +78,15 @@ export class SmartLockAccessory extends DeviceAccessory {
   }
 
   async handleLockTargetStateSet(value) {
-    this.platform.log.debug(this.accessory.displayName, 'Triggered SET LockTargetState', value);   
-    const stationSerial = this.SmartLock.getStationSerial();
-    const station = this.platform.getStationById(stationSerial);
-    station.lockDevice(this.SmartLock, !!value);
+    this.platform.log.debug(this.accessory.displayName, 'Triggered SET LockTargetState', value);
+
+    try {
+      const stationSerial = this.SmartLock.getStationSerial();
+      const station = this.platform.getStationById(stationSerial);
+      await station.lockDevice(this.SmartLock, !!value);
+    } catch (err) {
+      this.platform.log.error(this.accessory.displayName, 'Lock target state could not be set: ' + err);
+    }
   }
 
   getLockStatus(current = true) {
@@ -93,20 +105,20 @@ export class SmartLockAccessory extends DeviceAccessory {
 
     this.platform.log.debug(this.accessory.displayName, 'LockStatus', lockStatus);
 
-    const characteristic = (current) ? this.platform.Characteristic.LockCurrentState : this.platform.Characteristic.LockTargetState;
-
     switch (lockStatus) {
       case true:
       case 4:
-        return characteristic.SECURED;
+        return (current) ? this.platform.Characteristic.LockCurrentState.SECURED : this.platform.Characteristic.LockTargetState.SECURED;
       case false:
       case 3:
-        return characteristic.UNSECURED;
-      // case 3:
-      //   return characteristic.JAMMED;
+        return (current) ? this.platform.Characteristic.LockCurrentState.UNSECURED : this.platform.Characteristic.LockTargetState.UNSECURED;
+      case 5:
+        // return SECURED as TargetState if jammed
+        return (current) ? this.platform.Characteristic.LockCurrentState.JAMMED : this.platform.Characteristic.LockTargetState.SECURED;
       default:
         this.platform.log.warn(this.accessory.displayName, 'Something wrong on the lockstatus feedback');
-        return this.platform.Characteristic.LockCurrentState.UNKNOWN;
+        // return SECURED as TargetState if unknown
+        return (current) ? this.platform.Characteristic.LockCurrentState.UNKNOWN : this.platform.Characteristic.LockTargetState.SECURED;
     }
   }
 

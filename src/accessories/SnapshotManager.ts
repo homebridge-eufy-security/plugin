@@ -130,7 +130,9 @@ export class SnapshotManager extends EventEmitter {
       this.log.error(this.device.getName(), 'could not cache black snapshot file for further use: ' + err);
     }
 
-    this.getSnapshotFromCloud(); // get current cloud snapshot for balanced mode scenarios -> first snapshot can be resolved
+    this.getSnapshotFromCloud() // get current cloud snapshot for balanced mode scenarios -> first snapshot can be resolved
+      .catch(err => this.log.warn(this.device.getName(),
+        'snapshot handler is initialized without cloud snapshot. Maybe no snapshot will displayed the first times.'));
   }
 
   private onRingEvent(device: Device, state: boolean) {
@@ -374,7 +376,7 @@ export class SnapshotManager extends EventEmitter {
                 image: imageBuffer,
               });
             } else if (retries <= 0) {
-              this.log.warn(this.device.getName(), 'Didn\'t retireve cloud snapshot in time. Reached max. retries.');
+              this.log.warn(this.device.getName(), 'Did not retrieve cloud snapshot in time. Reached max. retries.');
               reject('Could not get image data');
             } else {
               setTimeout(() => {
