@@ -69,8 +69,7 @@ export class CameraAccessory extends DeviceAccessory {
 
     try {
       this.platform.log.debug(this.accessory.displayName, 'enableButton config:', this.cameraConfig.enableButton);
-      if ((this.cameraConfig.enableCamera || (typeof this.eufyDevice.isDoorbell === 'function' && this.eufyDevice.isDoorbell()))
-        && this.cameraConfig.enableButton
+      if (this.cameraConfig.enableButton
         && this.eufyDevice.hasProperty('enabled')) {
         this.platform.log.debug(this.accessory.displayName, 'has a isEnabled, so append switchEnabledService characteristic to him.');
 
