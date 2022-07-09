@@ -1,8 +1,9 @@
 # Change Log
 
-## 2.1.0 (beta) (21/06/2022)
+## 2.1.0 (beta) (09/07/2022)
 
 ### Changed
+-   Complete redesign of the config ui screen
 -   Additional log output when station guard mode is changed (see [enhancement]: Logging basic operations such as guard mode change on the UI without debug mode #39)
 -   Edited description for livestream caching in configuration wizard
 -   Changed log output messages for better understanding
@@ -10,6 +11,8 @@
 -   Added timeouts for guard mode changes with corresponding log messages and one retry (possible fix for [Bug]: Eufy Indoor Cam 2k alarm state issue #38 and [enhancement]: Logging basic operations such as guard mode change on the UI without debug mode #39)
 -   Improved snapshot handling
 -   Allow enabling and disabling motion detection throug switch if camera is used as motion sensor only
+-   cameras can now be enabled and disabled even if only used as motion sensors devices
+-   Refactored whole project structure to resemble the new workspace layout (plugin + custom ui)
 
 ### Fixed
 -   [Bug]: package.json reqiures the wrong node version #44
@@ -24,6 +27,11 @@
 - Fix #48 Options enableCamera and enableMotion were not working in specific configuration situations
 - Fix #79 Unbridge setting not working for doorbell cameras
 - Fix #81 under certain conditions two cameras on the same station could not get automatic snapshot refreshes simultaneously
+- crash on startup if ignoreStations or ignoreDevices was not set in config json
+- fixed all lint warnings and errors
+- fixed npm audit warnings
+- crash if first cloud snapshot could not be downloaded
+- smart lock state could be wrong on startup (further improvements needed)
 
 ## 2.0.1 (20.06.2022)
 
