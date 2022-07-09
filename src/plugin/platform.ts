@@ -109,6 +109,9 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
 
     this.log.warn('warning: planned changes, see https://github.com/homebridge-eufy-security/plugin/issues/1');
 
+    const library = require('../node_modules/eufy-security-client/package.json');
+    this.log.debug('Using bropats eufy-security-client library in version ' + library.version);
+
     this.clean_config();
 
     if (!fs.existsSync(this.eufyPath)) {

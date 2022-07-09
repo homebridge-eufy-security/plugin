@@ -40,6 +40,9 @@ class UiServer extends HomebridgePluginUiServer {
       }],
     });
 
+    const library = require('../node_modules/eufy-security-client/package.json');
+    this.log.debug('Using bropats eufy-security-client library in version ' + library.version);
+
     if (!fs.existsSync(this.storagePath)) {
       fs.mkdirSync(this.storagePath);
     }
