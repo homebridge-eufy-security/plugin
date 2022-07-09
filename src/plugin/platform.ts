@@ -158,14 +158,140 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
       this.eufyClient = (this.config.enableDetailedLogging)
         ? await EufySecurity.initialize(this.eufyConfig, this.logLib)
         : await EufySecurity.initialize(this.eufyConfig);
+      
+      this.eufyClient.on('station added', this.stationAdded.bind(this));
+      this.eufyClient.on('device added', this.deviceAdded.bind(this));
+
+      this.eufyClient.on('push connect', () => {
+        this.log.debug('Push Connected!');
+      });
+      this.eufyClient.on('push close', () => {
+        this.log.warn('Push Closed!');
+      });
+
     } catch (e) {
       this.log.error('Error while setup : ', e);
       this.log.error('Not connected can\'t continue!');
       return;
     }
 
-    await this.discoverDevices();
+    try {
+      await this.eufyClient.connect();
+      this.log.debug('EufyClient connected ' + this.eufyClient.isConnected());
+    } catch (e) {
+      this.log.error('Error authenticating Eufy : ', e);
+    }
 
+    if (!this.eufyClient.isConnected()) {
+      this.log.error('Not connected can\'t continue!');
+      return;
+    }
+
+    this.eufyClient.setCameraMaxLivestreamDuration(this.config.CameraMaxLivestreamDuration ?? 30);
+    this.log.debug('CameraMaxLivestreamDuration:', this.eufyClient.getCameraMaxLivestreamDuration());
+  }
+
+  private async stationAdded(station: Station) {
+    // TODO: implement
+    this.log.debug(
+      'Found Station',
+      station.getSerial(),
+      station.getName(),
+      DeviceType[station.getDeviceType()],
+      station.getLANIPAddress(),
+    );
+
+    if (station.getRawStation().member.member_type === 1) {
+      this.log.info('You\'re using guest admin account with this plugin! This is recommanded way!');
+    } else {
+      this.log.warn('You\'re not using guest admin account with this plugin! This is not recommanded way!');
+      this.log.warn('Please look here for more details:');
+      this.log.warn('https://github.com/homebridge-eufy-security/plugin/wiki/Installation');
+      this.log.warn(station.getSerial() + ' type: ' + station.getRawStation().member.member_type);
+    }
+
+    if (this.config.ignoreStations.indexOf(station.getSerial()) !== -1) {
+      this.log.debug('Device ignored');
+      return;
+    }
+
+    const deviceContainer: DeviceContainer = {
+      deviceIdentifier: {
+        uniqueId: station.getSerial(),
+        displayName: station.getName(),
+        type: station.getDeviceType(),
+        station: true,
+      } as DeviceIdentifier,
+      eufyDevice: station,
+    };
+    
+    this.processAccessory(deviceContainer);
+  }
+
+  private async deviceAdded(device: Device) {
+    // TODO: implement
+    this.log.debug(
+      'Found device',
+      device.getSerial(),
+      device.getName(),
+      DeviceType[device.getDeviceType()],
+    );
+
+    if (this.config.ignoreDevices.indexOf(device.getSerial()) !== -1) {
+      this.log.debug('Device ignored');
+      return;
+    }
+
+    const deviceContainer: DeviceContainer = {
+      deviceIdentifier: {
+        uniqueId: device.getSerial(),
+        displayName: device.getName(),
+        type: device.getDeviceType(),
+        station: false,
+      } as DeviceIdentifier,
+      eufyDevice: device,
+    };
+    
+    this.processAccessory(deviceContainer);
+  }
+
+  private processAccessory(deviceContainer: DeviceContainer) {
+    // generate a unique id for the accessory this should be generated from
+    // something globally unique, but constant, for example, the device serial
+    // number or MAC address
+    let uuid = this.api.hap.uuid.generate(deviceContainer.deviceIdentifier.uniqueId);
+
+    // Checking Device Type if it's not a station, it will be the same serial number we will find
+    // in Device list and it will create the same UUID
+    if (deviceContainer.deviceIdentifier.type !== DeviceType.STATION && deviceContainer.deviceIdentifier.station) {
+      uuid = this.api.hap.uuid.generate('s_' + deviceContainer.deviceIdentifier.uniqueId);
+      this.log.debug('This device is not a station. Generating a new UUID to avoid any duplicate issue');
+    }
+
+    // TODO: check activeAccessoriesIds
+    // activeAccessoryIds.push(uuid);
+
+    // see if an accessory with the same uuid has already been registered and restored from
+    // the cached devices we stored in the `configureAccessory` method above
+    const cachedAccessory = this.accessories.find((accessory) => accessory.UUID === uuid);
+
+    if (!cachedAccessory) {
+      // the accessory does not yet exist, so we need to create it
+
+      // create a new accessory
+      const accessory = new this.api.platformAccessory(deviceContainer.deviceIdentifier.displayName, uuid);
+
+      // store a copy of the device object in the `accessory.context`
+      // the `context` property can be used to store any data about the accessory you may need
+      accessory.context['device'] = deviceContainer.deviceIdentifier;
+
+      // create the accessory handler for the newly create accessory
+      // this is imported from `platformAccessory.ts`
+
+      this.register_accessory(accessory, deviceContainer, false);
+    } else {
+      this.register_accessory(cachedAccessory, deviceContainer, true);
+    }
   }
 
   private async pluginShutdown() {
@@ -188,105 +314,107 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
     this.accessories.push(accessory);
   }
 
+  // TODO: remove
+  // TODO: new cleanCache implementation
   async discoverDevices() {
-    this.log.debug('discoveringDevices');
+    // this.log.debug('discoveringDevices');
 
-    try {
-      await this.eufyClient.connect();
-      this.log.debug('EufyClient connected ' + this.eufyClient.isConnected());
-    } catch (e) {
-      this.log.error('Error authenticating Eufy : ', e);
-    }
+    // try {
+    //   await this.eufyClient.connect();
+    //   this.log.debug('EufyClient connected ' + this.eufyClient.isConnected());
+    // } catch (e) {
+    //   this.log.error('Error authenticating Eufy : ', e);
+    // }
 
-    if (!this.eufyClient.isConnected()) {
-      this.log.error('Not connected can\'t continue!');
-      return;
-    }
+    // if (!this.eufyClient.isConnected()) {
+    //   this.log.error('Not connected can\'t continue!');
+    //   return;
+    // }
 
-    await this.refreshData(this.eufyClient);
+    // await this.refreshData(this.eufyClient);
 
-    this.eufyClient.on('push connect', () => {
-      this.log.debug('Push Connected!');
-    });
-    this.eufyClient.on('push close', () => {
-      this.log.warn('Push Closed!');
-    });
+    // this.eufyClient.on('push connect', () => {
+    //   this.log.debug('Push Connected!');
+    // });
+    // this.eufyClient.on('push close', () => {
+    //   this.log.warn('Push Closed!');
+    // });
 
-    this.eufyClient.setCameraMaxLivestreamDuration(this.config.CameraMaxLivestreamDuration ?? 30);
-    this.log.debug('CameraMaxLivestreamDuration:', this.eufyClient.getCameraMaxLivestreamDuration());
+    // this.eufyClient.setCameraMaxLivestreamDuration(this.config.CameraMaxLivestreamDuration ?? 30);
+    // this.log.debug('CameraMaxLivestreamDuration:', this.eufyClient.getCameraMaxLivestreamDuration());
 
-    const eufyStations = await this.eufyClient.getStations();
-    this.log.debug('Found ' + eufyStations.length + ' stations.');
+    // const eufyStations = await this.eufyClient.getStations();
+    // this.log.debug('Found ' + eufyStations.length + ' stations.');
 
     const devices: Array<DeviceContainer> = [];
 
-    for (const station of eufyStations) {
-      this.log.debug(
-        'Found Station',
-        station.getSerial(),
-        station.getName(),
-        DeviceType[station.getDeviceType()],
-        station.getLANIPAddress(),
-      );
+    // for (const station of eufyStations) {
+    //   this.log.debug(
+    //     'Found Station',
+    //     station.getSerial(),
+    //     station.getName(),
+    //     DeviceType[station.getDeviceType()],
+    //     station.getLANIPAddress(),
+    //   );
 
-      if (station.getRawStation().member.member_type === 1) {
-        this.log.info('You\'re using guest admin account with this plugin! This is recommanded way!');
-      } else {
-        this.log.warn('You\'re not using guest admin account with this plugin! This is not recommanded way!');
-        this.log.warn('Please look here for more details:');
-        this.log.warn('https://github.com/homebridge-eufy-security/plugin/wiki/Installation');
-        this.log.warn(station.getSerial() + ' type: ' + station.getRawStation().member.member_type);
-      }
+    //   if (station.getRawStation().member.member_type === 1) {
+    //     this.log.info('You\'re using guest admin account with this plugin! This is recommanded way!');
+    //   } else {
+    //     this.log.warn('You\'re not using guest admin account with this plugin! This is not recommanded way!');
+    //     this.log.warn('Please look here for more details:');
+    //     this.log.warn('https://github.com/homebridge-eufy-security/plugin/wiki/Installation');
+    //     this.log.warn(station.getSerial() + ' type: ' + station.getRawStation().member.member_type);
+    //   }
 
-      if (this.config.ignoreStations.indexOf(station.getSerial()) !== -1) {
-        this.log.debug('Device ignored');
-        continue;
-      }
+    //   if (this.config.ignoreStations.indexOf(station.getSerial()) !== -1) {
+    //     this.log.debug('Device ignored');
+    //     continue;
+    //   }
 
-      const deviceContainer: DeviceContainer = {
-        deviceIdentifier: {
-          uniqueId: station.getSerial(),
-          displayName: station.getName(),
-          type: station.getDeviceType(),
-          station: true,
-        } as DeviceIdentifier,
-        eufyDevice: station,
-      };
-      devices.push(deviceContainer);
-    }
+    //   const deviceContainer: DeviceContainer = {
+    //     deviceIdentifier: {
+    //       uniqueId: station.getSerial(),
+    //       displayName: station.getName(),
+    //       type: station.getDeviceType(),
+    //       station: true,
+    //     } as DeviceIdentifier,
+    //     eufyDevice: station,
+    //   };
+    //   devices.push(deviceContainer);
+    // }
 
-    const eufyDevices = await this.eufyClient.getDevices();
-    this.log.debug('Found ' + eufyDevices.length + ' devices.');
+    // const eufyDevices = await this.eufyClient.getDevices();
+    // this.log.debug('Found ' + eufyDevices.length + ' devices.');
 
-    for (const device of eufyDevices) {
-      this.log.debug(
-        'Found device',
-        device.getSerial(),
-        device.getName(),
-        DeviceType[device.getDeviceType()],
-      );
+    // for (const device of eufyDevices) {
+    //   this.log.debug(
+    //     'Found device',
+    //     device.getSerial(),
+    //     device.getName(),
+    //     DeviceType[device.getDeviceType()],
+    //   );
 
-      // if (this.config.ignoreStations.indexOf(device.getStationSerial()) !== -1) {
-      //   this.log.debug('Device ignored because station is ignored');
-      //   continue;
-      // }
+    //   // if (this.config.ignoreStations.indexOf(device.getStationSerial()) !== -1) {
+    //   //   this.log.debug('Device ignored because station is ignored');
+    //   //   continue;
+    //   // }
 
-      if (this.config.ignoreDevices.indexOf(device.getSerial()) !== -1) {
-        this.log.debug('Device ignored');
-        continue;
-      }
+    //   if (this.config.ignoreDevices.indexOf(device.getSerial()) !== -1) {
+    //     this.log.debug('Device ignored');
+    //     continue;
+    //   }
 
-      const deviceContainer: DeviceContainer = {
-        deviceIdentifier: {
-          uniqueId: device.getSerial(),
-          displayName: device.getName(),
-          type: device.getDeviceType(),
-          station: false,
-        } as DeviceIdentifier,
-        eufyDevice: device,
-      };
-      devices.push(deviceContainer);
-    }
+    //   const deviceContainer: DeviceContainer = {
+    //     deviceIdentifier: {
+    //       uniqueId: device.getSerial(),
+    //       displayName: device.getName(),
+    //       type: device.getDeviceType(),
+    //       station: false,
+    //     } as DeviceIdentifier,
+    //     eufyDevice: device,
+    //   };
+    //   devices.push(deviceContainer);
+    // }
 
     const activeAccessoryIds: string[] = [];
 
@@ -371,10 +499,10 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
     if (station) {
       if (type !== DeviceType.STATION) {
         // Allowing camera but not the lock nor doorbell for now
-        if (!(type === DeviceType.LOCK_BASIC
-          || type === DeviceType.LOCK_ADVANCED
-          || type === DeviceType.LOCK_BASIC_NO_FINGER
-          || type === DeviceType.LOCK_ADVANCED_NO_FINGER
+        if (!(type === DeviceType.LOCK_BLE
+          || type === DeviceType.LOCK_WIFI
+          || type === DeviceType.LOCK_BLE_NO_FINGER
+          || type === DeviceType.LOCK_WIFI_NO_FINGER
           || type === DeviceType.DOORBELL
           || type === DeviceType.BATTERY_DOORBELL
           || type === DeviceType.BATTERY_DOORBELL_2
@@ -434,10 +562,10 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
       case DeviceType.SENSOR:
         new EntrySensorAccessory(this, accessory, device as EntrySensor);
         break;
-      case DeviceType.LOCK_BASIC:
-      case DeviceType.LOCK_ADVANCED:
-      case DeviceType.LOCK_BASIC_NO_FINGER:
-      case DeviceType.LOCK_ADVANCED_NO_FINGER:
+      case DeviceType.LOCK_BLE:
+      case DeviceType.LOCK_WIFI:
+      case DeviceType.LOCK_BLE_NO_FINGER:
+      case DeviceType.LOCK_WIFI_NO_FINGER:
         new SmartLockAccessory(this, accessory, device as Lock);
         break;
       default:
@@ -466,6 +594,7 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
 
   }
 
+  // TODO: remove since new polling is done by eufy-security-client itself
   public async refreshData(client: EufySecurity): Promise<void> {
     if (client) {
       this.log.debug('Refresh data from cloud and schedule next refresh.');
