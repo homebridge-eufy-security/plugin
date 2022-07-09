@@ -59,6 +59,9 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
 
   public readonly eufyPath: string;
 
+  private activeAccessoryIds: string[] = [];
+  private cleanCachedAccessoriesTimeout?: NodeJS.Timeout;
+
   constructor(
     public readonly hblog: Logger,
     config: PlatformConfig,
@@ -187,12 +190,17 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
       return;
     }
 
+    // give the connection 45 seconds to discover all devices
+    // clean old accessories after that time
+    this.cleanCachedAccessoriesTimeout = setTimeout(() => {
+      this.cleanCachedAccessories();
+    }, 45 * 1000);
+
     this.eufyClient.setCameraMaxLivestreamDuration(this.config.CameraMaxLivestreamDuration ?? 30);
     this.log.debug('CameraMaxLivestreamDuration:', this.eufyClient.getCameraMaxLivestreamDuration());
   }
 
   private async stationAdded(station: Station) {
-    // TODO: implement
     this.log.debug(
       'Found Station',
       station.getSerial(),
@@ -229,7 +237,6 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
   }
 
   private async deviceAdded(device: Device) {
-    // TODO: implement
     this.log.debug(
       'Found device',
       device.getSerial(),
@@ -268,8 +275,10 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
       this.log.debug('This device is not a station. Generating a new UUID to avoid any duplicate issue');
     }
 
-    // TODO: check activeAccessoriesIds
-    // activeAccessoryIds.push(uuid);
+    // add to active accessories (see cleanCache)
+    if (this.activeAccessoryIds.indexOf(uuid) === -1) {
+      this.activeAccessoryIds.push(uuid);
+    }
 
     // see if an accessory with the same uuid has already been registered and restored from
     // the cached devices we stored in the `configureAccessory` method above
@@ -295,6 +304,10 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
   }
 
   private async pluginShutdown() {
+    if (this.cleanCachedAccessoriesTimeout) {
+      clearTimeout(this.cleanCachedAccessoriesTimeout);
+    }
+
     try {
       this.eufyClient.close();
       this.log.info('Finished shutdown!');
@@ -314,159 +327,10 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
     this.accessories.push(accessory);
   }
 
-  // TODO: remove
-  // TODO: new cleanCache implementation
-  async discoverDevices() {
-    // this.log.debug('discoveringDevices');
-
-    // try {
-    //   await this.eufyClient.connect();
-    //   this.log.debug('EufyClient connected ' + this.eufyClient.isConnected());
-    // } catch (e) {
-    //   this.log.error('Error authenticating Eufy : ', e);
-    // }
-
-    // if (!this.eufyClient.isConnected()) {
-    //   this.log.error('Not connected can\'t continue!');
-    //   return;
-    // }
-
-    // await this.refreshData(this.eufyClient);
-
-    // this.eufyClient.on('push connect', () => {
-    //   this.log.debug('Push Connected!');
-    // });
-    // this.eufyClient.on('push close', () => {
-    //   this.log.warn('Push Closed!');
-    // });
-
-    // this.eufyClient.setCameraMaxLivestreamDuration(this.config.CameraMaxLivestreamDuration ?? 30);
-    // this.log.debug('CameraMaxLivestreamDuration:', this.eufyClient.getCameraMaxLivestreamDuration());
-
-    // const eufyStations = await this.eufyClient.getStations();
-    // this.log.debug('Found ' + eufyStations.length + ' stations.');
-
-    const devices: Array<DeviceContainer> = [];
-
-    // for (const station of eufyStations) {
-    //   this.log.debug(
-    //     'Found Station',
-    //     station.getSerial(),
-    //     station.getName(),
-    //     DeviceType[station.getDeviceType()],
-    //     station.getLANIPAddress(),
-    //   );
-
-    //   if (station.getRawStation().member.member_type === 1) {
-    //     this.log.info('You\'re using guest admin account with this plugin! This is recommanded way!');
-    //   } else {
-    //     this.log.warn('You\'re not using guest admin account with this plugin! This is not recommanded way!');
-    //     this.log.warn('Please look here for more details:');
-    //     this.log.warn('https://github.com/homebridge-eufy-security/plugin/wiki/Installation');
-    //     this.log.warn(station.getSerial() + ' type: ' + station.getRawStation().member.member_type);
-    //   }
-
-    //   if (this.config.ignoreStations.indexOf(station.getSerial()) !== -1) {
-    //     this.log.debug('Device ignored');
-    //     continue;
-    //   }
-
-    //   const deviceContainer: DeviceContainer = {
-    //     deviceIdentifier: {
-    //       uniqueId: station.getSerial(),
-    //       displayName: station.getName(),
-    //       type: station.getDeviceType(),
-    //       station: true,
-    //     } as DeviceIdentifier,
-    //     eufyDevice: station,
-    //   };
-    //   devices.push(deviceContainer);
-    // }
-
-    // const eufyDevices = await this.eufyClient.getDevices();
-    // this.log.debug('Found ' + eufyDevices.length + ' devices.');
-
-    // for (const device of eufyDevices) {
-    //   this.log.debug(
-    //     'Found device',
-    //     device.getSerial(),
-    //     device.getName(),
-    //     DeviceType[device.getDeviceType()],
-    //   );
-
-    //   // if (this.config.ignoreStations.indexOf(device.getStationSerial()) !== -1) {
-    //   //   this.log.debug('Device ignored because station is ignored');
-    //   //   continue;
-    //   // }
-
-    //   if (this.config.ignoreDevices.indexOf(device.getSerial()) !== -1) {
-    //     this.log.debug('Device ignored');
-    //     continue;
-    //   }
-
-    //   const deviceContainer: DeviceContainer = {
-    //     deviceIdentifier: {
-    //       uniqueId: device.getSerial(),
-    //       displayName: device.getName(),
-    //       type: device.getDeviceType(),
-    //       station: false,
-    //     } as DeviceIdentifier,
-    //     eufyDevice: device,
-    //   };
-    //   devices.push(deviceContainer);
-    // }
-
-    const activeAccessoryIds: string[] = [];
-
-    // loop over the discovered devices and register each one if it has not already been registered
-    for (const device of devices) {
-
-      // generate a unique id for the accessory this should be generated from
-      // something globally unique, but constant, for example, the device serial
-      // number or MAC address
-      let uuid = this.api.hap.uuid.generate(device.deviceIdentifier.uniqueId);
-
-      // Checking Device Type if it's not a station, it will be the same serial number we will find 
-      // in Device list and it will create the same UUID
-      if (device.deviceIdentifier.type !== DeviceType.STATION && device.deviceIdentifier.station) {
-        uuid = this.api.hap.uuid.generate('s_' + device.deviceIdentifier.uniqueId);
-        this.log.debug('This device is not a station. Generating a new UUID to avoid any duplicate issue');
-      }
-
-      activeAccessoryIds.push(uuid);
-
-      // see if an accessory with the same uuid has already been registered and restored from
-      // the cached devices we stored in the `configureAccessory` method above
-      const cachedAccessory = this.accessories.find((accessory) => accessory.UUID === uuid);
-
-      if (!cachedAccessory) {
-
-        // the accessory does not yet exist, so we need to create it
-
-        // create a new accessory
-        const accessory = new this.api.platformAccessory(
-          device.deviceIdentifier.displayName,
-          uuid,
-        );
-
-        // store a copy of the device object in the `accessory.context`
-        // the `context` property can be used to store any data about the accessory you may need
-        accessory.context.device = device.deviceIdentifier;
-
-        // create the accessory handler for the newly create accessory
-        // this is imported from `platformAccessory.ts`
-
-        this.register_accessory(accessory, device, false);
-      } else {
-        this.register_accessory(cachedAccessory, device, true);
-      }
-    }
-
-    // Cleaning cached accessory which are no longer exist
-
+  private cleanCachedAccessories() {
     if (this.config.cleanCache) {
       const staleAccessories = this.accessories.filter((item) => {
-        return activeAccessoryIds.indexOf(item.UUID) === -1;
+        return this.activeAccessoryIds.indexOf(item.UUID) === -1;
       });
 
       staleAccessories.forEach((staleAccessory) => {
@@ -594,25 +458,6 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
 
   }
 
-  // TODO: remove since new polling is done by eufy-security-client itself
-  public async refreshData(client: EufySecurity): Promise<void> {
-    if (client) {
-      this.log.debug('Refresh data from cloud and schedule next refresh.');
-      try {
-        await client.refreshCloudData();
-      } catch (error) {
-        this.log.error('Error refreshing data from Eufy: ', error);
-      }
-      setTimeout(() => {
-        try {
-          this.refreshData(client);
-        } catch (error) {
-          this.log.error('Error refreshing data from Eufy: ', error);
-        }
-      }, this.eufyConfig.pollingIntervalMinutes * 60 * 1000);
-    }
-  }
-
   public getStationById(id: string) {
     return this.eufyClient.getStation(id);
   }
@@ -676,15 +521,15 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
       if (cameras && this.accessories.length > 0) {
         for(let i=0; i<cameras.length; i++) {
           const camera = cameras[i];
-          const cachedAccessory = this.accessories.find((acc) => camera.serialNumber === acc.context.device.uniqueId);
-          if (cachedAccessory && Device.isDoorbell(cachedAccessory.context.device.type) && !camera.enableCamera) {
+          const cachedAccessory = this.accessories.find((acc) => camera.serialNumber === acc.context['device'].uniqueId);
+          if (cachedAccessory && Device.isDoorbell(cachedAccessory.context['device'].type) && !camera.enableCamera) {
             // eslint-disable-next-line max-len
-            this.log.warn('Found camera ' + cachedAccessory.context.device.displayName + ' (' + cachedAccessory.context.device.uniqueId + ') with invalid camera configuration option enableCamera. Attempt to repair. This should only happen once per device...');
+            this.log.warn('Found camera ' + cachedAccessory.context['device'].displayName + ' (' + cachedAccessory.context['device'].uniqueId + ') with invalid camera configuration option enableCamera. Attempt to repair. This should only happen once per device...');
             pluginConfig.cameras[i]['enableCamera'] = true;
 
             if (camera.unbridge) {
               // eslint-disable-next-line max-len
-              this.log.warn('Camera ' + cachedAccessory.context.device.displayName + ' (' + cachedAccessory.context.device.uniqueId + ') had camera configuration option \'unbridge\' set to true. This will be set to false to maintain functionality. See https://github.com/homebridge-eufy-security/plugin/issues/79 for more information.');
+              this.log.warn('Camera ' + cachedAccessory.context['device'].displayName + ' (' + cachedAccessory.context['device'].uniqueId + ') had camera configuration option \'unbridge\' set to true. This will be set to false to maintain functionality. See https://github.com/homebridge-eufy-security/plugin/issues/79 for more information.');
               pluginConfig.cameras[i]['unbridge'] = false;
             }
           }
