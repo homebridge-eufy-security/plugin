@@ -54,7 +54,7 @@
     "bootstrap": "^5.1.3",
     "bunyan": "^1.8.15",
     "bunyan-debug-stream": "^2.0.1",
-    "eufy-security-client": "2.0.1",
+    "eufy-security-client": "2.1.0",
     "ffmpeg-for-homebridge": "0.1.4",
     "pick-port": "^1.0.1",
     "rxjs": "~7.5.0",
