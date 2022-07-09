@@ -329,14 +329,24 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
 
   private cleanCachedAccessories() {
     if (this.config.cleanCache) {
+      this.log.info('Looking for old cached accessories that seem to be outdated...');
+      let num = 0;
+      
       const staleAccessories = this.accessories.filter((item) => {
         return this.activeAccessoryIds.indexOf(item.UUID) === -1;
       });
 
       staleAccessories.forEach((staleAccessory) => {
         this.log.info(`Removing cached accessory ${staleAccessory.UUID} ${staleAccessory.displayName}`);
+        num++;
         this.api.unregisterPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [staleAccessory]);
       });
+
+      if (num > 0) {
+        this.log.info('Removed ' + num + ' cached accessories');
+      } else {
+        this.log.info('No outdated cached accessories found.');
+      }
     }
   }
 
