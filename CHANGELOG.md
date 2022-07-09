@@ -32,6 +32,7 @@
 - fixed npm audit warnings
 - crash if first cloud snapshot could not be downloaded
 - smart lock state could be wrong on startup (further improvements needed)
+- fix printed error messages if no stored accessories were found when using the config ui
 
 ## 2.0.1 (20.06.2022)
 
