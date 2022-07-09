@@ -1,0 +1,39 @@
+/* You can add global styles to this file, and also import other style files */
+
+.form-switch {
+  transform: scale(1.4);
+}
+
+.btn-secondary {
+  background-color: #a6c!important;
+  border-color: #565e64;
+}
+
+.form-check-input:checked {
+  background-color: #a6c!important;
+  border-color: #565e64;
+}
+
+.settingsItem {
+  padding-bottom: 0 !important;
+}
+
+@media (min-width: 421px) {
+  .pluginContent {
+    width: 420px !important;
+  }
+
+  .container {
+    max-width: 420px;
+  }
+}
+
+@media (min-width: 721px) {
+  .pluginContent {
+    width: 720px !important;
+  }
+
+  .container {
+    max-width: 720px;
+  }
+}

@@ -1,0 +1,9 @@
+.device:hover {
+    transform:scale(1.05);
+    border-color: #ffc107 !important;
+    color: #ffc107;
+}
+
+.serial {
+    font-size: 12px;
+}

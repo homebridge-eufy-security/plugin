@@ -124,3 +124,5 @@ dist
 .history
 
 .github/workflows/
+
+.angular

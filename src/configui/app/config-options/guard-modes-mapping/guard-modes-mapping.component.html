@@ -1,0 +1,67 @@
+<div class="settingsItem row p-3">
+  <span>Change how each mode in the HomeKit security system is mapped to the modes in the Eufy App.</span>
+  <p></p>
+  <span *ngIf="accessory">These settings will only apply for this station. The global mappings can be found in the plugin settings.</span>
+  <!-- <span *ngIf="!accessory">These settings will apply to every station if not set individually (e.g. you can override these settings per station).</span> -->
+  <p></p>
+  
+  <div class="input-group mb-1">
+    <label class="input-group-text w-25" for="inputGroupSelect01">HomeKit Home</label>
+    <select [(ngModel)]="hkHome" class="form-select" id="inputGroupSelect01" (change)="update()">
+      <option *ngIf="accessory" [ngValue]=undefined>Use global setting</option>
+      <option [ngValue]=1>Eufy Home</option>
+      <option [ngValue]=0>Eufy Away</option>
+      <option [ngValue]=2>Eufy Schedule</option>
+      <option [ngValue]=3>Eufy Custom 1 (Night)</option>
+      <option [ngValue]=4>Eufy Custom 2</option>
+      <option [ngValue]=5>Eufy Custom 3</option>
+      <option [ngValue]=47>Eufy Geofencing</option>
+      <option [ngValue]=63>Eufy Disarmed</option>
+    </select>
+  </div>
+
+  <div class="input-group mb-1">
+    <label class="input-group-text w-25" for="inputGroupSelect02">HomeKit Away</label>
+    <select [(ngModel)]="hkAway" class="form-select" id="inputGroupSelect02" (change)="update()">
+      <option *ngIf="accessory" [ngValue]=undefined>Use global setting</option>
+      <option [ngValue]=1>Eufy Home</option>
+      <option [ngValue]=0>Eufy Away</option>
+      <option [ngValue]=2>Eufy Schedule</option>
+      <option [ngValue]=3>Eufy Custom 1 (Night)</option>
+      <option [ngValue]=4>Eufy Custom 2</option>
+      <option [ngValue]=5>Eufy Custom 3</option>
+      <option [ngValue]=47>Eufy Geofencing</option>
+      <option [ngValue]=63>Eufy Disarmed</option>
+    </select>
+  </div>
+
+  <div class="input-group mb-1">
+    <label class="input-group-text w-25" for="inputGroupSelect03">HomeKit Night</label>
+    <select [(ngModel)]="hkNight" class="form-select" id="inputGroupSelect03" (change)="update()">
+      <option *ngIf="accessory" [ngValue]=undefined>Use global setting</option>
+      <option [ngValue]=1>Eufy Home</option>
+      <option [ngValue]=0>Eufy Away</option>
+      <option [ngValue]=2>Eufy Schedule</option>
+      <option [ngValue]=3>Eufy Custom 1 (Night)</option>
+      <option [ngValue]=4>Eufy Custom 2</option>
+      <option [ngValue]=5>Eufy Custom 3</option>
+      <option [ngValue]=47>Eufy Geofencing</option>
+      <option [ngValue]=63>Eufy Disarmed</option>
+    </select>
+  </div>
+
+  <div class="input-group mb-1">
+    <label class="input-group-text w-25" for="inputGroupSelect04">HomeKit Off</label>
+    <select [(ngModel)]="hkOff" class="form-select" id="inputGroupSelect04" (change)="update()">
+      <option *ngIf="accessory" [ngValue]=undefined>Use global setting</option>
+      <option [ngValue]=1>Eufy Home</option>
+      <option [ngValue]=0>Eufy Away</option>
+      <option [ngValue]=2>Eufy Schedule</option>
+      <option [ngValue]=3>Eufy Custom 1 (Night)</option>
+      <option [ngValue]=4>Eufy Custom 2</option>
+      <option [ngValue]=5>Eufy Custom 3</option>
+      <option [ngValue]=47>Eufy Geofencing</option>
+      <option [ngValue]=63>Eufy Disarmed</option>
+    </select>
+  </div>
+</div>

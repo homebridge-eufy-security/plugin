@@ -1,0 +1,19 @@
+<div class="settingsItem row p-3">
+  <div class="d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center mb-2">
+    <span>Operation Mode</span>
+
+    <div class="col-12 col-sm-4">
+      <select class="form-select" [(ngModel)]="value" [attr.disabled]="disabled ? true : null" aria-label="Device Operation Mode" (change)="update()">
+        <option value="false">Motion Sensor</option>
+        <option value="true">Camera</option>
+      </select>
+  </div>
+
+  </div>
+  <small *ngIf="disabled"><i>
+    This option is disabled since doorbells are handled always as cameras.
+  </i></small>
+  <small *ngIf="!disabled"><i>
+    Cameras are handled as Motion Sensor by default, switch this setting to use as Camera
+  </i></small>
+</div>
