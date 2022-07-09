@@ -155,7 +155,8 @@ class UiServer extends HomebridgePluginUiServer {
       const accessories = JSON.parse(fs.readFileSync(this.storedAccessories_file, { encoding: 'utf-8' }));
       return Promise.resolve(accessories as Accessory[]);
     } catch (err) {
-      return Promise.reject(err);
+      this.log.error('Could not get stored accessories. Most likely no stored accessories yet: ' + err);
+      return Promise.reject([]);
     }
   }
 
