@@ -40,6 +40,9 @@ class UiServer extends HomebridgePluginUiServer {
       }],
     });
 
+    const library = require('../node_modules/eufy-security-client/package.json');
+    this.log.debug('Using bropats eufy-security-client library in version ' + library.version);
+
     if (!fs.existsSync(this.storagePath)) {
       fs.mkdirSync(this.storagePath);
     }
@@ -155,7 +158,8 @@ class UiServer extends HomebridgePluginUiServer {
       const accessories = JSON.parse(fs.readFileSync(this.storedAccessories_file, { encoding: 'utf-8' }));
       return Promise.resolve(accessories as Accessory[]);
     } catch (err) {
-      return Promise.reject(err);
+      this.log.error('Could not get stored accessories. Most likely no stored accessories yet: ' + err);
+      return Promise.reject([]);
     }
   }
 

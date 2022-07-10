@@ -13,6 +13,8 @@
 -   Allow enabling and disabling motion detection throug switch if camera is used as motion sensor only
 -   cameras can now be enabled and disabled even if only used as motion sensors devices
 -   Refactored whole project structure to resemble the new workspace layout (plugin + custom ui)
+-   Reimplementation of device discovery algorithm to better reflect best practices mentioned in [this comment](https://github.com/bropat/eufy-security-client/issues/167#issuecomment-1155388624)
+-   Updated to latest version of eufy-security-client (2.1.0)
 
 ### Fixed
 -   [Bug]: package.json reqiures the wrong node version #44
@@ -32,6 +34,8 @@
 - fixed npm audit warnings
 - crash if first cloud snapshot could not be downloaded
 - smart lock state could be wrong on startup (further improvements needed)
+- fix printed error messages if no stored accessories were found when using the config ui
+- temporary fix for log file rotation crashing
 
 ## 2.0.1 (20.06.2022)
 
