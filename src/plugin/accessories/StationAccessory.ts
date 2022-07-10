@@ -16,6 +16,7 @@ export class StationAccessory {
   private station: Station;
 
   private service: Service;
+  private manualTriggerService: Service;
   private alarm_triggered: boolean;
   private modes;
 
@@ -85,6 +86,20 @@ export class StationAccessory {
       .onGet(this.handleSecuritySystemTargetStateGet.bind(this))
       .onSet(this.handleSecuritySystemTargetStateSet.bind(this));
 
+    this.manualTriggerService = 
+      this.accessory.getService(this.platform.Service.Switch) ||
+      this.accessory.addService(this.platform.Service.Switch);
+    
+    this.manualTriggerService.setCharacteristic(
+      this.characteristic.Name,
+      accessory.displayName + ' alarm switch',
+    );
+
+    this.manualTriggerService
+      .getCharacteristic(this.characteristic.On)
+      .onGet(this.handleManualTriggerSwitchStateGet.bind(this))
+      .onSet(this.handleManualTriggerSwitchStateSet.bind(this));
+
     this.eufyStation.on('guard mode', (station: Station, guardMode: number) =>
       this.onStationGuardModePushNotification(station, guardMode),
     );
@@ -129,6 +144,12 @@ export class StationAccessory {
     if (config.hkOff || this.platform.config.hkOff) {
       config.hkOff = config.hkOff ??= this.platform.config.hkOff;
     }
+
+    if (!Array.isArray(config.manualTriggerModes)) {
+      config.manualTriggerModes = [];
+    }
+
+    config.manualAlarmSeconds = config.manualAlarmSeconds ??= 60;
 
     return config;
   }
@@ -178,12 +199,18 @@ export class StationAccessory {
         this.service
           .getCharacteristic(this.characteristic.SecuritySystemCurrentState)
           .updateValue(this.characteristic.SecuritySystemCurrentState.ALARM_TRIGGERED); // Alarm !!!
+        this.manualTriggerService
+          .getCharacteristic(this.characteristic.On)
+          .updateValue(this.characteristic.On);
         break;
       case 15: // Alarm off by Keypad
       case 16: // Alarm off by Eufy App
       case 17: // Alarm off by HomeBase button
         this.platform.log.warn('ON StationAlarmEvent - ALARM OFF - alarmEvent:', alarmEvent);
         this.alarm_triggered = false;
+        this.manualTriggerService
+          .getCharacteristic(this.characteristic.On)
+          .updateValue(this.characteristic.Off);
         break;
       default:
         this.platform.log.warn('ON StationAlarmEvent - ALARM UNKNOWN - alarmEvent:', alarmEvent);
@@ -259,7 +286,7 @@ export class StationAccessory {
   /**
    * Handle requests to get the current value of the 'Security System Target State' characteristic
    */
-  handleSecuritySystemTargetStateGet(): CharacteristicValue {
+  private handleSecuritySystemTargetStateGet(): CharacteristicValue {
     try {
       const currentValue = this.eufyStation.getPropertyValue(PropertyName.StationCurrentMode);
       if (currentValue === -1) {
@@ -300,6 +327,33 @@ export class StationAccessory {
       }, 5000);
     } catch (error) {
       this.platform.log.error(this.accessory.displayName + ': Error Setting security mode!', error);
+    }
+  }
+
+  private handleManualTriggerSwitchStateGet(): CharacteristicValue {
+    return this.alarm_triggered;
+  }
+
+  private async handleManualTriggerSwitchStateSet(value: CharacteristicValue) {
+    if (value) { // trigger alarm if allowed
+      try {
+        const currentValue = this.eufyStation.getPropertyValue(PropertyName.StationCurrentMode);
+        if (currentValue === -1) {
+          throw 'Something wrong with this device';
+        }
+        if (this.stationConfig.manualTriggerModes.indexOf(this.convertEufytoHK(currentValue))) {
+          this.eufyStation.triggerStationAlarmSound(this.stationConfig.manualAlarmSeconds)
+            .then(() => this.platform.log.debug(this.accessory.displayName, 'alarm manually triggerd'))
+            .catch(err => this.platform.log.error(this.accessory.displayName, 'alarm could not be manually triggerd: ' + err));
+        }
+      } catch {
+        this.platform.log.error(this.accessory.displayName, 'handleSecuritySystemTargetStateGet', 'Wrong return value');
+        return;
+      }
+    } else { // reset alarm
+      this.eufyStation.resetStationAlarmSound()
+        .then(() => this.platform.log.debug(this.accessory.displayName, 'alarm manually reset'))
+        .catch(err => this.platform.log.error(this.accessory.displayName, 'alarm could not be reset: ' + err));
     }
   }
 

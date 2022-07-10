@@ -59,4 +59,6 @@ export type StationConfig = {
   hkAway: number;
   hkNight: number;
   hkOff: number;
+  manualTriggerModes: number[];
+  manualAlarmSeconds: number;
 };
