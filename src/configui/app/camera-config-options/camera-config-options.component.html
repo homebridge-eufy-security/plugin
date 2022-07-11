@@ -7,62 +7,65 @@
     
     <!-- Put config options components here -->
     <app-ignore-accessory [accessory]="accessory"></app-ignore-accessory>
-    <hr />
-    <app-enable-camera [accessory]="accessory"></app-enable-camera>
-    <hr />
-    <app-livestream-cache [accessory]="accessory"></app-livestream-cache>
-    <hr />
-    <app-rtsp-streaming [accessory]="accessory"></app-rtsp-streaming>
-    <hr />
-    <app-enable-audio [accessory]="accessory"></app-enable-audio>
-    
-  </div>
-</div>
-
-<p></p>
-
-<div class="card" *ngIf="accessory">
-  <div class="card-header">
-      <b>HomeKit Behaviour</b> for <i>{{accessory.displayName}} ({{accessory.uniqueId}})</i>
-  </div>
-  <div class="card-body pt-0 pb-4">
-    
-    <!-- Put config options components here -->
-    <app-camera-buttons [accessory]="accessory"></app-camera-buttons>
-    <hr />
-    <app-unbridge-accessory [accessory]="accessory"></app-unbridge-accessory>
-    
-  </div>
-</div>
-
-<p></p>
-
-<div class="card" *ngIf="accessory">
-  <div class="card-header">
-      <b>Snapshot Behaviour</b> for <i>{{accessory.displayName}} ({{accessory.uniqueId}})</i>
-  </div>
-  <div class="card-body pt-0 pb-4">
-    
-    <!-- Put config options components here -->
-    <app-enable-snapshot-behaviour [accessory]="accessory" (showEvent)="updateSnapshotView($event)"></app-enable-snapshot-behaviour>
-    <hr />
-    <div *ngIf="showEnhancedSnapshotBehaviour">
-      <app-snapshot-handling-method [accessory]="accessory"></app-snapshot-handling-method>
-      <hr *ngIf="isDoorbell" />
-      <app-immediate-notification-on-ring [accessory]="accessory" *ngIf="isDoorbell"></app-immediate-notification-on-ring>
+    <div *ngIf="isCamera">
       <hr />
-      <app-delay-camera-snapshots [accessory]="accessory"></app-delay-camera-snapshots>
+      <app-enable-camera [accessory]="accessory"></app-enable-camera>
       <hr />
-      <app-periodic-snapshot-refresh [accessory]="accessory"></app-periodic-snapshot-refresh>
+      <app-livestream-cache [accessory]="accessory"></app-livestream-cache>
+      <hr />
+      <app-rtsp-streaming [accessory]="accessory"></app-rtsp-streaming>
+      <hr />
+      <app-enable-audio [accessory]="accessory"></app-enable-audio>
     </div>
-
-    <div *ngIf="!showEnhancedSnapshotBehaviour">
-      <app-force-refreshsnap [accessory]="accessory"></app-force-refreshsnap>
-    </div>
-    
   </div>
 </div>
 
-<p></p>
+<div *ngIf="isCamera">
+  <p></p>
 
-<app-advanced-videoconfig [accessory]="accessory"></app-advanced-videoconfig>
+  <div class="card" *ngIf="accessory">
+    <div class="card-header">
+        <b>HomeKit Behaviour</b> for <i>{{accessory.displayName}} ({{accessory.uniqueId}})</i>
+    </div>
+    <div class="card-body pt-0 pb-4">
+      
+      <!-- Put config options components here -->
+      <app-camera-buttons [accessory]="accessory"></app-camera-buttons>
+      <hr />
+      <app-unbridge-accessory [accessory]="accessory"></app-unbridge-accessory>
+      
+    </div>
+  </div>
+
+  <p></p>
+
+  <div class="card" *ngIf="accessory">
+    <div class="card-header">
+        <b>Snapshot Behaviour</b> for <i>{{accessory.displayName}} ({{accessory.uniqueId}})</i>
+    </div>
+    <div class="card-body pt-0 pb-4">
+      
+      <!-- Put config options components here -->
+      <app-enable-snapshot-behaviour [accessory]="accessory" (showEvent)="updateSnapshotView($event)"></app-enable-snapshot-behaviour>
+      <hr />
+      <div *ngIf="showEnhancedSnapshotBehaviour">
+        <app-snapshot-handling-method [accessory]="accessory"></app-snapshot-handling-method>
+        <hr *ngIf="isDoorbell" />
+        <app-immediate-notification-on-ring [accessory]="accessory" *ngIf="isDoorbell"></app-immediate-notification-on-ring>
+        <hr />
+        <app-delay-camera-snapshots [accessory]="accessory"></app-delay-camera-snapshots>
+        <hr />
+        <app-periodic-snapshot-refresh [accessory]="accessory"></app-periodic-snapshot-refresh>
+      </div>
+
+      <div *ngIf="!showEnhancedSnapshotBehaviour">
+        <app-force-refreshsnap [accessory]="accessory"></app-force-refreshsnap>
+      </div>
+      
+    </div>
+  </div>
+
+  <p></p>
+
+  <app-advanced-videoconfig [accessory]="accessory"></app-advanced-videoconfig>
+</div>

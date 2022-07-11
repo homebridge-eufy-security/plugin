@@ -115,6 +115,12 @@ export const DEFAULT_STORED_ACCESSORIES: Accessory[] = [
     station: false,
     type: 34,
   },
+  {
+    uniqueId: 'TxxxxP1111111114',
+    displayName: 'SENSOR',
+    station: false,
+    type: 2,
+  },
 ];
 
 export const DEFAULT_PLUGIN_CONFIG: PluginConfig = {

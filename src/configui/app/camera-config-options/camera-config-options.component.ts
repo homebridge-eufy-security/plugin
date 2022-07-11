@@ -14,6 +14,7 @@ export class CameraConfigOptionsComponent implements OnInit {
 
   showEnhancedSnapshotBehaviour = true;
   isDoorbell = false;
+  isCamera = false;
 
   constructor(private pluginService: PluginService, private route: ActivatedRoute) { }
 
@@ -22,7 +23,8 @@ export class CameraConfigOptionsComponent implements OnInit {
     this.accessory = this.pluginService.getDevice(uniqueId);
 
     if (this.accessory) {
-      this.isDoorbell = Device.isDoorbell(this.accessory?.type);
+      this.isDoorbell = Device.isDoorbell(this.accessory.type);
+      this.isCamera = Device.isCamera(this.accessory.type);
     }
   }
 
