@@ -186,7 +186,14 @@ export class StationAccessory {
     station: Station,
     alarmEvent: AlarmEvent,
   ): void {
-    const currentValue = this.eufyStation.getPropertyValue(PropertyName.StationCurrentMode);
+    let currentValue = this.eufyStation.getPropertyValue(PropertyName.StationCurrentMode);
+    if (alarmEvent === 0) {
+      // do not resset alarm if alarm was triggered manually
+      // since the alarm can only be triggered for 30 seconds for now (limitation of eufy-security-client)
+      // this would mean that the alarm is always reset after 30 seconds
+      // see here: https://github.com/bropat/eufy-security-client/issues/178
+      currentValue = -1;
+    }
     switch (alarmEvent) {
       case 2: // Alarm triggered by GSENSOR
       case 3: // Alarm triggered by PIR
