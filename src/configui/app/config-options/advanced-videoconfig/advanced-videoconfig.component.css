@@ -15,6 +15,11 @@
   padding: .375rem 1rem;
 }
 
+.config-ui-x-dark-mode .accordion-item {
+  background-color: #2b2b2b !important;
+  color: white !important;
+}
+
 .config-ui-x-dark-mode .accordion-button {
   background-color: #2b2b2b !important;
   color: white !important;
