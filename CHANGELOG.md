@@ -15,6 +15,7 @@
 -   Refactored whole project structure to resemble the new workspace layout (plugin + custom ui)
 -   Reimplementation of device discovery algorithm to better reflect best practices mentioned in [this comment](https://github.com/bropat/eufy-security-client/issues/167#issuecomment-1155388624)
 -   Updated to latest version of eufy-security-client (2.1.0)
+-   Added Dark Mode to config ui
 
 ### Fixed
 -   [Bug]: package.json reqiures the wrong node version #44
