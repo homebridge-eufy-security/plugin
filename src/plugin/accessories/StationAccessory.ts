@@ -186,6 +186,7 @@ export class StationAccessory {
     station: Station,
     alarmEvent: AlarmEvent,
   ): void {
+    const currentValue = this.eufyStation.getPropertyValue(PropertyName.StationCurrentMode);
     switch (alarmEvent) {
       case 2: // Alarm triggered by GSENSOR
       case 3: // Alarm triggered by PIR
@@ -206,6 +207,11 @@ export class StationAccessory {
       case 17: // Alarm off by HomeBase button
         this.platform.log.warn('ON StationAlarmEvent - ALARM OFF - alarmEvent:', alarmEvent);
         this.alarm_triggered = false;
+        if (currentValue !== -1) {
+          this.service
+            .getCharacteristic(this.characteristic.SecuritySystemCurrentState)
+            .updateValue(this.convertEufytoHK(currentValue)); // reset alarm state
+        }
         break;
       default:
         this.platform.log.warn('ON StationAlarmEvent - ALARM UNKNOWN - alarmEvent:', alarmEvent);
@@ -323,6 +329,10 @@ export class StationAccessory {
           this.platform.log.error(this.accessory.displayName, 'Changing guard mode to ' + this.getGuardModeName(value) + ' timed out!');
         }, 5000);
       }, 5000);
+
+      this.manualTriggerService
+        .getCharacteristic(this.characteristic.On)
+        .updateValue(false);
     } catch (error) {
       this.platform.log.error(this.accessory.displayName + ': Error Setting security mode!', error);
     }
@@ -341,8 +351,9 @@ export class StationAccessory {
         }
         if (this.stationConfig.manualTriggerModes.indexOf(this.convertEufytoHK(currentValue)) !== -1) {
           this.eufyStation.triggerStationAlarmSound(this.stationConfig.manualAlarmSeconds)
-            .then(() => this.platform.log.debug(this.accessory.displayName, 'alarm manually triggerd'))
-            .catch(err => this.platform.log.error(this.accessory.displayName, 'alarm could not be manually triggerd: ' + err));
+            .then(() => this.platform.log.debug(
+              this.accessory.displayName, 'alarm manually triggered for ' + this.stationConfig.manualAlarmSeconds + ' seconds.'))
+            .catch(err => this.platform.log.error(this.accessory.displayName, 'alarm could not be manually triggered: ' + err));
         } else {
           setTimeout(() => {
             // eslint-disable-next-line max-len
