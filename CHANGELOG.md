@@ -1,6 +1,11 @@
 # Change Log
 
-## 2.1.0 (beta) (09/07/2022)
+## 2.1.0 (beta) (11/07/2022)
+
+### Added
+
+- switch to manually reset alarm via homekit
+- switch to manually trigger alarm via homekit (this can be used to trigger the alarm with homekit automations) see #26
 
 ### Changed
 -   Complete redesign of the config ui screen
