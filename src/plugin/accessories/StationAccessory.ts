@@ -149,7 +149,7 @@ export class StationAccessory {
       config.manualTriggerModes = [];
     }
 
-    config.manualAlarmSeconds = config.manualAlarmSeconds ??= 60;
+    config.manualAlarmSeconds = config.manualAlarmSeconds ??= 30;
 
     return config;
   }
