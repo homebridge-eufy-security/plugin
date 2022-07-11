@@ -41,6 +41,7 @@
 - crash if first cloud snapshot could not be downloaded
 - smart lock state could be wrong on startup (further improvements needed)
 - fix printed error messages if no stored accessories were found when using the config ui
+- camera settings will now only show for camera devices
 
 ## 2.0.1 (20.06.2022)
 
