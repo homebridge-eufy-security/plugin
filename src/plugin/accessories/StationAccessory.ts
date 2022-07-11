@@ -199,18 +199,12 @@ export class StationAccessory {
         this.service
           .getCharacteristic(this.characteristic.SecuritySystemCurrentState)
           .updateValue(this.characteristic.SecuritySystemCurrentState.ALARM_TRIGGERED); // Alarm !!!
-        this.manualTriggerService
-          .getCharacteristic(this.characteristic.On)
-          .updateValue(this.characteristic.On);
         break;
       case 15: // Alarm off by Keypad
       case 16: // Alarm off by Eufy App
       case 17: // Alarm off by HomeBase button
         this.platform.log.warn('ON StationAlarmEvent - ALARM OFF - alarmEvent:', alarmEvent);
         this.alarm_triggered = false;
-        this.manualTriggerService
-          .getCharacteristic(this.characteristic.On)
-          .updateValue(this.characteristic.Off);
         break;
       default:
         this.platform.log.warn('ON StationAlarmEvent - ALARM UNKNOWN - alarmEvent:', alarmEvent);
@@ -219,6 +213,9 @@ export class StationAccessory {
           .updateValue(this.characteristic.StatusFault.GENERAL_FAULT);
         break;
     }
+    this.manualTriggerService
+      .getCharacteristic(this.characteristic.On)
+      .updateValue(this.alarm_triggered);
   }
 
   private mappingHKEufy(): void {
@@ -341,7 +338,7 @@ export class StationAccessory {
         if (currentValue === -1) {
           throw 'Something wrong with this device';
         }
-        if (this.stationConfig.manualTriggerModes.indexOf(this.convertEufytoHK(currentValue))) {
+        if (this.stationConfig.manualTriggerModes.indexOf(this.convertEufytoHK(currentValue)) !== -1) {
           this.eufyStation.triggerStationAlarmSound(this.stationConfig.manualAlarmSeconds)
             .then(() => this.platform.log.debug(this.accessory.displayName, 'alarm manually triggerd'))
             .catch(err => this.platform.log.error(this.accessory.displayName, 'alarm could not be manually triggerd: ' + err));
