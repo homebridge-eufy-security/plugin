@@ -4,10 +4,10 @@
     color: #ffc107;
 }
 
-.config-ui-x-dark-mode .device {
+.device {
     background-color: #fff !important;
     color: black !important;
-  }
+}
 
 .serial {
     font-size: 12px;
