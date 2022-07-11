@@ -14,6 +14,11 @@
   border-color: #565e64;
 }
 
+.config-ui-x-dark-mode .form-check-input:checked {
+  background-color: #ffa000 !important;
+  border-color: #565e64;
+}
+
 .settingsItem {
   padding-bottom: 0 !important;
 }
