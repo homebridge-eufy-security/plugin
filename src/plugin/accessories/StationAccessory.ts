@@ -342,6 +342,12 @@ export class StationAccessory {
           this.eufyStation.triggerStationAlarmSound(this.stationConfig.manualAlarmSeconds)
             .then(() => this.platform.log.debug(this.accessory.displayName, 'alarm manually triggerd'))
             .catch(err => this.platform.log.error(this.accessory.displayName, 'alarm could not be manually triggerd: ' + err));
+        } else {
+          // eslint-disable-next-line max-len
+          this.platform.log.info(this.accessory.displayName, 'tried to trigger alarm, but the current station mode prevents the alarm from being triggered. Please look in in the configuration if you want to change this behaviour.');
+          this.manualTriggerService
+            .getCharacteristic(this.characteristic.On)
+            .updateValue(false);
         }
       } catch {
         this.platform.log.error(this.accessory.displayName, 'handleSecuritySystemTargetStateGet', 'Wrong return value');
