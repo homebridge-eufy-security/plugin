@@ -38,6 +38,7 @@ import { StationConfigOptionsComponent } from './station-config-options/station-
 import { GuardModesMappingComponent } from './config-options/guard-modes-mapping/guard-modes-mapping.component';
 import { ResetPluginComponent } from './config-options/reset-plugin/reset-plugin.component';
 import { ResetConfirmationComponent } from './reset-confirmation/reset-confirmation.component';
+import { ManualAlarmModesComponent } from './config-options/manual-alarm-modes/manual-alarm-modes.component';
 
 @NgModule({
   declarations: [
@@ -69,6 +70,7 @@ import { ResetConfirmationComponent } from './reset-confirmation/reset-confirmat
     GuardModesMappingComponent,
     ResetPluginComponent,
     ResetConfirmationComponent,
+    ManualAlarmModesComponent,
   ],
   imports: [BrowserModule, FormsModule, NgbModule, AppRoutingModule, FontAwesomeModule],
   providers: [{ provide: LocationStrategy, useClass: HashLocationStrategy }],
