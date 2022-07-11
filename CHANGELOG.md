@@ -1,6 +1,11 @@
 # Change Log
 
-## 2.1.0 (beta) (09/07/2022)
+## 2.1.0 (beta) (11/07/2022)
+
+### Added
+
+- switch to manually reset alarm via homekit
+- switch to manually trigger alarm via homekit (this can be used to trigger the alarm with homekit automations) see #26
 
 ### Changed
 -   Complete redesign of the config ui screen
@@ -15,6 +20,7 @@
 -   Refactored whole project structure to resemble the new workspace layout (plugin + custom ui)
 -   Reimplementation of device discovery algorithm to better reflect best practices mentioned in [this comment](https://github.com/bropat/eufy-security-client/issues/167#issuecomment-1155388624)
 -   Updated to latest version of eufy-security-client (2.1.0)
+-   Added Dark Mode to config ui
 
 ### Fixed
 -   [Bug]: package.json reqiures the wrong node version #44
@@ -35,7 +41,6 @@
 - crash if first cloud snapshot could not be downloaded
 - smart lock state could be wrong on startup (further improvements needed)
 - fix printed error messages if no stored accessories were found when using the config ui
-- temporary fix for log file rotation crashing
 
 ## 2.0.1 (20.06.2022)
 
