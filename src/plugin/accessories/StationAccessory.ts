@@ -148,6 +148,8 @@ export class StationAccessory {
     if (!Array.isArray(config.manualTriggerModes)) {
       config.manualTriggerModes = [];
     }
+    this.platform.log.debug(
+      this.accessory.displayName, 'manual alarm will be triggered only in these hk modes: ' + config.manualTriggerModes);
 
     config.manualAlarmSeconds = config.manualAlarmSeconds ??= 30;
 
