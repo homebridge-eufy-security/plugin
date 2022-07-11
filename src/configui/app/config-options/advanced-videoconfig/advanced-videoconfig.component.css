@@ -15,22 +15,22 @@
   padding: .375rem 1rem;
 }
 
-.config-ui-x-dark-mode .accordion-item {
+.config-ui-x-dark-mode * .accordion-item {
   background-color: #2b2b2b !important;
   color: white !important;
 }
 
-.config-ui-x-dark-mode .accordion-button {
+.config-ui-x-dark-mode * .accordion-button {
   background-color: #2b2b2b !important;
   color: white !important;
 }
 
-.config-ui-x-dark-mode .accordion-button:not(.collapsed) {
+.config-ui-x-dark-mode * .accordion-button:not(.collapsed) {
   background-color: #2b2b2b !important;
   color: white !important;
 }
 
-.config-ui-x-dark-mode .accordion-body {
+.config-ui-x-dark-mode * .accordion-body {
   background-color: #2b2b2b !important;
   color: white !important;
 }
