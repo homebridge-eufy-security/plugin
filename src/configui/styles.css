@@ -37,3 +37,23 @@
     max-width: 720px;
   }
 }
+
+.config-ui-x-dark-mode .btn-secondary {
+  background-color: #2e2e2e !important;
+  color: #fff !important;
+}
+
+.config-ui-x-dark-mode .btn-success {
+  background-color: #ffa000 !important;
+  color: #fff !important;
+}
+
+/* html[native-dark-active] .btn-secondary {
+  background-color: #2e2e2e !important;
+  color: #fff !important;
+}
+
+html[native-dark-active] .btn-success {
+  background-color: #ffa000 !important;
+  color: #fff !important;
+} */
