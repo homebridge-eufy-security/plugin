@@ -200,6 +200,7 @@ export class StationAccessory {
           .getCharacteristic(this.characteristic.SecuritySystemCurrentState)
           .updateValue(this.characteristic.SecuritySystemCurrentState.ALARM_TRIGGERED); // Alarm !!!
         break;
+      case 0:  // Alarm off by Hub
       case 15: // Alarm off by Keypad
       case 16: // Alarm off by Eufy App
       case 17: // Alarm off by HomeBase button
