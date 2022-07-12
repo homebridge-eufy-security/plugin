@@ -9,6 +9,19 @@
     color: black !important;
 }
 
+.device:hover .deviceimage {
+    opacity: 0.5;
+}
+
+.device .devicesettingsicon {
+    display: none !important;
+}
+
+.device:hover .devicesettingsicon {
+    display: flex !important;
+    color: #ffa000 !important;
+}
+
 .serial {
     font-size: 12px;
 }
