@@ -85,36 +85,6 @@ export const DEFAULT_CACHED_ACCESSORIES: CachedAccessory[] = [
 ];
 
 export const DEFAULT_STORED_ACCESSORIES: Accessory[] = [
-  // {
-  //   uniqueId: 'T8010P111111111A',
-  //   displayName: 'STATION',
-  //   station: true,
-  //   type: 0,
-  // },
-  // {
-  //   uniqueId: 'TxxxxP111111111B',
-  //   displayName: 'SOLO_CAMERA_SPOTLIGHT_2K',
-  //   station: true,
-  //   type: 62,
-  // },
-  // {
-  //   uniqueId: 'T8210P1111111111',
-  //   displayName: 'BATTERY_DOORBELL',
-  //   station: false,
-  //   type: 7,
-  // },
-  // {
-  //   uniqueId: 'TxxxxP111111111B',
-  //   displayName: 'SOLO_CAMERA_SPOTLIGHT_2K',
-  //   station: false,
-  //   type: 62,
-  // },
-  // {
-  //   uniqueId: 'TxxxxP1111111113',
-  //   displayName: 'INDOOR_CAMERA_1080',
-  //   station: false,
-  //   type: 34,
-  // },
   {
     uniqueId: 'TxxxxP0000000001',
     displayName: 'CAMERA',
@@ -146,7 +116,7 @@ export const DEFAULT_STORED_ACCESSORIES: Accessory[] = [
     type: 5,
   },
   {
-    uniqueId: 'TxxxxP0000000006',
+    uniqueId: 'T8210P1111111111',
     displayName: 'BATTERY_DOORBELL',
     station: false,
     type: 7,
@@ -218,7 +188,7 @@ export const DEFAULT_STORED_ACCESSORIES: Accessory[] = [
     type: 33,
   },
   {
-    uniqueId: 'TxxxxP0000000018',
+    uniqueId: 'TxxxxP1111111113',
     displayName: 'INDOOR_CAMERA_1080',
     station: false,
     type: 34,
@@ -326,7 +296,7 @@ export const DEFAULT_STORED_ACCESSORIES: Accessory[] = [
     type: 60,
   },
   {
-    uniqueId: 'TxxxxP0000000036',
+    uniqueId: 'TxxxxP111111111B',
     displayName: 'SOLO_CAMERA_SPOTLIGHT_2K',
     station: false,
     type: 61,
@@ -465,7 +435,7 @@ export const DEFAULT_STORED_ACCESSORIES: Accessory[] = [
     type: 31,
   },
   {
-    uniqueId: 'TxxxxP0000000018',
+    uniqueId: 'TxxxxP1111111113',
     displayName: 'INDOOR_CAMERA_1080',
     station: true,
     type: 34,
@@ -519,7 +489,7 @@ export const DEFAULT_STORED_ACCESSORIES: Accessory[] = [
     type: 60,
   },
   {
-    uniqueId: 'TxxxxP0000000036',
+    uniqueId: 'TxxxxP111111111B',
     displayName: 'SOLO_CAMERA_SPOTLIGHT_2K',
     station: true,
     type: 61,
