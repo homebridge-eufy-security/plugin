@@ -12,6 +12,7 @@ import { faRotate } from '@fortawesome/free-solid-svg-icons';
 import { PluginService } from '../plugin.service';
 
 import { Accessory } from '../accessory';
+import { DeviceImage } from '../util/deviceToImagesMap';
 
 @Component({
   selector: 'app-accessory-list',
@@ -27,6 +28,8 @@ export class AccessoryListComponent implements OnInit {
   settingsIcon = faScrewdriverWrench;
   ignoreIcon = faEyeSlash;
   reloadIcon = faRotate;
+
+  DeviceImage = DeviceImage;
 
   closeResult = '';
 
@@ -113,5 +116,18 @@ export class AccessoryListComponent implements OnInit {
     } else {
       return `with: ${reason}`;
     }
+  }
+
+  getDevicePanelStyle(accessory: Accessory): string {
+    let style = '';
+    if (accessory.ignored) {
+      style += 'opacity: 0.2;';
+    }
+    if (DeviceImage.get(accessory.type)) {
+      style += 'padding:' + DeviceImage.get(accessory.type)?.padding;
+    } else {
+      style += 'padding:20px';
+    }
+    return style;
   }
 }

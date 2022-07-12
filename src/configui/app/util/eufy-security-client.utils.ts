@@ -1,4 +1,4 @@
-enum DeviceType {
+export enum DeviceType {
   //List retrieved from com.oceanwing.battery.cam.binder.model.QueryDeviceData
   STATION = 0,
   CAMERA = 1,
@@ -59,6 +59,42 @@ export class Device {
       type === DeviceType.BATTERY_DOORBELL_2 ||
       type === DeviceType.BATTERY_DOORBELL_PLUS ||
       type === DeviceType.DOORBELL_SOLO
+    ) {
+      return true;
+    }
+    return false;
+  }
+
+  static isCamera(type: number): boolean {
+    if (
+      type === DeviceType.CAMERA ||
+      type === DeviceType.CAMERA2 ||
+      type === DeviceType.CAMERA_E ||
+      type === DeviceType.CAMERA2C ||
+      type === DeviceType.INDOOR_CAMERA ||
+      type === DeviceType.INDOOR_PT_CAMERA ||
+      type === DeviceType.FLOODLIGHT ||
+      type === DeviceType.DOORBELL ||
+      type === DeviceType.BATTERY_DOORBELL ||
+      type === DeviceType.BATTERY_DOORBELL_2 ||
+      type === DeviceType.BATTERY_DOORBELL_PLUS ||
+      type === DeviceType.DOORBELL_SOLO ||
+      type === DeviceType.CAMERA2C_PRO ||
+      type === DeviceType.CAMERA2_PRO ||
+      type === DeviceType.INDOOR_CAMERA_1080 ||
+      type === DeviceType.INDOOR_PT_CAMERA_1080 ||
+      type === DeviceType.SOLO_CAMERA ||
+      type === DeviceType.SOLO_CAMERA_PRO ||
+      type === DeviceType.SOLO_CAMERA_SPOTLIGHT_1080 ||
+      type === DeviceType.SOLO_CAMERA_SPOTLIGHT_2K ||
+      type === DeviceType.SOLO_CAMERA_SPOTLIGHT_SOLAR ||
+      type === DeviceType.INDOOR_OUTDOOR_CAMERA_1080P ||
+      type === DeviceType.INDOOR_OUTDOOR_CAMERA_1080P_NO_LIGHT ||
+      type === DeviceType.INDOOR_OUTDOOR_CAMERA_2K ||
+      type === DeviceType.INDOOR_COST_DOWN_CAMERA ||
+      type === DeviceType.FLOODLIGHT_CAMERA_8422 ||
+      type === DeviceType.FLOODLIGHT_CAMERA_8423 ||
+      type === DeviceType.FLOODLIGHT_CAMERA_8424
     ) {
       return true;
     }
