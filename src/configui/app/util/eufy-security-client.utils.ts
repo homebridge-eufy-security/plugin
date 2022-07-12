@@ -1,4 +1,4 @@
-enum DeviceType {
+export enum DeviceType {
   //List retrieved from com.oceanwing.battery.cam.binder.model.QueryDeviceData
   STATION = 0,
   CAMERA = 1,

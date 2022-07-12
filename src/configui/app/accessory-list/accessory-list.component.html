@@ -62,7 +62,8 @@
                         <div class="text-center">
                             <a routerLink="/stationConfig/{{station.uniqueId}}" style="color: black;">
                                 <div class="device ratio ratio-1x1 border rounded shadow-sm">
-                                    <span class="d-flex border align-items-center justify-content-center" style="z-index: 10;">
+                                    <img class="deviceimage" [src]="'assets/devices/' + (DeviceImage.get(station.type) ? DeviceImage.get(station.type)?.image : 'unknown.png')" [attr.style]="getDevicePanelStyle(station)">
+                                    <span class="devicesettingsicon d-flex border align-items-center justify-content-center" style="z-index: 15;">
                                         <fa-icon [icon]="settingsIcon" size="2x"></fa-icon>
                                     </span>
                                     <span *ngIf="station.ignored" class="d-flex border align-items-top justify-content-end" style="z-index: 20;">
@@ -73,8 +74,8 @@
                         </div>
                     </div>
                         
-                    <span class="text-center">{{ station.cachedName ? station.cachedName : station.displayName }}</span>
-                    <span class="serial fw-light text-center">({{station.uniqueId}})</span>
+                    <span class="col-12 text-center">{{ station.cachedName ? station.cachedName : station.displayName }}</span>
+                    <span class="col-12 serial fw-light text-center">({{station.uniqueId}})</span>
                     
                 </div>
             </div>
@@ -94,7 +95,8 @@
                         <div class="text-center">
                             <a routerLink="/cameraConfig/{{device.uniqueId}}" style="color: black;">
                                 <div class="device ratio ratio-1x1 border rounded shadow-sm">
-                                    <span class="d-flex border align-items-center justify-content-center" style="z-index: 10;">
+                                    <img class="deviceimage" [src]="'assets/devices/' + (DeviceImage.get(device.type) ? DeviceImage.get(device.type)?.image : 'unknown.png')" [attr.style]="getDevicePanelStyle(device)">
+                                    <span class="devicesettingsicon d-flex border align-items-center justify-content-center" style="z-index: 15;">
                                         <fa-icon [icon]="settingsIcon" size="2x"></fa-icon>
                                     </span>
                                     <span *ngIf="device.ignored" class="d-flex border align-items-top justify-content-end" style="z-index: 20;">
@@ -105,13 +107,20 @@
                         </div>
                     </div>
                         
-                    <span class="text-center">{{ device.cachedName ? device.cachedName : device.displayName }}</span>
-                    <span class="serial fw-light text-center">({{device.uniqueId}})</span>
+                    <span class="col-12 text-center">{{ device.cachedName ? device.cachedName : device.displayName }}</span>
+                    <span class="col-12 serial fw-light text-center">({{device.uniqueId}})</span>
                     
                 </div>
 
             </div>
         </div>
     </div>
+
+    <p></p>
+
+    <span><i>The images used above are 'best effort' for now, since we do not own every eufy device.
+        If you experience that your device is depicted with a wrong image please feel free to let
+        us know in an issue on our <a href="https://github.com/homebridge-eufy-security/plugin" target="_blank" rel="noopener noreferrer">Github page.</a></i>
+    </span>
 
 </div>
