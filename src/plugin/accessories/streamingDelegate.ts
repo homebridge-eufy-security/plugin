@@ -906,7 +906,7 @@ export class StreamingDelegate implements CameraStreamingDelegate {
             'config=F8F0212C00BC00\r\n' +
           'a=crypto:1 AES_CM_128_HMAC_SHA1_80 inline:' + sessionInfo.audioSRTP.toString('base64') + '\r\n';
         activeSession.returnProcess = new FfmpegProcess(this.cameraName + '] [Two-Way', request.sessionID,
-          this.videoProcessor, [ffmpegReturnArgs], this.log, (this.videoConfig.debugReturn || true), this);
+          this.videoProcessor, [ffmpegReturnArgs], this.log, (this.videoConfig.debugReturn), this);
         activeSession.returnProcess.usesStdinAsInput = true;
         activeSession.returnProcess.stdin.end(sdpReturnAudio);
         activeSession.returnProcess.stdout.pipe(this.talkbackStream);
