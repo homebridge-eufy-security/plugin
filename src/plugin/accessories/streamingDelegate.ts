@@ -889,7 +889,7 @@ export class StreamingDelegate implements CameraStreamingDelegate {
 
         const ipVer = sessionInfo.ipv6 ? 'IP6' : 'IP4';
 
-        activeSession.talkbackStream = new TalkbackStream(this.platform.eufyClient, this.device, this.log);
+        activeSession.talkbackStream = new TalkbackStream(this.platform, this.device);
         
         const sdpReturnAudio =
           'v=0\r\n' +
