@@ -82,6 +82,7 @@ type ActiveSession = {
   uVideoStream?: NamePipeStream;
   uAudioStream?: NamePipeStream;
   cachedStreamId?: number;
+  talkbackStream?: TalkbackStream;
 };
 
 export class StreamingDelegate implements CameraStreamingDelegate {
@@ -100,7 +101,6 @@ export class StreamingDelegate implements CameraStreamingDelegate {
 
   private localLivestreamManager: LocalLivestreamManager;
   private snapshotManager?: SnapshotManager;
-  private talkbackStream: TalkbackStream;
 
   // keep track of sessions
   pendingSessions: Map<string, SessionInfo> = new Map();
@@ -129,8 +129,6 @@ export class StreamingDelegate implements CameraStreamingDelegate {
       this.cameraConfig.useCachedLocalLivestream,
       this.log,
     );
-
-    this.talkbackStream = new TalkbackStream(this.platform.eufyClient, this.device, this.log);
 
     if (this.cameraConfig.useEnhancedSnapshotBehaviour) {
       this.snapshotManager = new SnapshotManager(this.platform, this.device, this.cameraConfig, this.localLivestreamManager, this.log);
@@ -891,6 +889,8 @@ export class StreamingDelegate implements CameraStreamingDelegate {
 
         const ipVer = sessionInfo.ipv6 ? 'IP6' : 'IP4';
 
+        activeSession.talkbackStream = new TalkbackStream(this.platform.eufyClient, this.device, this.log);
+        
         const sdpReturnAudio =
           'v=0\r\n' +
           'o=- 0 0 IN ' + ipVer + ' ' + sessionInfo.address + '\r\n' +
@@ -909,7 +909,7 @@ export class StreamingDelegate implements CameraStreamingDelegate {
           this.videoProcessor, [ffmpegReturnArgs], this.log, (this.videoConfig.debugReturn), this);
         activeSession.returnProcess.usesStdinAsInput = true;
         activeSession.returnProcess.stdin.end(sdpReturnAudio);
-        activeSession.returnProcess.stdout.pipe(this.talkbackStream);
+        activeSession.returnProcess.stdout.pipe(activeSession.talkbackStream);
       }
 
       // Check if the pendingSession has been stopped before it was successfully started.
@@ -972,7 +972,7 @@ export class StreamingDelegate implements CameraStreamingDelegate {
         clearTimeout(session.timeout);
       }
       try {
-        this.talkbackStream.stopTalkbackStream();
+        session.talkbackStream?.stopTalkbackStream();
         session.returnProcess?.stdout.unpipe();
         session.returnProcess?.stop();
       } catch (err) {
