@@ -2,7 +2,7 @@ import { ChildProcessWithoutNullStreams, spawn } from 'child_process';
 import { StreamRequestCallback } from 'homebridge';
 import os from 'os';
 import readline from 'readline';
-import { Writable } from 'stream';
+import { Readable, Writable } from 'stream';
 import { Logger } from './logger';
 import { StreamingDelegate } from './streamingDelegate';
 
@@ -25,6 +25,9 @@ export class FfmpegProcess {
   private readonly process: ChildProcessWithoutNullStreams;
   private killTimeout?: NodeJS.Timeout;
   readonly stdin: Writable;
+  public stdout: Readable;
+
+  public usesStdinAsInput = false;
 
   public log;
   private cameraName: string;
@@ -41,6 +44,7 @@ export class FfmpegProcess {
     const startTime = Date.now();
     this.process = spawn(videoProcessor, ffmpegArgs.join(' ').split(/\s+/), { env: process.env });
     this.stdin = this.process.stdin;
+    this.stdout = this.process.stdout;
 
     this.process.stdout.on('data', (data) => {
       const progress = this.parseProgress(data);
@@ -142,7 +146,15 @@ export class FfmpegProcess {
   }
 
   public stop(): void {
-    this.process.stdin.write('q' + os.EOL);
+    // if process uses stdin as input then sending 'q' to quit is not possible and returns an error
+    // destroy input stream instead
+    // for example this happens in the returnAudio process
+    if (this.usesStdinAsInput) {
+      this.process.stdin.write('q' + os.EOL);
+    } else {
+      this.process.stdin.destroy();
+      this.process.kill('SIGTERM');
+    }
     this.killTimeout = setTimeout(() => {
       this.process.kill('SIGKILL');
     }, 2 * 1000);

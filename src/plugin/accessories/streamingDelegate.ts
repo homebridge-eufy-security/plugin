@@ -36,6 +36,7 @@ import { Readable } from 'stream';
 import { NamePipeStream, StreamInput } from './UniversalStream';
 import { LocalLivestreamManager } from './LocalLivestreamManager';
 import { SnapshotManager } from './SnapshotManager';
+import { TalkbackStream } from './Talkback';
 
 import { readFile } from 'fs';
 import path from 'path';
@@ -75,6 +76,7 @@ type ResolutionInfo = {
 type ActiveSession = {
   videoProcess?: FfmpegProcess;
   audioProcess?: FfmpegProcess;
+  returnProcess?: FfmpegProcess;
   timeout?: NodeJS.Timeout;
   socket?: Socket;
   uVideoStream?: NamePipeStream;
@@ -98,6 +100,7 @@ export class StreamingDelegate implements CameraStreamingDelegate {
 
   private localLivestreamManager: LocalLivestreamManager;
   private snapshotManager?: SnapshotManager;
+  private talkbackStream: TalkbackStream;
 
   // keep track of sessions
   pendingSessions: Map<string, SessionInfo> = new Map();
@@ -126,6 +129,8 @@ export class StreamingDelegate implements CameraStreamingDelegate {
       this.cameraConfig.useCachedLocalLivestream,
       this.log,
     );
+
+    this.talkbackStream = new TalkbackStream(this.platform.eufyClient, this.device, this.log);
 
     if (this.cameraConfig.useEnhancedSnapshotBehaviour) {
       this.snapshotManager = new SnapshotManager(this.platform, this.device, this.cameraConfig, this.localLivestreamManager, this.log);
@@ -165,7 +170,7 @@ export class StreamingDelegate implements CameraStreamingDelegate {
           },
         },
         audio: {
-          twoWayAudio: !!this.videoConfig.returnAudioTarget,
+          twoWayAudio: this.cameraConfig.talkback,
           codecs: [
             {
               type: AudioStreamingCodecType.AAC_ELD,
@@ -873,6 +878,40 @@ export class StreamingDelegate implements CameraStreamingDelegate {
         // });
       }
 
+      // talkback section
+      if (this.cameraConfig.talkback) {
+        const ffmpegReturnArgs =
+          '-hide_banner' +
+          ' -protocol_whitelist pipe,udp,rtp,file,crypto' +
+          ' -f sdp' +
+          ' -c:a libfdk_aac' +
+          ' -i pipe:' +
+          ' -acodec aac -ar 16k -ac 1 -b:a 20k -f adts pipe:1' + // TODO: try copy
+          ' -loglevel level' + (this.videoConfig.debugReturn ? '+verbose' : '');
+
+        const ipVer = sessionInfo.ipv6 ? 'IP6' : 'IP4';
+
+        const sdpReturnAudio =
+          'v=0\r\n' +
+          'o=- 0 0 IN ' + ipVer + ' ' + sessionInfo.address + '\r\n' +
+          's=Talk\r\n' +
+          'c=IN ' + ipVer + ' ' + sessionInfo.address + '\r\n' +
+          't=0 0\r\n' +
+          'm=audio ' + sessionInfo.audioReturnPort + ' RTP/AVP 110\r\n' +
+          'b=AS:24\r\n' +
+          'a=rtpmap:110 MPEG4-GENERIC/16000/1\r\n' +
+          'a=rtcp-mux\r\n' + // FFmpeg ignores this, but might as well
+          'a=fmtp:110 ' +
+            'profile-level-id=1;mode=AAC-hbr;sizelength=13;indexlength=3;indexdeltalength=3; ' +
+            'config=F8F0212C00BC00\r\n' +
+          'a=crypto:1 AES_CM_128_HMAC_SHA1_80 inline:' + sessionInfo.audioSRTP.toString('base64') + '\r\n';
+        activeSession.returnProcess = new FfmpegProcess(this.cameraName + '] [Two-Way', request.sessionID,
+          this.videoProcessor, [ffmpegReturnArgs], this.log, (this.videoConfig.debugReturn || true), this);
+        activeSession.returnProcess.usesStdinAsInput = true;
+        activeSession.returnProcess.stdin.end(sdpReturnAudio);
+        activeSession.returnProcess.stdout.pipe(this.talkbackStream);
+      }
+
       // Check if the pendingSession has been stopped before it was successfully started.
       const pendingSession = this.pendingSessions.get(request.sessionID);
       // pendingSession has not been deleted. Transfer it to ongoingSessions.
@@ -931,6 +970,13 @@ export class StreamingDelegate implements CameraStreamingDelegate {
     if (session) {
       if (session.timeout) {
         clearTimeout(session.timeout);
+      }
+      try {
+        this.talkbackStream.stopTalkbackStream();
+        session.returnProcess?.stdout.unpipe();
+        session.returnProcess?.stop();
+      } catch (err) {
+          this.log.error(this.cameraName, 'Error occurred terminating returnAudio FFmpeg process: ' + err);
       }
       try {
         session.videoProcess?.stop();

@@ -7,7 +7,7 @@ import { DeviceAccessory } from './Device';
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore  
-import { Camera, Device, PropertyName, VideoCodec } from 'eufy-security-client';
+import { Camera, Device, PropertyName, CommandName, VideoCodec } from 'eufy-security-client';
 import { StreamingDelegate } from './streamingDelegate';
 
 import { CameraConfig, VideoConfig } from './configTypes';
@@ -169,6 +169,16 @@ export class CameraAccessory extends DeviceAccessory {
 
     if (!config.snapshotHandlingMethod) {
       config.snapshotHandlingMethod = (config.forcerefreshsnap) ? 1 : 3;
+    }
+
+    config.talkback = config.talkback ??= false;
+    if (config.talkback && !this.eufyDevice.hasCommand(CommandName.DeviceStartTalkback)) {
+      this.platform.log.warn(this.accessory.displayName, 'Talkback for this device is not supported!');
+      config.talkback = false;
+    }
+    if (config.talkback && config.rtsp) {
+      this.platform.log.warn(this.accessory.displayName, 'Talkback cannot be used with rtsp option. Ignoring talkback setting.');
+      config.talkback = false;
     }
 
     return config;
