@@ -65,8 +65,6 @@ export class TalkbackStream extends Duplex {
     let pushReturn = true;
     while (this.cacheData.length > 0 && pushReturn) {
       const data = this.cacheData.shift();
-      this.log.debug(this.camera.getName(),
-        'sending cached audio data to camera. ' + this.cacheData.length + ' cached chunks of data left.');
       pushReturn = this.push(data);
     }
   }
@@ -81,12 +79,9 @@ export class TalkbackStream extends Duplex {
       this.stopTalkback();
     }, 2000);
 
-    // TODO: remove chunk logging
     if (this.targetStream) {
-      this.log.debug(this.camera.getName(), 'sending audio data to camera.');
       this.push(chunk);
     } else {
-      this.log.debug(this.camera.getName(), 'caching audio data and starting talkback.');
       this.cacheData.push(chunk);
       this.startTalkback();
     }
