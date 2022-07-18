@@ -39,6 +39,7 @@ import { GuardModesMappingComponent } from './config-options/guard-modes-mapping
 import { ResetPluginComponent } from './config-options/reset-plugin/reset-plugin.component';
 import { ResetConfirmationComponent } from './reset-confirmation/reset-confirmation.component';
 import { ManualAlarmModesComponent } from './config-options/manual-alarm-modes/manual-alarm-modes.component';
+import { TalkbackComponent } from './config-options/talkback/talkback.component';
 
 @NgModule({
   declarations: [
@@ -71,6 +72,7 @@ import { ManualAlarmModesComponent } from './config-options/manual-alarm-modes/m
     ResetPluginComponent,
     ResetConfirmationComponent,
     ManualAlarmModesComponent,
+    TalkbackComponent,
   ],
   imports: [BrowserModule, FormsModule, NgbModule, AppRoutingModule, FontAwesomeModule],
   providers: [{ provide: LocationStrategy, useClass: HashLocationStrategy }],
