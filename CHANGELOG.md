@@ -6,6 +6,7 @@
 
 - switch to manually reset alarm via homekit
 - switch to manually trigger alarm via homekit (this can be used to trigger the alarm with homekit automations) see #26
+- setting to disable log file storage to disk
 
 ### Changed
 -   Complete redesign of the config ui screen
