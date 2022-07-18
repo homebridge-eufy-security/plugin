@@ -24,6 +24,7 @@
 -   Added Dark Mode to config ui
 -   Added product images to devices page in config ui
 -   limit value for maximum streaming duration to prevent unexpected behaviour (see #111)
+-   Updated to latest version of eufy-security-client (2.1.1) (fix for #72 and #38)
 
 ### Fixed
 -   [Bug]: package.json reqiures the wrong node version #44
