@@ -71,52 +71,67 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
 
     this.eufyPath = this.api.user.storagePath() + '/eufysecurity';
 
+    if (!fs.existsSync(this.eufyPath)) {
+      fs.mkdirSync(this.eufyPath);
+    }
+
     const plugin = require('../package.json');
 
-    this.log = bunyan.createLogger({
-      name: '[EufySecurity-' + plugin.version + ']',
-      hostname: '',
-      streams: [{
-        level: (this.config.enableDetailedLogging) ? 'debug' : 'info',
-        type: 'raw',
-        stream: bunyanDebugStream({
-          forceColor: true,
-          showProcess: false,
-          showPid: false,
-          showDate: (time) => {
-            return '[' + time.toLocaleString('en-US') + ']';
-          },
-        }),
-      }, {
+    const omitLogFiles = this.config.omitLogFiles ?? false;
+
+    const logStreams: bunyan.Stream[] = [{
+      level: (this.config.enableDetailedLogging) ? 'debug' : 'info',
+      type: 'raw',
+      stream: bunyanDebugStream({
+        forceColor: true,
+        showProcess: false,
+        showPid: false,
+        showDate: (time) => {
+          return '[' + time.toLocaleString('en-US') + ']';
+        },
+      }),
+    }];
+
+    if (!omitLogFiles) {
+      logStreams.push({
         level: (this.config.enableDetailedLogging) ? 'debug' : 'info',
         type: 'rotating-file',
         path: this.eufyPath + '/log-lib.log',
         period: '1d',   // daily rotation
         count: 3,        // keep 3 back copies
-      }],
+      });
+    }
+
+    this.log = bunyan.createLogger({
+      name: '[EufySecurity-' + plugin.version + ']',
+      hostname: '',
+      streams: logStreams,
       serializers: bunyanDebugStream.stdSerializers,
     });
 
-    this.logLib = bunyan.createLogger({
-      name: '[EufySecurity-' + plugin.version + ']',
-      hostname: '',
-      streams: [{
-        level: (this.config.enableDetailedLogging) ? 'debug' : 'info',
-        type: 'file',
-        path: this.eufyPath + '/log-lib.log',
-      }],
-    });
+    if (!omitLogFiles) {
+      this.logLib = bunyan.createLogger({
+        name: '[EufySecurity-' + plugin.version + ']',
+        hostname: '',
+        streams: [{
+          level: (this.config.enableDetailedLogging) ? 'debug' : 'info',
+          type: 'file',
+          path: this.eufyPath + '/log-lib.log',
+        }],
+      });
+    }
 
     this.log.warn('warning: planned changes, see https://github.com/homebridge-eufy-security/plugin/issues/1');
 
     const library = require('../node_modules/eufy-security-client/package.json');
+    this.log.debug('plugin data store: ' + this.eufyPath);
     this.log.debug('Using bropats eufy-security-client library in version ' + library.version);
 
-    this.clean_config();
-
-    if (!fs.existsSync(this.eufyPath)) {
-      fs.mkdirSync(this.eufyPath);
+    if (omitLogFiles) {
+      this.log.info('log file storage will be omitted.');
     }
+
+    this.clean_config();
 
     this.eufyConfig = {
       username: this.config.username,
@@ -199,7 +214,14 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
       this.cleanCachedAccessories();
     }, 45 * 1000);
 
-    this.eufyClient.setCameraMaxLivestreamDuration(this.config.CameraMaxLivestreamDuration ?? 30);
+    let cameraMaxLivestreamDuration = this.config.CameraMaxLivestreamDuration ?? 30;
+    if (cameraMaxLivestreamDuration > 86400) {
+      cameraMaxLivestreamDuration = 86400;
+      // eslint-disable-next-line max-len
+      this.log.warn('Your maximum livestream duration value is too large. Since this can cause problems it was reset to 86400 seconds (1 day maximum).');
+    }
+
+    this.eufyClient.setCameraMaxLivestreamDuration(cameraMaxLivestreamDuration);
     this.log.debug('CameraMaxLivestreamDuration:', this.eufyClient.getCameraMaxLivestreamDuration());
   }
 
