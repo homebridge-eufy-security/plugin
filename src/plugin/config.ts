@@ -11,6 +11,7 @@ export interface EufySecurityPlatformConfig extends PlatformConfig {
   username: string;
   password: string;
   enableDetailedLogging: number;
+  omitLogFiles: boolean;
   enableCamera: boolean;
   CameraMaxLivestreamDuration: number;
   pollingIntervalMinutes: number;

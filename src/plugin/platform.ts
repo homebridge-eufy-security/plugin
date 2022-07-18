@@ -77,39 +77,49 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
 
     const plugin = require('../package.json');
 
-    this.log = bunyan.createLogger({
-      name: '[EufySecurity-' + plugin.version + ']',
-      hostname: '',
-      streams: [{
-        level: (this.config.enableDetailedLogging) ? 'debug' : 'info',
-        type: 'raw',
-        stream: bunyanDebugStream({
-          forceColor: true,
-          showProcess: false,
-          showPid: false,
-          showDate: (time) => {
-            return '[' + time.toLocaleString('en-US') + ']';
-          },
-        }),
-      }, {
+    const omitLogFiles = this.config.omitLogFiles ?? false;
+
+    const logStreams: bunyan.Stream[] = [{
+      level: (this.config.enableDetailedLogging) ? 'debug' : 'info',
+      type: 'raw',
+      stream: bunyanDebugStream({
+        forceColor: true,
+        showProcess: false,
+        showPid: false,
+        showDate: (time) => {
+          return '[' + time.toLocaleString('en-US') + ']';
+        },
+      }),
+    }];
+
+    if (!omitLogFiles) {
+      logStreams.push({
         level: (this.config.enableDetailedLogging) ? 'debug' : 'info',
         type: 'rotating-file',
         path: this.eufyPath + '/log-lib.log',
         period: '1d',   // daily rotation
         count: 3,        // keep 3 back copies
-      }],
+      });
+    }
+
+    this.log = bunyan.createLogger({
+      name: '[EufySecurity-' + plugin.version + ']',
+      hostname: '',
+      streams: logStreams,
       serializers: bunyanDebugStream.stdSerializers,
     });
 
-    this.logLib = bunyan.createLogger({
-      name: '[EufySecurity-' + plugin.version + ']',
-      hostname: '',
-      streams: [{
-        level: (this.config.enableDetailedLogging) ? 'debug' : 'info',
-        type: 'file',
-        path: this.eufyPath + '/log-lib.log',
-      }],
-    });
+    if (!omitLogFiles) {
+      this.logLib = bunyan.createLogger({
+        name: '[EufySecurity-' + plugin.version + ']',
+        hostname: '',
+        streams: [{
+          level: (this.config.enableDetailedLogging) ? 'debug' : 'info',
+          type: 'file',
+          path: this.eufyPath + '/log-lib.log',
+        }],
+      });
+    }
 
     this.log.warn('warning: planned changes, see https://github.com/homebridge-eufy-security/plugin/issues/1');
 
