@@ -200,7 +200,14 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
       this.cleanCachedAccessories();
     }, 45 * 1000);
 
-    this.eufyClient.setCameraMaxLivestreamDuration(this.config.CameraMaxLivestreamDuration ?? 30);
+    let cameraMaxLivestreamDuration = this.config.CameraMaxLivestreamDuration ?? 30;
+    if (cameraMaxLivestreamDuration > 86400) {
+      cameraMaxLivestreamDuration = 86400;
+      // eslint-disable-next-line max-len
+      this.log.warn('Your maximum livestream duration value is too large. Since this can cause problems it was reset to 86400 seconds (1 day maximum).');
+    }
+
+    this.eufyClient.setCameraMaxLivestreamDuration(cameraMaxLivestreamDuration);
     this.log.debug('CameraMaxLivestreamDuration:', this.eufyClient.getCameraMaxLivestreamDuration());
   }
 
