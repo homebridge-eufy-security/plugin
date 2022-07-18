@@ -71,6 +71,10 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
 
     this.eufyPath = this.api.user.storagePath() + '/eufysecurity';
 
+    if (!fs.existsSync(this.eufyPath)) {
+      fs.mkdirSync(this.eufyPath);
+    }
+
     const plugin = require('../package.json');
 
     this.log = bunyan.createLogger({
@@ -114,10 +118,6 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
     this.log.debug('Using bropats eufy-security-client library in version ' + library.version);
 
     this.clean_config();
-
-    if (!fs.existsSync(this.eufyPath)) {
-      fs.mkdirSync(this.eufyPath);
-    }
 
     this.eufyConfig = {
       username: this.config.username,
