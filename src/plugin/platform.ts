@@ -127,6 +127,10 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
     this.log.debug('plugin data store: ' + this.eufyPath);
     this.log.debug('Using bropats eufy-security-client library in version ' + library.version);
 
+    if (omitLogFiles) {
+      this.log.info('log file storage will be omitted.');
+    }
+
     this.clean_config();
 
     this.eufyConfig = {
