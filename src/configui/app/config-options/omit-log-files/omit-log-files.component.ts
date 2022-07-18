@@ -6,7 +6,7 @@ import { ConfigOptionsInterpreter } from '../config-options-interpreter';
   selector: 'app-omit-log-files',
   templateUrl: './omit-log-files.component.html',
   styles: [
-  ]
+  ],
 })
 export class OmitLogFilesComponent extends ConfigOptionsInterpreter implements OnInit {
 
