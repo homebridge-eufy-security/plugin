@@ -15,6 +15,7 @@ export class CameraConfigOptionsComponent implements OnInit {
   showEnhancedSnapshotBehaviour = true;
   isDoorbell = false;
   isCamera = false;
+  supportsRTSP = false;
 
   constructor(private pluginService: PluginService, private route: ActivatedRoute) { }
 
@@ -25,6 +26,7 @@ export class CameraConfigOptionsComponent implements OnInit {
     if (this.accessory) {
       this.isDoorbell = Device.isDoorbell(this.accessory.type);
       this.isCamera = Device.isCamera(this.accessory.type);
+      this.supportsRTSP = Device.supportsRTSP(this.accessory.type);
     }
   }
 

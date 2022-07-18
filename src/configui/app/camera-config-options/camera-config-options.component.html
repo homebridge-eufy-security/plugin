@@ -12,8 +12,8 @@
       <app-enable-camera [accessory]="accessory"></app-enable-camera>
       <hr />
       <app-livestream-cache [accessory]="accessory"></app-livestream-cache>
-      <hr />
-      <app-rtsp-streaming [accessory]="accessory"></app-rtsp-streaming>
+      <hr *ngIf="supportsRTSP" />
+      <app-rtsp-streaming [accessory]="accessory" *ngIf="supportsRTSP"></app-rtsp-streaming>
       <hr />
       <app-enable-audio [accessory]="accessory"></app-enable-audio>
     </div>

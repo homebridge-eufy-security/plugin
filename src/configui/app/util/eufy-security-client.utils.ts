@@ -100,4 +100,23 @@ export class Device {
     }
     return false;
   }
+
+  static supportsRTSP(type: number): boolean {
+    return (
+      type === DeviceType.CAMERA ||
+      type === DeviceType.CAMERA2 ||
+      type === DeviceType.CAMERA2C ||
+      type === DeviceType.CAMERA2C_PRO ||
+      type === DeviceType.CAMERA_E ||
+      type === DeviceType.INDOOR_CAMERA ||
+      type === DeviceType.INDOOR_CAMERA_1080 ||
+      type === DeviceType.INDOOR_OUTDOOR_CAMERA_1080P ||
+      type === DeviceType.INDOOR_OUTDOOR_CAMERA_1080P_NO_LIGHT ||
+      type === DeviceType.INDOOR_OUTDOOR_CAMERA_2K ||
+      type === DeviceType.INDOOR_PT_CAMERA ||
+      type === DeviceType.INDOOR_PT_CAMERA_1080 ||
+      type === DeviceType.INDOOR_COST_DOWN_CAMERA ||
+      type === DeviceType.FLOODLIGHT_CAMERA_8423
+    );
+  }
 }
