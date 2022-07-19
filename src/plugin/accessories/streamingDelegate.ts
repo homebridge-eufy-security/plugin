@@ -844,7 +844,7 @@ export class StreamingDelegate implements CameraStreamingDelegate {
       activeSession.uAudioStream = uAudioStream;
 
       activeSession.videoProcess = new FfmpegProcess(
-        this.cameraName,
+        '[' + this.cameraName + '] [Video Process]',
         request.sessionID,
         this.videoProcessor,
         clean_ffmpegVideoArgs,
@@ -856,7 +856,7 @@ export class StreamingDelegate implements CameraStreamingDelegate {
 
       if (useAudio) {
         activeSession.audioProcess = new FfmpegProcess(
-          this.cameraName,
+          '[' + this.cameraName + '] [Audio Process]',
           request.sessionID,
           this.videoProcessor,
           clean_ffmpegAudioArgs,
@@ -905,8 +905,15 @@ export class StreamingDelegate implements CameraStreamingDelegate {
             'profile-level-id=1;mode=AAC-hbr;sizelength=13;indexlength=3;indexdeltalength=3; ' +
             'config=F8F0212C00BC00\r\n' +
           'a=crypto:1 AES_CM_128_HMAC_SHA1_80 inline:' + sessionInfo.audioSRTP.toString('base64') + '\r\n';
-        activeSession.returnProcess = new FfmpegProcess(this.cameraName + '] [Two-Way', request.sessionID,
-          this.videoProcessor, [ffmpegReturnArgs], this.log, (this.videoConfig.debugReturn), this);
+        activeSession.returnProcess = new FfmpegProcess(
+          '[' + this.cameraName + '] [Talkback Process]',
+          request.sessionID,
+          this.videoProcessor,
+          [ffmpegReturnArgs],
+          this.log,
+          (this.videoConfig.debugReturn),
+          this,
+        );
         activeSession.returnProcess.usesStdinAsInput = true;
         activeSession.returnProcess.stdin.end(sdpReturnAudio);
         activeSession.returnProcess.stdout.pipe(activeSession.talkbackStream);
