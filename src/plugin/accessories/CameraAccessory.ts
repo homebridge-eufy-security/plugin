@@ -393,7 +393,9 @@ export class CameraAccessory extends DeviceAccessory {
     this.platform.log.debug(this.accessory.displayName, 'SET DeviceEnabled:', value);
     const station = this.platform.getStationById(this.eufyDevice.getStationSerial());
     station.enableDevice(this.eufyDevice, value as boolean);
-    this.CameraService.getCharacteristic(this.characteristic.ManuallyDisabled).updateValue(!value as boolean);
+    if (this.cameraConfig.enableCamera) {
+      this.CameraService.getCharacteristic(this.characteristic.ManuallyDisabled).updateValue(!value as boolean);
+    }
   }
 
   async handleMotionOnGet(): Promise<CharacteristicValue> {
