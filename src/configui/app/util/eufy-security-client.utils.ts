@@ -131,6 +131,14 @@ export class Device {
       type === DeviceType.BATTERY_DOORBELL_2 ||
       type === DeviceType.BATTERY_DOORBELL_PLUS ||
       type === DeviceType.DOORBELL_SOLO ||
+      type === DeviceType.INDOOR_CAMERA ||
+      type === DeviceType.INDOOR_CAMERA_1080 ||
+      type === DeviceType.INDOOR_OUTDOOR_CAMERA_1080P ||
+      type === DeviceType.INDOOR_OUTDOOR_CAMERA_1080P_NO_LIGHT ||
+      type === DeviceType.INDOOR_OUTDOOR_CAMERA_2K ||
+      type === DeviceType.INDOOR_PT_CAMERA ||
+      type === DeviceType.INDOOR_PT_CAMERA_1080 ||
+      type === DeviceType.INDOOR_COST_DOWN_CAMERA ||
       type === DeviceType.SOLO_CAMERA ||
       type === DeviceType.SOLO_CAMERA_PRO ||
       type === DeviceType.SOLO_CAMERA_SPOTLIGHT_1080 ||
