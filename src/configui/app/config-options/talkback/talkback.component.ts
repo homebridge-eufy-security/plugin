@@ -7,7 +7,7 @@ import { ConfigOptionsInterpreter } from '../config-options-interpreter';
   selector: 'app-talkback',
   templateUrl: './talkback.component.html',
   styles: [
-  ]
+  ],
 })
 export class TalkbackComponent extends ConfigOptionsInterpreter implements OnInit {
 
