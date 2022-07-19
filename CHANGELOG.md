@@ -26,6 +26,7 @@
 -   Added product images to devices page in config ui
 -   limit value for maximum streaming duration to prevent unexpected behaviour (see #111)
 -   RTSP setting is now only avaiable on compatible devices
+-   only utilize one ffmpeg stream if rtsp setting is used
 
 ### Fixed
 -   [Bug]: package.json reqiures the wrong node version #44
