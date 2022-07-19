@@ -119,4 +119,27 @@ export class Device {
       type === DeviceType.FLOODLIGHT_CAMERA_8423
     );
   }
+
+  static supportsTalkback(type: number): boolean {
+    return (
+      type === DeviceType.CAMERA2 ||
+      type === DeviceType.CAMERA2C ||
+      type === DeviceType.CAMERA2C_PRO ||
+      type === DeviceType.CAMERA2_PRO ||
+      type === DeviceType.DOORBELL ||
+      type === DeviceType.BATTERY_DOORBELL ||
+      type === DeviceType.BATTERY_DOORBELL_2 ||
+      type === DeviceType.BATTERY_DOORBELL_PLUS ||
+      type === DeviceType.DOORBELL_SOLO ||
+      type === DeviceType.SOLO_CAMERA ||
+      type === DeviceType.SOLO_CAMERA_PRO ||
+      type === DeviceType.SOLO_CAMERA_SPOTLIGHT_1080 ||
+      type === DeviceType.SOLO_CAMERA_SPOTLIGHT_2K ||
+      type === DeviceType.SOLO_CAMERA_SPOTLIGHT_SOLAR ||
+      type === DeviceType.FLOODLIGHT ||
+      type === DeviceType.FLOODLIGHT_CAMERA_8422 ||
+      type === DeviceType.FLOODLIGHT_CAMERA_8423 ||
+      type === DeviceType.FLOODLIGHT_CAMERA_8424
+    );
+  }
 }

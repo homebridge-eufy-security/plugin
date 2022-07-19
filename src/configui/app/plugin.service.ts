@@ -84,6 +84,7 @@ export class PluginService extends EventTarget {
       if (save) {
         await window.homebridge.savePluginConfig();
       }
+      this.dispatchEvent(new Event('configChanged'));
     } catch (err) {
       console.log('There was an error updating the credentials in your config: ' + err);
     }

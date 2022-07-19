@@ -40,6 +40,7 @@ import { ResetPluginComponent } from './config-options/reset-plugin/reset-plugin
 import { ResetConfirmationComponent } from './reset-confirmation/reset-confirmation.component';
 import { ManualAlarmModesComponent } from './config-options/manual-alarm-modes/manual-alarm-modes.component';
 import { OmitLogFilesComponent } from './config-options/omit-log-files/omit-log-files.component';
+import { TalkbackComponent } from './config-options/talkback/talkback.component';
 
 @NgModule({
   declarations: [
@@ -73,6 +74,7 @@ import { OmitLogFilesComponent } from './config-options/omit-log-files/omit-log-
     ResetConfirmationComponent,
     ManualAlarmModesComponent,
     OmitLogFilesComponent,
+    TalkbackComponent,
   ],
   imports: [BrowserModule, FormsModule, NgbModule, AppRoutingModule, FontAwesomeModule],
   providers: [{ provide: LocationStrategy, useClass: HashLocationStrategy }],

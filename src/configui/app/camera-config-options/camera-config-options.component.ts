@@ -16,6 +16,7 @@ export class CameraConfigOptionsComponent implements OnInit {
   isDoorbell = false;
   isCamera = false;
   supportsRTSP = false;
+  supportsTalkback = false;
 
   constructor(private pluginService: PluginService, private route: ActivatedRoute) { }
 
@@ -27,6 +28,7 @@ export class CameraConfigOptionsComponent implements OnInit {
       this.isDoorbell = Device.isDoorbell(this.accessory.type);
       this.isCamera = Device.isCamera(this.accessory.type);
       this.supportsRTSP = Device.supportsRTSP(this.accessory.type);
+      this.supportsTalkback = Device.supportsTalkback(this.accessory.type);
     }
   }
 
