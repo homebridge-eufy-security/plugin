@@ -1,12 +1,13 @@
 # Change Log
 
-## 2.1.0 (beta) (18/07/2022)
+## 2.1.0 (beta) (19/07/2022)
 
 ### Added
 
 - switch to manually reset alarm via homekit
 - switch to manually trigger alarm via homekit (this can be used to trigger the alarm with homekit automations) see #26
 - setting to disable log file storage to disk (possible fix for #93)
+- talkback support #103
 
 ### Changed
 -   Complete redesign of the config ui screen
@@ -20,11 +21,10 @@
 -   cameras can now be enabled and disabled even if only used as motion sensors devices
 -   Refactored whole project structure to resemble the new workspace layout (plugin + custom ui)
 -   Reimplementation of device discovery algorithm to better reflect best practices mentioned in [this comment](https://github.com/bropat/eufy-security-client/issues/167#issuecomment-1155388624)
--   Updated to latest version of eufy-security-client (2.1.0)
+-   Updated to latest version of eufy-security-client (2.1.1) (fix for #72 and #38)
 -   Added Dark Mode to config ui
 -   Added product images to devices page in config ui
 -   limit value for maximum streaming duration to prevent unexpected behaviour (see #111)
--   Updated to latest version of eufy-security-client (2.1.1) (fix for #72 and #38)
 -   RTSP setting is now only avaiable on compatible devices
 
 ### Fixed

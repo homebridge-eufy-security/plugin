@@ -16,6 +16,8 @@
       <app-rtsp-streaming [accessory]="accessory" *ngIf="supportsRTSP"></app-rtsp-streaming>
       <hr />
       <app-enable-audio [accessory]="accessory"></app-enable-audio>
+      <hr *ngIf="supportsTalkback" />
+      <app-talkback [accessory]="accessory" *ngIf="supportsTalkback"></app-talkback>
     </div>
   </div>
 </div>

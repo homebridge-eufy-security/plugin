@@ -1,13 +1,16 @@
 import { Component, Input, OnInit } from '@angular/core';
-import { Accessory } from '../../../app/accessory';
-import { PluginService } from '../../../app/plugin.service';
+import { Accessory } from '../../accessory';
+import { PluginService } from '../../plugin.service';
 import { ConfigOptionsInterpreter } from '../config-options-interpreter';
 
 @Component({
-  selector: 'app-rtsp-streaming',
-  templateUrl: './rtsp-streaming.component.html',
+  selector: 'app-talkback',
+  templateUrl: './talkback.component.html',
+  styles: [
+  ],
 })
-export class RtspStreamingComponent extends ConfigOptionsInterpreter implements OnInit {
+export class TalkbackComponent extends ConfigOptionsInterpreter implements OnInit {
+
   constructor(pluginService: PluginService) {
     super(pluginService);
   }
@@ -15,7 +18,7 @@ export class RtspStreamingComponent extends ConfigOptionsInterpreter implements 
   ngOnInit(): void {
     this.readValue();
 
-    this.pluginService.addEventListener('configChanged', () => this.readValue()); // look for changes of talkback setting
+    this.pluginService.addEventListener('configChanged', () => this.readValue()); // look for changes of rtsp setting
   }
 
   /** Customize from here */
@@ -28,26 +31,27 @@ export class RtspStreamingComponent extends ConfigOptionsInterpreter implements 
   @Input() accessory?: Accessory;
   value = false;
 
-  talkbackIsEnabled = false;
+  rtspIsEnabled = false;
 
   async readValue() {
     const config = await this.getCameraConfig(this.accessory?.uniqueId || '');
 
-    if (config && Object.prototype.hasOwnProperty.call(config, 'rtsp')) {
-      this.value = config['rtsp'];
+    if (config && Object.prototype.hasOwnProperty.call(config, 'talkback')) {
+      this.value = config['talkback'];
     }
 
-    if (config && Object.prototype.hasOwnProperty.call(config, 'talkback')) {
-      this.talkbackIsEnabled = config['talkback'];
+    if (config && Object.prototype.hasOwnProperty.call(config, 'rtsp')) {
+      this.rtspIsEnabled = config['rtsp'];
     }
   }
 
   update() {
     this.updateConfig(
       {
-        rtsp: this.value,
+        talkback: this.value,
       },
       this.accessory,
     );
   }
+
 }
