@@ -26,7 +26,7 @@ Homebridge plugin to control certain Eufy Security devices
 ### Prerequisites
 
 - To use this plugin, you will need to already have [Homebridge](https://homebridge.io) (at least v1.3.4)  installed. Refer to the links for more information and installation instructions.
-- It is recommended to use the current LTS version of Node, currently v14, however Node v12 is also supported.
+- It is recommended to use the current LTS version of Node, currently v16, however Node v12 is also supported.
 
 ### Setup
 
@@ -49,12 +49,21 @@ Homebridge plugin to control certain Eufy Security devices
 
 ### Supporting
 
--   **[samemory](https://github.com/samemory)**
--   **[schliemann](https://github.com/schliemann)**
--   **[lenoxys](https://github.com/lenoxys)**
--   **[thieren](https://github.com/thieren)**
+If you appreciate this plugin and want to support the work we do, you can use one of the following links:
 
-Big thanks to **[bropat](https://github.com/bropat)** who made this possible. Please consider buying a coffee for him over here: https://ko-fi.com/bropat
+**Active Contributors**
+
+- **[lenoxys](https://github.com/sponsors/lenoxys)**
+- **[schliemann](https://github.com/schliemann)**
+- **[thieren](https://ko-fi.com/thieren)**
+
+**The guy who started it all**
+
+- **[samemory](https://ko-fi.com/S6S24XCVJ)**
+
+**And also**
+
+Big thanks to **[bropat](https://github.com/bropat)** who made this possible. You can support him [here](https://ko-fi.com/bropat)
 
 ### Disclaimer
 
