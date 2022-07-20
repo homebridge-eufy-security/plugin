@@ -1,7 +1,7 @@
 {
   "displayName": "Homebridge Eufy Security",
   "name": "homebridge-eufy-security",
-  "version": "2.1.0-beta.10",
+  "version": "2.1.0-beta.11",
   "description": "Control Eufy Security from homebridge.",
   "license": "Apache-2.0",
   "repository": {
@@ -10,16 +10,16 @@
   },
   "funding": [
     {
-      "type" : "github",
-      "url" : "https://github.com/sponsors/lenoxys"
+      "type": "github",
+      "url": "https://github.com/sponsors/lenoxys"
     },
     {
-      "type" : "ko-fi",
-      "url" : "https://ko-fi.com/thieren"
+      "type": "ko-fi",
+      "url": "https://ko-fi.com/thieren"
     },
     {
-      "type" : "ko-fi",
-      "url" : "https://ko-fi.com/samemory"
+      "type": "ko-fi",
+      "url": "https://ko-fi.com/samemory"
     }
   ],
   "bugs": {
