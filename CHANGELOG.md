@@ -8,6 +8,7 @@ You can find the complete detailled changelog for every beta release [here](http
 
 - Use just one ffmpeg process for rtsp streaming
 - Updated repo funding details (Readme.md and package.json)
+- Cleaned up dependencies
 - Improved readablity of the changelog (i hope)
 
 ### Fixed
@@ -40,6 +41,7 @@ You can find the complete detailled changelog for every beta release [here](http
 - Limit value for maximum streaming duration to prevent unexpected behaviour (see #111)
 - Additional debug messages to help with issues
 - Updated repo funding details (Readme.md and package.json)
+- Cleaned up dependencies
 
 ### Fixed
 
