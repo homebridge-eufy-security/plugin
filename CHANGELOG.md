@@ -1,52 +1,64 @@
 # Change Log
 
-## 2.1.0 (beta) (19/07/2022)
+You can find the complete detailled changelog for every beta release [here](https://github.com/homebridge-eufy-security/plugin/releases).
+
+## 2.1.0-beta.11 (20/07/2022) - latest changes
+
+### Changed
+
+- Use just one ffmpeg process for rtsp streaming
+- Updated repo funding details (Readme.md and package.json)
+- Cleaned up dependencies
+- Improved readablity of the changelog (i hope)
+
+### Fixed
+
+- Bug where an error saying 'talkback will not work with rtsp setting enabled' was displayed even though one of theses settings was not available (see [here](https://github.com/homebridge-eufy-security/plugin/issues/103#issuecomment-1189244061))
+- plugin crashed if dependencies were stored in in non default places by npm (see [here](https://github.com/homebridge-eufy-security/plugin/issues/72#issuecomment-1189144152))
+
+## 2.1.0 (beta) - complete changes of the beta so far (19/07/2022)
 
 ### Added
 
-- switch to manually reset alarm via homekit
-- switch to manually trigger alarm via homekit (this can be used to trigger the alarm with homekit automations) see #26
-- setting to disable log file storage to disk (possible fix for #93)
-- talkback support #103
+- Talkback support #103
+- Improved snapshot handling: 3 different snapshot methods
+- Feature to improve camera snapshots at night (night vision)
+- Feature to automatically generate camera snapshots a given period of time, so that snapshots are more up-to-date
+- Feature allowing enabling and disabling motion detection throug switch if camera is used as a motion sensor only
+- Feature allowing enabling and disabling the camera throug switch even if camera is used as a motion sensor only
+- Control Station alarm through HomeKit (reset the alarm and even trigger it with HomeKit automations. You can now trigger the alarm even with third party accessories - e.g. with devices from vendors other than eufy) - see #26
+- Setting to disable log file storage to disk (possible fix for #93)
 
 ### Changed
--   Complete redesign of the config ui screen
--   Additional log output when station guard mode is changed (see [enhancement]: Logging basic operations such as guard mode change on the UI without debug mode #39)
--   Edited description for livestream caching in configuration wizard
--   Changed log output messages for better understanding
--   Added error handling for misconfigured guard modes (possible fix [Bug]: Disarming Dufy Security Fails and Crashes Homebridge Server #52)
--   Added timeouts for guard mode changes with corresponding log messages and one retry (possible fix for [Bug]: Eufy Indoor Cam 2k alarm state issue #38 and [enhancement]: Logging basic operations such as guard mode change on the UI without debug mode #39)
--   Improved snapshot handling
--   Allow enabling and disabling motion detection throug switch if camera is used as motion sensor only
--   cameras can now be enabled and disabled even if only used as motion sensors devices
--   Refactored whole project structure to resemble the new workspace layout (plugin + custom ui)
--   Reimplementation of device discovery algorithm to better reflect best practices mentioned in [this comment](https://github.com/bropat/eufy-security-client/issues/167#issuecomment-1155388624)
--   Updated to latest version of eufy-security-client (2.1.1) (fix for #72 and #38)
--   Added Dark Mode to config ui
--   Added product images to devices page in config ui
--   limit value for maximum streaming duration to prevent unexpected behaviour (see #111)
--   RTSP setting is now only avaiable on compatible devices
+
+- Complete redesign of the config ui screen
+- RTSP setting is now only avaiable on compatible devices
+- Plugin will use two separate ffmpeg process for audio and video to increase stability (exception: rtsp streams)
+- Updated to latest version of eufy-security-client (2.1.1) (fix for #72 and #38)
+- Refactored whole project structure to resemble the new workspace layout (plugin + custom ui)
+- Reimplementation of device discovery algorithm to better reflect best practices mentioned in [this comment](https://github.com/bropat/eufy-security-client/issues/167#issuecomment-1155388624)
+- Added timeouts for guard mode changes. If these fail HomeKit will no longer get stuck, trying to change the guard mode and an error will be written to the log output (see #39)
+- Limit value for maximum streaming duration to prevent unexpected behaviour (see #111)
+- Additional debug messages to help with issues
+- Updated repo funding details (Readme.md and package.json)
+- Cleaned up dependencies
 
 ### Fixed
--   [Bug]: package.json reqiures the wrong node version #44
-- Bug where a local livestream cache may not have been shutdown properly and so subsequent livestreams would not be started
-- A problem where motion events prevented the livestream cache to terminate properly (see [Bug]: Snapshot updates problem #43)
-- Changed log file rotation behaviour to prevent race conditions with already moved log files (fix for #56)
-- Sometimes motion events were not reset correctly, this will now be prevented
--   Fix issue while New Config UI (2.0.0 and above) causes Push Notification to not work properly #59
-- Livestreams could fail if videoconfig was wrongly updated by plugin
-- First snapshots in balanced mode were failing since there weren't snapshots available
-- Plugin crashed when station mode was set to off/disarmed and config was not setup with guard modes correctly
-- Fix #48 Options enableCamera and enableMotion were not working in specific configuration situations
-- Fix #79 Unbridge setting not working for doorbell cameras
-- Fix #81 under certain conditions two cameras on the same station could not get automatic snapshot refreshes simultaneously
-- crash on startup if ignoreStations or ignoreDevices was not set in config json
-- fixed all lint warnings and errors
-- fixed npm audit warnings
-- crash if first cloud snapshot could not be downloaded
-- smart lock state could be wrong on startup (further improvements needed)
-- fix printed error messages if no stored accessories were found when using the config ui
-- camera settings will now only show for camera devices
+
+- Plugin crash if guard modes were configured incorrectly (see #52)
+- Plugin crashed if station was disarmed with certain configured guard modes
+- Config ui crash due to a wrong node version requirement (#44)
+- Livestream could not be started if previous local livestream cache was not shut down correctly (e.g. #43)
+- Livestream was not working if videoconfig was populated with empty values
+- Plugin may have crashed due to a race condition regarding log file rotation (see #56)
+- Motion events were not reseted correctly in some cases. So new events would not be recognized
+- Push notifications stopped working if the configuration editor was opened and the plugin not restarted aftwerwards (see #59)
+- Options enableCamera and enableMotion were not working in specific configuration situations (see #48)
+- Unbridge setting was not working for doorbell cameras (see #79)
+- Fixed #81
+- Fixed all lint warnings and errors
+- Fixed npm warnings
+- Smart lock states could be wrong on plugin startup (further improvements needed for smartlocks)
 
 ## 2.0.1 (20.06.2022)
 

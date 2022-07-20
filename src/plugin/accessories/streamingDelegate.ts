@@ -776,13 +776,16 @@ export class StreamingDelegate implements CameraStreamingDelegate {
       const useAudio = request.audio.codec === AudioStreamingCodecType.OPUS || request.audio.codec === AudioStreamingCodecType.AAC_ELD;
 
       if (useAudio) {
+
+        const audioArgsTarget = (rtsp) ? ffmpegVideoArgs : ffmpegAudioArgs;
+
         if (!rtsp) {
-          ffmpegAudioArgs.push(`-i ${uAudioStream.url}`);
+          audioArgsTarget.push(`-i ${uAudioStream.url}`);
         } else {
-          ffmpegAudioArgs.push(...ffmpegInput);
+          audioArgsTarget.push(...ffmpegInput);
         }
 
-        ffmpegAudioArgs.push(
+        audioArgsTarget.push(
           // Audio
           '-vn -sn -dn',
           request.audio.codec === AudioStreamingCodecType.OPUS
@@ -795,7 +798,7 @@ export class StreamingDelegate implements CameraStreamingDelegate {
           '-payload_type ' + request.audio.pt,
         );
 
-        ffmpegAudioArgs.push(
+        audioArgsTarget.push(
           // Audio Stream
           '-ssrc ' + sessionInfo.audioSSRC,
           '-f rtp',
@@ -854,7 +857,7 @@ export class StreamingDelegate implements CameraStreamingDelegate {
         callback,
       );
 
-      if (useAudio) {
+      if (useAudio && !rtsp) {
         activeSession.audioProcess = new FfmpegProcess(
           '[' + this.cameraName + '] [Audio Process]',
           request.sessionID,
@@ -884,7 +887,7 @@ export class StreamingDelegate implements CameraStreamingDelegate {
           ' -f sdp' +
           ' -c:a libfdk_aac' +
           ' -i pipe:' +
-          ' -acodec aac -ar 16k -ac 1 -b:a 20k -f adts pipe:1' + // TODO: try copy
+          ' -acodec aac -ar 16k -ac 1 -b:a 20k -f adts pipe:1' +
           ' -loglevel level' + (this.videoConfig.debugReturn ? '+verbose' : '');
 
         const ipVer = sessionInfo.ipv6 ? 'IP6' : 'IP4';
