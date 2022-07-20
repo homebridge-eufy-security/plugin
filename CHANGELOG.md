@@ -6,12 +6,13 @@ You can find the complete detailled changelog for every beta release [here](http
 
 ### Changed
 
-- updated repo funding details (Readme.md and package.json)
-- improved readablity of the changelog (i hope)
+- Use just one ffmpeg process for rtsp streaming
+- Updated repo funding details (Readme.md and package.json)
+- Improved readablity of the changelog (i hope)
 
 ### Fixed
 
-- bug where an error saying 'talkback will not work with rtsp setting enabled' was displayed even though one of theses settings was not available (see [here](https://github.com/homebridge-eufy-security/plugin/issues/103#issuecomment-1189244061))
+- Bug where an error saying 'talkback will not work with rtsp setting enabled' was displayed even though one of theses settings was not available (see [here](https://github.com/homebridge-eufy-security/plugin/issues/103#issuecomment-1189244061))
 
 ## 2.1.0 (beta) - complete changes of the beta so far (19/07/2022)
 
