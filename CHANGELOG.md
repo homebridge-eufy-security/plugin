@@ -13,6 +13,7 @@ You can find the complete detailled changelog for every beta release [here](http
 ### Fixed
 
 - Bug where an error saying 'talkback will not work with rtsp setting enabled' was displayed even though one of theses settings was not available (see [here](https://github.com/homebridge-eufy-security/plugin/issues/103#issuecomment-1189244061))
+- plugin crashed if dependencies were stored in in non default places by npm
 
 ## 2.1.0 (beta) - complete changes of the beta so far (19/07/2022)
 
