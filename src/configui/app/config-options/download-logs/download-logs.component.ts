@@ -45,9 +45,10 @@ export class DownloadLogsComponent implements OnInit {
       // eslint-disable-next-line no-console
       console.log(err);
 
+      const error = err as { message: string };
       this.failed = true;
       this.updateDownloadMessage(undefined);
-      this.failureMessage = `Generating of compressed logs.zip file did not complete: ${err}`;
+      this.failureMessage = `Generating of compressed logs.zip file did not complete: ${error.message}`;
     } finally {
       this.isDownloading = false;
     }
