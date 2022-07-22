@@ -1,5 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 
+import { fromEvent } from 'rxjs';
+
 @Component({
   selector: 'app-download-logs',
   templateUrl: './download-logs.component.html',
@@ -8,10 +10,13 @@ import { Component, OnInit } from '@angular/core';
 })
 export class DownloadLogsComponent implements OnInit {
 
+  private numberOfFilesEvent$ = fromEvent(window.homebridge, 'downloadLogsFileCount');
+
   // TODO: remove lint warnings
   ngOnInit(): void {
+    // window.homebridge.addEventListener('downloadLogsFileCount', (event: any) => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    window.homebridge.addEventListener('downloadLogsFileCount', (event: any) => {
+    this.numberOfFilesEvent$.subscribe((event: any) => {
       // eslint-disable-next-line no-console
       console.log(event);
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
