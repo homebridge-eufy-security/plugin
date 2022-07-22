@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Component, NgZone, OnInit } from '@angular/core';
 
 @Component({
@@ -12,25 +13,26 @@ export class DownloadLogsComponent implements OnInit {
 
   constructor(private zone: NgZone) { }
 
-  // TODO: remove lint warnings
   ngOnInit(): void {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     window.homebridge.addEventListener('downloadLogsFileCount', (event: any) => {
-      // eslint-disable-next-line no-console
-      console.log(event);
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const data = event['data'] as any;
       const numberOfFiles = data['numberOfFiles'] as number;
       this.updateDownloadMessage(`Compressing ${numberOfFiles} log files...`);
     });
+
+    window.homebridge.addEventListener('downloadLogsComplete', (event: any) => {
+      this.updateDownloadMessage('Log files were compressed successfully. Click \'Download\' to get your file.');
+    });
   }
 
+  failed = false;
   isDownloading = false;
   hasDownloaded = false;
   downloadMessage?: string;
+  failureMessage = '';
   logFileLocation = '';
 
-  // TODO: add failure banner
   async downloadLogs() {
     try {
       this.isDownloading = true;
@@ -42,6 +44,10 @@ export class DownloadLogsComponent implements OnInit {
     } catch (err) {
       // eslint-disable-next-line no-console
       console.log(err);
+
+      this.failed = true;
+      this.updateDownloadMessage(undefined);
+      this.failureMessage = `Generating of compressed logs.zip file did not complete: ${err}`;
     } finally {
       this.isDownloading = false;
     }

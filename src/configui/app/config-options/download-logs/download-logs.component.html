@@ -1,4 +1,7 @@
 <div class="settingsItem row p-3">
+  <div class="alert alert-danger" role="alert" *ngIf="failed">
+    {{ failureMessage }}
+  </div>
   <div class="d-flex flex-column flex-sm-row justify-content-between align-items-center mb-2">
     <span class="mb-3 mb-sm-0">Download Logs</span>
     

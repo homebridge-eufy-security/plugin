@@ -236,7 +236,6 @@ class UiServer extends HomebridgePluginUiServer {
     }
   }
 
-  // TODO: add handling of 'no log files found'
   // TODO: remove zipped log files on plugin startup
   // TODO: test for different configurations (apt-install, npm -g install, windows, ...)
   async downloadLogs(): Promise<string> {
@@ -285,20 +284,19 @@ class UiServer extends HomebridgePluginUiServer {
       }
 
       if (numberOfFiles === 0) {
-        reject('No log files were found');
-        return;
+        throw new Error('No log files were found');
       }
 
       this.pushEvent('downloadLogsFileCount', { numberOfFiles: numberOfFiles });
 
-      setTimeout(() => {
-        zip.archive(this.logZipFilePath).then(() => {
-          resolve(this.relativeLogZipFilePath);
-        }).catch((err) => {
-          this.log.error('Error while generating log files: ' + err);
-          reject('Error while generating logs!');
-        });
-      }, 250);
+      zip.archive(this.logZipFilePath).then(() => {
+        this.pushEvent('downloadLogsComplete', undefined);
+        resolve(this.relativeLogZipFilePath);
+      }).catch((err) => {
+        this.log.error('Error while generating log files: ' + err);
+        reject(err);
+      });
+      
     });
   }
 
