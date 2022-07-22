@@ -2,12 +2,16 @@
   <div class="d-flex flex-column flex-sm-row justify-content-between align-items-center mb-2">
     <span class="mb-3 mb-sm-0">Download Logs</span>
     
-    <button type="button" class="btn btn-success col-12 col-sm-4" (click)="downloadLogs()" [attr.disabled]="isDownloading ? true : null">
+    <button type="button" *ngIf="!hasDownloaded" class="btn btn-secondary col-12 col-sm-4" (click)="downloadLogs()" [attr.disabled]="isDownloading ? true : null">
       <span *ngIf="isDownloading" class="spinner-border spinner-border-sm" role="status"
           aria-hidden="true"></span>
-      <span *ngIf="!isDownloading">Download Logs</span>
-      <span *ngIf="isDownloading"> Generating Logs...</span>
+      <span *ngIf="!isDownloading">Generate Log Zip</span>
+      <span *ngIf="isDownloading"> Generating Zip...</span>
     </button>
+
+    <a *ngIf="hasDownloaded" [href]="sanitize(dataUrl)" class="btn btn-success col-12 col-sm-4" download="logs.zip">
+      <span>Download Logs</span>
+    </a>
   </div>
   <small *ngIf="downloadMessage"><i>
     {{ downloadMessage }}

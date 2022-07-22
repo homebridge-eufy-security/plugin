@@ -1,4 +1,6 @@
 import { Component, OnInit } from '@angular/core';
+import { DomSanitizer } from '@angular/platform-browser';
+
 import 'rxjs';
 
 @Component({
@@ -9,6 +11,9 @@ import 'rxjs';
 })
 export class DownloadLogsComponent implements OnInit {
 
+  constructor(private sanitizer: DomSanitizer) { }
+
+  // TODO: remove lint warnings
   ngOnInit(): void {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     window.homebridge.addEventListener('compressingLogFile', (event: any) => {
@@ -22,23 +27,33 @@ export class DownloadLogsComponent implements OnInit {
   }
 
   isDownloading = false;
+  hasDownloaded = false;
   downloadMessage?: string;
+  dataUrl = '';
 
   // TODO: add failure banner
   async downloadLogs() {
     try {
       this.isDownloading = true;
       const logBuffer = await window.homebridge.request('/downloadLogs') as Buffer;
-      const blob = new Blob([logBuffer], { type: 'application/zip' });
-      const url= window.URL.createObjectURL(blob);
-      // window.open(url);
-      window.location.href = url;
+      this.dataUrl = this.generateDataUrl(logBuffer);
+      this.hasDownloaded = true;
     } catch (err) {
       // eslint-disable-next-line no-console
       console.log(err);
     } finally {
       this.isDownloading = false;
     }
+  }
+
+  sanitize(url:string){
+    return this.sanitizer.bypassSecurityTrustUrl(url);
+  }
+
+  private generateDataUrl(buffer: Buffer): string {
+    let url = 'data:application/zip;base64,';
+    url += buffer.toString('base64');
+    return url;
   }
 
   private updateDownloadMessage(message?: string) {
