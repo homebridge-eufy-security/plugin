@@ -29,17 +29,15 @@ export class DownloadLogsComponent implements OnInit {
   isDownloading = false;
   hasDownloaded = false;
   downloadMessage?: string;
-  dataUrl = '';
+  logFileLocation = '';
 
   // TODO: add failure banner
   async downloadLogs() {
     try {
       this.isDownloading = true;
-      const genResult = await window.homebridge.request('/downloadLogs') as boolean;
+      const location = await window.homebridge.request('/downloadLogs') as string;
       
-      if (!genResult) {
-        throw new Error('Log file generation failed!');
-      }
+      this.logFileLocation = location;
       
       this.hasDownloaded = true;
     } catch (err) {

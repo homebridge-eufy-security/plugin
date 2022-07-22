@@ -3,6 +3,7 @@ import { EufySecurity, EufySecurityConfig, libVersion, Device, Station } from 'e
 import { HomebridgePluginUiServer } from '@homebridge/plugin-ui-utils';
 
 import fs from 'fs';
+import path from 'path';
 import bunyan from 'bunyan';
 import { Zip } from 'zip-lib';
 
@@ -19,13 +20,16 @@ class UiServer extends HomebridgePluginUiServer {
 
   private log: bunyan;
 
-  private assetsLogZipFilePath = __dirname + '/public/assets/logs.zip';
+  private relativeLogZipFilePath: string;
+  private logZipFilePath: string;
 
   constructor() {
     super();
 
     this.storagePath = this.homebridgeStoragePath + '/eufysecurity';
     this.storedAccessories_file = this.storagePath + '/accessories.json';
+    this.logZipFilePath = this.storagePath + '/logs.zip';
+    this.relativeLogZipFilePath = path.relative(__dirname + '/public', this.storagePath) + '/logs.zip';
 
     this.eufyClient = null;
 
@@ -235,8 +239,8 @@ class UiServer extends HomebridgePluginUiServer {
   // TODO: add handling of 'no log files found'
   // TODO: remove zipped log files on plugin startup
   // TODO: test for different configurations (apt-install, npm -g install, windows, ...)
-  async downloadLogs(): Promise<boolean> {
-    this.log.info(`compressing log files to ${this.assetsLogZipFilePath} and sending to client.`);
+  async downloadLogs(): Promise<string> {
+    this.log.info(`compressing log files to ${this.logZipFilePath} and sending to client.`);
     if (!this.removeCompressedLogs()) {
       this.log.error('There were already old compressed log files that could not be removed!');
       return Promise.reject('There were already old compressed log files that could not be removed!');
@@ -288,8 +292,8 @@ class UiServer extends HomebridgePluginUiServer {
       this.pushEvent('downloadLogsFileCount', { numberOfFiles: numberOfFiles });
 
       setTimeout(() => {
-        zip.archive(this.assetsLogZipFilePath).then(() => {
-          resolve(true);
+        zip.archive(this.logZipFilePath).then(() => {
+          resolve(this.relativeLogZipFilePath);
         }).catch((err) => {
           this.log.error('Error while generating log files: ' + err);
           reject('Error while generating logs!');
@@ -300,8 +304,8 @@ class UiServer extends HomebridgePluginUiServer {
 
   private removeCompressedLogs(): boolean {
     try {
-      if (fs.existsSync(this.assetsLogZipFilePath)) {
-        fs.unlinkSync(this.assetsLogZipFilePath);
+      if (fs.existsSync(this.logZipFilePath)) {
+        fs.unlinkSync(this.logZipFilePath);
       }
       return true;
     } catch {
