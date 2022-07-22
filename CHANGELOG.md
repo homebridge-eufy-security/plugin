@@ -2,19 +2,15 @@
 
 You can find the complete detailled changelog for every beta release [here](https://github.com/homebridge-eufy-security/plugin/releases).
 
-## 2.1.0-beta.11 (20/07/2022) - latest changes
+## 2.1.0-beta.12 (22/07/2022) - latest changes
 
-### Changed
+### Added
 
-- Use just one ffmpeg process for rtsp streaming
-- Updated repo funding details (Readme.md and package.json)
-- Cleaned up dependencies
-- Improved readablity of the changelog (i hope)
+- Download logs through configuration ui
 
 ### Fixed
 
-- Bug where an error saying 'talkback will not work with rtsp setting enabled' was displayed even though one of theses settings was not available (see [here](https://github.com/homebridge-eufy-security/plugin/issues/103#issuecomment-1189244061))
-- plugin crashed if dependencies were stored in in non default places by npm (see [here](https://github.com/homebridge-eufy-security/plugin/issues/72#issuecomment-1189144152))
+- some users were unable to open configuration ui due to incorrect query of library version
 
 ## 2.1.0 (beta) - complete changes of the beta so far (19/07/2022)
 
@@ -27,6 +23,7 @@ You can find the complete detailled changelog for every beta release [here](http
 - Feature allowing enabling and disabling motion detection throug switch if camera is used as a motion sensor only
 - Feature allowing enabling and disabling the camera throug switch even if camera is used as a motion sensor only
 - Control Station alarm through HomeKit (reset the alarm and even trigger it with HomeKit automations. You can now trigger the alarm even with third party accessories - e.g. with devices from vendors other than eufy) - see #26
+- Feature to download log files through plugin configuration ui
 - Setting to disable log file storage to disk (possible fix for #93)
 
 ### Changed

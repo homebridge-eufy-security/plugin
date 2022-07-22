@@ -1,9 +1,10 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
-import { EufySecurity, EufySecurityConfig, Device, Station } from 'eufy-security-client';
+import { EufySecurity, EufySecurityConfig, libVersion, Device, Station } from 'eufy-security-client';
 import { HomebridgePluginUiServer } from '@homebridge/plugin-ui-utils';
 
 import fs from 'fs';
 import bunyan from 'bunyan';
+import { Zip } from 'zip-lib';
 
 import { Accessory } from './configui/app/accessory';
 import { LoginResult, LoginFailReason } from './configui/app/util/types';
@@ -40,8 +41,7 @@ class UiServer extends HomebridgePluginUiServer {
       }],
     });
 
-    const library = require('../node_modules/eufy-security-client/package.json');
-    this.log.debug('Using bropats eufy-security-client library in version ' + library.version);
+    this.log.debug('Using bropats eufy-security-client library in version ' + libVersion);
 
     if (!fs.existsSync(this.storagePath)) {
       fs.mkdirSync(this.storagePath);
@@ -61,6 +61,7 @@ class UiServer extends HomebridgePluginUiServer {
     this.onRequest('/login', this.login.bind(this));
     this.onRequest('/storedAccessories', this.loadStoredAccessories.bind(this));
     this.onRequest('/reset', this.resetPlugin.bind(this));
+    this.onRequest('/downloadLogs', this.downloadLogs.bind(this));
 
     this.ready();
   }
@@ -226,6 +227,73 @@ class UiServer extends HomebridgePluginUiServer {
       return { result: 1 }; //file removed
     } catch (err) {
       return { result: 0 }; //error while removing the file
+    }
+  }
+
+  // TODO: add handling of 'no log files found'
+  async downloadLogs(): Promise<Buffer> {
+    this.log.info('compressing log files and sending to client.');
+    if (!this.removeCompressedLogs()) {
+      this.log.error('There were already old compressed log files that could not be removed!');
+      return Promise.reject('There were already old compressed log files that could not be removed!');
+    }
+    return new Promise((resolve, reject) => {
+      const zip = new Zip();
+      
+      if (fs.existsSync(this.storagePath + '/log-lib.log')) {
+        this.pushEvent('compressingLogFile', { filename: 'log-lib.log' });
+        zip.addFile(this.storagePath + '/log-lib.log');
+      }
+      if (fs.existsSync(this.storagePath + '/log-lib.log.0')) {
+        this.pushEvent('compressingLogFile', { filename: 'log-lib.log.0' });
+        zip.addFile(this.storagePath + '/log-lib.log.0');
+      }
+      if (fs.existsSync(this.storagePath + '/log-lib.log.1')) {
+        this.pushEvent('compressingLogFile', { filename: 'log-lib.log.1' });
+        zip.addFile(this.storagePath + '/log-lib.log.1');
+      }
+      if (fs.existsSync(this.storagePath + '/log-lib.log.2')) {
+        this.pushEvent('compressingLogFile', { filename: 'log-lib.log.2' });
+        zip.addFile(this.storagePath + '/log-lib.log.2');
+      }
+
+      if (fs.existsSync(this.storagePath + '/configui-server.log')) {
+        this.pushEvent('compressingLogFile', { filename: 'configui-server.log' });
+        zip.addFile(this.storagePath + '/configui-server.log');
+      }
+      if (fs.existsSync(this.storagePath + '/configui-server.log.0')) {
+        this.pushEvent('compressingLogFile', { filename: 'configui-server.log.0' });
+        zip.addFile(this.storagePath + '/configui-server.log.0');
+      }
+      if (fs.existsSync(this.storagePath + '/configui-server.log.1')) {
+        this.pushEvent('compressingLogFile', { filename: 'configui-server.log.1' });
+        zip.addFile(this.storagePath + '/configui-server.log.1');
+      }
+      if (fs.existsSync(this.storagePath + '/configui-server.log.2')) {
+        this.pushEvent('compressingLogFile', { filename: 'configui-server.log.2' });
+        zip.addFile(this.storagePath + '/configui-server.log.2');
+      }
+
+      zip.archive(this.storagePath + '/logs.zip').then(() => {
+        const fileBuffer = fs.readFileSync(this.storagePath + '/logs.zip');
+        resolve(fileBuffer);
+      }).catch((err) => {
+        this.log.error('Error while generating log files: ' + err);
+        reject('Error while generating logs!');
+      }).finally(() => {
+        this.removeCompressedLogs();
+      });
+    });
+  }
+
+  private removeCompressedLogs(): boolean {
+    try {
+      if (fs.existsSync(this.storagePath + '/logs.zip')) {
+        fs.unlinkSync(this.storagePath + '/logs.zip');
+      }
+      return true;
+    } catch {
+      return false;
     }
   }
 }

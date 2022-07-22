@@ -1,0 +1,15 @@
+<div class="settingsItem row p-3">
+  <div class="d-flex flex-column flex-sm-row justify-content-between align-items-center mb-2">
+    <span class="mb-3 mb-sm-0">Download Logs</span>
+    
+    <button type="button" class="btn btn-success col-12 col-sm-4" (click)="downloadLogs()" [attr.disabled]="isDownloading ? true : null">
+      <span *ngIf="isDownloading" class="spinner-border spinner-border-sm" role="status"
+          aria-hidden="true"></span>
+      <span *ngIf="!isDownloading">Download Logs</span>
+      <span *ngIf="isDownloading"> Generating Logs...</span>
+    </button>
+  </div>
+  <small *ngIf="downloadMessage"><i>
+    {{ downloadMessage }}
+  </i></small>
+</div>
