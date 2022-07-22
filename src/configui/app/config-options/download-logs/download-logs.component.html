@@ -9,7 +9,7 @@
       <span *ngIf="isDownloading"> Generating Zip...</span>
     </button>
 
-    <a *ngIf="hasDownloaded" [href]="sanitize(dataUrl)" class="btn btn-success col-12 col-sm-4" download="logs.zip">
+    <a *ngIf="hasDownloaded" href="assets/logs.zip" class="btn btn-success col-12 col-sm-4" download="logs.zip">
       <span>Download Logs</span>
     </a>
   </div>

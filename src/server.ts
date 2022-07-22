@@ -19,6 +19,8 @@ class UiServer extends HomebridgePluginUiServer {
 
   private log: bunyan;
 
+  private assetsLogZipFilePath = __dirname + '/public/assets/logs.zip';
+
   constructor() {
     super();
 
@@ -231,65 +233,75 @@ class UiServer extends HomebridgePluginUiServer {
   }
 
   // TODO: add handling of 'no log files found'
-  async downloadLogs(): Promise<Buffer> {
-    this.log.info('compressing log files and sending to client.');
+  // TODO: remove zipped log files on plugin startup
+  // TODO: test for different configurations (apt-install, npm -g install, windows, ...)
+  async downloadLogs(): Promise<boolean> {
+    this.log.info(`compressing log files to ${this.assetsLogZipFilePath} and sending to client.`);
     if (!this.removeCompressedLogs()) {
       this.log.error('There were already old compressed log files that could not be removed!');
       return Promise.reject('There were already old compressed log files that could not be removed!');
     }
     return new Promise((resolve, reject) => {
       const zip = new Zip();
-      
+      let numberOfFiles = 0;
+
       if (fs.existsSync(this.storagePath + '/log-lib.log')) {
         this.pushEvent('compressingLogFile', { filename: 'log-lib.log' });
         zip.addFile(this.storagePath + '/log-lib.log');
+        numberOfFiles++;
       }
       if (fs.existsSync(this.storagePath + '/log-lib.log.0')) {
-        this.pushEvent('compressingLogFile', { filename: 'log-lib.log.0' });
         zip.addFile(this.storagePath + '/log-lib.log.0');
+        numberOfFiles++;
       }
       if (fs.existsSync(this.storagePath + '/log-lib.log.1')) {
-        this.pushEvent('compressingLogFile', { filename: 'log-lib.log.1' });
         zip.addFile(this.storagePath + '/log-lib.log.1');
+        numberOfFiles++;
       }
       if (fs.existsSync(this.storagePath + '/log-lib.log.2')) {
-        this.pushEvent('compressingLogFile', { filename: 'log-lib.log.2' });
         zip.addFile(this.storagePath + '/log-lib.log.2');
+        numberOfFiles++;
       }
 
       if (fs.existsSync(this.storagePath + '/configui-server.log')) {
-        this.pushEvent('compressingLogFile', { filename: 'configui-server.log' });
         zip.addFile(this.storagePath + '/configui-server.log');
+        numberOfFiles++;
       }
       if (fs.existsSync(this.storagePath + '/configui-server.log.0')) {
-        this.pushEvent('compressingLogFile', { filename: 'configui-server.log.0' });
         zip.addFile(this.storagePath + '/configui-server.log.0');
+        numberOfFiles++;
       }
       if (fs.existsSync(this.storagePath + '/configui-server.log.1')) {
-        this.pushEvent('compressingLogFile', { filename: 'configui-server.log.1' });
         zip.addFile(this.storagePath + '/configui-server.log.1');
+        numberOfFiles++;
       }
       if (fs.existsSync(this.storagePath + '/configui-server.log.2')) {
-        this.pushEvent('compressingLogFile', { filename: 'configui-server.log.2' });
         zip.addFile(this.storagePath + '/configui-server.log.2');
+        numberOfFiles++;
       }
 
-      zip.archive(this.storagePath + '/logs.zip').then(() => {
-        const fileBuffer = fs.readFileSync(this.storagePath + '/logs.zip');
-        resolve(fileBuffer);
-      }).catch((err) => {
-        this.log.error('Error while generating log files: ' + err);
-        reject('Error while generating logs!');
-      }).finally(() => {
-        this.removeCompressedLogs();
-      });
+      if (numberOfFiles === 0) {
+        reject('No log files were found');
+        return;
+      }
+
+      this.pushEvent('downloadLogsFileCount', { numberOfFiles: numberOfFiles });
+
+      setTimeout(() => {
+        zip.archive(this.assetsLogZipFilePath).then(() => {
+          resolve(true);
+        }).catch((err) => {
+          this.log.error('Error while generating log files: ' + err);
+          reject('Error while generating logs!');
+        });
+      }, 250);
     });
   }
 
   private removeCompressedLogs(): boolean {
     try {
-      if (fs.existsSync(this.storagePath + '/logs.zip')) {
-        fs.unlinkSync(this.storagePath + '/logs.zip');
+      if (fs.existsSync(this.assetsLogZipFilePath)) {
+        fs.unlinkSync(this.assetsLogZipFilePath);
       }
       return true;
     } catch {
