@@ -28,8 +28,8 @@ class UiServer extends HomebridgePluginUiServer {
 
     this.storagePath = this.homebridgeStoragePath + '/eufysecurity';
     this.storedAccessories_file = this.storagePath + '/accessories.json';
-    this.logZipFilePath = this.storagePath + '/logs.zip';
-    this.relativeLogZipFilePath = path.relative(__dirname + '/public', this.storagePath) + '/logs.zip';
+    this.logZipFilePath = __dirname + '/public/assets/logs.zip';
+    this.relativeLogZipFilePath = path.relative(__dirname + '/public', path.dirname(this.logZipFilePath)) + '/logs.zip';
 
     this.eufyClient = null;
 
@@ -249,7 +249,6 @@ class UiServer extends HomebridgePluginUiServer {
       let numberOfFiles = 0;
 
       if (fs.existsSync(this.storagePath + '/log-lib.log')) {
-        this.pushEvent('compressingLogFile', { filename: 'log-lib.log' });
         zip.addFile(this.storagePath + '/log-lib.log');
         numberOfFiles++;
       }
