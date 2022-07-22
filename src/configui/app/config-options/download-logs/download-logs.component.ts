@@ -1,6 +1,4 @@
-import { Component, OnInit } from '@angular/core';
-
-import { fromEvent } from 'rxjs';
+import { Component, NgZone, OnInit } from '@angular/core';
 
 @Component({
   selector: 'app-download-logs',
@@ -10,13 +8,14 @@ import { fromEvent } from 'rxjs';
 })
 export class DownloadLogsComponent implements OnInit {
 
-  private numberOfFilesEvent$ = fromEvent(window.homebridge, 'downloadLogsFileCount');
+  // private numberOfFilesEvent$ = fromEvent(window.homebridge, 'downloadLogsFileCount');
+
+  constructor(private zone: NgZone) { }
 
   // TODO: remove lint warnings
   ngOnInit(): void {
-    // window.homebridge.addEventListener('downloadLogsFileCount', (event: any) => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    this.numberOfFilesEvent$.subscribe((event: any) => {
+    window.homebridge.addEventListener('downloadLogsFileCount', (event: any) => {
       // eslint-disable-next-line no-console
       console.log(event);
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -49,7 +48,9 @@ export class DownloadLogsComponent implements OnInit {
   }
 
   private updateDownloadMessage(message?: string) {
-    this.downloadMessage = message;
+    this.zone.run(() => {
+      this.downloadMessage = message;
+    });
   }
 
 }
