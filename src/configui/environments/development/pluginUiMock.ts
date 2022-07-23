@@ -1,5 +1,7 @@
 /* eslint-disable no-console */
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import { Buffer } from 'buffer';
+
 import { CachedAccessory, PluginConfig } from '@homebridge/plugin-ui-utils/dist/ui.interface';
 
 import { LoginResult, LoginFailReason } from '../../app/util/types';
@@ -77,6 +79,8 @@ export class PluginUiMock extends EventTarget {
         return this.getStoredAccessories();
       case '/reset':
         return this.resetAll();
+      case '/downloadLogs':
+        return this.downloadLogs();
       default:
         return Promise.reject('unknown path');
     }
@@ -165,6 +169,22 @@ export class PluginUiMock extends EventTarget {
   private resetAll() {
     this.mimicFirstLogin();
     return Promise.resolve({ result: 1 });
+  }
+
+  private downloadLogs(): Promise<Buffer> {
+
+    // TODO: add log generating failure
+    // TODO: add compressing log file push events
+    // TODO: substitute for real zip data
+    // TODO: add failure for no log files
+
+    return new Promise((resolve, reject) => {
+      setTimeout(() => {
+        const file = 'many many log entries';
+        const buffer = Buffer.from(file);
+        resolve(buffer);
+      }, 2000);
+    });
   }
 }
 

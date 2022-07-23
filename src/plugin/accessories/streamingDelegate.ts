@@ -775,7 +775,7 @@ export class StreamingDelegate implements CameraStreamingDelegate {
 
       const useAudio = request.audio.codec === AudioStreamingCodecType.OPUS || request.audio.codec === AudioStreamingCodecType.AAC_ELD;
 
-      if (useAudio) {
+      if (useAudio && this.videoConfig.audio === true) {
 
         const audioArgsTarget = (rtsp) ? ffmpegVideoArgs : ffmpegAudioArgs;
 
@@ -806,7 +806,7 @@ export class StreamingDelegate implements CameraStreamingDelegate {
           '-srtp_out_params ' + sessionInfo.audioSRTP.toString('base64'),
           'srtp://' + sessionInfo.address + ':' + sessionInfo.audioPort + '?rtcpport=' + sessionInfo.audioPort + '&pkt_size=188',
         );
-      } else {
+      } else if (this.videoConfig.audio === true) {
         this.log.error(this.cameraName, 'Unsupported audio codec requested: ' + request.audio.codec);
       }
 
@@ -857,7 +857,7 @@ export class StreamingDelegate implements CameraStreamingDelegate {
         callback,
       );
 
-      if (useAudio && !rtsp) {
+      if (useAudio && !rtsp && this.videoConfig.audio === true) {
         activeSession.audioProcess = new FfmpegProcess(
           '[' + this.cameraName + '] [Audio Process]',
           request.sessionID,

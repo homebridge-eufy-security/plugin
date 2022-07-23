@@ -122,8 +122,4 @@ export class PluginService extends EventTarget {
     });
     return Promise.resolve(name);
   }
-
-  public test() {
-    return Promise.resolve('TEST');
-  }
 }
