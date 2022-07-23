@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Component, NgZone, OnInit } from '@angular/core';
+import { DomSanitizer } from '@angular/platform-browser';
 import { Router, NavigationStart } from '@angular/router';
 
 @Component({
@@ -14,6 +15,7 @@ export class DownloadLogsComponent implements OnInit {
 
   constructor(
     private router: Router,
+    private sanitizer: DomSanitizer,
     private zone: NgZone,
   ) { }
 
@@ -70,6 +72,10 @@ export class DownloadLogsComponent implements OnInit {
     } finally {
       this.isDownloading = false;
     }
+  }
+
+  sanitize(url:string){
+    return this.sanitizer.bypassSecurityTrustUrl(url);
   }
 
   private updateDownloadMessage(message?: string) {
