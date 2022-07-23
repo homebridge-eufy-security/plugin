@@ -286,7 +286,6 @@ class UiServer extends HomebridgePluginUiServer {
       this.pushEvent('downloadLogsFileCount', { numberOfFiles: numberOfFiles });
 
       zip.archive(this.logZipFilePath).then(() => {
-        this.pushEvent('downloadLogsComplete', undefined);
         const fileBuffer = fs.readFileSync(this.logZipFilePath);
         resolve(fileBuffer);
       }).catch((err) => {

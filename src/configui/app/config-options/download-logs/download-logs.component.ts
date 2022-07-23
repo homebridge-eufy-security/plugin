@@ -2,7 +2,7 @@
 import { Component, NgZone, OnInit } from '@angular/core';
 import { Router, NavigationStart } from '@angular/router';
 
-import { Buffer } from 'node:buffer';
+import { Buffer } from 'buffer';
 
 @Component({
   selector: 'app-download-logs',
@@ -36,10 +36,6 @@ export class DownloadLogsComponent implements OnInit {
       const data = event['data'] as any;
       const numberOfFiles = data['numberOfFiles'] as number;
       this.updateDownloadMessage(`Compressing ${numberOfFiles} log files...`);
-    });
-
-    window.homebridge.addEventListener('downloadLogsComplete', (event: any) => {
-      this.updateDownloadMessage('Log files were compressed successfully. Click \'Download\' to get your file.');
     });
   }
 
