@@ -11,6 +11,7 @@ You can find the complete detailled changelog for every beta release [here](http
 ### Fixed
 
 - some users were unable to open configuration ui due to incorrect query of library version
+- setting 'enable audio' was not working - audio was always streamed
 
 ## 2.1.0 (beta) - complete changes of the beta so far (19/07/2022)
 
