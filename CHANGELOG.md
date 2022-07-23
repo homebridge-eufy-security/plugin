@@ -6,12 +6,7 @@ You can find the complete detailled changelog for every beta release [here](http
 
 ### Added
 
-- Download logs through configuration ui
-
-### Fixed
-
-- some users were unable to open configuration ui due to incorrect query of library version
-- setting 'enable audio' was not working - audio was always streamed
+- Setting to choose whether one or multiple processes for audio and video streaming will be used
 
 ## 2.1.0 (beta) - complete changes of the beta so far (19/07/2022)
 
@@ -26,6 +21,7 @@ You can find the complete detailled changelog for every beta release [here](http
 - Control Station alarm through HomeKit (reset the alarm and even trigger it with HomeKit automations. You can now trigger the alarm even with third party accessories - e.g. with devices from vendors other than eufy) - see #26
 - Feature to download log files through plugin configuration ui
 - Setting to disable log file storage to disk (possible fix for #93)
+- Setting to choose whether one or multiple processes for audio and video streaming will be used
 
 ### Changed
 
