@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Component, NgZone, OnInit } from '@angular/core';
+import { Router, NavigationStart } from '@angular/router';
 
 @Component({
   selector: 'app-download-logs',
@@ -9,11 +10,25 @@ import { Component, NgZone, OnInit } from '@angular/core';
 })
 export class DownloadLogsComponent implements OnInit {
 
-  // private numberOfFilesEvent$ = fromEvent(window.homebridge, 'downloadLogsFileCount');
+  private routeSub: any;
 
-  constructor(private zone: NgZone) { }
+  constructor(
+    private router: Router,
+    private zone: NgZone,
+  ) { }
 
   ngOnInit(): void {
+
+    this.routeSub = this.router.events.subscribe((event) => {
+      if (event instanceof NavigationStart) {
+        if (this.logFileLocation !== '') {
+          // eslint-disable-next-line no-console
+          console.log('revoke log zip file blob location url.');
+          window.URL.revokeObjectURL(this.logFileLocation);
+          this.logFileLocation = '';
+        }
+      }
+    })
 
     window.homebridge.addEventListener('downloadLogsFileCount', (event: any) => {
       const data = event['data'] as any;
@@ -36,9 +51,12 @@ export class DownloadLogsComponent implements OnInit {
   async downloadLogs() {
     try {
       this.isDownloading = true;
-      const location = await window.homebridge.request('/downloadLogs') as string;
+      const fileBuffer = await window.homebridge.request('/downloadLogs') as Buffer;
+
+      const blob = new Blob([fileBuffer], { type: 'application/zip' });
+      const url= window.URL.createObjectURL(blob);
       
-      this.logFileLocation = location;
+      this.logFileLocation = url;
       
       this.hasDownloaded = true;
     } catch (err) {

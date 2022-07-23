@@ -20,7 +20,6 @@ class UiServer extends HomebridgePluginUiServer {
 
   private log: bunyan;
 
-  private relativeLogZipFilePath: string;
   private logZipFilePath: string;
 
   constructor() {
@@ -28,8 +27,7 @@ class UiServer extends HomebridgePluginUiServer {
 
     this.storagePath = this.homebridgeStoragePath + '/eufysecurity';
     this.storedAccessories_file = this.storagePath + '/accessories.json';
-    this.logZipFilePath = __dirname + '/public/assets/logs.zip';
-    this.relativeLogZipFilePath = path.relative(__dirname + '/public', path.dirname(this.logZipFilePath)) + '/logs.zip';
+    this.logZipFilePath = this.storagePath + '/logs.zip';
 
     this.eufyClient = null;
 
@@ -238,7 +236,7 @@ class UiServer extends HomebridgePluginUiServer {
 
   // TODO: remove zipped log files on plugin startup
   // TODO: test for different configurations (apt-install, npm -g install, windows, ...)
-  async downloadLogs(): Promise<string> {
+  async downloadLogs(): Promise<Buffer> {
     this.log.info(`compressing log files to ${this.logZipFilePath} and sending to client.`);
     if (!this.removeCompressedLogs()) {
       this.log.error('There were already old compressed log files that could not be removed!');
@@ -290,7 +288,8 @@ class UiServer extends HomebridgePluginUiServer {
 
       zip.archive(this.logZipFilePath).then(() => {
         this.pushEvent('downloadLogsComplete', undefined);
-        resolve(this.relativeLogZipFilePath);
+        const fileBuffer = fs.readFileSync(this.logZipFilePath);
+        resolve(fileBuffer);
       }).catch((err) => {
         this.log.error('Error while generating log files: ' + err);
         reject(err);
