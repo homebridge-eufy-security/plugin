@@ -20,9 +20,9 @@
 
       <div class="input-group mb-1">
         <div class="input-group-text">
-          <input class="form-check-input mt-0" type="checkbox" [value]="useMultipleProcesses || useMultipleProcesses === undefined" (change)="useMultipleProcesses = (useMultipleProcesses === undefined) ? false : !useMultipleProcesses; update()">
+          <input class="form-check-input mt-0" type="checkbox" [(ngModel)]="useOneProcess" (change)="update()">
         </div>
-        <span class="input-group-text" id="inputGroup-sizing-default">use multiple ffmpeg processes for video and audio (rtsp will still use only one process)</span>
+        <span class="input-group-text" id="inputGroup-sizing-default">use only one process for video and audio</span>
       </div>
 
       <div class="input-group mb-1">
