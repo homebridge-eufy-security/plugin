@@ -57,6 +57,7 @@ You can find the complete detailled changelog for every beta release [here](http
 - Fixed all lint warnings and errors
 - Fixed npm warnings
 - Smart lock states could be wrong on plugin startup (further improvements needed for smartlocks)
+- setting to 'enable audio' was not working - audio was always streamed
 
 ## 2.0.1 (20.06.2022)
 

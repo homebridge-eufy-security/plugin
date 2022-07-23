@@ -806,7 +806,7 @@ export class StreamingDelegate implements CameraStreamingDelegate {
           '-srtp_out_params ' + sessionInfo.audioSRTP.toString('base64'),
           'srtp://' + sessionInfo.address + ':' + sessionInfo.audioPort + '?rtcpport=' + sessionInfo.audioPort + '&pkt_size=188',
         );
-      } else {
+      } else if (this.videoConfig.audio === true) {
         this.log.error(this.cameraName, 'Unsupported audio codec requested: ' + request.audio.codec);
       }
 
