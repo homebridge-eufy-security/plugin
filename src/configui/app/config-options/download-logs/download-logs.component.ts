@@ -57,7 +57,8 @@ export class DownloadLogsComponent implements OnInit {
       
       this.logFileLocation = url;
       window.open(this.logFileLocation);
-      
+
+      this.updateDownloadMessage(undefined);
       this.hasDownloaded = true;
     } catch (err) {
       // eslint-disable-next-line no-console
