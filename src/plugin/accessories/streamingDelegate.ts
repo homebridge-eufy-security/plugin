@@ -774,10 +774,11 @@ export class StreamingDelegate implements CameraStreamingDelegate {
       const ffmpegAudioArgs: Array<string> = [];
 
       const useAudio = request.audio.codec === AudioStreamingCodecType.OPUS || request.audio.codec === AudioStreamingCodecType.AAC_ELD;
+      const useMultipleProcesses = this.videoConfig.useMultipleProcesses ??= true;
 
       if (useAudio && this.videoConfig.audio === true) {
 
-        const audioArgsTarget = (rtsp) ? ffmpegVideoArgs : ffmpegAudioArgs;
+        const audioArgsTarget = (rtsp || !useMultipleProcesses) ? ffmpegVideoArgs : ffmpegAudioArgs;
 
         if (!rtsp) {
           audioArgsTarget.push(`-i ${uAudioStream.url}`);
@@ -857,7 +858,7 @@ export class StreamingDelegate implements CameraStreamingDelegate {
         callback,
       );
 
-      if (useAudio && !rtsp && this.videoConfig.audio === true) {
+      if (useAudio && !rtsp && useMultipleProcesses && this.videoConfig.audio === true) {
         activeSession.audioProcess = new FfmpegProcess(
           '[' + this.cameraName + '] [Audio Process]',
           request.sessionID,
