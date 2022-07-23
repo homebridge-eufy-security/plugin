@@ -1,7 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Component, NgZone, OnInit } from '@angular/core';
-import { DomSanitizer } from '@angular/platform-browser';
 import { Router, NavigationStart } from '@angular/router';
+
+import { Buffer } from 'node:buffer';
 
 @Component({
   selector: 'app-download-logs',
@@ -15,7 +16,6 @@ export class DownloadLogsComponent implements OnInit {
 
   constructor(
     private router: Router,
-    private sanitizer: DomSanitizer,
     private zone: NgZone,
   ) { }
 
@@ -30,7 +30,7 @@ export class DownloadLogsComponent implements OnInit {
           this.logFileLocation = '';
         }
       }
-    })
+    });
 
     window.homebridge.addEventListener('downloadLogsFileCount', (event: any) => {
       const data = event['data'] as any;
@@ -53,12 +53,14 @@ export class DownloadLogsComponent implements OnInit {
   async downloadLogs() {
     try {
       this.isDownloading = true;
-      const fileBuffer = await window.homebridge.request('/downloadLogs') as Buffer;
+      const bufferData = await window.homebridge.request('/downloadLogs') as {type: string; data: number[]};
+      const buffer = Buffer.from(bufferData.data);
 
-      const blob = new Blob([fileBuffer], { type: 'application/zip' });
-      const url= window.URL.createObjectURL(blob);
+      const file = new File([buffer], 'logs.zip', { type: 'application/zip' });
+      const url= window.URL.createObjectURL(file);
       
       this.logFileLocation = url;
+      window.open(this.logFileLocation);
       
       this.hasDownloaded = true;
     } catch (err) {
@@ -73,9 +75,9 @@ export class DownloadLogsComponent implements OnInit {
       this.isDownloading = false;
     }
   }
-
-  sanitize(url:string){
-    return this.sanitizer.bypassSecurityTrustUrl(url);
+  
+  openLink() {
+    window.open(this.logFileLocation);
   }
 
   private updateDownloadMessage(message?: string) {

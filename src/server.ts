@@ -234,7 +234,6 @@ class UiServer extends HomebridgePluginUiServer {
     }
   }
 
-  // TODO: remove zipped log files on plugin startup
   // TODO: test for different configurations (apt-install, npm -g install, windows, ...)
   async downloadLogs(): Promise<Buffer> {
     this.log.info(`compressing log files to ${this.logZipFilePath} and sending to client.`);
@@ -293,7 +292,7 @@ class UiServer extends HomebridgePluginUiServer {
       }).catch((err) => {
         this.log.error('Error while generating log files: ' + err);
         reject(err);
-      });
+      }).finally(() => this.removeCompressedLogs());
       
     });
   }

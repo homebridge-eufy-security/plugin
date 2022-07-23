@@ -30,7 +30,10 @@
               "node_modules/bootstrap/dist/css/bootstrap.min.css",
               "src/configui/styles.css"
             ],
-            "scripts": []
+            "scripts": [],
+            "allowedCommonJsDependencies": [
+              "buffer"
+           ]
           },
           "configurations": {
             "production": {
