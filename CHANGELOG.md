@@ -7,7 +7,7 @@ You can find the complete detailled changelog for every beta release [here](http
 ### Added
 
 - Setting to choose whether one or multiple processes for audio and video streaming will be used
-- Manually triggered alarms will now respect the delayed alarm settings in the eufy app.
+- Manually triggered alarms will now respect the delayed alarm on leave setting in the eufy app.
 
 ### Fixed
 
