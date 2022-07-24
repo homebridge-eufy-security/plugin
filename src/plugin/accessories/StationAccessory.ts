@@ -396,6 +396,7 @@ export class StationAccessory {
   }
 
   private onStationAlarmDelayedEvent(station: Station, armDelay: number) {
+    this.platform.log.debug(this.accessory.displayName, `alarm for this station will be delayed by ${armDelay} seconds.`);
     this.alarm_delayed = true;
 
     if (this.alarm_delay_timeout) {
@@ -403,11 +404,13 @@ export class StationAccessory {
     }
 
     this.alarm_delay_timeout = setTimeout(() => {
+      this.platform.log.debug(this.accessory.displayName, 'alarm for this station is armed now (due to timeout).');
       this.alarm_delayed = false;
     }, (armDelay + 1) * 1000);
   }
 
   private onStationAlarmArmedEvent(station: Station) {
+    this.platform.log.debug(this.accessory.displayName, 'alarm for this station is armed now.');
     this.alarm_delayed = false;
 
     if (this.alarm_delay_timeout) {
