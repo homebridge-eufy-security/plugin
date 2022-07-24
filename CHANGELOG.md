@@ -7,11 +7,12 @@ You can find the complete detailled changelog for every beta release [here](http
 ### Added
 
 - Setting to choose whether one or multiple processes for audio and video streaming will be used
+- Manually triggered alarms will now respect the delayed alarm settings in the eufy app.
 
 ### Fixed
 
-- setting `maxFPS` in advanced camera configuration should now work as expected (see #125)
-- checkboxes in advanced camera configuration were not showing correct state
+- Setting `maxFPS` in advanced camera configuration should now work as expected (see #125)
+- Checkboxes in advanced camera configuration were not showing correct state
 
 ## 2.1.0 (beta) - complete changes of the beta so far (19/07/2022)
 
@@ -58,8 +59,8 @@ You can find the complete detailled changelog for every beta release [here](http
 - Fixed all lint warnings and errors
 - Fixed npm warnings
 - Smart lock states could be wrong on plugin startup (further improvements needed for smartlocks)
-- setting to 'enable audio' was not working - audio was always streamed
-- setting `maxFPS` in advanced camera configuration should now work as expected (see #125)
+- Setting to 'enable audio' was not working - audio was always streamed
+- Setting `maxFPS` in advanced camera configuration should now work as expected (see #125)
 
 ## 2.0.1 (20.06.2022)
 
