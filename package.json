@@ -54,6 +54,7 @@
     "eufy-security-client": "2.1.1",
     "ffmpeg-for-homebridge": "0.1.4",
     "pick-port": "^1.0.1",
+    "rotating-file-stream": "^3.0.4",
     "tslog": "^3.3.3",
     "zip-lib": "^0.7.3"
   },

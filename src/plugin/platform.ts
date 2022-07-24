@@ -43,6 +43,7 @@ import {
 import bunyan from 'bunyan';
 import bunyanDebugStream from 'bunyan-debug-stream';
 import { Logger as TsLogger, ILogObject } from 'tslog';
+import * as rfs from 'rotating-file-stream';
 
 import fs from 'fs';
 
@@ -58,7 +59,6 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
   private eufyConfig: EufySecurityConfig;
 
   public log;
-  public logLib;
   private tsLogger;
 
   public readonly eufyPath: string;
@@ -114,28 +114,15 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
     });
 
     if (!omitLogFiles) {
-      this.logLib = bunyan.createLogger({
-        name: '[EufySecurity-' + plugin.version + ']',
-        hostname: '',
-        streams: [{
-          level: (this.config.enableDetailedLogging) ? 'debug' : 'info',
-          type: 'file',
-          path: this.eufyPath + '/log-lib.log',
-        }],
+      // use tslog for eufy-security-client
+      const eufyLogStream = rfs.createStream('eufy-log.log', {
+        path: this.eufyPath,
+        interval: '1d',
+        maxFiles: 3,
+        maxSize: '200M',
       });
+      this.tsLogger = new TsLogger({ stdErr: eufyLogStream, stdOut: eufyLogStream, colorizePrettyLogs: false });
     }
-
-    // use tslog for eufy-security-client
-    this.tsLogger = new TsLogger();
-    this.tsLogger.attachTransport({
-      silly: (logObject: ILogObject) => { this.logLib.silly(logObject.argumentsArray); },
-      debug: (logObject: ILogObject) => { this.logLib.debug(logObject.argumentsArray); },
-      trace: (logObject: ILogObject) => { this.logLib.trace(logObject.argumentsArray); },
-      info: (logObject: ILogObject) => { this.logLib.info(logObject.argumentsArray); },
-      warn: (logObject: ILogObject) => { this.logLib.warn(logObject.argumentsArray); },
-      error: (logObject: ILogObject) => { this.logLib.error(logObject.argumentsArray); },
-      fatal: (logObject: ILogObject) => { this.logLib.fatal(logObject.argumentsArray); },
-    });
 
     this.log.warn('warning: planned changes, see https://github.com/homebridge-eufy-security/plugin/issues/1');
 
