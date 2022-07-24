@@ -2,7 +2,7 @@
 
 You can find the complete detailled changelog for every beta release [here](https://github.com/homebridge-eufy-security/plugin/releases).
 
-## 2.1.0-beta.12 (24/07/2022) - latest changes
+## 2.1.0-beta.13 (24/07/2022) - latest changes
 
 ### Added
 
@@ -11,6 +11,7 @@ You can find the complete detailled changelog for every beta release [here](http
 ### Fixed
 
 - setting `maxFPS` in advanced camera configuration should now work as expected (see #125)
+- checkboxes in advanced camera configuration were not showing correct state
 
 ## 2.1.0 (beta) - complete changes of the beta so far (19/07/2022)
 
