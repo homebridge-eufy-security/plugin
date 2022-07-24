@@ -42,6 +42,8 @@ import {
 
 import bunyan from 'bunyan';
 import bunyanDebugStream from 'bunyan-debug-stream';
+import { Logger as TsLogger, ILogObject } from 'tslog';
+
 import fs from 'fs';
 
 export class EufySecurityPlatform implements DynamicPlatformPlugin {
@@ -57,6 +59,7 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
 
   public log;
   public logLib;
+  private tsLogger;
 
   public readonly eufyPath: string;
 
@@ -122,6 +125,18 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
       });
     }
 
+    // use tslog for eufy-security-client
+    this.tsLogger = new TsLogger();
+    this.tsLogger.attachTransport({
+      silly: (logObject: ILogObject) => { this.logLib.silly(logObject.argumentsArray); },
+      debug: (logObject: ILogObject) => { this.logLib.debug(logObject.argumentsArray); },
+      trace: (logObject: ILogObject) => { this.logLib.trace(logObject.argumentsArray); },
+      info: (logObject: ILogObject) => { this.logLib.info(logObject.argumentsArray); },
+      warn: (logObject: ILogObject) => { this.logLib.warn(logObject.argumentsArray); },
+      error: (logObject: ILogObject) => { this.logLib.error(logObject.argumentsArray); },
+      fatal: (logObject: ILogObject) => { this.logLib.fatal(logObject.argumentsArray); },
+    });
+
     this.log.warn('warning: planned changes, see https://github.com/homebridge-eufy-security/plugin/issues/1');
 
     this.log.debug('plugin data store: ' + this.eufyPath);
@@ -177,7 +192,7 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
 
     try {
       this.eufyClient = (this.config.enableDetailedLogging)
-        ? await EufySecurity.initialize(this.eufyConfig, this.logLib)
+        ? await EufySecurity.initialize(this.eufyConfig, this.tsLogger)
         : await EufySecurity.initialize(this.eufyConfig);
       
       this.eufyClient.on('station added', this.stationAdded.bind(this));
