@@ -115,10 +115,17 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
 
     if (!omitLogFiles) {
       // use tslog for eufy-security-client
-      const eufyLogStream = rfs.createStream('eufy-log.log', {
+      // TODO: change download logs
+
+      const logFileNameGenerator: rfs.Generator = (index): string => {
+        const filename = 'eufy-log.log';
+        return (index === null) ? filename : filename + '.' + index;
+      };
+
+      const eufyLogStream = rfs.createStream(logFileNameGenerator, {
         path: this.eufyPath,
         interval: '1d',
-        maxFiles: 3,
+        rotate: 3,
         maxSize: '200M',
       });
       this.tsLogger = new TsLogger({ stdErr: eufyLogStream, stdOut: eufyLogStream, colorizePrettyLogs: false });
