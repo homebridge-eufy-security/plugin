@@ -678,7 +678,7 @@ export class StreamingDelegate implements CameraStreamingDelegate {
 
       const resolution = this.determineResolution(request.video, false);
 
-      let fps = this.videoConfig.maxFPS && this.videoConfig.forceMax ? this.videoConfig.maxFPS : request.video.fps;
+      let fps = this.videoConfig.maxFPS && !this.videoConfig.forceMax ? this.videoConfig.maxFPS : request.video.fps;
       let videoBitrate =
         this.videoConfig.maxBitrate && this.videoConfig.forceMax ? this.videoConfig.maxBitrate : request.video.max_bit_rate;
       let bufsize = request.video.max_bit_rate * 2;

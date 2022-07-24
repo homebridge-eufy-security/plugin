@@ -2,11 +2,15 @@
 
 You can find the complete detailled changelog for every beta release [here](https://github.com/homebridge-eufy-security/plugin/releases).
 
-## 2.1.0-beta.12 (23/07/2022) - latest changes
+## 2.1.0-beta.12 (24/07/2022) - latest changes
 
 ### Added
 
 - Setting to choose whether one or multiple processes for audio and video streaming will be used
+
+### Fixed
+
+- setting `maxFPS` in advanced camera configuration should now work as expected (see #125)
 
 ## 2.1.0 (beta) - complete changes of the beta so far (19/07/2022)
 
@@ -54,6 +58,7 @@ You can find the complete detailled changelog for every beta release [here](http
 - Fixed npm warnings
 - Smart lock states could be wrong on plugin startup (further improvements needed for smartlocks)
 - setting to 'enable audio' was not working - audio was always streamed
+- setting `maxFPS` in advanced camera configuration should now work as expected (see #125)
 
 ## 2.0.1 (20.06.2022)
 
