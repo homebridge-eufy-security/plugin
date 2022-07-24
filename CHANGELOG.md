@@ -9,6 +9,11 @@ You can find the complete detailled changelog for every beta release [here](http
 - Setting to choose whether one or multiple processes for audio and video streaming will be used
 - Manually triggered alarms will now respect the delayed alarm on leave setting in the eufy app.
 
+### Changed
+
+- Using tslog instead of bunyan for logging of eufy-security-client messages since bunyan would not print deep nested objects correctly
+- Logging for eufy-security-client is moved to separate log file: `eufy-log.log`
+
 ### Fixed
 
 - Setting `maxFPS` in advanced camera configuration should now work as expected (see #125)
@@ -42,6 +47,8 @@ You can find the complete detailled changelog for every beta release [here](http
 - Additional debug messages to help with issues
 - Updated repo funding details (Readme.md and package.json)
 - Cleaned up dependencies
+- Using tslog instead of bunyan for logging of eufy-security-client messages since bunyan would not print deep nested objects correctly
+- Logging for eufy-security-client is moved to separate log file: `eufy-log.log`
 
 ### Fixed
 
