@@ -19,6 +19,8 @@ export class PluginUiMock extends EventTarget {
   private loginWillFailWithCaptcha = false;
   private loginWillTimeout = false;
 
+  private logFilesCannotBeDownloaded = false;
+
   constructor() {
     super();
   }
@@ -51,6 +53,10 @@ export class PluginUiMock extends EventTarget {
     this.cachedAccessories = DEFAULT_CACHED_ACCESSORIES;
     this.storedAccessories = DEFAULT_STORED_ACCESSORIES;
     this.pluginConfig = DEFAULT_PLUGIN_CONFIG;
+  }
+
+  public mimicDownloadLogsFailure() {
+    this.logFilesCannotBeDownloaded = true;
   }
 
   public getPluginConfig(): Promise<PluginConfig[]> {
@@ -171,19 +177,20 @@ export class PluginUiMock extends EventTarget {
     return Promise.resolve({ result: 1 });
   }
 
-  private downloadLogs(): Promise<Buffer> {
+  private downloadLogs(): Promise<{type: string; data: Buffer }> {
 
-    // TODO: add log generating failure
-    // TODO: add compressing log file push events
-    // TODO: substitute for real zip data
-    // TODO: add failure for no log files
+    this.dispatchEvent(new DataEvent('downloadLogsFileCount', { numberOfFiles: 2 }));
 
     return new Promise((resolve, reject) => {
       setTimeout(() => {
-        const file = 'many many log entries';
-        const buffer = Buffer.from(file);
-        resolve(buffer);
-      }, 2000);
+        if (this.logFilesCannotBeDownloaded) {
+          reject('Severe failure while log files would have been downloaded');
+        } else {
+          const file = 'many many log entries as zip file';
+          const buffer = Buffer.from(file);
+          resolve({ type: 'Buffer', data: buffer });
+        }
+      }, 4000);
     });
   }
 }
