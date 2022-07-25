@@ -42,6 +42,9 @@ import {
 
 import bunyan from 'bunyan';
 import bunyanDebugStream from 'bunyan-debug-stream';
+import { Logger as TsLogger, ILogObject } from 'tslog';
+import * as rfs from 'rotating-file-stream';
+
 import fs from 'fs';
 
 export class EufySecurityPlatform implements DynamicPlatformPlugin {
@@ -56,7 +59,7 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
   private eufyConfig: EufySecurityConfig;
 
   public log;
-  public logLib;
+  private tsLogger;
 
   public readonly eufyPath: string;
 
@@ -111,15 +114,20 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
     });
 
     if (!omitLogFiles) {
-      this.logLib = bunyan.createLogger({
-        name: '[EufySecurity-' + plugin.version + ']',
-        hostname: '',
-        streams: [{
-          level: (this.config.enableDetailedLogging) ? 'debug' : 'info',
-          type: 'file',
-          path: this.eufyPath + '/log-lib.log',
-        }],
+      // use tslog for eufy-security-client
+
+      const logFileNameGenerator: rfs.Generator = (index): string => {
+        const filename = 'eufy-log.log';
+        return (index === null) ? filename : filename + '.' + (index as number - 1);
+      };
+
+      const eufyLogStream = rfs.createStream(logFileNameGenerator, {
+        path: this.eufyPath,
+        interval: '1d',
+        rotate: 3,
+        maxSize: '200M',
       });
+      this.tsLogger = new TsLogger({ stdErr: eufyLogStream, stdOut: eufyLogStream, colorizePrettyLogs: false });
     }
 
     this.log.warn('warning: planned changes, see https://github.com/homebridge-eufy-security/plugin/issues/1');
@@ -177,7 +185,7 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
 
     try {
       this.eufyClient = (this.config.enableDetailedLogging)
-        ? await EufySecurity.initialize(this.eufyConfig, this.logLib)
+        ? await EufySecurity.initialize(this.eufyConfig, this.tsLogger)
         : await EufySecurity.initialize(this.eufyConfig);
       
       this.eufyClient.on('station added', this.stationAdded.bind(this));

@@ -678,7 +678,7 @@ export class StreamingDelegate implements CameraStreamingDelegate {
 
       const resolution = this.determineResolution(request.video, false);
 
-      let fps = this.videoConfig.maxFPS && this.videoConfig.forceMax ? this.videoConfig.maxFPS : request.video.fps;
+      let fps = this.videoConfig.maxFPS && !this.videoConfig.forceMax ? this.videoConfig.maxFPS : request.video.fps;
       let videoBitrate =
         this.videoConfig.maxBitrate && this.videoConfig.forceMax ? this.videoConfig.maxBitrate : request.video.max_bit_rate;
       let bufsize = request.video.max_bit_rate * 2;
@@ -774,10 +774,11 @@ export class StreamingDelegate implements CameraStreamingDelegate {
       const ffmpegAudioArgs: Array<string> = [];
 
       const useAudio = request.audio.codec === AudioStreamingCodecType.OPUS || request.audio.codec === AudioStreamingCodecType.AAC_ELD;
+      const useOneProcess = this.videoConfig.useOneProcess ??= false;
 
       if (useAudio && this.videoConfig.audio === true) {
 
-        const audioArgsTarget = (rtsp) ? ffmpegVideoArgs : ffmpegAudioArgs;
+        const audioArgsTarget = (rtsp || useOneProcess) ? ffmpegVideoArgs : ffmpegAudioArgs;
 
         if (!rtsp) {
           audioArgsTarget.push(`-i ${uAudioStream.url}`);
@@ -857,7 +858,7 @@ export class StreamingDelegate implements CameraStreamingDelegate {
         callback,
       );
 
-      if (useAudio && !rtsp && this.videoConfig.audio === true) {
+      if (useAudio && !rtsp && !useOneProcess && this.videoConfig.audio === true) {
         activeSession.audioProcess = new FfmpegProcess(
           '[' + this.cameraName + '] [Audio Process]',
           request.sessionID,

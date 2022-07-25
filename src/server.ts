@@ -262,6 +262,23 @@ class UiServer extends HomebridgePluginUiServer {
         numberOfFiles++;
       }
 
+      if (fs.existsSync(this.storagePath + '/eufy-log.log')) {
+        zip.addFile(this.storagePath + '/eufy-log.log');
+        numberOfFiles++;
+      }
+      if (fs.existsSync(this.storagePath + '/eufy-log.log.0')) {
+        zip.addFile(this.storagePath + '/eufy-log.log.0');
+        numberOfFiles++;
+      }
+      if (fs.existsSync(this.storagePath + '/eufy-log.log.1')) {
+        zip.addFile(this.storagePath + '/eufy-log.log.1');
+        numberOfFiles++;
+      }
+      if (fs.existsSync(this.storagePath + '/eufy-log.log.2')) {
+        zip.addFile(this.storagePath + '/eufy-log.log.2');
+        numberOfFiles++;
+      }
+
       if (fs.existsSync(this.storagePath + '/configui-server.log')) {
         zip.addFile(this.storagePath + '/configui-server.log');
         numberOfFiles++;

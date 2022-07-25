@@ -52,6 +52,7 @@ export type VideoConfig = {
   audio?: boolean;
   debug?: boolean;
   debugReturn?: boolean;
+  useOneProcess?: boolean;
 };
 
 export type StationConfig = {

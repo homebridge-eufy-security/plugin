@@ -20,6 +20,9 @@ export class StationAccessory {
   private alarm_triggered: boolean;
   private modes;
 
+  private alarm_delayed: boolean;
+  private alarm_delay_timeout?: NodeJS.Timeout;
+  
   protected characteristic;
 
   public readonly stationConfig: StationConfig;
@@ -50,6 +53,7 @@ export class StationAccessory {
     this.mappingHKEufy();
 
     this.alarm_triggered = false;
+    this.alarm_delayed = false;
 
     this.accessory
       .getService(this.platform.Service.AccessoryInformation)!
@@ -111,6 +115,9 @@ export class StationAccessory {
     this.eufyStation.on('alarm event', (station: Station, alarmEvent: AlarmEvent) =>
       this.onStationAlarmEventPushNotification(station, alarmEvent),
     );
+
+    this.eufyStation.on('alarm arm delay event', this.onStationAlarmDelayedEvent.bind(this));
+    this.eufyStation.on('alarm armed event', this.onStationAlarmArmedEvent.bind(this));
 
     if (this.platform.config.enableDetailedLogging) {
       this.eufyStation.on('raw property changed', (device: Station, type: number, value: string) =>
@@ -352,21 +359,26 @@ export class StationAccessory {
   }
 
   private async handleManualTriggerSwitchStateSet(value: CharacteristicValue) {
-    if (value) { // trigger alarm if allowed
+    if (value) { // trigger alarm
       try {
         const currentValue = this.eufyStation.getPropertyValue(PropertyName.StationCurrentMode);
         if (currentValue === -1) {
           throw 'Something wrong with this device';
         }
-        if (this.stationConfig.manualTriggerModes.indexOf(this.convertEufytoHK(currentValue)) !== -1) {
+        // check if alarm is allowed for this guard mode
+        // and alarm is not delayed
+        if (this.stationConfig.manualTriggerModes.indexOf(this.convertEufytoHK(currentValue)) !== -1 && !this.alarm_delayed) {
           this.eufyStation.triggerStationAlarmSound(this.stationConfig.manualAlarmSeconds)
             .then(() => this.platform.log.debug(
               this.accessory.displayName, 'alarm manually triggered for ' + this.stationConfig.manualAlarmSeconds + ' seconds.'))
             .catch(err => this.platform.log.error(this.accessory.displayName, 'alarm could not be manually triggered: ' + err));
         } else {
+          const message = this.alarm_delayed ?
+            'tried to trigger alarm, but the alarm delayed event was triggered beforehand.' :
+            'tried to trigger alarm, but the current station mode prevents the alarm from being triggered. ' +
+            'Please look in in the configuration if you want to change this behaviour.';
           setTimeout(() => {
-            // eslint-disable-next-line max-len
-            this.platform.log.info(this.accessory.displayName, 'tried to trigger alarm, but the current station mode prevents the alarm from being triggered. Please look in in the configuration if you want to change this behaviour.');
+            this.platform.log.info(this.accessory.displayName, message);
             this.manualTriggerService
               .getCharacteristic(this.characteristic.On)
               .updateValue(false);
@@ -380,6 +392,29 @@ export class StationAccessory {
       this.eufyStation.resetStationAlarmSound()
         .then(() => this.platform.log.debug(this.accessory.displayName, 'alarm manually reset'))
         .catch(err => this.platform.log.error(this.accessory.displayName, 'alarm could not be reset: ' + err));
+    }
+  }
+
+  private onStationAlarmDelayedEvent(station: Station, armDelay: number) {
+    this.platform.log.debug(this.accessory.displayName, `alarm for this station will be delayed by ${armDelay} seconds.`);
+    this.alarm_delayed = true;
+
+    if (this.alarm_delay_timeout) {
+      clearTimeout(this.alarm_delay_timeout);
+    }
+
+    this.alarm_delay_timeout = setTimeout(() => {
+      this.platform.log.debug(this.accessory.displayName, 'alarm for this station is armed now (due to timeout).');
+      this.alarm_delayed = false;
+    }, (armDelay + 1) * 1000);
+  }
+
+  private onStationAlarmArmedEvent(station: Station) {
+    this.platform.log.debug(this.accessory.displayName, 'alarm for this station is armed now.');
+    this.alarm_delayed = false;
+
+    if (this.alarm_delay_timeout) {
+      clearTimeout(this.alarm_delay_timeout);
     }
   }
 

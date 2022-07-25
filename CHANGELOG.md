@@ -2,16 +2,22 @@
 
 You can find the complete detailled changelog for every beta release [here](https://github.com/homebridge-eufy-security/plugin/releases).
 
-## 2.1.0-beta.12 (23/07/2022) - latest changes
+## 2.1.0-beta.13 (25/07/2022) - latest changes
 
 ### Added
 
-- Download logs through configuration ui
+- Setting to choose whether one or multiple processes for audio and video streaming will be used
+- Manually triggered alarms will now respect the delay on leave setting in the eufy app.
+
+### Changed
+
+- Using tslog instead of bunyan for logging of eufy-security-client messages since bunyan would not print deep nested objects correctly
+- Logging for eufy-security-client is moved to separate log file: `eufy-log.log`
 
 ### Fixed
 
-- some users were unable to open configuration ui due to incorrect query of library version
-- setting 'enable audio' was not working - audio was always streamed
+- Setting `maxFPS` in advanced camera configuration should now work as expected (see #125)
+- Checkboxes in advanced camera configuration were not showing correct state
 
 ## 2.1.0 (beta) - complete changes of the beta so far (19/07/2022)
 
@@ -26,6 +32,7 @@ You can find the complete detailled changelog for every beta release [here](http
 - Control Station alarm through HomeKit (reset the alarm and even trigger it with HomeKit automations. You can now trigger the alarm even with third party accessories - e.g. with devices from vendors other than eufy) - see #26
 - Feature to download log files through plugin configuration ui
 - Setting to disable log file storage to disk (possible fix for #93)
+- Setting to choose whether one or multiple processes for audio and video streaming will be used
 
 ### Changed
 
@@ -40,6 +47,8 @@ You can find the complete detailled changelog for every beta release [here](http
 - Additional debug messages to help with issues
 - Updated repo funding details (Readme.md and package.json)
 - Cleaned up dependencies
+- Using tslog instead of bunyan for logging of eufy-security-client messages since bunyan would not print deep nested objects correctly
+- Logging for eufy-security-client is moved to separate log file: `eufy-log.log`
 
 ### Fixed
 
@@ -57,7 +66,8 @@ You can find the complete detailled changelog for every beta release [here](http
 - Fixed all lint warnings and errors
 - Fixed npm warnings
 - Smart lock states could be wrong on plugin startup (further improvements needed for smartlocks)
-- setting to 'enable audio' was not working - audio was always streamed
+- Setting to 'enable audio' was not working - audio was always streamed
+- Setting `maxFPS` in advanced camera configuration should now work as expected (see #125)
 
 ## 2.0.1 (20.06.2022)
 
