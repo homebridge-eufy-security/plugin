@@ -2,12 +2,12 @@
 
 You can find the complete detailled changelog for every beta release [here](https://github.com/homebridge-eufy-security/plugin/releases).
 
-## 2.1.0-beta.13 (24/07/2022) - latest changes
+## 2.1.0-beta.13 (25/07/2022) - latest changes
 
 ### Added
 
 - Setting to choose whether one or multiple processes for audio and video streaming will be used
-- Manually triggered alarms will now respect the delayed alarm on leave setting in the eufy app.
+- Manually triggered alarms will now respect the delay on leave setting in the eufy app.
 
 ### Changed
 
