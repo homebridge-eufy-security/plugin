@@ -37,7 +37,7 @@
           <input class="form-check-input mt-0" type="checkbox" [checked]="vcodec !== undefined ? true: null" (change)="vcodec = (vcodec === undefined) ? '' : undefined; update();">
         </div>
         <span class="input-group-text" id="inputGroup-sizing-default">vcodec</span>
-        <input type="text" [(ngModel)]="vcodec" placeholder="leave blank if you don't know" class="form-control" [attr.disabled]="(vcodec === undefined) ? true : null" (change)="update()">
+        <input type="text" [(ngModel)]="vcodec" placeholder="libx264" class="form-control" [attr.disabled]="(vcodec === undefined) ? true : null" (change)="update()">
       </div>
 
       <div class="input-group mb-1">
@@ -45,7 +45,7 @@
           <input class="form-check-input mt-0" type="checkbox" [checked]="acodec !== undefined ? true: null" (change)="acodec = (acodec === undefined) ? '' : undefined; update();">
         </div>
         <span class="input-group-text" id="inputGroup-sizing-default">acodec</span>
-        <input type="text" [(ngModel)]="acodec" placeholder="leave blank if you don't know" class="form-control" [attr.disabled]="(acodec === undefined) ? true : null" (change)="update()">
+        <input type="text" [(ngModel)]="acodec" placeholder="libfdk_aac" class="form-control" [attr.disabled]="(acodec === undefined) ? true : null" (change)="update()">
       </div>
 
       <div class="input-group mb-1">
@@ -61,7 +61,7 @@
           <input class="form-check-input mt-0" type="checkbox" [checked]="encoderOptions !== undefined ? true: null" (change)="encoderOptions = (encoderOptions === undefined) ? '' : undefined; update();">
         </div>
         <span class="input-group-text" id="inputGroup-sizing-default">encoderOptions</span>
-        <input type="text" [(ngModel)]="encoderOptions" placeholder="leave blank if you don't know" class="form-control" [attr.disabled]="(encoderOptions === undefined) ? true : null" (change)="update()">
+        <input type="text" [(ngModel)]="encoderOptions" placeholder="-preset ultrafast -tune zerolatency" class="form-control" [attr.disabled]="(encoderOptions === undefined) ? true : null" (change)="update()">
       </div>
 
       <div class="input-group mb-1">
@@ -78,37 +78,6 @@
         </div>
         <span class="input-group-text" id="inputGroup-sizing-default">analyzeDuration</span>
         <input type="number" [(ngModel)]="analyzeDuration" placeholder="0" class="form-control" [attr.disabled]="(analyzeDuration === undefined) ? true : null" (change)="update()">
-      </div>
-
-      <div class="input-group mb-1">
-        <div class="input-group-text">
-          <input class="form-check-input mt-0" type="checkbox" [checked]="mapvideo !== undefined ? true: null" (change)="mapvideo = (mapvideo === undefined) ? '' : undefined; update();">
-        </div>
-        <span class="input-group-text" id="inputGroup-sizing-default">mapvideo</span>
-        <input type="text" [(ngModel)]="mapvideo" placeholder="leave blank if you don't know" class="form-control" [attr.disabled]="(mapvideo === undefined) ? true : null" (change)="update()">
-      </div>
-
-      <div class="input-group mb-1">
-        <div class="input-group-text">
-          <input class="form-check-input mt-0" type="checkbox" [checked]="mapaudio !== undefined ? true: null" (change)="mapaudio = (mapaudio === undefined) ? '' : undefined; update();">
-        </div>
-        <span class="input-group-text" id="inputGroup-sizing-default">mapaudio</span>
-        <input type="text" [(ngModel)]="mapaudio" placeholder="leave blank if you don't know" class="form-control" [attr.disabled]="(mapaudio === undefined) ? true : null" (change)="update()">
-      </div>
-
-      <div class="input-group mb-1">
-        <div class="input-group-text">
-          <input class="form-check-input mt-0" type="checkbox" [(ngModel)]="forceMax" (change)="update()">
-        </div>
-        <span class="input-group-text" id="inputGroup-sizing-default">forceMax</span>
-      </div>
-
-      <div class="input-group mb-1">
-        <div class="input-group-text">
-          <input class="form-check-input mt-0" type="checkbox" [checked]="maxDelay !== undefined ? true: null" (change)="maxDelay = (maxDelay === undefined) ? 0 : undefined; update();">
-        </div>
-        <span class="input-group-text" id="inputGroup-sizing-default">maxDelay</span>
-        <input type="number" [(ngModel)]="maxDelay" placeholder="0" class="form-control" [attr.disabled]="(maxDelay === undefined) ? true : null" (change)="update()">
       </div>
 
       <div class="input-group mb-1">
@@ -139,7 +108,7 @@
         <div class="input-group-text">
           <input class="form-check-input mt-0" type="checkbox" [checked]="maxFPS !== undefined ? true: null" (change)="maxFPS = (maxFPS === undefined) ? 0 : undefined; update();">
         </div>
-        <span class="input-group-text" id="inputGroup-sizing-default">maxFPS</span>
+        <span class="input-group-text" id="inputGroup-sizing-default">fps</span>
         <input type="number" [(ngModel)]="maxFPS" placeholder="0" class="form-control" [attr.disabled]="(maxFPS === undefined) ? true : null" (change)="update()">
       </div>
 
@@ -147,7 +116,7 @@
         <div class="input-group-text">
           <input class="form-check-input mt-0" type="checkbox" [checked]="maxBitrate !== undefined ? true : null" (change)="maxBitrate = (maxBitrate === undefined) ? 0 : undefined; update();">
         </div>
-        <span class="input-group-text" id="inputGroup-sizing-default">maxBitrate</span>
+        <span class="input-group-text" id="inputGroup-sizing-default">bitrate</span>
         <input type="number" [(ngModel)]="maxBitrate" placeholder="0" class="form-control" [attr.disabled]="(maxBitrate === undefined) ? true : null" (change)="update()">
       </div>
 

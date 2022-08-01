@@ -9,6 +9,7 @@ You can find the complete detailled changelog for every beta release [here](http
 - Refactored ffmpeg processing
 - Updated eufy-security-client to 2.1.2
 - Deprecated options `forcerefreshsnap` and `useEnhancedSnapshotBehaviour` were removed and will no longer be evaluated
+- Removed `mapvideo`, `mapaudio`, `maxDelay` and `forceMax` options from advanced VideoConfig since they are deprecated
 
 ### Fixed
 
@@ -48,6 +49,7 @@ You can find the complete detailled changelog for every beta release [here](http
 - Logging for eufy-security-client is moved to separate log file: `eufy-log.log`
 - Refactored handling of ffmpeg processes
 - Deprecated option `forcerefreshsnap` was removed and will no longer be evaluated - use `snapshotHandlingMethod` instead
+- Removed `mapvideo`, `mapaudio`, `maxDelay` and `forceMax` options from advanced VideoConfig since they are deprecated
 
 ### Fixed
 

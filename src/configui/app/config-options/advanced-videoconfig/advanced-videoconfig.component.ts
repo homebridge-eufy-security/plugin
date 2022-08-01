@@ -38,10 +38,6 @@ export class AdvancedVideoconfigComponent
   encoderOptions: string | undefined = undefined;
   probeSize: number | undefined = undefined;
   analyzeDuration: number | undefined = undefined;
-  mapvideo: string | undefined = undefined;
-  mapaudio: string | undefined = undefined;
-  forceMax: boolean | undefined = undefined;
-  maxDelay: number | undefined = undefined;
   maxStreams: number | undefined = undefined;
   maxWidth: number | undefined = undefined;
   maxHeight: number | undefined = undefined;
@@ -96,18 +92,6 @@ export class AdvancedVideoconfigComponent
     }
     if (this.analyzeDuration !== undefined) {
       newConfig['analyzeDuration'] = this.analyzeDuration;
-    }
-    if (this.mapvideo && this.mapvideo !== '') {
-      newConfig['mapvideo'] = this.mapvideo;
-    }
-    if (this.mapaudio && this.mapaudio !== '') {
-      newConfig['mapaudio'] = this.mapaudio;
-    }
-    if (this.forceMax) {
-      newConfig['forceMax'] = this.forceMax;
-    }
-    if (this.maxDelay !== undefined) {
-      newConfig['maxDelay'] = this.maxDelay;
     }
     if (this.maxStreams !== undefined) {
       newConfig['maxStreams'] = this.maxStreams;
