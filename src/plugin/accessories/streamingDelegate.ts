@@ -33,11 +33,6 @@ import { LocalLivestreamManager } from './LocalLivestreamManager';
 import { SnapshotManager } from './SnapshotManager';
 import { TalkbackStream } from './Talkback';
 
-import { readFile } from 'fs';
-import { promisify } from 'util';
-const readFileAsync = promisify(readFile),
-  SnapshotUnavailablePath = require.resolve('../../media/Snapshot-Unavailable.png');
-
 export type SessionInfo = {
   address: string; // address of the HAP controller
   ipv6: boolean;
