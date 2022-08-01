@@ -8,7 +8,23 @@
     </ng-template>
     <ng-template ngbPanelContent>
 
-      The following options directly change the way how ffmpeg is configured when a stream is started. If configured wrong these will most likely result in faulty streams or bad streaming performance.
+      The following options directly change the way how ffmpeg is configured when a stream is started. If configured incorrectly these will most likely result in faulty streams or bad streaming performance.
+      <p></p>
+      You can try the following presets to improve your streaming experience. We do not guarantee that these will work for you.<p></p>
+      <div class="d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center mb-2">
+      
+        <div class="col-12 col-sm-4">
+          <select class="form-select" [(ngModel)]="preset" aria-label="Presets" (change)="loadPreset()">
+            <option [ngValue]=0>No Preset (default)</option>
+            <option [ngValue]=1>Copy</option>
+            <option [ngValue]=2>Performance</option>
+            <option [ngValue]=3>Custom</option>
+          </select>
+        </div>
+      </div>
+      <div *ngIf="presetDescription">
+        {{ presetDescription }}
+      </div>
       <p></p>
 
       <div class="input-group mb-1">

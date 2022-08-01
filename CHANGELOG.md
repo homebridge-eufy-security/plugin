@@ -4,6 +4,10 @@ You can find the complete detailled changelog for every beta release [here](http
 
 ## 2.1.0-beta.14 (01/08/2022) - latest changes
 
+### Added
+
+- Presets (`copy`, `performance`) for advanced video config
+
 ### Changed
 
 - Refactored ffmpeg processing
@@ -32,6 +36,7 @@ You can find the complete detailled changelog for every beta release [here](http
 - Feature to download log files through plugin configuration ui
 - Setting to disable log file storage to disk (possible fix for #93)
 - Setting to choose that separate ffmpeg processes for audio and video streaming will be used (this can increase performance)
+- Presets (`copy`, `performance`) for advanced video config
 
 ### Changed
 

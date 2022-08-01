@@ -45,6 +45,9 @@ export class AdvancedVideoconfigComponent
   maxBitrate: number | undefined = undefined;
   useSeparateProcesses: boolean | undefined = undefined;
 
+  preset = 0;
+  presetDescription?: string;
+
   async readValue() {
     const config = await this.getCameraConfig(this.accessory?.uniqueId || '');
 
@@ -54,6 +57,120 @@ export class AdvancedVideoconfigComponent
         const obj = this as any;
         obj[key] = value;
       });
+    }
+  }
+
+  loadPreset() {
+    if (this.preset === 0) {
+      this.readRate = undefined;
+      this.vcodec = undefined;
+      this.acodec = undefined;
+      this.videoFilter = undefined;
+      this.encoderOptions = undefined;
+      this.probeSize = undefined;
+      this.analyzeDuration = undefined;
+      this.maxStreams = undefined;
+      this.maxWidth = undefined;
+      this.maxHeight = undefined;
+      this.maxFPS = undefined;
+      this.maxBitrate = undefined;
+      this.useSeparateProcesses = undefined;
+
+      this.presetDescription = undefined;
+    } else if (this.preset === 1) {
+      this.readRate = undefined;
+      this.vcodec = 'copy';
+      this.acodec = undefined;
+      this.videoFilter = undefined;
+      this.encoderOptions = undefined;
+      this.probeSize = undefined;
+      this.analyzeDuration = undefined;
+      this.maxStreams = undefined;
+      this.maxWidth = undefined;
+      this.maxHeight = undefined;
+      this.maxFPS = undefined;
+      this.maxBitrate = undefined;
+      this.useSeparateProcesses = true;
+      
+      // eslint-disable-next-line max-len
+      this.presetDescription = 'Most eufy cams support the same codec that HomeKit requests. You can try and \'forward\' the stream directly without encoding it with ffmpeg. This can increase performance and quality drastically.';
+    } else if (this.preset === 2) {
+      this.readRate = undefined;
+      this.vcodec = undefined;
+      this.acodec = undefined;
+      this.videoFilter = undefined;
+      this.encoderOptions = undefined;
+      this.probeSize = undefined;
+      this.analyzeDuration = undefined;
+      this.maxStreams = undefined;
+      this.maxWidth = 640;
+      this.maxHeight = 480;
+      this.maxFPS = 15;
+      this.maxBitrate = undefined;
+      this.useSeparateProcesses = true;
+      
+      // eslint-disable-next-line max-len
+      this.presetDescription = 'This preset tries to increase performance by reducing the quality of the stream. This can work for low performance hardware like raspberry pis.';
+    } else {
+      this.presetDescription = undefined;
+    }
+
+    this.update();
+  }
+
+  private updatePreset() {
+    let p = 3;
+    if (!this.readRate &&
+      this.vcodec === undefined &&
+      this.acodec === undefined &&
+      this.videoFilter === undefined &&
+      this.encoderOptions === undefined &&
+      this.probeSize === undefined &&
+      this.analyzeDuration === undefined &&
+      this.maxStreams === undefined &&
+      this.maxWidth === undefined &&
+      this.maxHeight === undefined &&
+      this.maxFPS === undefined &&
+      this.maxBitrate === undefined &&
+      this.useSeparateProcesses === undefined) {
+
+      p = 0;
+    }
+    if (!this.readRate &&
+      this.vcodec === 'copy' &&
+      this.acodec === undefined &&
+      this.videoFilter === undefined &&
+      this.encoderOptions === undefined &&
+      this.probeSize === undefined &&
+      this.analyzeDuration === undefined &&
+      this.maxStreams === undefined &&
+      this.maxWidth === undefined &&
+      this.maxHeight === undefined &&
+      this.maxFPS === undefined &&
+      this.maxBitrate === undefined &&
+      this.useSeparateProcesses === true) {
+
+      p = 1;
+    }
+    if (!this.readRate &&
+      this.vcodec === undefined &&
+      this.acodec === undefined &&
+      this.videoFilter === undefined &&
+      this.encoderOptions === undefined &&
+      this.probeSize === undefined &&
+      this.analyzeDuration === undefined &&
+      this.maxStreams === undefined &&
+      this.maxWidth === 640 &&
+      this.maxHeight === 480 &&
+      this.maxFPS === 15 &&
+      this.maxBitrate === undefined &&
+      this.useSeparateProcesses === true) {
+
+      p = 2;
+    }
+
+    if (p !== this.preset) {
+      this.preset = p;
     }
   }
 
@@ -118,5 +235,7 @@ export class AdvancedVideoconfigComponent
       },
       this.accessory,
     );
+
+    this.updatePreset();
   }
 }
