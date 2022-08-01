@@ -69,17 +69,6 @@ class FFmpegProgress extends EventEmitter {
 }
 
 export class FFmpegParameters {
-  // TODO: mapping options
-  
-  // TODO: maxDelay is ignored since eufy-security-client takes care of reordering the packages
-  // TODO: reorderQueueSize is ignored (see above)
-
-  // TODO: change maxFPS to just fps
-  // TODO: disable options on codec 'copy'
-  // TODO: delete 'forceMax'?
-
-  // TODO: autofill: vcodec, encoderOptions
-
   // TODO: log stderr from process to new log files
 
   public progressPort: number;
