@@ -445,7 +445,7 @@ export class SnapshotManager extends EventEmitter {
       return Promise.reject('No camera source detected.');
     }
 
-    const parameters = await FFmpegParameters.forSnapshot();
+    const parameters = await FFmpegParameters.forSnapshot(this.cameraConfig.videoConfig?.debug);
 
     if (source.url) {
       parameters.setInputSource(source.url);
@@ -520,7 +520,7 @@ export class SnapshotManager extends EventEmitter {
 
   private async resizeSnapshot(snapshot: Buffer, request: SnapshotRequest): Promise<Buffer> {
 
-    const parameters = await FFmpegParameters.forSnapshot();
+    const parameters = await FFmpegParameters.forSnapshot(this.cameraConfig.videoConfig?.debug);
     parameters.setup(this.cameraConfig, request);
     
     const ffmpeg = new FFmpeg(

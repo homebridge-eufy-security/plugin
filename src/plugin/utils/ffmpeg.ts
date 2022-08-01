@@ -69,9 +69,9 @@ class FFmpegProgress extends EventEmitter {
 }
 
 export class FFmpegParameters {
-  // TODO: log stderr from process to new log files
 
   public progressPort: number;
+  public debug: boolean;
 
   // default parameters
   private hideBanner = true;
@@ -122,41 +122,42 @@ export class FFmpegParameters {
   private numberFrames?: number;
   private delaySnapshot = false;
 
-  private constructor(port: number, isVideo: boolean, isAudio: boolean, isSnapshot: boolean) {
+  private constructor(port: number, isVideo: boolean, isAudio: boolean, isSnapshot: boolean, debug = false) {
     this.progressPort = port;
     this.isVideo = isVideo;
     this.isAudio = isAudio;
     this.isSnapshot = isSnapshot;
+    this.debug = debug;
   }
 
-  static async forAudio(): Promise<FFmpegParameters> {
+  static async forAudio(debug = false): Promise<FFmpegParameters> {
     const port = await pickPort({
       type: 'tcp',
       ip: '0.0.0.0',
       reserveTimeout: 15,
     });
-    const ffmpeg = new FFmpegParameters(port, false, true, false);
+    const ffmpeg = new FFmpegParameters(port, false, true, false, debug);
     ffmpeg.useWallclockAsTimestamp = false;
     ffmpeg.flagsGlobalHeader = true;
     return ffmpeg;
   }
 
-  static async forVideo(): Promise<FFmpegParameters> {
+  static async forVideo(debug = false): Promise<FFmpegParameters> {
     const port = await pickPort({
       type: 'tcp',
       ip: '0.0.0.0',
       reserveTimeout: 15,
     });
-    return new FFmpegParameters(port, true, false, false);
+    return new FFmpegParameters(port, true, false, false, debug);
   }
 
-  static async forSnapshot(): Promise<FFmpegParameters> {
+  static async forSnapshot(debug = false): Promise<FFmpegParameters> {
     const port = await pickPort({
       type: 'tcp',
       ip: '0.0.0.0',
       reserveTimeout: 15,
     });
-    const ffmpeg = new FFmpegParameters(port, false, false, true);
+    const ffmpeg = new FFmpegParameters(port, false, false, true, debug);
     ffmpeg.useWallclockAsTimestamp = false;
     ffmpeg.numberFrames = 1;
     ffmpeg.format = 'image2';
@@ -587,6 +588,12 @@ export class FFmpeg extends EventEmitter {
     this.stdin = this.process.stdin;
     this.stdout = this.process.stdout;
 
+    if (this.parameters[0].debug) {
+      this.process.stderr.on('data', (chunk) => {
+        this.log.debug(this.name, chunk.toString());
+      });
+    }
+
     this.process.on('error', this.onProcessError.bind(this));
     this.process.on('exit', this.onProcessExit.bind(this));
   }
@@ -602,6 +609,12 @@ export class FFmpeg extends EventEmitter {
 
     return new Promise((resolve, reject) => {
       this.process = spawn(this.ffmpegExec, processArgs.join(' ').split(/\s+/), { env: process.env });
+
+      if (this.parameters[0].debug) {
+        this.process.stderr.on('data', (chunk) => {
+          this.log.debug(this.name, chunk.toString());
+        });
+      }
 
       const killTimeout = setTimeout(() => {
         this.stop();
