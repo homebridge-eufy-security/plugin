@@ -43,7 +43,7 @@ export class AdvancedVideoconfigComponent
   maxHeight: number | undefined = undefined;
   maxFPS: number | undefined = undefined;
   maxBitrate: number | undefined = undefined;
-  useOneProcess: boolean | undefined = undefined;
+  useSeparateProcesses: boolean | undefined = undefined;
 
   async readValue() {
     const config = await this.getCameraConfig(this.accessory?.uniqueId || '');
@@ -108,8 +108,8 @@ export class AdvancedVideoconfigComponent
     if (this.maxBitrate !== undefined) {
       newConfig['maxBitrate'] = this.maxBitrate;
     }
-    if (this.useOneProcess) {
-      newConfig['useOneProcess'] = this.useOneProcess;
+    if (this.useSeparateProcesses) {
+      newConfig['useSeparateProcesses'] = this.useSeparateProcesses;
     }
 
     this.updateConfig(

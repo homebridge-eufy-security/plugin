@@ -10,6 +10,7 @@ You can find the complete detailled changelog for every beta release [here](http
 - Updated eufy-security-client to 2.1.2
 - Deprecated options `forcerefreshsnap` and `useEnhancedSnapshotBehaviour` were removed and will no longer be evaluated
 - Removed `mapvideo`, `mapaudio`, `maxDelay` and `forceMax` options from advanced VideoConfig since they are deprecated
+- By default the plugin will use one ffmpeg process for video and audio - this can be controlled via an option (`useSeparateProcesses` is now used instead of `useOneProcess`)
 
 ### Fixed
 
@@ -30,13 +31,12 @@ You can find the complete detailled changelog for every beta release [here](http
 - Control Station alarm through HomeKit (reset the alarm and even trigger it with HomeKit automations. You can now trigger the alarm even with third party accessories - e.g. with devices from vendors other than eufy) - see #26
 - Feature to download log files through plugin configuration ui
 - Setting to disable log file storage to disk (possible fix for #93)
-- Setting to choose whether one or multiple processes for audio and video streaming will be used
+- Setting to choose that separate ffmpeg processes for audio and video streaming will be used (this can increase performance)
 
 ### Changed
 
 - Complete redesign of the config ui screen
 - RTSP setting is now only avaiable on compatible devices
-- Plugin will use two separate ffmpeg process for audio and video to increase stability (exception: rtsp streams)
 - Updated to latest version of eufy-security-client (2.1.2) (fix for #72 and #38)
 - Refactored whole project structure to resemble the new workspace layout (plugin + custom ui)
 - Reimplementation of device discovery algorithm to better reflect best practices mentioned in [this comment](https://github.com/bropat/eufy-security-client/issues/167#issuecomment-1155388624)

@@ -300,11 +300,11 @@ export class StreamingDelegate implements CameraStreamingDelegate {
         }
       }
 
-      const useOneProcess = this.videoConfig.useOneProcess ??= false;
+      const useSeparateProcesses = this.videoConfig.useSeparateProcesses ??= false;
 
       const videoProcess = new FFmpeg(
         `[${this.cameraName}] [Video Process]`,
-        useOneProcess && audioParams ? [videoParams, audioParams] : videoParams,
+        !useSeparateProcesses && audioParams ? [videoParams, audioParams] : videoParams,
         this.log,
       );
       videoProcess.on('started', () => {
@@ -317,7 +317,7 @@ export class StreamingDelegate implements CameraStreamingDelegate {
       activeSession.videoProcess = videoProcess;
       activeSession.videoProcess.start();
 
-      if (!useOneProcess && audioParams) {
+      if (useSeparateProcesses && audioParams) {
         const audioProcess = new FFmpeg(
           `[${this.cameraName}] [Audio Process]`,
           audioParams,
