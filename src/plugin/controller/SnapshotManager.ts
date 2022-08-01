@@ -1,20 +1,18 @@
 import https from 'node:https';
 import { readFileSync } from 'node:fs';
-import { EventEmitter } from 'node:stream';
-import { spawn } from 'child_process';
+import { EventEmitter, Readable } from 'node:stream';
 
 import { Camera, Device, PropertyName, PropertyValue } from 'eufy-security-client';
 import ffmpegPath from 'ffmpeg-for-homebridge';
 
-import { CameraConfig } from './configTypes';
+import { CameraConfig } from '../utils/configTypes';
 import { EufySecurityPlatform } from '../platform';
 import { LocalLivestreamManager } from './LocalLivestreamManager';
-import { Logger } from './logger';
-import { StreamInput } from './UniversalStream';
+import { Logger } from '../utils/logger';
 
 import { is_rtsp_ready } from '../utils/utils';
-import { resolve } from 'node:path';
-import { rejects } from 'node:assert';
+import { SnapshotRequest } from 'homebridge';
+import { FFmpeg, FFmpegParameters } from '../utils/ffmpeg';
 
 const SnapshotBlackPath = require.resolve('../../media/Snapshot-black.png');
 
@@ -32,7 +30,8 @@ type ImageDataResponse = {
 };
 
 type StreamSource = {
-  url: string;
+  url?: string;
+  stream?: Readable;
   livestreamId?: number;
 };
 
@@ -149,12 +148,12 @@ export class SnapshotManager extends EventEmitter {
     }
   }
 
-  public async getSnapshotBuffer(): Promise<Buffer> {
+  public async getSnapshotBuffer(request: SnapshotRequest): Promise<Buffer> {
     // return a new snapshot it it is recent enough (not more than 15 seconds)
     if (this.currentSnapshot) {
       const diff = Math.abs((Date.now() - this.currentSnapshot.timestamp) / 1000);
       if (diff <= 15) {
-        return Promise.resolve(this.currentSnapshot.image);
+        return this.resizeSnapshot(this.currentSnapshot.image, request);
       }
     }
 
@@ -162,23 +161,30 @@ export class SnapshotManager extends EventEmitter {
     if (this.cameraConfig.immediateRingNotificationWithoutSnapshot && diff < 5) {
       this.log.debug(this.device.getName(), 'Sending empty snapshot to speed up homekit notification for ring event.');
       if (this.blackSnapshot) {
-        return Promise.resolve(this.blackSnapshot);
+        return this.resizeSnapshot(this.blackSnapshot, request);
       } else {
         return Promise.reject('Prioritize ring notification over snapshot request. But could not supply empty snapshot.');
       }
     }
 
-    if (this.cameraConfig.snapshotHandlingMethod === 1) {
-      // return a preferablly most recent snapshot every time
-      return this.getNewestSnapshotBuffer();
-    } else if (this.cameraConfig.snapshotHandlingMethod === 2) {
-      // balanced method
-      return this.getBalancedSnapshot();
-    } else if (this.cameraConfig.snapshotHandlingMethod === 3) {
-      // fastest method with potentially old snapshots
-      return this.getNewestCloudSnapshot();
-    } else {
-      return Promise.reject('No suitable handling method for snapshots defined');
+    let snapshot = Buffer.from([]);
+    try {
+      if (this.cameraConfig.snapshotHandlingMethod === 1) {
+        // return a preferablly most recent snapshot every time
+        snapshot = await this.getNewestSnapshotBuffer();
+      } else if (this.cameraConfig.snapshotHandlingMethod === 2) {
+        // balanced method
+        snapshot = await this.getBalancedSnapshot();
+      } else if (this.cameraConfig.snapshotHandlingMethod === 3) {
+        // fastest method with potentially old snapshots
+        snapshot = await this.getNewestCloudSnapshot();
+      } else {
+        return Promise.reject('No suitable handling method for snapshots defined');
+      }
+      return this.resizeSnapshot(snapshot, request);
+
+    } catch (err) {
+      return Promise.reject(err);
     }
   }
 
@@ -439,78 +445,39 @@ export class SnapshotManager extends EventEmitter {
       return Promise.reject('No camera source detected.');
     }
 
-    return new Promise((resolve, reject) => {
+    const parameters = await FFmpegParameters.forSnapshot(this.cameraConfig.videoConfig?.debug);
 
-      const url = '-i ' + source.url;
-      const ffmpegArgs = (this.cameraConfig.videoConfig!.stillImageSource || url) + // Still
-                      ' -frames:v 1' +
-                      ((this.cameraConfig.delayCameraSnapshot) ? ' -ss 00:00:00.500' : '') +
-                      ' -f image2 -' +
-                      ' -hide_banner' +
-                      ' -loglevel error';
-      
-      this.log.debug(
-        this.device.getName(),
-        'Snapshot command: ' + this.videoProcessor + ' ' + ffmpegArgs,
-        this.cameraConfig.videoConfig!.debug,
+    if (source.url) {
+      parameters.setInputSource(source.url);
+    } else if (source.stream && source.livestreamId) {
+      await parameters.setInputStream(source.stream);
+    } else {
+      return Promise.reject('No valid camera source detected.');
+    }
+
+    if (this.cameraConfig.delayCameraSnapshot) {
+      parameters.setDelayedSnapshot();
+    }
+
+    try {
+      const ffmpeg = new FFmpeg(
+        `[${this.device.getName()}] [Snapshot Process]`,
+        parameters,
+        this.log,
       );
-      const startTime = Date.now();
-      const ffmpeg = spawn(this.videoProcessor, ffmpegArgs.split(/\s+/), { env: process.env });
+      const buffer = await ffmpeg.getResult();
 
-      const ffmpegTimeout = setTimeout(() => {
-        if (source.livestreamId) {
-          this.livestreamManager.stopProxyStream(source.livestreamId);
-        }
+      if (source.livestreamId) {
+        this.livestreamManager.stopProxyStream(source.livestreamId);
+      }
 
-        reject('ffmpeg process timed out');
-      }, 15000);
-
-      let snapshotBuffer = Buffer.alloc(0);
-      ffmpeg.stdout.on('data', (data) => {
-        snapshotBuffer = Buffer.concat([snapshotBuffer, data]);
-      });
-      ffmpeg.on('error', (error: Error) => {
-        reject('FFmpeg process creation failed: ' + error.message);
-      });
-      ffmpeg.stderr.on('data', (data) => {
-        data.toString().split('\n').forEach((line: string) => {
-          if (this.cameraConfig.videoConfig!.debug && line.length > 0) { // For now only write anything out when debug is set
-            this.log.error(line, this.device.getName() + '] [Snapshot');
-          }
-        });
-      });
-      ffmpeg.on('close', () => {
-        if (ffmpegTimeout) {
-          clearTimeout(ffmpegTimeout);
-        }
-
-        if (snapshotBuffer.length > 0) {
-          resolve(snapshotBuffer);
-        } else {
-          reject(' Failed to fetch snapshot.');
-        }
-
-        if (source.livestreamId !== null) {
-          this.livestreamManager.stopProxyStream(source.livestreamId);
-        }
-
-        const runtime = (Date.now() - startTime) / 1000;
-        let message = 'Fetching snapshot took ' + runtime + ' seconds.';
-        if (runtime < 5) {
-          this.log.debug(message, this.device.getName(), this.cameraConfig.videoConfig!.debug);
-        } else {
-          if (!this.cameraConfig.unbridge) {
-            message += ' It is highly recommended you switch to unbridge mode.';
-          }
-          if (runtime < 22) {
-            this.log.warn(message, this.device.getName());
-          } else {
-            message += ' The request has timed out.';
-            this.log.error(message, this.device.getName());
-          }
-        }
-      });
-    });
+      return Promise.resolve(buffer);
+    } catch (err) {
+      if (source.livestreamId) {
+        this.livestreamManager.stopProxyStream(source.livestreamId);
+      }
+      return Promise.reject(err);
+    }
   }
 
   private async getCameraSource(): Promise<StreamSource | null> {
@@ -528,9 +495,8 @@ export class SnapshotManager extends EventEmitter {
     } else {
       try {
         const streamData = await this.livestreamManager.getLocalLivestream();
-        const uVideoStream = StreamInput(streamData.videostream, this.device.getName() + '_video', this.platform.eufyPath, this.log);
         return {
-          url: uVideoStream.url,
+          stream: streamData.videostream,
           livestreamId: streamData.id,
         };
       } catch (err) {
@@ -550,5 +516,18 @@ export class SnapshotManager extends EventEmitter {
       return '';
     }
     return url.substring(0, endIndex);
+  }
+
+  private async resizeSnapshot(snapshot: Buffer, request: SnapshotRequest): Promise<Buffer> {
+
+    const parameters = await FFmpegParameters.forSnapshot(this.cameraConfig.videoConfig?.debug);
+    parameters.setup(this.cameraConfig, request);
+    
+    const ffmpeg = new FFmpeg(
+      `[${this.device.getName()}] [Snapshot Resize Process]`,
+      parameters,
+      this.log,
+    );
+    return ffmpeg.getResult(snapshot);
   }
 }

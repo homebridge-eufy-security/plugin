@@ -3,7 +3,7 @@ import { Accessory } from '../../../app/accessory';
 import { PluginService } from '../../../app/plugin.service';
 import { ConfigOptionsInterpreter } from '../config-options-interpreter';
 
-import { VideoConfig } from '../../../../plugin/accessories/configTypes';
+import { VideoConfig } from '../../../../plugin/utils/configTypes';
 
 @Component({
   selector: 'app-advanced-videoconfig',
@@ -38,16 +38,15 @@ export class AdvancedVideoconfigComponent
   encoderOptions: string | undefined = undefined;
   probeSize: number | undefined = undefined;
   analyzeDuration: number | undefined = undefined;
-  mapvideo: string | undefined = undefined;
-  mapaudio: string | undefined = undefined;
-  forceMax: boolean | undefined = undefined;
-  maxDelay: number | undefined = undefined;
   maxStreams: number | undefined = undefined;
   maxWidth: number | undefined = undefined;
   maxHeight: number | undefined = undefined;
   maxFPS: number | undefined = undefined;
   maxBitrate: number | undefined = undefined;
-  useOneProcess: boolean | undefined = undefined;
+  useSeparateProcesses: boolean | undefined = undefined;
+
+  preset = 0;
+  presetDescription?: string;
 
   async readValue() {
     const config = await this.getCameraConfig(this.accessory?.uniqueId || '');
@@ -58,6 +57,122 @@ export class AdvancedVideoconfigComponent
         const obj = this as any;
         obj[key] = value;
       });
+    }
+
+    this.updatePreset();
+  }
+
+  loadPreset() {
+    if (this.preset === 0) {
+      this.readRate = undefined;
+      this.vcodec = undefined;
+      this.acodec = undefined;
+      this.videoFilter = undefined;
+      this.encoderOptions = undefined;
+      this.probeSize = undefined;
+      this.analyzeDuration = undefined;
+      this.maxStreams = undefined;
+      this.maxWidth = undefined;
+      this.maxHeight = undefined;
+      this.maxFPS = undefined;
+      this.maxBitrate = undefined;
+      this.useSeparateProcesses = undefined;
+
+      this.presetDescription = undefined;
+    } else if (this.preset === 1) {
+      this.readRate = undefined;
+      this.vcodec = 'copy';
+      this.acodec = undefined;
+      this.videoFilter = undefined;
+      this.encoderOptions = undefined;
+      this.probeSize = undefined;
+      this.analyzeDuration = undefined;
+      this.maxStreams = undefined;
+      this.maxWidth = undefined;
+      this.maxHeight = undefined;
+      this.maxFPS = undefined;
+      this.maxBitrate = undefined;
+      this.useSeparateProcesses = true;
+      
+      // eslint-disable-next-line max-len
+      this.presetDescription = 'Most eufy cams support the same codec that HomeKit requests. You can try and \'forward\' the stream directly without encoding it with ffmpeg. This can increase performance and quality drastically.';
+    } else if (this.preset === 2) {
+      this.readRate = undefined;
+      this.vcodec = undefined;
+      this.acodec = undefined;
+      this.videoFilter = undefined;
+      this.encoderOptions = undefined;
+      this.probeSize = undefined;
+      this.analyzeDuration = undefined;
+      this.maxStreams = undefined;
+      this.maxWidth = 640;
+      this.maxHeight = 480;
+      this.maxFPS = 15;
+      this.maxBitrate = undefined;
+      this.useSeparateProcesses = true;
+      
+      // eslint-disable-next-line max-len
+      this.presetDescription = 'This preset tries to increase performance by reducing the quality of the stream. This can work for low performance hardware like raspberry pis.';
+    } else {
+      this.presetDescription = undefined;
+    }
+
+    this.update();
+  }
+
+  private updatePreset() {
+    let p = 3;
+    if (!this.readRate &&
+      this.vcodec === undefined &&
+      this.acodec === undefined &&
+      this.videoFilter === undefined &&
+      this.encoderOptions === undefined &&
+      this.probeSize === undefined &&
+      this.analyzeDuration === undefined &&
+      this.maxStreams === undefined &&
+      this.maxWidth === undefined &&
+      this.maxHeight === undefined &&
+      this.maxFPS === undefined &&
+      this.maxBitrate === undefined &&
+      this.useSeparateProcesses === undefined) {
+
+      p = 0;
+    }
+    if (!this.readRate &&
+      this.vcodec === 'copy' &&
+      this.acodec === undefined &&
+      this.videoFilter === undefined &&
+      this.encoderOptions === undefined &&
+      this.probeSize === undefined &&
+      this.analyzeDuration === undefined &&
+      this.maxStreams === undefined &&
+      this.maxWidth === undefined &&
+      this.maxHeight === undefined &&
+      this.maxFPS === undefined &&
+      this.maxBitrate === undefined &&
+      this.useSeparateProcesses === true) {
+
+      p = 1;
+    }
+    if (!this.readRate &&
+      this.vcodec === undefined &&
+      this.acodec === undefined &&
+      this.videoFilter === undefined &&
+      this.encoderOptions === undefined &&
+      this.probeSize === undefined &&
+      this.analyzeDuration === undefined &&
+      this.maxStreams === undefined &&
+      this.maxWidth === 640 &&
+      this.maxHeight === 480 &&
+      this.maxFPS === 15 &&
+      this.maxBitrate === undefined &&
+      this.useSeparateProcesses === true) {
+
+      p = 2;
+    }
+
+    if (p !== this.preset) {
+      this.preset = p;
     }
   }
 
@@ -97,18 +212,6 @@ export class AdvancedVideoconfigComponent
     if (this.analyzeDuration !== undefined) {
       newConfig['analyzeDuration'] = this.analyzeDuration;
     }
-    if (this.mapvideo && this.mapvideo !== '') {
-      newConfig['mapvideo'] = this.mapvideo;
-    }
-    if (this.mapaudio && this.mapaudio !== '') {
-      newConfig['mapaudio'] = this.mapaudio;
-    }
-    if (this.forceMax) {
-      newConfig['forceMax'] = this.forceMax;
-    }
-    if (this.maxDelay !== undefined) {
-      newConfig['maxDelay'] = this.maxDelay;
-    }
     if (this.maxStreams !== undefined) {
       newConfig['maxStreams'] = this.maxStreams;
     }
@@ -124,8 +227,8 @@ export class AdvancedVideoconfigComponent
     if (this.maxBitrate !== undefined) {
       newConfig['maxBitrate'] = this.maxBitrate;
     }
-    if (this.useOneProcess) {
-      newConfig['useOneProcess'] = this.useOneProcess;
+    if (this.useSeparateProcesses) {
+      newConfig['useSeparateProcesses'] = this.useSeparateProcesses;
     }
 
     this.updateConfig(
@@ -134,5 +237,7 @@ export class AdvancedVideoconfigComponent
       },
       this.accessory,
     );
+
+    this.updatePreset();
   }
 }

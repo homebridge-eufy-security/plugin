@@ -48,17 +48,13 @@
     <div class="card-body pt-0 pb-4">
       
       <!-- Put config options components here -->
-      <app-enable-snapshot-behaviour [accessory]="accessory" (showEvent)="updateSnapshotView($event)"></app-enable-snapshot-behaviour>
+      <app-snapshot-handling-method [accessory]="accessory"></app-snapshot-handling-method>
+      <hr *ngIf="isDoorbell" />
+      <app-immediate-notification-on-ring [accessory]="accessory" *ngIf="isDoorbell"></app-immediate-notification-on-ring>
       <hr />
-      <div *ngIf="showEnhancedSnapshotBehaviour">
-        <app-snapshot-handling-method [accessory]="accessory"></app-snapshot-handling-method>
-        <hr *ngIf="isDoorbell" />
-        <app-immediate-notification-on-ring [accessory]="accessory" *ngIf="isDoorbell"></app-immediate-notification-on-ring>
-        <hr />
-        <app-delay-camera-snapshots [accessory]="accessory"></app-delay-camera-snapshots>
-        <hr />
-        <app-periodic-snapshot-refresh [accessory]="accessory"></app-periodic-snapshot-refresh>
-      </div>
+      <app-delay-camera-snapshots [accessory]="accessory"></app-delay-camera-snapshots>
+      <hr />
+      <app-periodic-snapshot-refresh [accessory]="accessory"></app-periodic-snapshot-refresh>
 
       <div *ngIf="!showEnhancedSnapshotBehaviour">
         <app-force-refreshsnap [accessory]="accessory"></app-force-refreshsnap>

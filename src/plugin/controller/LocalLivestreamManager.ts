@@ -3,7 +3,7 @@ import { EventEmitter, Readable } from 'stream';
 import { Station, Device, StreamMetadata, Camera } from 'eufy-security-client';
 
 import { EufySecurityPlatform } from '../platform';
-import { Logger } from './logger';
+import { Logger } from '../utils/logger';
 
 type StationStream = {
   station: Station;

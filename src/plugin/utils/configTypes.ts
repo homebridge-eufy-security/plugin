@@ -18,7 +18,6 @@ export type CameraConfig = {
   enableCamera: boolean;
   forcerefreshsnap: boolean;
   useCachedLocalLivestream: boolean;
-  useEnhancedSnapshotBehaviour?: boolean;
   refreshSnapshotIntervalMinutes?: number;
   snapshotHandlingMethod?: number;
   immediateRingNotificationWithoutSnapshot?: boolean;
@@ -32,27 +31,23 @@ export type VideoConfig = {
   returnAudioTarget?: string;
   analyzeDuration?: number;
   probeSize?: number;
-  reorderQueueSize?: number;
-  maxDelay?: number;
   maxStreams?: number;
   maxWidth?: number;
   maxHeight?: number;
   maxFPS?: number;
   maxBitrate?: number;
   readRate?: boolean;
-  forceMax?: boolean;
   vcodec?: string;
   acodec?: string;
   packetSize?: number;
   stimeout?: number;
   videoFilter?: string;
   encoderOptions?: string;
-  mapvideo?: string;
-  mapaudio?: string;
   audio?: boolean;
+  audioSampleRate?: number;
   debug?: boolean;
   debugReturn?: boolean;
-  useOneProcess?: boolean;
+  useSeparateProcesses?: boolean;
 };
 
 export type StationConfig = {

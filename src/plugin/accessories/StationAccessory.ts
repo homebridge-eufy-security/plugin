@@ -4,7 +4,7 @@ import { EufySecurityPlatform } from '../platform';
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore  
 import { Station, DeviceType, PropertyName, PropertyValue, AlarmEvent } from 'eufy-security-client';
-import { StationConfig } from './configTypes';
+import { StationConfig } from '../utils/configTypes';
 
 /**
  * Platform Accessory
