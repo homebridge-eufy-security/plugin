@@ -2,22 +2,16 @@
 
 You can find the complete detailled changelog for every beta release [here](https://github.com/homebridge-eufy-security/plugin/releases).
 
-## 2.1.0-beta.13 (25/07/2022) - latest changes
-
-### Added
-
-- Setting to choose whether one or multiple processes for audio and video streaming will be used
-- Manually triggered alarms will now respect the delay on leave setting in the eufy app.
+## 2.1.0-beta.14 (01/08/2022) - latest changes
 
 ### Changed
 
-- Using tslog instead of bunyan for logging of eufy-security-client messages since bunyan would not print deep nested objects correctly
-- Logging for eufy-security-client is moved to separate log file: `eufy-log.log`
+- Refactored ffmpeg processing
+- Deprecated options `forcerefreshsnap` and `useEnhancedSnapshotBehaviour` were removed and will no longer be evaluated
 
 ### Fixed
 
-- Setting `maxFPS` in advanced camera configuration should now work as expected (see #125)
-- Checkboxes in advanced camera configuration were not showing correct state
+- Fix issue that streams were only rendered in 640x480 - see #46
 
 ## 2.1.0 (beta) - complete changes of the beta so far (19/07/2022)
 
@@ -49,6 +43,8 @@ You can find the complete detailled changelog for every beta release [here](http
 - Cleaned up dependencies
 - Using tslog instead of bunyan for logging of eufy-security-client messages since bunyan would not print deep nested objects correctly
 - Logging for eufy-security-client is moved to separate log file: `eufy-log.log`
+- Refactored handling of ffmpeg processes
+- Deprecated option `forcerefreshsnap` was removed and will no longer be evaluated - use `snapshotHandlingMethod` instead
 
 ### Fixed
 
@@ -68,6 +64,7 @@ You can find the complete detailled changelog for every beta release [here](http
 - Smart lock states could be wrong on plugin startup (further improvements needed for smartlocks)
 - Setting to 'enable audio' was not working - audio was always streamed
 - Setting `maxFPS` in advanced camera configuration should now work as expected (see #125)
+- Fix issue that streams were only rendered in 640x480 - see #46
 
 ## 2.0.1 (20.06.2022)
 

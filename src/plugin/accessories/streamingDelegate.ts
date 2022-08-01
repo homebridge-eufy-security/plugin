@@ -21,7 +21,6 @@ import {
   StreamRequestTypes,
 } from 'homebridge';
 import { createSocket, Socket } from 'dgram';
-import ffmpegPath from 'ffmpeg-for-homebridge';
 import pickPort, { pickPortOptions } from 'pick-port';
 import { CameraConfig, VideoConfig } from './configTypes';
 import { FFmpeg, FFmpegParameters } from '../utils/ffmpeg';
@@ -79,7 +78,7 @@ export class StreamingDelegate implements CameraStreamingDelegate {
   private readonly device: Camera;
 
   private localLivestreamManager: LocalLivestreamManager;
-  private snapshotManager?: SnapshotManager;
+  private snapshotManager: SnapshotManager;
 
   // keep track of sessions
   pendingSessions: Map<string, SessionInfo> = new Map();
@@ -108,11 +107,7 @@ export class StreamingDelegate implements CameraStreamingDelegate {
       this.log,
     );
 
-    if (this.cameraConfig.useEnhancedSnapshotBehaviour) {
-      this.snapshotManager = new SnapshotManager(this.platform, this.device, this.cameraConfig, this.localLivestreamManager, this.log);
-    } else {
-      this.log.warn('Using deprecated snapshot handling method.');
-    }
+    this.snapshotManager = new SnapshotManager(this.platform, this.device, this.cameraConfig, this.localLivestreamManager, this.log);
 
     this.api.on(APIEvent.SHUTDOWN, () => {
       for (const session in this.ongoingSessions) {
@@ -162,78 +157,13 @@ export class StreamingDelegate implements CameraStreamingDelegate {
     this.controller = new hap.CameraController(options);
   }
 
-  // deprecated - will be deleted in future versions
-  async fetchSnapshot(request: SnapshotRequest): Promise<Buffer> {
-
-    let livestreamIdToRelease: number | null = null;
-    const rtsp = this.is_rtsp_ready();
-
-    try {
-      const parameters = await FFmpegParameters.forSnapshot();
-      parameters.setup(this.cameraConfig, request);
-
-      if (!this.cameraConfig.forcerefreshsnap) {
-        try {
-          const url = this.device.getPropertyValue(PropertyName.DevicePictureUrl) as string;
-          parameters.setInputSource(url);
-          this.platform.log.debug(this.cameraName, 'EUFY CLOUD URL: ' + url);
-        } catch {
-          this.log.warn(this.cameraName + ' fetchSnapshot: ' + 'No Snapshot found');
-          return Promise.resolve(await readFileAsync(SnapshotUnavailablePath));
-        }
-      } else if (rtsp) {
-        try {
-          const url = this.device.getPropertyValue(PropertyName.DeviceRTSPStreamUrl);
-          this.platform.log.debug(this.cameraName, 'RTSP URL: ' + url);
-          parameters.setInputSource(url as string);
-        } catch {
-          this.log.warn(this.cameraName + ' fetchSnapshot: ' + 'No Snapshot found');
-          return Promise.resolve(await readFileAsync(SnapshotUnavailablePath));
-        }
-      } else {
-        try {
-          const streamData = await this.localLivestreamManager.getLocalLivestream().catch((err) => {
-            throw err;
-          });
-          livestreamIdToRelease = streamData.id;
-          await parameters.setInputStream(streamData.videostream);
-        } catch (err) {
-          this.log.error((this.cameraName + ' Unable to start the livestream: ' + err) as string);
-          return Promise.resolve(await readFileAsync(SnapshotUnavailablePath));
-        }
-      }
-
-      const ffmpeg = new FFmpeg(
-        `[${this.cameraName}] [Snapshot Process]`,
-        parameters,
-        this.log,
-      );
-      const buffer = await ffmpeg.getResult();
-
-      if (livestreamIdToRelease !== null) {
-        this.localLivestreamManager.stopProxyStream(livestreamIdToRelease);
-      }
-
-      return Promise.resolve(buffer);
-
-    } catch (err) {
-      this.log.error((this.cameraName + ' Unable to get Snapshot: ' + err));
-      return Promise.resolve(await readFileAsync(SnapshotUnavailablePath));
-    }
-  }
-
   async handleSnapshotRequest(request: SnapshotRequest, callback: SnapshotRequestCallback): Promise<void> {
     this.log.debug('handleSnapshotRequest');
 
     try {
       this.log.debug('Snapshot requested: ' + request.width + ' x ' + request.height, this.cameraName, this.videoConfig.debug);
 
-      let snapshot;
-      if (this.cameraConfig.useEnhancedSnapshotBehaviour && this.snapshotManager) {
-        snapshot = await this.snapshotManager.getSnapshotBuffer(request);
-      } else {
-        snapshot = await this.fetchSnapshot(request);
-      }
+      const snapshot = await this.snapshotManager.getSnapshotBuffer(request);
 
       this.log.debug('snapshot byte lenght: ' + snapshot?.byteLength);
 
