@@ -532,7 +532,7 @@ export class FFmpegParameters {
       return `Starting video stream: ${message}`;
     }
     if (this.isAudio) {
-      message = this.codec === 'copy' ? 'native' : `${this.sampleRate} Hz, ${this.bitrate} kbps, codec: ${this.codec}`;
+      message = this.codec === 'copy' ? 'native' : `${this.sampleRate} kHz, ${this.bitrate} kbps, codec: ${this.codec}`;
       return `Starting audio stream: ${message}`;
     }
     return 'Starting unknown stream';

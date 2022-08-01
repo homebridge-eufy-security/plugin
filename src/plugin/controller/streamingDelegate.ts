@@ -119,6 +119,8 @@ export class StreamingDelegate implements CameraStreamingDelegate {
       samplerate = AudioStreamingSamplerate.KHZ_24;
     }
 
+    this.log.debug(this.cameraName, `Audio sample rate set to ${samplerate} kHz.`);
+
     const options: CameraControllerOptions = {
       cameraStreamCount: this.videoConfig.maxStreams || 2, // HomeKit requires at least 2 streams, but 1 is also just fine
       delegate: this,
