@@ -3,7 +3,7 @@ import { Accessory } from '../../../app/accessory';
 import { PluginService } from '../../../app/plugin.service';
 import { ConfigOptionsInterpreter } from '../config-options-interpreter';
 
-import { VideoConfig } from '../../../../plugin/accessories/configTypes';
+import { VideoConfig } from '../../../../plugin/utils/configTypes';
 
 @Component({
   selector: 'app-advanced-videoconfig',

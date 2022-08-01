@@ -1,7 +1,7 @@
 import { Camera, PropertyName } from 'eufy-security-client';
 
-import { CameraConfig } from '../accessories/configTypes';
-import { Logger } from '../accessories/logger';
+import { CameraConfig } from './configTypes';
+import { Logger } from './logger';
 
 export const is_rtsp_ready = function(device: Camera, cameraConfig: CameraConfig, log: Logger): boolean {
 

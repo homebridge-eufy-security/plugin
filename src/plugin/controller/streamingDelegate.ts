@@ -22,16 +22,16 @@ import {
 } from 'homebridge';
 import { createSocket, Socket } from 'dgram';
 import pickPort, { pickPortOptions } from 'pick-port';
-import { CameraConfig, VideoConfig } from './configTypes';
+import { CameraConfig, VideoConfig } from '../utils/configTypes';
 import { FFmpeg, FFmpegParameters } from '../utils/ffmpeg';
-import { Logger } from './logger';
+import { Logger } from '../utils/logger';
 
 import { Station, Device, Camera, PropertyName } from 'eufy-security-client';
 import { EufySecurityPlatform } from '../platform';
 
 import { LocalLivestreamManager } from './LocalLivestreamManager';
 import { SnapshotManager } from './SnapshotManager';
-import { TalkbackStream } from './Talkback';
+import { TalkbackStream } from '../utils/Talkback';
 
 export type SessionInfo = {
   address: string; // address of the HAP controller

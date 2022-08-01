@@ -6,11 +6,11 @@ import { Readable, Writable } from 'stream';
 import ffmpegPath from 'ffmpeg-for-homebridge';
 import pickPort from 'pick-port';
 
-import { Logger } from '../accessories/logger';
+import { Logger } from './logger';
 import EventEmitter from 'events';
-import { CameraConfig } from '../accessories/configTypes';
+import { CameraConfig } from './configTypes';
 import { AudioStreamingCodecType, ReconfigureStreamRequest, SnapshotRequest, StartStreamRequest } from 'homebridge';
-import { SessionInfo } from '../accessories/streamingDelegate';
+import { SessionInfo } from '../controller/streamingDelegate';
 
 class FFmpegProgress extends EventEmitter {
   private port: number;

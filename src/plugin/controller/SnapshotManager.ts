@@ -5,10 +5,10 @@ import { EventEmitter, Readable } from 'node:stream';
 import { Camera, Device, PropertyName, PropertyValue } from 'eufy-security-client';
 import ffmpegPath from 'ffmpeg-for-homebridge';
 
-import { CameraConfig } from './configTypes';
+import { CameraConfig } from '../utils/configTypes';
 import { EufySecurityPlatform } from '../platform';
 import { LocalLivestreamManager } from './LocalLivestreamManager';
-import { Logger } from './logger';
+import { Logger } from '../utils/logger';
 
 import { is_rtsp_ready } from '../utils/utils';
 import { SnapshotRequest } from 'homebridge';
