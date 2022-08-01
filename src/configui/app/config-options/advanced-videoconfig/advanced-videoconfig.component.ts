@@ -58,6 +58,8 @@ export class AdvancedVideoconfigComponent
         obj[key] = value;
       });
     }
+
+    this.updatePreset();
   }
 
   loadPreset() {
