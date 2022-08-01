@@ -7,6 +7,7 @@ You can find the complete detailled changelog for every beta release [here](http
 ### Changed
 
 - Refactored ffmpeg processing
+- Updated eufy-security-client to 2.1.2
 - Deprecated options `forcerefreshsnap` and `useEnhancedSnapshotBehaviour` were removed and will no longer be evaluated
 
 ### Fixed
@@ -33,7 +34,7 @@ You can find the complete detailled changelog for every beta release [here](http
 - Complete redesign of the config ui screen
 - RTSP setting is now only avaiable on compatible devices
 - Plugin will use two separate ffmpeg process for audio and video to increase stability (exception: rtsp streams)
-- Updated to latest version of eufy-security-client (2.1.1) (fix for #72 and #38)
+- Updated to latest version of eufy-security-client (2.1.2) (fix for #72 and #38)
 - Refactored whole project structure to resemble the new workspace layout (plugin + custom ui)
 - Reimplementation of device discovery algorithm to better reflect best practices mentioned in [this comment](https://github.com/bropat/eufy-security-client/issues/167#issuecomment-1155388624)
 - Added timeouts for guard mode changes. If these fail HomeKit will no longer get stuck, trying to change the guard mode and an error will be written to the log output (see #39)
