@@ -32,6 +32,7 @@ import { EufySecurityPlatform } from '../platform';
 import { LocalLivestreamManager } from './LocalLivestreamManager';
 import { SnapshotManager } from './SnapshotManager';
 import { TalkbackStream } from '../utils/Talkback';
+import { is_rtsp_ready } from '../utils/utils';
 
 export type SessionInfo = {
   address: string; // address of the HAP controller
@@ -220,38 +221,8 @@ export class StreamingDelegate implements CameraStreamingDelegate {
     callback(undefined, response);
   }
 
-  // duplicate in ../utils
-  // TODO: remove
-  private is_rtsp_ready(): boolean {
-    this.platform.log.debug(this.cameraName, 'RTSP rtspStream:' + JSON.stringify(this.device.hasProperty('rtspStream')));
-    if (!this.device.hasProperty('rtspStream')) {
-      this.platform.log.debug(this.cameraName, 'Looks like not compatible with RTSP');
-      return false;
-    }
-
-    this.platform.log.debug(this.cameraName, 'RTSP cameraConfig: ' + JSON.stringify(this.cameraConfig.rtsp));
-    if (!this.cameraConfig.rtsp) {
-      this.platform.log.debug(this.cameraName, 'Looks like RTSP is not enabled on camera config');
-      return false;
-    }
-
-    this.platform.log.debug(this.cameraName, 'RTSP ' + JSON.stringify(this.device.getPropertyValue(PropertyName.DeviceRTSPStream)));
-    if (!this.device.getPropertyValue(PropertyName.DeviceRTSPStream)) {
-      this.platform.log.debug(this.cameraName, ': RTSP capabilities not enabled. You will need to do it manually!');
-      return false;
-    }
-
-    this.platform.log.debug(this.cameraName, 'RTSP ' + JSON.stringify(this.device.getPropertyValue(PropertyName.DeviceRTSPStreamUrl)));
-    if (this.device.getPropertyValue(PropertyName.DeviceRTSPStreamUrl) === '') {
-      this.platform.log.debug(this.cameraName, ': RTSP URL is unknow');
-      return false;
-    }
-
-    return true;
-  }
-
   public async prepareCachedStream(): Promise<void> {
-    if (!this.is_rtsp_ready()) {
+    if (!is_rtsp_ready(this.device, this.cameraConfig, this.log)) {
       const proxyStream = await this.localLivestreamManager.getLocalLivestream();
       this.localLivestreamManager.stopProxyStream(proxyStream.id);
     }
@@ -306,7 +277,7 @@ export class StreamingDelegate implements CameraStreamingDelegate {
         audioParams.setRTPTarget(sessionInfo!, request);
       }
 
-      const rtsp = this.is_rtsp_ready();
+      const rtsp = is_rtsp_ready(this.device, this.cameraConfig, this.log);
 
       if (rtsp) {
         const url = this.device.getPropertyValue(PropertyName.DeviceRTSPStreamUrl);
@@ -460,7 +431,7 @@ export class StreamingDelegate implements CameraStreamingDelegate {
         this.log.error(this.cameraName, 'Error occurred closing socket: ' + err);
       }
       try {
-        if (!this.is_rtsp_ready() && session.cachedStreamId) {
+        if (!is_rtsp_ready(this.device, this.cameraConfig, this.log) && session.cachedStreamId) {
           this.localLivestreamManager.stopProxyStream(session.cachedStreamId);
         }
       } catch (err) {
