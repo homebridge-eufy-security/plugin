@@ -112,6 +112,13 @@ export class StreamingDelegate implements CameraStreamingDelegate {
       this.localLivestreamManager.stopLocalLiveStream();
     });
 
+    let samplerate = AudioStreamingSamplerate.KHZ_16;
+    if (this.videoConfig.audioSampleRate === 8) {
+      samplerate = AudioStreamingSamplerate.KHZ_8;
+    } else if (this.videoConfig.audioSampleRate === 24) {
+      samplerate = AudioStreamingSamplerate.KHZ_24;
+    }
+
     const options: CameraControllerOptions = {
       cameraStreamCount: this.videoConfig.maxStreams || 2, // HomeKit requires at least 2 streams, but 1 is also just fine
       delegate: this,
@@ -141,7 +148,7 @@ export class StreamingDelegate implements CameraStreamingDelegate {
           codecs: [
             {
               type: AudioStreamingCodecType.AAC_ELD,
-              samplerate: AudioStreamingSamplerate.KHZ_16,
+              samplerate: samplerate,
               /*type: AudioStreamingCodecType.OPUS,
                             samplerate: AudioStreamingSamplerate.KHZ_24*/
             },

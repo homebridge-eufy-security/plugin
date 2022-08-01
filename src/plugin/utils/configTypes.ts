@@ -44,6 +44,7 @@ export type VideoConfig = {
   videoFilter?: string;
   encoderOptions?: string;
   audio?: boolean;
+  audioSampleRate?: number;
   debug?: boolean;
   debugReturn?: boolean;
   useSeparateProcesses?: boolean;

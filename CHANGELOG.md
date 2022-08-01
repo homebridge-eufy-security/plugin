@@ -7,6 +7,7 @@ You can find the complete detailled changelog for every beta release [here](http
 ### Added
 
 - Presets (`copy`, `performance`) for advanced video config
+- Setting to choose audio sample rate
 
 ### Changed
 
@@ -14,7 +15,7 @@ You can find the complete detailled changelog for every beta release [here](http
 - Updated eufy-security-client to 2.1.2
 - Deprecated options `forcerefreshsnap` and `useEnhancedSnapshotBehaviour` were removed and will no longer be evaluated
 - Removed `mapvideo`, `mapaudio`, `maxDelay` and `forceMax` options from advanced VideoConfig since they are deprecated
-- By default the plugin will use one ffmpeg process for video and audio - this can be controlled via an option (`useSeparateProcesses` is now used instead of `useOneProcess`)
+- By default the plugin will now use one ffmpeg process for video and audio - this can be controlled via an option (`useSeparateProcesses` is now used instead of `useOneProcess`)
 
 ### Fixed
 
@@ -36,6 +37,7 @@ You can find the complete detailled changelog for every beta release [here](http
 - Feature to download log files through plugin configuration ui
 - Setting to disable log file storage to disk (possible fix for #93)
 - Setting to choose that separate ffmpeg processes for audio and video streaming will be used (this can increase performance)
+- Setting to choose audio sample rate
 - Presets (`copy`, `performance`) for advanced video config
 
 ### Changed
