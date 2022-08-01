@@ -25,7 +25,7 @@ export class EnableAudioComponent extends ConfigOptionsInterpreter implements On
 
   @Input() accessory?: Accessory;
   value = false;
-  samplerate = 16;
+  samplerate = 0;
 
   async readValue() {
     const config = await this.getCameraConfig(this.accessory?.uniqueId || '');

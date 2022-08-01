@@ -282,7 +282,11 @@ export class FFmpegParameters {
       }
       this.codec = codec;
       this.codecOptions = codecOptions;
-      const samplerate = videoConfig.audioSampleRate ??= req.audio.sample_rate;
+      let samplerate = req.audio.sample_rate;
+      if (videoConfig.audioSampleRate &&
+        (videoConfig.audioSampleRate === 8 || videoConfig.audioSampleRate === 16 || videoConfig.audioSampleRate === 24)) {
+        samplerate = videoConfig.audioSampleRate;
+      }
       this.sampleRate = samplerate;
       this.channels = req.audio.channel;
       this.bitrate = req.audio.max_bit_rate;
