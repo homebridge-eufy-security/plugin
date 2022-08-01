@@ -590,7 +590,7 @@ export class FFmpeg extends EventEmitter {
 
     if (this.parameters[0].debug) {
       this.process.stderr.on('data', (chunk) => {
-        this.log.debug(this.name, chunk.toString());
+        this.log.debug(this.name, 'ffmpeg log message:\n' + chunk.toString());
       });
     }
 
@@ -612,7 +612,7 @@ export class FFmpeg extends EventEmitter {
 
       if (this.parameters[0].debug) {
         this.process.stderr.on('data', (chunk) => {
-          this.log.debug(this.name, chunk.toString());
+          this.log.debug(this.name, 'ffmpeg log message:\n' + chunk.toString());
         });
       }
 
