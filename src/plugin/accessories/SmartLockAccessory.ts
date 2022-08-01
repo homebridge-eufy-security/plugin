@@ -3,11 +3,7 @@ import { Service, PlatformAccessory, CharacteristicValue } from 'homebridge';
 import { EufySecurityPlatform } from '../platform';
 import { DeviceAccessory } from './Device';
 
-// TODO: timeout for target state change
-
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-ignore  
-import { Device, Lock, PropertyName } from 'eufy-security-client';
+import { Device, Lock, PropertyName, PropertyValue } from 'eufy-security-client';
 
 /**
  * Platform Accessory
@@ -49,9 +45,7 @@ export class SmartLockAccessory extends DeviceAccessory {
       .onGet(this.handleLockTargetStateGet.bind(this))
       .onSet(this.handleLockTargetStateSet.bind(this));
 
-    this.SmartLock.on('locked', (device: Device, lock: boolean) =>
-      this.onDeviceLockPushNotification(device, lock),
-    );
+    this.SmartLock.on('property changed', this.onSmartLockPropertyChange.bind(this));
     
     // update the lock state at startup
     const lockStatus = this.SmartLock.isLocked();
@@ -122,15 +116,13 @@ export class SmartLockAccessory extends DeviceAccessory {
     }
   }
 
-  private onDeviceLockPushNotification(
-    device: Device,
-    lockStatus: boolean,
-  ): void {
+  private onSmartLockPropertyChange(_: Device, name: string, value: PropertyValue) {
+    if (name === PropertyName.DeviceLockStatus) {
+      this.platform.log.debug(this.accessory.displayName, 'Handle Lock Status:  -- ', value);
 
-    this.platform.log.debug(this.accessory.displayName, 'Handle Lock Status:  -- ', lockStatus);
-
-    this.service
-      .getCharacteristic(this.platform.Characteristic.LockCurrentState)
-      .updateValue(this.convertlockStatusCode(lockStatus));
+      this.service
+        .getCharacteristic(this.platform.Characteristic.LockCurrentState)
+        .updateValue(this.convertlockStatusCode(value));
+    }
   }
 }

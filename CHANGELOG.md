@@ -13,6 +13,7 @@ You can find the complete detailled changelog for every beta release [here](http
 ### Fixed
 
 - Fix issue that streams were only rendered in 640x480 - see #46
+- Fixed smartlocks - see #110
 
 ## 2.1.0 (beta) - complete changes of the beta so far (19/07/2022)
 
