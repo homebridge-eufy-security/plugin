@@ -14,6 +14,7 @@ You can find the complete detailled changelog for every beta release [here](http
 
 - Fix issue that streams were only rendered in 640x480 - see #46
 - Fixed smartlocks - see #110
+- Fixed occasional EPIPE Error when streaming - see #14
 
 ## 2.1.0 (beta) - complete changes of the beta so far (19/07/2022)
 
@@ -67,6 +68,8 @@ You can find the complete detailled changelog for every beta release [here](http
 - Setting to 'enable audio' was not working - audio was always streamed
 - Setting `maxFPS` in advanced camera configuration should now work as expected (see #125)
 - Fix issue that streams were only rendered in 640x480 - see #46
+- Fixed smartlocks - see #110
+- Fixed occasional EPIPE Error when streaming - see #14
 
 ## 2.0.1 (20.06.2022)
 
