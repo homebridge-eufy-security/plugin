@@ -69,6 +69,7 @@ export class CameraAccessory extends DeviceAccessory {
           this.accessory,
           eufyDevice,
           this.cameraConfig,
+          this.streamingDelegate.getLivestreamManager(),
           this.platform.log,
         );
 
