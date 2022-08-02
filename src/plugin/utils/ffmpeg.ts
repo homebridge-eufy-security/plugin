@@ -122,6 +122,10 @@ export class FFmpegParameters {
   private numberFrames?: number;
   private delaySnapshot = false;
 
+  // recording options / fragmented mp4
+  private movflags?: string;
+  private maxMuxingQueueSize?: number;
+
   private constructor(port: number, isVideo: boolean, isAudio: boolean, isSnapshot: boolean, debug = false) {
     this.progressPort = port;
     this.isVideo = isVideo;
@@ -161,6 +165,33 @@ export class FFmpegParameters {
     ffmpeg.useWallclockAsTimestamp = false;
     ffmpeg.numberFrames = 1;
     ffmpeg.format = 'image2';
+    return ffmpeg;
+  }
+
+  static async forVideoRecording(debug = false): Promise<FFmpegParameters> {
+    const port = await pickPort({
+      type: 'tcp',
+      ip: '0.0.0.0',
+      reserveTimeout: 15,
+    });
+    const ffmpeg = new FFmpegParameters(port, true, false, false, debug);
+    ffmpeg.useWallclockAsTimestamp = true;
+    ffmpeg.codec = 'copy';
+    return ffmpeg;
+  }
+
+  static async forAudioRecording(debug = false): Promise<FFmpegParameters> {
+    const port = await pickPort({
+      type: 'tcp',
+      ip: '0.0.0.0',
+      reserveTimeout: 15,
+    });
+    const ffmpeg = new FFmpegParameters(port, false, true, false, debug);
+    ffmpeg.codec = 'libfdk_aac';
+    ffmpeg.codecOptions = '-profile:a aac_eld -flags +global_header';
+    ffmpeg.sampleRate = 24;
+    ffmpeg.channels = 1;
+    ffmpeg.bitrate = 24;
     return ffmpeg;
   }
 
@@ -327,6 +358,12 @@ export class FFmpegParameters {
       this.format = 'rtp';
       this.output = `srtp://${sessionInfo.address}:${sessionInfo.audioPort}?rtcpport=${sessionInfo.audioPort}&pkt_size=188`;
     }
+  }
+
+  public setupForRecording(output: string) {
+    this.movflags = 'frag_keyframe+empty_moov+default_base_moof';
+    this.maxMuxingQueueSize = 1024;
+    this.output = output;
   }
 
   public async setTalkbackInput(sessionInfo: SessionInfo) {
@@ -512,6 +549,26 @@ export class FFmpegParameters {
     return this.buildParameters();
   }
 
+  static getRecordingArguments(parameters: FFmpegParameters[]): string[] {
+    let params: string[] = [];
+    if (parameters.length === 0) {
+      return params;
+    }
+
+    params = parameters[0].buildGenericParameters();
+    parameters.forEach((p) => {
+      params = params.concat(p.buildInputParamters());
+      params = params.concat(p.buildEncodingParameters());
+    });
+    params.push(parameters[0].movflags ? `-movflags ${parameters[0].movflags}`: '');
+    params.push(parameters[0].maxMuxingQueueSize ? `-max_muxing_queue_size ${parameters[0].maxMuxingQueueSize}`: '');
+    params.push(parameters[0].output);
+    params.push(`-progress tcp://127.0.0.1:${parameters[0].progressPort}`);
+    params = params.filter(x => x !== '');
+
+    return params;
+  }
+
   static getCombinedArguments(parameters: FFmpegParameters[]): string[] {
     let params: string[] = [];
     if (parameters.length === 0) {
@@ -649,6 +706,117 @@ export class FFmpeg extends EventEmitter {
       if (input) {
         this.process.stdin.end(input);
       }
+    });
+  }
+
+  public async startFragmentedMP4Session(): Promise<{
+    socket: net.Socket;
+    process?: ChildProcessWithoutNullStreams;
+    generator: AsyncGenerator<{
+      header: Buffer;
+      length: number;
+      type: string;
+      data: Buffer;
+  }>;}> {
+    this.starttime = Date.now();
+
+    this.progress = new FFmpegProgress(this.parameters[0].progressPort);
+    this.progress.on('progress started', this.onProgressStarted.bind(this));
+
+    const port = await pickPort({
+      type: 'tcp',
+      ip: '0.0.0.0',
+      reserveTimeout: 15,
+    });
+
+    return new Promise((resolve, reject) => {
+      const server = net.createServer((socket) => {
+        server.close();
+
+        resolve({
+          socket: socket,
+          process: this.process,
+          generator: this.parseFragmentedMP4(socket),
+        });
+      });
+
+      server.listen(port, () => {
+        this.parameters[0].setupForRecording(`tcp://127.0.0.1:${port}`);
+        const processArgs = FFmpegParameters.getRecordingArguments(this.parameters);
+
+        this.log.debug(this.name, 'Stream command: ' + this.ffmpegExec + ' ' + processArgs.join(' '));
+        this.parameters.forEach((p) => {
+          this.log.info(this.name, p.getStreamStartText());
+        });
+
+        this.process = spawn(this.ffmpegExec, processArgs.join(' ').split(/\s+/), { env: process.env });
+        this.stdin = this.process.stdin;
+        this.stdout = this.process.stdout;
+
+        if (this.parameters[0].debug) {
+          this.process.stderr.on('data', (chunk) => {
+            this.log.debug(this.name, 'ffmpeg log message:\n' + chunk.toString());
+          });
+        }
+
+        this.process.on('error', this.onProcessError.bind(this));
+        this.process.on('exit', this.onProcessExit.bind(this));
+      });
+    });
+  }
+
+  private async * parseFragmentedMP4(socket: net.Socket) {
+    while (true) {
+      const header = await this.readLength(socket, 8);
+      const length = header.readInt32BE(0) - 8;
+      const type = header.slice(4).toString();
+      const data = await this.readLength(socket, length);
+
+      yield {
+        header,
+        length,
+        type,
+        data,
+      };
+    }
+  }
+
+  private async readLength(socket: net.Socket, length: number): Promise<Buffer> {
+    if (length <= 0) {
+      return Buffer.alloc(0);
+    }
+  
+    const value = socket.read(length);
+    if (value) {
+      return value;
+    }
+  
+    return new Promise((resolve, reject) => {
+      const readHandler = () => {
+        const value = socket.read(length);
+  
+        if (value) {
+          cleanup();
+          resolve(value);
+        }
+      };
+  
+      const endHandler = () => {
+        cleanup();
+        reject(new Error(`FFMPEG socket closed during read for ${length} bytes!`));
+      };
+  
+      const cleanup = () => {
+        socket.removeListener('readable', readHandler);
+        socket.removeListener('close', endHandler);
+      };
+  
+      if (!socket) {
+        throw new Error('FFMPEG socket is closed now!');
+      }
+  
+      socket.on('readable', readHandler);
+      socket.on('close', endHandler);
     });
   }
 

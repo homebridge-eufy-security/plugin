@@ -22,7 +22,8 @@ export type CameraConfig = {
   snapshotHandlingMethod?: number;
   immediateRingNotificationWithoutSnapshot?: boolean;
   delayCameraSnapshot?:boolean;
-  talkback: boolean;
+  talkback?: boolean;
+  hsv?: boolean;
 };
 
 export type VideoConfig = {

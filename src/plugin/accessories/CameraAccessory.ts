@@ -1,16 +1,21 @@
-import { Service, PlatformAccessory, CharacteristicValue } from 'homebridge';
+import {
+  Service,
+  PlatformAccessory,
+  CharacteristicValue,
+  AudioStreamingSamplerate,
+  CameraControllerOptions,
+  AudioStreamingCodecType,
+  AudioRecordingSamplerate,
+  AudioRecordingCodecType,
+} from 'homebridge';
 
 import { EufySecurityPlatform } from '../platform';
 import { DeviceAccessory } from './Device';
-
-// import { HttpService, LocalLookupService, DeviceClientService, CommandType } from 'eufy-node-client';
-
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-ignore  
 import { Camera, Device, PropertyName, CommandName, VideoCodec } from 'eufy-security-client';
 import { StreamingDelegate } from '../controller/streamingDelegate';
 
-import { CameraConfig, VideoConfig } from '../utils/configTypes';
+import { CameraConfig } from '../utils/configTypes';
+import { RecordingDelegate } from '../controller/recordingDelegate';
 
 /**
  * Platform Accessory
@@ -25,6 +30,7 @@ export class CameraAccessory extends DeviceAccessory {
   public readonly cameraConfig: CameraConfig;
 
   protected streamingDelegate: StreamingDelegate | null = null;
+  private recordingDelegate?: RecordingDelegate;
 
   private motionTimeout?: NodeJS.Timeout;
 
@@ -44,6 +50,12 @@ export class CameraAccessory extends DeviceAccessory {
     this.cameraConfig = this.getCameraConfig();
     this.platform.log.debug(this.accessory.displayName, 'config is:', this.cameraConfig);
 
+    try {
+      this.service = this.motionFunction(accessory);
+    } catch (Error) {
+      this.platform.log.error(this.accessory.displayName, 'raise error to check and attach motion function.', Error);
+    }
+
     if (this.cameraConfig.enableCamera || (typeof this.eufyDevice.isDoorbell === 'function' && this.eufyDevice.isDoorbell())) {
       this.platform.log.debug(this.accessory.displayName, 'has a camera');
 
@@ -52,19 +64,139 @@ export class CameraAccessory extends DeviceAccessory {
         this.CameraService.setPrimaryService(true);
         const delegate = new StreamingDelegate(this.platform, eufyDevice, this.cameraConfig, this.platform.api, this.platform.api.hap);
         this.streamingDelegate = delegate;
-        accessory.configureController(delegate.controller);
+        this.recordingDelegate = new RecordingDelegate(
+          this.platform,
+          this.accessory,
+          eufyDevice,
+          this.cameraConfig,
+          this.platform.log,
+        );
+
+        let samplerate = AudioStreamingSamplerate.KHZ_16;
+        if (this.cameraConfig.videoConfig?.audioSampleRate === 8) {
+          samplerate = AudioStreamingSamplerate.KHZ_8;
+        } else if (this.cameraConfig.videoConfig?.audioSampleRate === 24) {
+          samplerate = AudioStreamingSamplerate.KHZ_24;
+        }
+
+        this.platform.log.debug(this.accessory.displayName, `Audio sample rate set to ${samplerate} kHz.`);
+
+        const options: CameraControllerOptions = {
+          cameraStreamCount: this.cameraConfig.videoConfig?.maxStreams || 2, // HomeKit requires at least 2 streams, but 1 is also just fine
+          delegate: this.streamingDelegate,
+          streamingOptions: {
+            supportedCryptoSuites: [this.platform.api.hap.SRTPCryptoSuites.AES_CM_128_HMAC_SHA1_80],
+            video: {
+              resolutions: [
+                [320, 180, 30],
+                [320, 240, 15], // Apple Watch requires this configuration
+                [320, 240, 30],
+                [480, 270, 30],
+                [480, 360, 30],
+                [640, 360, 30],
+                [640, 480, 30],
+                [1280, 720, 30],
+                [1280, 960, 30],
+                [1920, 1080, 30],
+                [1600, 1200, 30],
+              ],
+              codec: {
+                profiles: [
+                  this.platform.api.hap.H264Profile.BASELINE,
+                  this.platform.api.hap.H264Profile.MAIN,
+                  this.platform.api.hap.H264Profile.HIGH,
+                ],
+                levels: [
+                  this.platform.api.hap.H264Level.LEVEL3_1,
+                  this.platform.api.hap.H264Level.LEVEL3_2,
+                  this.platform.api.hap.H264Level.LEVEL4_0,
+                ],
+              },
+            },
+            audio: {
+              twoWayAudio: this.cameraConfig.talkback,
+              codecs: [
+                {
+                  type: AudioStreamingCodecType.AAC_ELD,
+                  samplerate: samplerate,
+                  /*type: AudioStreamingCodecType.OPUS,
+                                samplerate: AudioStreamingSamplerate.KHZ_24*/
+                },
+              ],
+            },
+          },
+          recording: this.cameraConfig.hsv
+            ? {
+              options: {
+                overrideEventTriggerOptions: [
+                  this.platform.api.hap.EventTriggerOption.MOTION,
+                  this.platform.api.hap.EventTriggerOption.DOORBELL,
+                ],
+                prebufferLength: 4000, // prebufferLength always remains 4s ?
+                mediaContainerConfiguration: [
+                  {
+                    type: this.platform.api.hap.MediaContainerType.FRAGMENTED_MP4,
+                    fragmentLength: 4000,
+                  },
+                ],
+                video: {
+                  type: this.platform.api.hap.VideoCodecType.H264,
+                  parameters: {
+                    profiles: [
+                      this.platform.api.hap.H264Profile.BASELINE,
+                      this.platform.api.hap.H264Profile.MAIN,
+                      this.platform.api.hap.H264Profile.HIGH,
+                    ],
+                    levels: [
+                      this.platform.api.hap.H264Level.LEVEL3_1,
+                      this.platform.api.hap.H264Level.LEVEL3_2,
+                      this.platform.api.hap.H264Level.LEVEL4_0,
+                    ],
+                  },
+                  resolutions: [
+                    [320, 180, 30],
+                    [320, 240, 15],
+                    [320, 240, 30],
+                    [480, 270, 30],
+                    [480, 360, 30],
+                    [640, 360, 30],
+                    [640, 480, 30],
+                    [1280, 720, 30],
+                    [1280, 960, 30],
+                    [1920, 1080, 30],
+                    [1600, 1200, 30],
+                  ],
+                },
+                audio: {
+                  codecs: {
+                    type: AudioRecordingCodecType.AAC_ELD,
+                    samplerate: AudioRecordingSamplerate.KHZ_24,
+                    bitrateMode: 0,
+                    audioChannels: 1,
+                  },
+                },
+              },
+              delegate: this.recordingDelegate,
+            }
+            : undefined,
+          sensors: this.cameraConfig.hsv
+            ? {
+              motion: this.service,
+              // eslint-disable-next-line max-len
+              // occupancy: this.accessory.getServiceById(this.platform.api.hap.Service.OccupancySensor, 'occupancy') || false, //not implemented yet
+            }
+            : undefined,
+        };
+
+        const controller = new this.platform.api.hap.CameraController(options);
+        this.streamingDelegate.setController(controller);
+        accessory.configureController(controller);
       } catch (Error) {
         this.platform.log.error(this.accessory.displayName, 'raise error to check and attach livestream function.', Error);
       }
       
     } else {
       this.platform.log.debug(this.accessory.displayName, 'has a motion sensor.');
-    }
-
-    try {
-      this.service = this.motionFunction(accessory);
-    } catch (Error) {
-      this.platform.log.error(this.accessory.displayName, 'raise error to check and attach motion function.', Error);
     }
 
     try {
@@ -165,6 +297,15 @@ export class CameraAccessory extends DeviceAccessory {
     config.useCachedLocalLivestream = config.useCachedLocalLivestream ??= false;
     config.immediateRingNotificationWithoutSnapshot = config.immediateRingNotificationWithoutSnapshot ??= false;
     config.delayCameraSnapshot = config.delayCameraSnapshot ??= false;
+    config.hsv = config.hsv ??= false;
+
+    if (config.hsv && !this.platform.api.versionGreaterOrEqual('1.4.0')) {
+      config.hsv = false;
+      this.platform.log.warn(
+        this.accessory.displayName,
+        'HomeKit Secure Video is only supported by Homebridge version >1.4.0! Please update.',
+      );
+    }
 
     if (!config.snapshotHandlingMethod) {
       config.snapshotHandlingMethod = (config.forcerefreshsnap) ? 1 : 3;
