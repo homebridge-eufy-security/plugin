@@ -556,10 +556,15 @@ export class FFmpegParameters {
     }
 
     params = parameters[0].buildGenericParameters();
-    parameters.forEach((p) => {
-      params = params.concat(p.buildInputParamters());
-      params = params.concat(p.buildEncodingParameters());
-    });
+    // video
+    params.push(parameters[0].inputSoure);
+    if (parameters.length > 1) {
+      params.push(parameters[1].inputSoure);
+    }
+    params = params.concat(parameters[0].buildEncodingParameters());
+    if (parameters.length > 1) {
+      params = params.concat(parameters[1].buildEncodingParameters());
+    }
     params.push(parameters[0].movflags ? `-movflags ${parameters[0].movflags}`: '');
     params.push(parameters[0].maxMuxingQueueSize ? `-max_muxing_queue_size ${parameters[0].maxMuxingQueueSize}`: '');
     params.push(parameters[0].output);
