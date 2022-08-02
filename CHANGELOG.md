@@ -2,22 +2,26 @@
 
 You can find the complete detailled changelog for every beta release [here](https://github.com/homebridge-eufy-security/plugin/releases).
 
-## 2.1.0-beta.13 (25/07/2022) - latest changes
+## 2.1.0-beta.14 (01/08/2022) - latest changes
 
 ### Added
 
-- Setting to choose whether one or multiple processes for audio and video streaming will be used
-- Manually triggered alarms will now respect the delay on leave setting in the eufy app.
+- Presets (`copy`, `performance`) for advanced video config
+- Setting to choose audio sample rate
 
 ### Changed
 
-- Using tslog instead of bunyan for logging of eufy-security-client messages since bunyan would not print deep nested objects correctly
-- Logging for eufy-security-client is moved to separate log file: `eufy-log.log`
+- Refactored ffmpeg processing
+- Updated eufy-security-client to 2.1.2
+- Deprecated options `forcerefreshsnap` and `useEnhancedSnapshotBehaviour` were removed and will no longer be evaluated
+- Removed `mapvideo`, `mapaudio`, `maxDelay` and `forceMax` options from advanced VideoConfig since they are deprecated
+- By default the plugin will now use one ffmpeg process for video and audio - this can be controlled via an option (`useSeparateProcesses` is now used instead of `useOneProcess`)
 
 ### Fixed
 
-- Setting `maxFPS` in advanced camera configuration should now work as expected (see #125)
-- Checkboxes in advanced camera configuration were not showing correct state
+- Fix issue that streams were only rendered in 640x480 - see #46
+- Fixed smartlocks - see #110
+- Fixed occasional EPIPE Error when streaming - see #14
 
 ## 2.1.0 (beta) - complete changes of the beta so far (19/07/2022)
 
@@ -32,14 +36,15 @@ You can find the complete detailled changelog for every beta release [here](http
 - Control Station alarm through HomeKit (reset the alarm and even trigger it with HomeKit automations. You can now trigger the alarm even with third party accessories - e.g. with devices from vendors other than eufy) - see #26
 - Feature to download log files through plugin configuration ui
 - Setting to disable log file storage to disk (possible fix for #93)
-- Setting to choose whether one or multiple processes for audio and video streaming will be used
+- Setting to choose that separate ffmpeg processes for audio and video streaming will be used (this can increase performance)
+- Setting to choose audio sample rate
+- Presets (`copy`, `performance`) for advanced video config
 
 ### Changed
 
 - Complete redesign of the config ui screen
 - RTSP setting is now only avaiable on compatible devices
-- Plugin will use two separate ffmpeg process for audio and video to increase stability (exception: rtsp streams)
-- Updated to latest version of eufy-security-client (2.1.1) (fix for #72 and #38)
+- Updated to latest version of eufy-security-client (2.1.2) (fix for #72 and #38)
 - Refactored whole project structure to resemble the new workspace layout (plugin + custom ui)
 - Reimplementation of device discovery algorithm to better reflect best practices mentioned in [this comment](https://github.com/bropat/eufy-security-client/issues/167#issuecomment-1155388624)
 - Added timeouts for guard mode changes. If these fail HomeKit will no longer get stuck, trying to change the guard mode and an error will be written to the log output (see #39)
@@ -49,6 +54,9 @@ You can find the complete detailled changelog for every beta release [here](http
 - Cleaned up dependencies
 - Using tslog instead of bunyan for logging of eufy-security-client messages since bunyan would not print deep nested objects correctly
 - Logging for eufy-security-client is moved to separate log file: `eufy-log.log`
+- Refactored handling of ffmpeg processes
+- Deprecated option `forcerefreshsnap` was removed and will no longer be evaluated - use `snapshotHandlingMethod` instead
+- Removed `mapvideo`, `mapaudio`, `maxDelay` and `forceMax` options from advanced VideoConfig since they are deprecated
 
 ### Fixed
 
@@ -68,6 +76,9 @@ You can find the complete detailled changelog for every beta release [here](http
 - Smart lock states could be wrong on plugin startup (further improvements needed for smartlocks)
 - Setting to 'enable audio' was not working - audio was always streamed
 - Setting `maxFPS` in advanced camera configuration should now work as expected (see #125)
+- Fix issue that streams were only rendered in 640x480 - see #46
+- Fixed smartlocks - see #110
+- Fixed occasional EPIPE Error when streaming - see #14
 
 ## 2.0.1 (20.06.2022)
 

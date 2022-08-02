@@ -8,9 +8,9 @@ import { DeviceAccessory } from './Device';
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore  
 import { Camera, Device, PropertyName, CommandName, VideoCodec } from 'eufy-security-client';
-import { StreamingDelegate } from './streamingDelegate';
+import { StreamingDelegate } from '../controller/streamingDelegate';
 
-import { CameraConfig, VideoConfig } from './configTypes';
+import { CameraConfig, VideoConfig } from '../utils/configTypes';
 
 /**
  * Platform Accessory
@@ -164,7 +164,6 @@ export class CameraAccessory extends DeviceAccessory {
     config.videoConfig = config.videoConfig ??= {};
     config.useCachedLocalLivestream = config.useCachedLocalLivestream ??= false;
     config.immediateRingNotificationWithoutSnapshot = config.immediateRingNotificationWithoutSnapshot ??= false;
-    config.useEnhancedSnapshotBehaviour = config.useEnhancedSnapshotBehaviour ??= true;
     config.delayCameraSnapshot = config.delayCameraSnapshot ??= false;
 
     if (!config.snapshotHandlingMethod) {
