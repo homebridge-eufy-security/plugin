@@ -567,6 +567,7 @@ export class FFmpegParameters {
     }
     params.push(parameters[0].movflags ? `-movflags ${parameters[0].movflags}`: '');
     params.push(parameters[0].maxMuxingQueueSize ? `-max_muxing_queue_size ${parameters[0].maxMuxingQueueSize}`: '');
+    params.push('-f mp4');
     params.push(parameters[0].output);
     params.push(`-progress tcp://127.0.0.1:${parameters[0].progressPort}`);
     params = params.filter(x => x !== '');
