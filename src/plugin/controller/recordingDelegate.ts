@@ -19,7 +19,6 @@ import { LocalLivestreamManager } from './LocalLivestreamManager';
 
 const MAX_RECORDING_MINUTES = 3;
 
-// TODO: add doorbell controller
 // TODO: proper motion reset
 
 export class RecordingDelegate implements CameraRecordingDelegate {

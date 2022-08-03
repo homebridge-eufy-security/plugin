@@ -30,14 +30,17 @@ export class CameraAccessory extends DeviceAccessory {
   public readonly cameraConfig: CameraConfig;
 
   protected streamingDelegate: StreamingDelegate | null = null;
-  private recordingDelegate?: RecordingDelegate;
+  protected recordingDelegate?: RecordingDelegate;
 
   private motionTimeout?: NodeJS.Timeout;
+
+  protected cameraControllerOptions?: CameraControllerOptions;
 
   constructor(
     platform: EufySecurityPlatform,
     accessory: PlatformAccessory,
     eufyDevice: Camera,
+    isDoorbell = false,
   ) {
     super(platform, accessory, eufyDevice);
 
@@ -82,7 +85,7 @@ export class CameraAccessory extends DeviceAccessory {
 
         this.platform.log.debug(this.accessory.displayName, `Audio sample rate set to ${samplerate} kHz.`);
 
-        const options: CameraControllerOptions = {
+        this.cameraControllerOptions = {
           cameraStreamCount: this.cameraConfig.videoConfig?.maxStreams || 2, // HomeKit requires at least 2 streams, but 1 is also just fine
           delegate: this.streamingDelegate,
           streamingOptions: {
@@ -189,10 +192,12 @@ export class CameraAccessory extends DeviceAccessory {
             : undefined,
         };
 
-        const controller = new this.platform.api.hap.CameraController(options);
-        this.streamingDelegate.setController(controller);
-        this.recordingDelegate.setController(controller);
-        accessory.configureController(controller);
+        if (!isDoorbell) {
+          const controller = new this.platform.api.hap.CameraController(this.cameraControllerOptions);
+          this.streamingDelegate.setController(controller);
+          this.recordingDelegate.setController(controller);
+          accessory.configureController(controller);
+        }
       } catch (Error) {
         this.platform.log.error(this.accessory.displayName, 'raise error to check and attach livestream function.', Error);
       }

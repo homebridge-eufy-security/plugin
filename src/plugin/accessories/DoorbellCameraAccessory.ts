@@ -1,4 +1,4 @@
-import { Service, PlatformAccessory } from 'homebridge';
+import { Service, PlatformAccessory, DoorbellOptions } from 'homebridge';
 
 import { EufySecurityPlatform } from '../platform';
 
@@ -26,7 +26,7 @@ export class DoorbellCameraAccessory extends CameraAccessory {
     accessory: PlatformAccessory,
     eufyDevice: DoorbellCamera,
   ) {
-    super(platform, accessory, eufyDevice);
+    super(platform, accessory, eufyDevice, true);
     this.DoorbellCamera = eufyDevice;
 
     this.platform.log.debug(this.accessory.displayName, 'Constructed Doorbell');
@@ -53,6 +53,16 @@ export class DoorbellCameraAccessory extends CameraAccessory {
     );
 
     this.doorbellService.setPrimaryService(true);
+
+    if (this.cameraControllerOptions) {
+      const doorbellOptions: DoorbellOptions = {
+        externalDoorbellService: this.doorbellService,
+      };
+      const controller = new this.platform.api.hap.DoorbellController({...this.cameraControllerOptions, ...doorbellOptions});
+      this.streamingDelegate?.setController(controller);
+      this.recordingDelegate?.setController(controller);
+      accessory.configureController(controller);
+    }
 
   }
 
