@@ -8,8 +8,18 @@ import pickPort from 'pick-port';
 
 import { Logger } from './logger';
 import EventEmitter from 'events';
-import { CameraConfig } from './configTypes';
-import { AudioStreamingCodecType, ReconfigureStreamRequest, SnapshotRequest, StartStreamRequest } from 'homebridge';
+import { CameraConfig, VideoConfig } from './configTypes';
+import {
+  AudioRecordingCodecType,
+  AudioRecordingSamplerate,
+  AudioStreamingCodecType,
+  CameraRecordingConfiguration,
+  H264Level,
+  H264Profile,
+  ReconfigureStreamRequest,
+  SnapshotRequest,
+  StartStreamRequest,
+} from 'homebridge';
 import { SessionInfo } from '../controller/streamingDelegate';
 
 class FFmpegProgress extends EventEmitter {
@@ -125,6 +135,7 @@ export class FFmpegParameters {
   // recording options / fragmented mp4
   private movflags?: string;
   private maxMuxingQueueSize?: number;
+  private iFrameInterval?: number;
 
   private constructor(port: number, isVideo: boolean, isAudio: boolean, isSnapshot: boolean, debug = false) {
     this.progressPort = port;
@@ -176,7 +187,6 @@ export class FFmpegParameters {
     });
     const ffmpeg = new FFmpegParameters(port, true, false, false, debug);
     ffmpeg.useWallclockAsTimestamp = true;
-    ffmpeg.codec = 'copy';
     return ffmpeg;
   }
 
@@ -187,11 +197,6 @@ export class FFmpegParameters {
       reserveTimeout: 15,
     });
     const ffmpeg = new FFmpegParameters(port, false, true, false, debug);
-    ffmpeg.codec = 'libfdk_aac';
-    ffmpeg.codecOptions = '-profile:a aac_eld -flags +global_header';
-    ffmpeg.sampleRate = 24;
-    ffmpeg.channels = 1;
-    ffmpeg.bitrate = 24;
     return ffmpeg;
   }
 
@@ -360,10 +365,93 @@ export class FFmpegParameters {
     }
   }
 
-  public setupForRecording(output: string) {
+  public setOutput(output: string) {
+    this.output = output;
+  }
+
+  public setupForRecording(videoConfig: VideoConfig, configuration: CameraRecordingConfiguration) {
     this.movflags = 'frag_keyframe+empty_moov+default_base_moof';
     this.maxMuxingQueueSize = 1024;
-    this.output = output;
+
+    if (this.isVideo) {
+
+      if (videoConfig.vcodec && videoConfig.vcodec !== '') {
+        this.codec = videoConfig.vcodec;
+      } else {
+        this.codec = 'libx264';
+      }
+
+      if (this.codec === 'libx264') {
+        this.pixFormat = 'yuv420p';
+        const profile =
+          configuration.videoCodec.parameters.profile === H264Profile.HIGH
+            ? 'high'
+            : configuration.videoCodec.parameters.profile === H264Profile.MAIN
+              ? 'main'
+              : 'baseline';
+        const level =
+          configuration.videoCodec.parameters.level === H264Level.LEVEL4_0
+            ? '4.0'
+            : configuration.videoCodec.parameters.level === H264Level.LEVEL3_2
+              ? '3.2'
+              : '3.1';
+        this.codecOptions = `-profile:v ${profile} -level:v ${level}`;
+      }
+      if (this.codec !== 'copy') {
+        this.bitrate = configuration.videoCodec.parameters.bitRate;
+        this.width = configuration.videoCodec.resolution[0];
+        this.height = configuration.videoCodec.resolution[1];
+        this.fps = configuration.videoCodec.resolution[2];
+      }
+
+      this.iFrameInterval = configuration.videoCodec.parameters.iFrameInterval;
+    }
+
+    if (this.isAudio) {
+
+      if (videoConfig.acodec && videoConfig.acodec !== '') {
+        this.codec = videoConfig.acodec;
+      } else {
+        this.codec = 'libfdk_aac';
+      }
+
+      if (this.codec === 'libfdk_aac' || this.codec === 'aac') {
+        this.codecOptions = (configuration.audioCodec.type === AudioRecordingCodecType.AAC_LC)
+          ? '-profile:a aac_low'
+          : '-profile:a aac_eld';
+        this.codecOptions += ' -flags +global_header';
+      }
+      
+      if (this.codec !== 'copy') {
+        let samplerate;
+
+        switch (configuration.audioCodec.samplerate) {
+          case AudioRecordingSamplerate.KHZ_8:
+            samplerate = '8';
+            break;
+          case AudioRecordingSamplerate.KHZ_16:
+            samplerate = '16';
+            break;
+          case AudioRecordingSamplerate.KHZ_24:
+            samplerate = '24';
+            break;
+          case AudioRecordingSamplerate.KHZ_32:
+            samplerate = '32';
+            break;
+          case AudioRecordingSamplerate.KHZ_44_1:
+            samplerate = '44.1';
+            break;
+          case AudioRecordingSamplerate.KHZ_48:
+            samplerate = '48';
+            break;
+          default:
+            throw new Error(`Unsupported audio samplerate: ${configuration.audioCodec.samplerate}`);
+        }
+        this.sampleRate = samplerate;
+        this.bitrate = configuration.audioCodec.bitrate;
+        this.channels = configuration.audioCodec.audioChannels;
+      }
+    }
   }
 
   public async setTalkbackInput(sessionInfo: SessionInfo) {
@@ -467,13 +555,9 @@ export class FFmpegParameters {
         filters.splice(noneFilter, 1);
       }
       if (noneFilter < 0 && this.width && this.height) {
-        const resizeFilter = 'scale=' +
-        '\'min(' + this.width + ',iw)\'' +
-        ':' +
-        '\'min(' + this.height + ',iw)\'' +
-        ':force_original_aspect_ratio=decrease';
+        // eslint-disable-next-line max-len
+        const resizeFilter = `scale=w=${this.width}:h=${this.height}:force_original_aspect_ratio=1,pad=${this.width}:${this.height}:(ow-iw)/2:(oh-ih)/2`;
         filters.push(resizeFilter);
-        filters.push('scale=\'trunc(iw/2)*2:trunc(ih/2)*2\''); // Force to fit encoder restrictions
       }
       if (filters.length > 0) {
         params.push('-filter:v ' + filters.join(','));
@@ -556,17 +640,31 @@ export class FFmpegParameters {
     }
 
     params = parameters[0].buildGenericParameters();
-    // video
+    // input
     params.push(parameters[0].inputSoure);
-    if (parameters.length > 1) {
+    if (parameters.length > 1 && parameters[0].inputSoure !== parameters[1].inputSoure) { // don't include extra audio source for rtsp
       params.push(parameters[1].inputSoure);
     }
+    if (parameters.length === 1) { 
+      params.push('-an');
+    }
+    params.push('-sn -dn');
+
+    // video encoding
     params = params.concat(parameters[0].buildEncodingParameters());
+    params.push(parameters[0].iFrameInterval ? `-force_key_frames expr:gte(t,n_forced*${parameters[0].iFrameInterval / 1000})`: '');
+
+    // audio encoding
     if (parameters.length > 1) {
+      params.push('-bsf:a aac_adtstoasc');
       params = params.concat(parameters[1].buildEncodingParameters());
     }
+
+    // fragmented mp4 options
     params.push(parameters[0].movflags ? `-movflags ${parameters[0].movflags}`: '');
     params.push(parameters[0].maxMuxingQueueSize ? `-max_muxing_queue_size ${parameters[0].maxMuxingQueueSize}`: '');
+
+    // output
     params.push('-f mp4');
     params.push(parameters[0].output);
     params.push(`-progress tcp://127.0.0.1:${parameters[0].progressPort}`);
@@ -747,7 +845,7 @@ export class FFmpeg extends EventEmitter {
       });
 
       server.listen(port, () => {
-        this.parameters[0].setupForRecording(`tcp://127.0.0.1:${port}`);
+        this.parameters[0].setOutput(`tcp://127.0.0.1:${port}`);
         const processArgs = FFmpegParameters.getRecordingArguments(this.parameters);
 
         this.log.debug(this.name, 'Stream command: ' + this.ffmpegExec + ' ' + processArgs.join(' '));
@@ -873,7 +971,8 @@ export class FFmpeg extends EventEmitter {
         this.log.error(this.name, message + ' (Unexpected)');
       }
     } else {
-      this.log.error(this.name, message + ' (Error)');
+      this.emit('error', message + ' (Error)');
+      // this.log.error(this.name, message + ' (Error)');
     }
   }
 }

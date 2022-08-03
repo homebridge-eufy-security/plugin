@@ -133,7 +133,7 @@ export class CameraAccessory extends DeviceAccessory {
                   this.platform.api.hap.EventTriggerOption.MOTION,
                   this.platform.api.hap.EventTriggerOption.DOORBELL,
                 ],
-                prebufferLength: 4000, // prebufferLength always remains 4s ?
+                prebufferLength: 0, // prebufferLength always remains 4s ?
                 mediaContainerConfiguration: [
                   {
                     type: this.platform.api.hap.MediaContainerType.FRAGMENTED_MP4,
@@ -191,6 +191,7 @@ export class CameraAccessory extends DeviceAccessory {
 
         const controller = new this.platform.api.hap.CameraController(options);
         this.streamingDelegate.setController(controller);
+        this.recordingDelegate.setController(controller);
         accessory.configureController(controller);
       } catch (Error) {
         this.platform.log.error(this.accessory.displayName, 'raise error to check and attach livestream function.', Error);
@@ -375,7 +376,7 @@ export class CameraAccessory extends DeviceAccessory {
   }
 
   handleEventSnapshotsActiveGet(): Promise<CharacteristicValue> {
-    const currentValue = this.characteristic.EventSnapshotsActive.DISABLE;
+    const currentValue = this.characteristic.EventSnapshotsActive.ENABLE;
     this.platform.log.debug(this.accessory.displayName, 'GET EventSnapshotsActive:', currentValue);
     return currentValue;
   }
@@ -384,14 +385,14 @@ export class CameraAccessory extends DeviceAccessory {
    * Handle requests to set the "Event Snapshots Active" characteristic
    */
   handleEventSnapshotsActiveSet(value) {
-    this.platform.log.debug(this.accessory.displayName, 'SET EventSnapshotsActive:', value);
+    this.platform.log.debug(this.accessory.displayName, 'Will not SET EventSnapshotsActive:', value);
   }
 
   /**
    * Handle requests to get the current value of the "HomeKit Camera Active" characteristic
    */
   handleHomeKitCameraActiveGet(): Promise<CharacteristicValue> {
-    const currentValue = this.characteristic.HomeKitCameraActive.OFF;
+    const currentValue = this.characteristic.HomeKitCameraActive.ON;
     this.platform.log.debug(this.accessory.displayName, 'GET HomeKitCameraActive:', currentValue);
     return currentValue;
   }
@@ -400,7 +401,7 @@ export class CameraAccessory extends DeviceAccessory {
    * Handle requests to set the "HomeKit Camera Active" characteristic
    */
   handleHomeKitCameraActiveSet(value) {
-    this.platform.log.debug(this.accessory.displayName, 'SET HomeKitCameraActive:', value);
+    this.platform.log.debug(this.accessory.displayName, 'Will not SET HomeKitCameraActive:', value);
   }
 
   /**
@@ -497,18 +498,18 @@ export class CameraAccessory extends DeviceAccessory {
     device: Device,
     motion: boolean,
   ): void {
-    if (motion) {
-      this.motionTimeout = setTimeout(() => {
-        this.platform.log.debug(this.accessory.displayName, 'Reseting motion through timout.');
-        this.service
-          .getCharacteristic(this.characteristic.MotionDetected)
-          .updateValue(false);
-      }, 15000);
-    } else {
-      if (this.motionTimeout) {
-        clearTimeout(this.motionTimeout);
-      }
-    }
+    // if (motion) {
+    //   this.motionTimeout = setTimeout(() => {
+    //     this.platform.log.debug(this.accessory.displayName, 'Reseting motion through timout.');
+    //     this.service
+    //       .getCharacteristic(this.characteristic.MotionDetected)
+    //       .updateValue(false);
+    //   }, 15000);
+    // } else {
+    //   if (this.motionTimeout) {
+    //     clearTimeout(this.motionTimeout);
+    //   }
+    // }
     this.platform.log.debug(this.accessory.displayName, 'ON DeviceMotionDetected:', motion);
     if (this.cameraConfig.useCachedLocalLivestream && this.streamingDelegate && motion) {
       this.streamingDelegate.prepareCachedStream();

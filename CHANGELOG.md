@@ -2,28 +2,17 @@
 
 You can find the complete detailled changelog for every beta release [here](https://github.com/homebridge-eufy-security/plugin/releases).
 
-## 2.1.0-beta.14 (01/08/2022) - latest changes
+## 2.2.0-beta.1 (03/08/2022) - latest changes
 
 ### Added
 
-- Presets (`copy`, `performance`) for advanced video config
-- Setting to choose audio sample rate
+- HomeKit Secure Video (HKSV) Support
 
 ### Changed
 
-- Refactored ffmpeg processing
-- Updated eufy-security-client to 2.1.2
-- Deprecated options `forcerefreshsnap` and `useEnhancedSnapshotBehaviour` were removed and will no longer be evaluated
-- Removed `mapvideo`, `mapaudio`, `maxDelay` and `forceMax` options from advanced VideoConfig since they are deprecated
-- By default the plugin will now use one ffmpeg process for video and audio - this can be controlled via an option (`useSeparateProcesses` is now used instead of `useOneProcess`)
+- Adjusting streaming resolution is now by padding the image instead of truncating it
 
-### Fixed
-
-- Fix issue that streams were only rendered in 640x480 - see #46
-- Fixed smartlocks - see #110
-- Fixed occasional EPIPE Error when streaming - see #14
-
-## 2.1.0 (beta) - complete changes of the beta so far (19/07/2022)
+## 2.1.0 (RC)
 
 ### Added
 
