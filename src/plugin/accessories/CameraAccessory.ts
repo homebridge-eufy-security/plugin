@@ -499,7 +499,7 @@ export class CameraAccessory extends DeviceAccessory {
   async handleMotionDetectedGet(): Promise<CharacteristicValue> {
     try {
       let currentValue = this.eufyDevice.getPropertyValue(PropertyName.DeviceMotionDetected);
-      if (this.recordingDelegate?.isRecording) {
+      if (this.recordingDelegate?.isRecording()) {
         currentValue = true; // assume ongoing motion when HKSV is recording
         // HKSV will remove unnecessary bits of the recorded video itself when there is no more motion
         // but since eufy-security-client doesn't return a proper value for MotionDetected while
