@@ -148,6 +148,11 @@ export class RecordingDelegate implements CameraRecordingDelegate {
           filebuffer = Buffer.concat([filebuffer, Buffer.concat(pending)]);
           pending = [];
 
+          if (!this.handlingStreamingRequest) {
+            this.log.debug(this.camera.getName(), 'Recording was ended prematurely.');
+            break;
+          }
+
           yield {
             data: fragment,
             isLast: !motionDetected,
@@ -162,12 +167,22 @@ export class RecordingDelegate implements CameraRecordingDelegate {
     } catch (error) {
       this.log.error(this.camera.getName(), 'Error while recording: ' + error);
     } finally {
-      if (this.closeReason && this.closeReason !== HDSProtocolSpecificErrorReason.NORMAL) {
+      if (this.closeReason &&
+        this.closeReason !== HDSProtocolSpecificErrorReason.NORMAL && this.closeReason !== HDSProtocolSpecificErrorReason.CANCELLED) {
+
         this.log.warn(
           this.camera.getName(),
           `The recording process was aborted by HSV with reason "${this.closeReason}"`,
         );
-      } else if (filebuffer.length > 0) {
+      }
+      if (this.closeReason && this.closeReason === HDSProtocolSpecificErrorReason.CANCELLED) {
+          
+        this.log.debug(
+          this.camera.getName(),
+          'The recording process was canceled by the HomeKit Controller."',
+        );
+      }
+      if (filebuffer.length > 0) {
         this.log.debug(this.camera.getName(), 'Recording completed (HSV). Send ' + filebuffer.length + ' bytes.');
       }
 
@@ -202,14 +217,16 @@ export class RecordingDelegate implements CameraRecordingDelegate {
   closeRecordingStream(streamId: number, reason: HDSProtocolSpecificErrorReason | undefined): void {
     this.log.info(this.camera.getName(), 'Closing recording process');
 
-    if (this.session) {
-      this.log.debug(this.camera.getName(), 'Stopping recording session.');
-      this.session.socket?.destroy();
-      this.session.process?.kill('SIGKILL');
-      this.session = undefined;
-    } else {
-      this.log.warn('Recording session could not be closed gracefully.');
-    }
+    setTimeout(() => {
+      if (this.session) {
+        this.log.debug(this.camera.getName(), 'Stopping recording session.');
+        this.session.socket?.destroy();
+        this.session.process?.kill('SIGKILL');
+        this.session = undefined;
+      } else {
+        this.log.warn('Recording session could not be closed gracefully.');
+      }
+    }, 5000);
 
     if (this.forceStopTimeout) {
       clearTimeout(this.forceStopTimeout);
