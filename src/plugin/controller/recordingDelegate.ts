@@ -32,8 +32,6 @@ const HKSVQuitReason = [
   'Invalid Configuration',
 ];
 
-// TODO: remove cached streaming
-
 export class RecordingDelegate implements CameraRecordingDelegate {
 
   private platform: EufySecurityPlatform;
