@@ -166,7 +166,12 @@ export class RecordingDelegate implements CameraRecordingDelegate {
         }
       }
     } catch (error) {
-      this.log.error(this.camera.getName(), 'Error while recording: ' + error);
+      if (!this.handlingStreamingRequest && this.closeReason && this.closeReason === HDSProtocolSpecificErrorReason.CANCELLED) {
+        this.log.debug(this.camera.getName(),
+          'Recording encountered an error but that is expected, as the recording was canceled beforehand. Error: ' + error);
+      } else {
+        this.log.error(this.camera.getName(), 'Error while recording: ' + error);
+      }
     } finally {
       if (this.closeReason &&
         this.closeReason !== HDSProtocolSpecificErrorReason.NORMAL && this.closeReason !== HDSProtocolSpecificErrorReason.CANCELLED) {
@@ -218,16 +223,14 @@ export class RecordingDelegate implements CameraRecordingDelegate {
   closeRecordingStream(streamId: number, reason: HDSProtocolSpecificErrorReason | undefined): void {
     this.log.info(this.camera.getName(), 'Closing recording process');
 
-    setTimeout(() => {
-      if (this.session) {
-        this.log.debug(this.camera.getName(), 'Stopping recording session.');
-        this.session.socket?.destroy();
-        this.session.process?.kill('SIGKILL');
-        this.session = undefined;
-      } else {
-        this.log.warn('Recording session could not be closed gracefully.');
-      }
-    }, 10000);
+    if (this.session) {
+      this.log.debug(this.camera.getName(), 'Stopping recording session.');
+      this.session.socket?.destroy();
+      this.session.process?.kill('SIGKILL');
+      this.session = undefined;
+    } else {
+      this.log.warn('Recording session could not be closed gracefully.');
+    }
 
     if (this.forceStopTimeout) {
       clearTimeout(this.forceStopTimeout);
