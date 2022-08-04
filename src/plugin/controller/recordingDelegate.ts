@@ -19,6 +19,19 @@ import { LocalLivestreamManager } from './LocalLivestreamManager';
 
 const MAX_RECORDING_MINUTES = 3;
 
+const HKSVQuitReason = [
+  'Normal',
+  'Not allowed',
+  'Busy',
+  'Cancelled',
+  'Unsupported',
+  'Unexpected Failure',
+  'Timeout',
+  'Bad data',
+  'Protocol error',
+  'Invalid Configuration',
+];
+
 // TODO: proper motion reset
 
 export class RecordingDelegate implements CameraRecordingDelegate {
@@ -66,6 +79,10 @@ export class RecordingDelegate implements CameraRecordingDelegate {
 
   public setController(controller: CameraController) {
     this.controller = controller;
+  }
+
+  public isRecording(): boolean {
+    return this.handlingStreamingRequest;
   }
 
   async * handleRecordingStreamRequest(streamId: number): AsyncGenerator<RecordingPacket, any, unknown> {
@@ -178,7 +195,7 @@ export class RecordingDelegate implements CameraRecordingDelegate {
 
         this.log.warn(
           this.camera.getName(),
-          `The recording process was aborted by HSV with reason "${this.closeReason}"`,
+          `The recording process was aborted by HSV with reason "${HKSVQuitReason[this.closeReason]}"`,
         );
       }
       if (this.closeReason && this.closeReason === HDSProtocolSpecificErrorReason.CANCELLED) {
