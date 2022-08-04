@@ -17,7 +17,6 @@ export type CameraConfig = {
   videoConfigEna: boolean;
   enableCamera: boolean;
   forcerefreshsnap: boolean;
-  useCachedLocalLivestream: boolean;
   refreshSnapshotIntervalMinutes?: number;
   snapshotHandlingMethod?: number;
   immediateRingNotificationWithoutSnapshot?: boolean;

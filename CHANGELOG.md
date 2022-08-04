@@ -11,6 +11,8 @@ You can find the complete detailled changelog for every beta release [here](http
 ### Changed
 
 - Adjusting streaming resolution is now by padding the image instead of truncating it
+- If HomeKit Secure Video is enabled, motion detection will not work while a recording is active. This is due to technical limitations for now. (see #6)
+- Removed livestream caching (a.k.a `useCachedLocalLivestream`) since the continued streaming could cause issues with HKSV and motion detection in general
 
 ## 2.1.0 (RC)
 

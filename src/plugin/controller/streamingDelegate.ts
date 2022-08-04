@@ -99,7 +99,6 @@ export class StreamingDelegate implements CameraStreamingDelegate {
     this.localLivestreamManager = new LocalLivestreamManager(
       this.platform,
       this.device,
-      this.cameraConfig.useCachedLocalLivestream,
       this.log,
     );
 
@@ -187,13 +186,6 @@ export class StreamingDelegate implements CameraStreamingDelegate {
 
     this.pendingSessions.set(request.sessionID, sessionInfo);
     callback(undefined, response);
-  }
-
-  public async prepareCachedStream(): Promise<void> {
-    if (!is_rtsp_ready(this.device, this.cameraConfig, this.log)) {
-      const proxyStream = await this.localLivestreamManager.getLocalLivestream();
-      this.localLivestreamManager.stopProxyStream(proxyStream.id);
-    }
   }
 
   private async startStream(request: StartStreamRequest, callback: StreamRequestCallback): Promise<void> {
