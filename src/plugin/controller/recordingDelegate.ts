@@ -32,7 +32,6 @@ const HKSVQuitReason = [
   'Invalid Configuration',
 ];
 
-// TODO: proper motion reset
 // TODO: remove cached streaming
 
 export class RecordingDelegate implements CameraRecordingDelegate {
@@ -88,7 +87,7 @@ export class RecordingDelegate implements CameraRecordingDelegate {
 
   async * handleRecordingStreamRequest(streamId: number): AsyncGenerator<RecordingPacket, any, unknown> {
     this.handlingStreamingRequest = true;
-    this.log.debug(this.camera.getName(), 'requesting recording for HomeKit Secure Video.');
+    this.log.info(this.camera.getName(), 'requesting recording for HomeKit Secure Video.');
 
     let cachedStreamId: number | undefined = undefined;
     
