@@ -61,8 +61,6 @@ export class CameraAccessory extends DeviceAccessory {
       this.platform.log.debug(this.accessory.displayName, 'has a camera');
 
       try {
-        this.CameraService = this.cameraFunction(accessory);
-        this.CameraService.setPrimaryService(true);
         const delegate = new StreamingDelegate(this.platform, eufyDevice, this.cameraConfig, this.platform.api, this.platform.api.hap);
         this.streamingDelegate = delegate;
         this.recordingDelegate = new RecordingDelegate(
@@ -192,12 +190,16 @@ export class CameraAccessory extends DeviceAccessory {
 
         if (!isDoorbell) {
           const controller = new this.platform.api.hap.CameraController(this.cameraControllerOptions);
-          controller.initWithServices({
-            cameraOperatingMode: this.CameraService,
-          });
+          const operatingModeService = accessory.getService(this.platform.api.hap.Service.CameraOperatingMode);
+          if (operatingModeService) {
+            // if we don't remove the CameraOperatingMode Service from the accessory there might be
+            // a crash on startup of the plugin
+            accessory.removeService(operatingModeService);
+          }
           this.streamingDelegate.setController(controller);
           this.recordingDelegate.setController(controller);
           accessory.configureController(controller);
+          this.cameraSetup(accessory);
         }
       } catch (Error) {
         this.platform.log.error(this.accessory.displayName, 'raise error to check and attach livestream function.', Error);
@@ -331,12 +333,12 @@ export class CameraAccessory extends DeviceAccessory {
     return config;
   }
 
-  private cameraFunction(
+  protected cameraSetup(
     accessory: PlatformAccessory,
-  ): Service {
+  ) {
     const service =
-      this.accessory.getService(this.platform.Service.CameraOperatingMode) ||
-      this.accessory.addService(this.platform.Service.CameraOperatingMode);
+      accessory.getService(this.platform.Service.CameraOperatingMode) ||
+      accessory.addService(this.platform.Service.CameraOperatingMode);
 
     service.setCharacteristic(
       this.characteristic.Name,
@@ -384,7 +386,8 @@ export class CameraAccessory extends DeviceAccessory {
         .onSet(this.handleHomeKitNightVisionSet.bind(this));
     }
 
-    return service as Service;
+    this.CameraService = service;
+    this.CameraService.setPrimaryService(true);
   }
 
   handleEventSnapshotsActiveGet(): Promise<CharacteristicValue> {

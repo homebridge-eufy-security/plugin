@@ -52,21 +52,24 @@ export class DoorbellCameraAccessory extends CameraAccessory {
       this.onDeviceRingsPushNotification(),
     );
 
-    this.doorbellService.setPrimaryService(true);
-
     if (this.cameraControllerOptions) {
       const doorbellOptions: DoorbellOptions = {
         externalDoorbellService: this.doorbellService,
       };
       const controller = new this.platform.api.hap.DoorbellController({...this.cameraControllerOptions, ...doorbellOptions});
-      controller.initWithServices({
-        cameraOperatingMode: this.CameraService,
-      });
+      const operatingModeService = accessory.getService(this.platform.api.hap.Service.CameraOperatingMode);
+      if (operatingModeService) {
+        // if we don't remove the CameraOperatingMode Service from the accessory there might be
+        // a crash on startup of the plugin
+        accessory.removeService(operatingModeService);
+      }
       this.streamingDelegate?.setController(controller);
       this.recordingDelegate?.setController(controller);
       accessory.configureController(controller);
+      this.cameraSetup(accessory);
     }
 
+    this.doorbellService.setPrimaryService(true);
   }
 
   // We receive 2 push when Doorbell ring, mute the second by checking if we already send
