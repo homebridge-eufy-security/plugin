@@ -135,6 +135,12 @@ export class RecordingDelegate implements CameraRecordingDelegate {
       }
 
       for await (const box of this.session.generator) {
+        
+        if (!this.handlingStreamingRequest) {
+          this.log.debug(this.camera.getName(), 'Recording was ended prematurely.');
+          break;
+        }
+
         const { header, type, data } = box;
 
         pending.push(header, data);
@@ -147,11 +153,6 @@ export class RecordingDelegate implements CameraRecordingDelegate {
 
           filebuffer = Buffer.concat([filebuffer, Buffer.concat(pending)]);
           pending = [];
-
-          if (!this.handlingStreamingRequest) {
-            this.log.debug(this.camera.getName(), 'Recording was ended prematurely.');
-            break;
-          }
 
           yield {
             data: fragment,
