@@ -33,6 +33,7 @@ const HKSVQuitReason = [
 ];
 
 // TODO: proper motion reset
+// TODO: remove cached streaming
 
 export class RecordingDelegate implements CameraRecordingDelegate {
 

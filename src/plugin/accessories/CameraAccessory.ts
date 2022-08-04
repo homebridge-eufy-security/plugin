@@ -11,7 +11,7 @@ import {
 
 import { EufySecurityPlatform } from '../platform';
 import { DeviceAccessory } from './Device';
-import { Camera, Device, PropertyName, CommandName, VideoCodec } from 'eufy-security-client';
+import { Camera, Device, PropertyName, CommandName, VideoCodec, PropertyValue } from 'eufy-security-client';
 import { StreamingDelegate } from '../controller/streamingDelegate';
 
 import { CameraConfig } from '../utils/configTypes';
@@ -31,8 +31,6 @@ export class CameraAccessory extends DeviceAccessory {
 
   protected streamingDelegate: StreamingDelegate | null = null;
   protected recordingDelegate?: RecordingDelegate;
-
-  private motionTimeout?: NodeJS.Timeout;
 
   protected cameraControllerOptions?: CameraControllerOptions;
 
@@ -493,24 +491,21 @@ export class CameraAccessory extends DeviceAccessory {
       .getCharacteristic(this.characteristic.MotionDetected)
       .onGet(this.handleMotionDetectedGet.bind(this));
 
-    this.eufyDevice.on('motion detected', (device: Device, motion: boolean) =>
-      this.onDeviceMotionDetectedPushNotification(device, motion),
-    );
-
-    this.eufyDevice.on('person detected', (device: Device, motion: boolean) =>
-      this.onDeviceMotionDetectedPushNotification(device, motion),
-    );
-
-    this.eufyDevice.on('pet detected', (device: Device, motion: boolean) =>
-      this.onDeviceMotionDetectedPushNotification(device, motion),
-    );
+    this.eufyDevice.on('property changed', this.onPropertyChange.bind(this));
 
     return service as Service;
   }
 
   async handleMotionDetectedGet(): Promise<CharacteristicValue> {
     try {
-      const currentValue = this.eufyDevice.getPropertyValue(PropertyName.DeviceMotionDetected);
+      let currentValue = this.eufyDevice.getPropertyValue(PropertyName.DeviceMotionDetected);
+      if (this.recordingDelegate?.isRecording) {
+        currentValue = true; // assume ongoing motion when HKSV is recording
+        // HKSV will remove unnecessary bits of the recorded video itself when there is no more motion
+        // but since eufy-security-client doesn't return a proper value for MotionDetected while
+        // streaming we assume motion to be ongoing
+        // otherwise the recording would almost always end prematurely
+      }
       this.platform.log.debug(this.accessory.displayName, 'GET DeviceMotionDetected:', currentValue);
       return currentValue as boolean;
     } catch {
@@ -519,29 +514,26 @@ export class CameraAccessory extends DeviceAccessory {
     }
   }
 
-  private onDeviceMotionDetectedPushNotification(
-    device: Device,
-    motion: boolean,
-  ): void {
-    // if (motion) {
-    //   this.motionTimeout = setTimeout(() => {
-    //     this.platform.log.debug(this.accessory.displayName, 'Reseting motion through timout.');
-    //     this.service
-    //       .getCharacteristic(this.characteristic.MotionDetected)
-    //       .updateValue(false);
-    //   }, 15000);
-    // } else {
-    //   if (this.motionTimeout) {
-    //     clearTimeout(this.motionTimeout);
-    //   }
-    // }
-    this.platform.log.debug(this.accessory.displayName, 'ON DeviceMotionDetected:', motion);
-    if (this.cameraConfig.useCachedLocalLivestream && this.streamingDelegate && motion) {
-      this.streamingDelegate.prepareCachedStream();
+  private onPropertyChange(_: Device, name: string, value: PropertyValue) {
+    const motionValues = [
+      'motionDetected',
+      'personDetected',
+      'petDetected',
+    ];
+    if (motionValues.indexOf(name) !== -1) {
+      const isRecording = this.recordingDelegate?.isRecording();
+      if (!isRecording) {
+        const motionDetected = value as boolean;
+        this.platform.log.debug(this.accessory.displayName, 'ON DeviceMotionDetected:', motionDetected);
+        this.service
+          .getCharacteristic(this.characteristic.MotionDetected)
+          .updateValue(motionDetected);
+      } else {
+        this.platform.log.debug(this.accessory.displayName, 
+          'ignore change of motion detected state, since HKSV is still recording.' +
+          'The recording controller will reset the motion state afterwards.');
+      }
     }
-    this.service
-      .getCharacteristic(this.characteristic.MotionDetected)
-      .updateValue(motion);
   }
 
   async handleEnableGet(): Promise<CharacteristicValue> {
