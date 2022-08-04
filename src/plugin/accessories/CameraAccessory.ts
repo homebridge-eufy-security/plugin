@@ -351,6 +351,13 @@ export class CameraAccessory extends DeviceAccessory {
       .onSet(this.handleEventSnapshotsActiveSet.bind(this));
 
     service
+      .getCharacteristic(this.characteristic.PeriodicSnapshotsActive)
+      .onGet(this.handlePeriodicSnapshotsActiveGet.bind(this));
+    service
+      .getCharacteristic(this.characteristic.PeriodicSnapshotsActive)
+      .onSet(this.handlePeriodicSnapshotsActiveSet.bind(this));
+
+    service
       .getCharacteristic(this.characteristic.HomeKitCameraActive)
       .onGet(this.handleHomeKitCameraActiveGet.bind(this));
     service
@@ -391,6 +398,19 @@ export class CameraAccessory extends DeviceAccessory {
    */
   handleEventSnapshotsActiveSet(value) {
     this.platform.log.debug(this.accessory.displayName, 'Will not SET EventSnapshotsActive:', value);
+  }
+
+  handlePeriodicSnapshotsActiveGet(): Promise<CharacteristicValue> {
+    const currentValue = this.characteristic.PeriodicSnapshotsActive.ENABLE;
+    this.platform.log.debug(this.accessory.displayName, 'GET PeriodicSnapshotsActive:', currentValue);
+    return currentValue;
+  }
+
+  /**
+   * Handle requests to set the "Periodic Snapshots Active" characteristic
+   */
+  handlePeriodicSnapshotsActiveSet(value) {
+    this.platform.log.debug(this.accessory.displayName, 'Will not SET PeriodicSnapshotsActive:', value);
   }
 
   /**

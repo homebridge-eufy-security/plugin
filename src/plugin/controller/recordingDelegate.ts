@@ -226,7 +226,7 @@ export class RecordingDelegate implements CameraRecordingDelegate {
       } else {
         this.log.warn('Recording session could not be closed gracefully.');
       }
-    }, 5000);
+    }, 10000);
 
     if (this.forceStopTimeout) {
       clearTimeout(this.forceStopTimeout);
