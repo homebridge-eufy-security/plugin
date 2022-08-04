@@ -171,6 +171,20 @@ export class RecordingDelegate implements CameraRecordingDelegate {
         this.log.debug(this.camera.getName(), 'Recording completed (HSV). Send ' + filebuffer.length + ' bytes.');
       }
 
+      if (this.forceStopTimeout) {
+        clearTimeout(this.forceStopTimeout);
+        this.forceStopTimeout = undefined;
+      }
+
+      // check whether motion is still in progress
+      const motionDetected = this.accessory
+        .getService(this.platform.Service.MotionSensor)?.getCharacteristic(this.platform.Characteristic.MotionDetected).value;
+      if (motionDetected) {
+        this.accessory
+          .getService(this.platform.Service.MotionSensor)?.getCharacteristic(this.platform.Characteristic.MotionDetected)
+          .updateValue(false);
+      }
+
       if (cachedStreamId) {
         this.localLivestreamManager.stopProxyStream(cachedStreamId);
       }
