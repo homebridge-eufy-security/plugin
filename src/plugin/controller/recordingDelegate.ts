@@ -135,7 +135,7 @@ export class RecordingDelegate implements CameraRecordingDelegate {
       }
 
       for await (const box of this.session.generator) {
-        
+
         if (!this.handlingStreamingRequest) {
           this.log.debug(this.camera.getName(), 'Recording was ended prematurely.');
           break;
@@ -232,6 +232,15 @@ export class RecordingDelegate implements CameraRecordingDelegate {
     if (this.forceStopTimeout) {
       clearTimeout(this.forceStopTimeout);
       this.forceStopTimeout = undefined;
+    }
+
+    // check whether motion is still in progress
+    const motionDetected = this.accessory
+      .getService(this.platform.Service.MotionSensor)?.getCharacteristic(this.platform.Characteristic.MotionDetected).value;
+    if (motionDetected) {
+      this.accessory
+        .getService(this.platform.Service.MotionSensor)?.getCharacteristic(this.platform.Characteristic.MotionDetected)
+        .updateValue(false);
     }
 
     this.closeReason = reason;
