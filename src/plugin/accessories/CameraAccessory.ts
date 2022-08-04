@@ -192,6 +192,9 @@ export class CameraAccessory extends DeviceAccessory {
 
         if (!isDoorbell) {
           const controller = new this.platform.api.hap.CameraController(this.cameraControllerOptions);
+          controller.initWithServices({
+            cameraOperatingMode: this.CameraService,
+          });
           this.streamingDelegate.setController(controller);
           this.recordingDelegate.setController(controller);
           accessory.configureController(controller);
