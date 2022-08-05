@@ -41,7 +41,7 @@ export class EnableHsvComponent extends ConfigOptionsInterpreter implements OnIn
   update() {
     this.updateConfig(
       {
-        unbridge: this.value,
+        hsv: this.value,
       },
       this.accessory,
     );
