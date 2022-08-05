@@ -555,9 +555,13 @@ export class FFmpegParameters {
         filters.splice(noneFilter, 1);
       }
       if (noneFilter < 0 && this.width && this.height) {
-        // eslint-disable-next-line max-len
-        const resizeFilter = `scale=w=${this.width}:h=${this.height}:force_original_aspect_ratio=1,pad=${this.width}:${this.height}:(ow-iw)/2:(oh-ih)/2`;
+        const resizeFilter = 'scale=' +
+        '\'min(' + this.width + ',iw)\'' +
+        ':' +
+        '\'min(' + this.height + ',iw)\'' +
+        ':force_original_aspect_ratio=decrease';
         filters.push(resizeFilter);
+        filters.push('scale=\'trunc(iw/2)*2:trunc(ih/2)*2\''); // Force to fit encoder restrictions
       }
       if (filters.length > 0) {
         params.push('-filter:v ' + filters.join(','));
