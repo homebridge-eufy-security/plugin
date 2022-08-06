@@ -126,3 +126,5 @@ dist
 .github/workflows/
 
 .angular
+
+homebridge-ui/
