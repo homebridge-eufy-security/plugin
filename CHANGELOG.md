@@ -8,7 +8,7 @@ You can find the complete detailled changelog for every beta release [here](http
 
 - Streams might have been aborted after 30-60 seconds due to stream backpressuring
 
-## 2.1.0-rc.0
+## 2.1.0 (RC)
 
 ### Added
 
