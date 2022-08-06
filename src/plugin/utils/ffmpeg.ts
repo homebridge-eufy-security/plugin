@@ -758,11 +758,11 @@ export class FFmpeg extends EventEmitter {
     this.stdin = this.process.stdin;
     this.stdout = this.process.stdout;
 
-    if (this.parameters[0].debug) {
-      this.process.stderr.on('data', (chunk) => {
+    this.process.stderr.on('data', (chunk) => {
+      if (this.parameters[0].debug) {
         this.log.debug(this.name, 'ffmpeg log message:\n' + chunk.toString());
-      });
-    }
+      }
+    });
 
     this.process.on('error', this.onProcessError.bind(this));
     this.process.on('exit', this.onProcessExit.bind(this));
@@ -780,11 +780,11 @@ export class FFmpeg extends EventEmitter {
     return new Promise((resolve, reject) => {
       this.process = spawn(this.ffmpegExec, processArgs.join(' ').split(/\s+/), { env: process.env });
 
-      if (this.parameters[0].debug) {
-        this.process.stderr.on('data', (chunk) => {
+      this.process.stderr.on('data', (chunk) => {
+        if (this.parameters[0].debug) {
           this.log.debug(this.name, 'ffmpeg log message:\n' + chunk.toString());
-        });
-      }
+        }
+      });
 
       const killTimeout = setTimeout(() => {
         this.stop();

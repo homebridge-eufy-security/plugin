@@ -69,6 +69,7 @@ You can find the complete detailled changelog for every beta release [here](http
 - Fix issue that streams were only rendered in 640x480 - see #46
 - Fixed smartlocks - see #110
 - Fixed occasional EPIPE Error when streaming - see #14
+- Streams might have been aborted after 30-60 seconds due to stream backpressuring
 
 ## 2.0.1 (20.06.2022)
 
