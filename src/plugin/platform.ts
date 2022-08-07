@@ -187,6 +187,9 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
       this.eufyClient = (this.config.enableDetailedLogging)
         ? await EufySecurity.initialize(this.eufyConfig, this.tsLogger)
         : await EufySecurity.initialize(this.eufyConfig);
+
+      this.eufyClient.on('tfa request', this.tfaWarning.bind(this));
+      this.eufyClient.on('captcha request', this.captchaWarning.bind(this));
       
       this.eufyClient.on('station added', this.stationAdded.bind(this));
       this.eufyClient.on('device added', this.deviceAdded.bind(this));
@@ -231,6 +234,22 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
 
     this.eufyClient.setCameraMaxLivestreamDuration(cameraMaxLivestreamDuration);
     this.log.debug('CameraMaxLivestreamDuration:', this.eufyClient.getCameraMaxLivestreamDuration());
+  }
+
+  private tfaWarning() {
+    this.log.warn(
+      'There was a 2 Factor Authentication request while login in. ' +
+      'This cannot be fulfilled by the plugin itself. Please login using the ' +
+      'configuration wizard (settings) in the Homebridge UI plugins tab.',
+    );
+  }
+
+  private captchaWarning(id: string, captcha: string) {
+    this.log.warn(
+      'There was a Captcha request while login in. ' +
+      'This cannot be fulfilled by the plugin itself. Please login using the ' +
+      'configuration wizard (settings) in the Homebridge UI plugins tab.',
+    );
   }
 
   private async stationAdded(station: Station) {

@@ -6,7 +6,8 @@ You can find the complete detailled changelog for every beta release [here](http
 
 ### Added
 
-- HomeKit Secure Video (HKSV) Support
+- HomeKit Secure Video (HKSV) Support (see #6)
+- Plugin will show warnings if it encounters a captcha or 2FA request while logging in.
 
 ### Changed
 
