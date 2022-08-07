@@ -346,6 +346,9 @@ export class FFmpegParameters {
       if (videoConfig.videoFilter && videoConfig.videoFilter !== '') {
         this.filters = videoConfig.videoFilter;
       }
+      if (videoConfig.crop) {
+        this.crop = videoConfig.crop;
+      }
     }
   }
 
@@ -569,7 +572,9 @@ export class FFmpegParameters {
         ':force_original_aspect_ratio=' + (this.crop ? 'increase' : 'decrease');
         filters.push(resizeFilter);
         filters.push('scale=\'trunc(iw/2)*2:trunc(ih/2)*2\''); // Force to fit encoder restrictions
-        filters.push(this.crop ? `crop=${this.width}:${this.height}` : '');
+        if (this.crop) {
+          filters.push(`crop=${this.width}:${this.height}`);
+        }
       }
       if (filters.length > 0) {
         params.push('-filter:v ' + filters.join(','));
@@ -605,7 +610,9 @@ export class FFmpegParameters {
         ':force_original_aspect_ratio=' + (this.crop ? 'increase' : 'decrease');
         filters.push(resizeFilter);
         filters.push('scale=\'trunc(iw/2)*2:trunc(ih/2)*2\''); // Force to fit encoder restrictions
-        filters.push(this.crop ? `crop=${this.width}:${this.height}` : '');
+        if (this.crop) {
+          filters.push(`crop=${this.width}:${this.height}`);
+        }
       }
       if (filters.length > 0) {
         params.push('-filter:v ' + filters.join(','));
