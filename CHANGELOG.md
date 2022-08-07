@@ -2,11 +2,11 @@
 
 You can find the complete detailled changelog for every beta release [here](https://github.com/homebridge-eufy-security/plugin/releases).
 
-## 2.1.0-rc.1 - latest changes
+## 2.1.0-rc.2 - latest changes
 
 ### Fixed
 
-- Streams might have been aborted after 30-60 seconds due to stream backpressuring
+- Minor bug that might have caused incorrect calculated output resolution
 
 ## 2.1.0 (RC)
 
