@@ -122,6 +122,13 @@
 
       <div class="input-group mb-1">
         <div class="input-group-text">
+          <input class="form-check-input mt-0" type="checkbox" [attr.disabled]="vcodec === 'copy' ? true : null" [(ngModel)]="crop" (change)="update()">
+        </div>
+        <span class="input-group-text" id="inputGroup-sizing-default" [attr.style]="vcodec === 'copy' ? 'text-decoration: line-through; color: lightgray;' : null">force crop image to requested/defined resolution</span>
+      </div>
+
+      <div class="input-group mb-1">
+        <div class="input-group-text">
           <input class="form-check-input mt-0" type="checkbox" [attr.disabled]="vcodec === 'copy' ? true : null" [checked]="maxFPS !== undefined ? true: null" (change)="maxFPS = (maxFPS === undefined) ? 0 : undefined; update();">
         </div>
         <span class="input-group-text" id="inputGroup-sizing-default" [attr.style]="vcodec === 'copy' ? 'text-decoration: line-through; color: lightgray;' : null">fps</span>

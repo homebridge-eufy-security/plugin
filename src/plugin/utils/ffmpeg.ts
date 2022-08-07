@@ -122,6 +122,7 @@ export class FFmpegParameters {
   private height?: number;
   private bufsize?: number;
   private maxrate?: number;
+  private crop = false;
 
   // audio options
   private sampleRate?: number;
@@ -303,6 +304,9 @@ export class FFmpegParameters {
         if (videoConfig.videoFilter && videoConfig.videoFilter !== '') {
           this.filters = videoConfig.videoFilter;
         }
+        if (videoConfig.crop) {
+          this.crop = videoConfig.crop;
+        }
       }
     }
     if (this.isAudio) {
@@ -402,6 +406,9 @@ export class FFmpegParameters {
         this.width = configuration.videoCodec.resolution[0];
         this.height = configuration.videoCodec.resolution[1];
         this.fps = configuration.videoCodec.resolution[2];
+        if (videoConfig.crop) {
+          this.crop = videoConfig.crop;
+        }
       }
 
       this.iFrameInterval = configuration.videoCodec.parameters.iFrameInterval;
@@ -559,9 +566,10 @@ export class FFmpegParameters {
         '\'min(' + this.width + ',iw)\'' +
         ':' +
         '\'min(' + this.height + ',iw)\'' +
-        ':force_original_aspect_ratio=decrease';
+        ':force_original_aspect_ratio=' + (this.crop ? 'increase' : 'decrease');
         filters.push(resizeFilter);
         filters.push('scale=\'trunc(iw/2)*2:trunc(ih/2)*2\''); // Force to fit encoder restrictions
+        filters.push(this.crop ? `crop=${this.width}:${this.height}` : '');
       }
       if (filters.length > 0) {
         params.push('-filter:v ' + filters.join(','));
@@ -594,9 +602,10 @@ export class FFmpegParameters {
         '\'min(' + this.width + ',iw)\'' +
         ':' +
         '\'min(' + this.height + ',iw)\'' +
-        ':force_original_aspect_ratio=decrease';
+        ':force_original_aspect_ratio=' + (this.crop ? 'increase' : 'decrease');
         filters.push(resizeFilter);
         filters.push('scale=\'trunc(iw/2)*2:trunc(ih/2)*2\''); // Force to fit encoder restrictions
+        filters.push(this.crop ? `crop=${this.width}:${this.height}` : '');
       }
       if (filters.length > 0) {
         params.push('-filter:v ' + filters.join(','));

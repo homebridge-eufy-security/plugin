@@ -44,6 +44,7 @@ export class AdvancedVideoconfigComponent
   maxFPS: number | undefined = undefined;
   maxBitrate: number | undefined = undefined;
   useSeparateProcesses: boolean | undefined = undefined;
+  crop: boolean | undefined = undefined;
 
   preset = 0;
   presetDescription?: string;
@@ -77,6 +78,7 @@ export class AdvancedVideoconfigComponent
       this.maxFPS = undefined;
       this.maxBitrate = undefined;
       this.useSeparateProcesses = undefined;
+      this.crop = undefined;
 
       this.presetDescription = undefined;
     } else if (this.preset === 1) {
@@ -93,6 +95,7 @@ export class AdvancedVideoconfigComponent
       this.maxFPS = undefined;
       this.maxBitrate = undefined;
       this.useSeparateProcesses = true;
+      this.crop = undefined;
       
       // eslint-disable-next-line max-len
       this.presetDescription = 'Most eufy cams support the same codec that HomeKit requests. You can try and \'forward\' the stream directly without encoding it with ffmpeg. This can increase performance and quality drastically.';
@@ -110,6 +113,7 @@ export class AdvancedVideoconfigComponent
       this.maxFPS = 15;
       this.maxBitrate = undefined;
       this.useSeparateProcesses = true;
+      this.crop = undefined;
       
       // eslint-disable-next-line max-len
       this.presetDescription = 'This preset tries to increase performance by reducing the quality of the stream. This can work for low performance hardware like raspberry pis.';
@@ -134,8 +138,9 @@ export class AdvancedVideoconfigComponent
       this.maxHeight === undefined &&
       this.maxFPS === undefined &&
       this.maxBitrate === undefined &&
-      this.useSeparateProcesses === undefined) {
-
+      this.useSeparateProcesses === undefined &&
+      this.crop === undefined
+    ) {
       p = 0;
     }
     if (!this.readRate &&
@@ -150,8 +155,9 @@ export class AdvancedVideoconfigComponent
       this.maxHeight === undefined &&
       this.maxFPS === undefined &&
       this.maxBitrate === undefined &&
-      this.useSeparateProcesses === true) {
-
+      this.useSeparateProcesses === true &&
+      this.crop === undefined
+    ) {
       p = 1;
     }
     if (!this.readRate &&
@@ -166,8 +172,9 @@ export class AdvancedVideoconfigComponent
       this.maxHeight === 480 &&
       this.maxFPS === 15 &&
       this.maxBitrate === undefined &&
-      this.useSeparateProcesses === true) {
-
+      this.useSeparateProcesses === true &&
+      this.crop === undefined
+    ) {
       p = 2;
     }
 
@@ -229,6 +236,9 @@ export class AdvancedVideoconfigComponent
     }
     if (this.useSeparateProcesses) {
       newConfig['useSeparateProcesses'] = this.useSeparateProcesses;
+    }
+    if (this.crop) {
+      newConfig['crop'] = this.crop;
     }
 
     this.updateConfig(
