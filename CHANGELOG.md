@@ -2,28 +2,20 @@
 
 You can find the complete detailled changelog for every beta release [here](https://github.com/homebridge-eufy-security/plugin/releases).
 
-## 2.1.0-beta.14 (01/08/2022) - latest changes
+## 2.2.0-beta.1 - latest changes
 
 ### Added
 
-- Presets (`copy`, `performance`) for advanced video config
-- Setting to choose audio sample rate
+- HomeKit Secure Video (HKSV) Support (see #6)
+- Plugin will show warnings if it encounters a captcha or 2FA request while logging in.
+- Setting to crop image to requested resolution. This might help with streaming issues when the HomeKit Controller stops the stream due to wrong stream configuration.
 
 ### Changed
 
-- Refactored ffmpeg processing
-- Updated eufy-security-client to 2.1.2
-- Deprecated options `forcerefreshsnap` and `useEnhancedSnapshotBehaviour` were removed and will no longer be evaluated
-- Removed `mapvideo`, `mapaudio`, `maxDelay` and `forceMax` options from advanced VideoConfig since they are deprecated
-- By default the plugin will now use one ffmpeg process for video and audio - this can be controlled via an option (`useSeparateProcesses` is now used instead of `useOneProcess`)
+- If HomeKit Secure Video is enabled, motion detection will not work while a recording is active. This is due to technical limitations for now. (see #6)
+- Removed livestream caching (a.k.a `useCachedLocalLivestream`) since the continued streaming could cause issues with HKSV and motion detection in general
 
-### Fixed
-
-- Fix issue that streams were only rendered in 640x480 - see #46
-- Fixed smartlocks - see #110
-- Fixed occasional EPIPE Error when streaming - see #14
-
-## 2.1.0 (beta) - complete changes of the beta so far (19/07/2022)
+## 2.1.0 (RC)
 
 ### Added
 
@@ -79,6 +71,7 @@ You can find the complete detailled changelog for every beta release [here](http
 - Fix issue that streams were only rendered in 640x480 - see #46
 - Fixed smartlocks - see #110
 - Fixed occasional EPIPE Error when streaming - see #14
+- Streams might have been aborted after 30-60 seconds due to stream backpressuring
 
 ## 2.0.1 (20.06.2022)
 

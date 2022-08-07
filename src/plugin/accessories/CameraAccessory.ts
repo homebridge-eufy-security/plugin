@@ -1,16 +1,21 @@
-import { Service, PlatformAccessory, CharacteristicValue } from 'homebridge';
+import {
+  Service,
+  PlatformAccessory,
+  CharacteristicValue,
+  AudioStreamingSamplerate,
+  CameraControllerOptions,
+  AudioStreamingCodecType,
+  AudioRecordingSamplerate,
+  AudioRecordingCodecType,
+} from 'homebridge';
 
 import { EufySecurityPlatform } from '../platform';
 import { DeviceAccessory } from './Device';
-
-// import { HttpService, LocalLookupService, DeviceClientService, CommandType } from 'eufy-node-client';
-
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-ignore  
-import { Camera, Device, PropertyName, CommandName, VideoCodec } from 'eufy-security-client';
+import { Camera, Device, PropertyName, CommandName, VideoCodec, PropertyValue } from 'eufy-security-client';
 import { StreamingDelegate } from '../controller/streamingDelegate';
 
-import { CameraConfig, VideoConfig } from '../utils/configTypes';
+import { CameraConfig } from '../utils/configTypes';
+import { RecordingDelegate } from '../controller/recordingDelegate';
 
 /**
  * Platform Accessory
@@ -25,13 +30,15 @@ export class CameraAccessory extends DeviceAccessory {
   public readonly cameraConfig: CameraConfig;
 
   protected streamingDelegate: StreamingDelegate | null = null;
+  protected recordingDelegate?: RecordingDelegate;
 
-  private motionTimeout?: NodeJS.Timeout;
+  protected cameraControllerOptions?: CameraControllerOptions;
 
   constructor(
     platform: EufySecurityPlatform,
     accessory: PlatformAccessory,
     eufyDevice: Camera,
+    isDoorbell = false,
   ) {
     super(platform, accessory, eufyDevice);
 
@@ -44,27 +51,162 @@ export class CameraAccessory extends DeviceAccessory {
     this.cameraConfig = this.getCameraConfig();
     this.platform.log.debug(this.accessory.displayName, 'config is:', this.cameraConfig);
 
+    try {
+      this.service = this.motionFunction(accessory);
+    } catch (Error) {
+      this.platform.log.error(this.accessory.displayName, 'raise error to check and attach motion function.', Error);
+    }
+
     if (this.cameraConfig.enableCamera || (typeof this.eufyDevice.isDoorbell === 'function' && this.eufyDevice.isDoorbell())) {
       this.platform.log.debug(this.accessory.displayName, 'has a camera');
 
       try {
-        this.CameraService = this.cameraFunction(accessory);
-        this.CameraService.setPrimaryService(true);
         const delegate = new StreamingDelegate(this.platform, eufyDevice, this.cameraConfig, this.platform.api, this.platform.api.hap);
         this.streamingDelegate = delegate;
-        accessory.configureController(delegate.controller);
+        this.recordingDelegate = new RecordingDelegate(
+          this.platform,
+          this.accessory,
+          eufyDevice,
+          this.cameraConfig,
+          this.streamingDelegate.getLivestreamManager(),
+          this.platform.log,
+        );
+
+        let samplerate = AudioStreamingSamplerate.KHZ_16;
+        if (this.cameraConfig.videoConfig?.audioSampleRate === 8) {
+          samplerate = AudioStreamingSamplerate.KHZ_8;
+        } else if (this.cameraConfig.videoConfig?.audioSampleRate === 24) {
+          samplerate = AudioStreamingSamplerate.KHZ_24;
+        }
+
+        this.platform.log.debug(this.accessory.displayName, `Audio sample rate set to ${samplerate} kHz.`);
+
+        this.cameraControllerOptions = {
+          cameraStreamCount: this.cameraConfig.videoConfig?.maxStreams || 2, // HomeKit requires at least 2 streams, but 1 is also just fine
+          delegate: this.streamingDelegate,
+          streamingOptions: {
+            supportedCryptoSuites: [this.platform.api.hap.SRTPCryptoSuites.AES_CM_128_HMAC_SHA1_80],
+            video: {
+              resolutions: [
+                [320, 180, 30],
+                [320, 240, 15], // Apple Watch requires this configuration
+                [320, 240, 30],
+                [480, 270, 30],
+                [480, 360, 30],
+                [640, 360, 30],
+                [640, 480, 30],
+                [1280, 720, 30],
+                [1280, 960, 30],
+                [1920, 1080, 30],
+                [1600, 1200, 30],
+              ],
+              codec: {
+                profiles: [
+                  this.platform.api.hap.H264Profile.BASELINE,
+                  this.platform.api.hap.H264Profile.MAIN,
+                  this.platform.api.hap.H264Profile.HIGH,
+                ],
+                levels: [
+                  this.platform.api.hap.H264Level.LEVEL3_1,
+                  this.platform.api.hap.H264Level.LEVEL3_2,
+                  this.platform.api.hap.H264Level.LEVEL4_0,
+                ],
+              },
+            },
+            audio: {
+              twoWayAudio: this.cameraConfig.talkback,
+              codecs: [
+                {
+                  type: AudioStreamingCodecType.AAC_ELD,
+                  samplerate: samplerate,
+                  /*type: AudioStreamingCodecType.OPUS,
+                                samplerate: AudioStreamingSamplerate.KHZ_24*/
+                },
+              ],
+            },
+          },
+          recording: this.cameraConfig.hsv
+            ? {
+              options: {
+                overrideEventTriggerOptions: [
+                  this.platform.api.hap.EventTriggerOption.MOTION,
+                  this.platform.api.hap.EventTriggerOption.DOORBELL,
+                ],
+                prebufferLength: 0, // prebufferLength always remains 4s ?
+                mediaContainerConfiguration: [
+                  {
+                    type: this.platform.api.hap.MediaContainerType.FRAGMENTED_MP4,
+                    fragmentLength: 4000,
+                  },
+                ],
+                video: {
+                  type: this.platform.api.hap.VideoCodecType.H264,
+                  parameters: {
+                    profiles: [
+                      this.platform.api.hap.H264Profile.BASELINE,
+                      this.platform.api.hap.H264Profile.MAIN,
+                      this.platform.api.hap.H264Profile.HIGH,
+                    ],
+                    levels: [
+                      this.platform.api.hap.H264Level.LEVEL3_1,
+                      this.platform.api.hap.H264Level.LEVEL3_2,
+                      this.platform.api.hap.H264Level.LEVEL4_0,
+                    ],
+                  },
+                  resolutions: [
+                    [320, 180, 30],
+                    [320, 240, 15],
+                    [320, 240, 30],
+                    [480, 270, 30],
+                    [480, 360, 30],
+                    [640, 360, 30],
+                    [640, 480, 30],
+                    [1280, 720, 30],
+                    [1280, 960, 30],
+                    [1920, 1080, 30],
+                    [1600, 1200, 30],
+                  ],
+                },
+                audio: {
+                  codecs: {
+                    type: AudioRecordingCodecType.AAC_ELD,
+                    samplerate: AudioRecordingSamplerate.KHZ_24,
+                    bitrateMode: 0,
+                    audioChannels: 1,
+                  },
+                },
+              },
+              delegate: this.recordingDelegate,
+            }
+            : undefined,
+          sensors: this.cameraConfig.hsv
+            ? {
+              motion: this.service,
+              // eslint-disable-next-line max-len
+              // occupancy: this.accessory.getServiceById(this.platform.api.hap.Service.OccupancySensor, 'occupancy') || false, //not implemented yet
+            }
+            : undefined,
+        };
+
+        if (!isDoorbell) {
+          const controller = new this.platform.api.hap.CameraController(this.cameraControllerOptions);
+          const operatingModeService = accessory.getService(this.platform.api.hap.Service.CameraOperatingMode);
+          if (operatingModeService) {
+            // if we don't remove the CameraOperatingMode Service from the accessory there might be
+            // a crash on startup of the plugin
+            accessory.removeService(operatingModeService);
+          }
+          this.streamingDelegate.setController(controller);
+          this.recordingDelegate.setController(controller);
+          accessory.configureController(controller);
+          this.cameraSetup(accessory);
+        }
       } catch (Error) {
         this.platform.log.error(this.accessory.displayName, 'raise error to check and attach livestream function.', Error);
       }
       
     } else {
       this.platform.log.debug(this.accessory.displayName, 'has a motion sensor.');
-    }
-
-    try {
-      this.service = this.motionFunction(accessory);
-    } catch (Error) {
-      this.platform.log.error(this.accessory.displayName, 'raise error to check and attach motion function.', Error);
     }
 
     try {
@@ -162,9 +304,17 @@ export class CameraAccessory extends DeviceAccessory {
     config.rtsp = config.rtsp ??= false;
     config.forcerefreshsnap = config.forcerefreshsnap ??= false;
     config.videoConfig = config.videoConfig ??= {};
-    config.useCachedLocalLivestream = config.useCachedLocalLivestream ??= false;
     config.immediateRingNotificationWithoutSnapshot = config.immediateRingNotificationWithoutSnapshot ??= false;
     config.delayCameraSnapshot = config.delayCameraSnapshot ??= false;
+    config.hsv = config.hsv ??= false;
+
+    if (config.hsv && !this.platform.api.versionGreaterOrEqual('1.4.0')) {
+      config.hsv = false;
+      this.platform.log.warn(
+        this.accessory.displayName,
+        'HomeKit Secure Video is only supported by Homebridge version >1.4.0! Please update.',
+      );
+    }
 
     if (!config.snapshotHandlingMethod) {
       config.snapshotHandlingMethod = (config.forcerefreshsnap) ? 1 : 3;
@@ -183,12 +333,12 @@ export class CameraAccessory extends DeviceAccessory {
     return config;
   }
 
-  private cameraFunction(
+  protected cameraSetup(
     accessory: PlatformAccessory,
-  ): Service {
+  ) {
     const service =
-      this.accessory.getService(this.platform.Service.CameraOperatingMode) ||
-      this.accessory.addService(this.platform.Service.CameraOperatingMode);
+      accessory.getService(this.platform.Service.CameraOperatingMode) ||
+      accessory.addService(this.platform.Service.CameraOperatingMode);
 
     service.setCharacteristic(
       this.characteristic.Name,
@@ -201,6 +351,13 @@ export class CameraAccessory extends DeviceAccessory {
     service
       .getCharacteristic(this.characteristic.EventSnapshotsActive)
       .onSet(this.handleEventSnapshotsActiveSet.bind(this));
+
+    service
+      .getCharacteristic(this.characteristic.PeriodicSnapshotsActive)
+      .onGet(this.handlePeriodicSnapshotsActiveGet.bind(this));
+    service
+      .getCharacteristic(this.characteristic.PeriodicSnapshotsActive)
+      .onSet(this.handlePeriodicSnapshotsActiveSet.bind(this));
 
     service
       .getCharacteristic(this.characteristic.HomeKitCameraActive)
@@ -229,11 +386,12 @@ export class CameraAccessory extends DeviceAccessory {
         .onSet(this.handleHomeKitNightVisionSet.bind(this));
     }
 
-    return service as Service;
+    this.CameraService = service;
+    this.CameraService.setPrimaryService(true);
   }
 
   handleEventSnapshotsActiveGet(): Promise<CharacteristicValue> {
-    const currentValue = this.characteristic.EventSnapshotsActive.DISABLE;
+    const currentValue = this.characteristic.EventSnapshotsActive.ENABLE;
     this.platform.log.debug(this.accessory.displayName, 'GET EventSnapshotsActive:', currentValue);
     return currentValue;
   }
@@ -242,14 +400,27 @@ export class CameraAccessory extends DeviceAccessory {
    * Handle requests to set the "Event Snapshots Active" characteristic
    */
   handleEventSnapshotsActiveSet(value) {
-    this.platform.log.debug(this.accessory.displayName, 'SET EventSnapshotsActive:', value);
+    this.platform.log.debug(this.accessory.displayName, 'Will not SET EventSnapshotsActive:', value);
+  }
+
+  handlePeriodicSnapshotsActiveGet(): Promise<CharacteristicValue> {
+    const currentValue = this.characteristic.PeriodicSnapshotsActive.ENABLE;
+    this.platform.log.debug(this.accessory.displayName, 'GET PeriodicSnapshotsActive:', currentValue);
+    return currentValue;
+  }
+
+  /**
+   * Handle requests to set the "Periodic Snapshots Active" characteristic
+   */
+  handlePeriodicSnapshotsActiveSet(value) {
+    this.platform.log.debug(this.accessory.displayName, 'Will not SET PeriodicSnapshotsActive:', value);
   }
 
   /**
    * Handle requests to get the current value of the "HomeKit Camera Active" characteristic
    */
   handleHomeKitCameraActiveGet(): Promise<CharacteristicValue> {
-    const currentValue = this.characteristic.HomeKitCameraActive.OFF;
+    const currentValue = this.characteristic.HomeKitCameraActive.ON;
     this.platform.log.debug(this.accessory.displayName, 'GET HomeKitCameraActive:', currentValue);
     return currentValue;
   }
@@ -258,7 +429,7 @@ export class CameraAccessory extends DeviceAccessory {
    * Handle requests to set the "HomeKit Camera Active" characteristic
    */
   handleHomeKitCameraActiveSet(value) {
-    this.platform.log.debug(this.accessory.displayName, 'SET HomeKitCameraActive:', value);
+    this.platform.log.debug(this.accessory.displayName, 'Will not SET HomeKitCameraActive:', value);
   }
 
   /**
@@ -325,24 +496,21 @@ export class CameraAccessory extends DeviceAccessory {
       .getCharacteristic(this.characteristic.MotionDetected)
       .onGet(this.handleMotionDetectedGet.bind(this));
 
-    this.eufyDevice.on('motion detected', (device: Device, motion: boolean) =>
-      this.onDeviceMotionDetectedPushNotification(device, motion),
-    );
-
-    this.eufyDevice.on('person detected', (device: Device, motion: boolean) =>
-      this.onDeviceMotionDetectedPushNotification(device, motion),
-    );
-
-    this.eufyDevice.on('pet detected', (device: Device, motion: boolean) =>
-      this.onDeviceMotionDetectedPushNotification(device, motion),
-    );
+    this.eufyDevice.on('property changed', this.onPropertyChange.bind(this));
 
     return service as Service;
   }
 
   async handleMotionDetectedGet(): Promise<CharacteristicValue> {
     try {
-      const currentValue = this.eufyDevice.getPropertyValue(PropertyName.DeviceMotionDetected);
+      let currentValue = this.eufyDevice.getPropertyValue(PropertyName.DeviceMotionDetected);
+      if (this.recordingDelegate?.isRecording()) {
+        currentValue = true; // assume ongoing motion when HKSV is recording
+        // HKSV will remove unnecessary bits of the recorded video itself when there is no more motion
+        // but since eufy-security-client doesn't return a proper value for MotionDetected while
+        // streaming we assume motion to be ongoing
+        // otherwise the recording would almost always end prematurely
+      }
       this.platform.log.debug(this.accessory.displayName, 'GET DeviceMotionDetected:', currentValue);
       return currentValue as boolean;
     } catch {
@@ -351,29 +519,26 @@ export class CameraAccessory extends DeviceAccessory {
     }
   }
 
-  private onDeviceMotionDetectedPushNotification(
-    device: Device,
-    motion: boolean,
-  ): void {
-    if (motion) {
-      this.motionTimeout = setTimeout(() => {
-        this.platform.log.debug(this.accessory.displayName, 'Reseting motion through timout.');
+  private onPropertyChange(_: Device, name: string, value: PropertyValue) {
+    const motionValues = [
+      'motionDetected',
+      'personDetected',
+      'petDetected',
+    ];
+    if (motionValues.indexOf(name) !== -1) {
+      const isRecording = this.recordingDelegate?.isRecording();
+      if (!isRecording) {
+        const motionDetected = value as boolean;
+        this.platform.log.debug(this.accessory.displayName, 'ON DeviceMotionDetected:', motionDetected);
         this.service
           .getCharacteristic(this.characteristic.MotionDetected)
-          .updateValue(false);
-      }, 15000);
-    } else {
-      if (this.motionTimeout) {
-        clearTimeout(this.motionTimeout);
+          .updateValue(motionDetected);
+      } else {
+        this.platform.log.debug(this.accessory.displayName, 
+          'ignore change of motion detected state, since HKSV is still recording.' +
+          'The recording controller will reset the motion state afterwards.');
       }
     }
-    this.platform.log.debug(this.accessory.displayName, 'ON DeviceMotionDetected:', motion);
-    if (this.cameraConfig.useCachedLocalLivestream && this.streamingDelegate && motion) {
-      this.streamingDelegate.prepareCachedStream();
-    }
-    this.service
-      .getCharacteristic(this.characteristic.MotionDetected)
-      .updateValue(motion);
   }
 
   async handleEnableGet(): Promise<CharacteristicValue> {

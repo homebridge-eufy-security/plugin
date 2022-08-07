@@ -157,8 +157,6 @@ export class LocalLivestreamManager extends EventEmitter {
 
   private proxyStreams: Set<ProxyStream> = new Set<ProxyStream>();
 
-  private cacheEnabled: boolean;
-
   private connectionTimeout?: NodeJS.Timeout;
   private terminationTimeout?: NodeJS.Timeout;
 
@@ -168,17 +166,12 @@ export class LocalLivestreamManager extends EventEmitter {
   private readonly platform: EufySecurityPlatform;
   private readonly device: Camera;
   
-  constructor(platform: EufySecurityPlatform, device: Camera, cacheEnabled: boolean, log: Logger) {    
+  constructor(platform: EufySecurityPlatform, device: Camera, log: Logger) {    
     super();
 
     this.log = log;
     this.platform = platform;
     this.device = device;
-
-    this.cacheEnabled = cacheEnabled;
-    if (this.cacheEnabled) {
-      this.log.debug('Livestream caching for ' + this.device.getName() + ' is enabled.');
-    }
 
     this.stationStream = null;
     this.livestreamStartedAt = null;
@@ -408,26 +401,7 @@ export class LocalLivestreamManager extends EventEmitter {
                     this.proxyStreams.size + ' instance(s) using the livestream.');
       if(this.proxyStreams.size === 0) {
         this.log.debug(this.device.getName(), 'All proxy instances to the livestream have terminated.');
-        // check if minimum remaining livestream duration is more than 20 percent
-        // of maximum streaming duration or at least 20 seconds
-        // if so the termination of the livestream is scheduled
-        // if a new livestream is initiated in that time (e.g. fetching a snapshot)
-        // the cached livestream can be used
-        // caching must also be enabled of course
-        const maxStreamingDuration = this.platform.eufyClient.getCameraMaxLivestreamDuration();
-        const runtime = (Date.now() - ((this.livestreamStartedAt !== null) ? this.livestreamStartedAt! : Date.now())) / 1000;
-        if (((maxStreamingDuration - runtime) > maxStreamingDuration*0.2) && (maxStreamingDuration - runtime) > 20 && this.cacheEnabled) {
-          this.log.debug(
-            this.device.getName(),
-            'Sufficient remaining livestream duration available. (' + (maxStreamingDuration - runtime) + ' seconds left)');
-          this.scheduleLivestreamCacheTermination(Math.floor(maxStreamingDuration - runtime));
-        } else {
-          // stop livestream immediately
-          if (this.cacheEnabled) {
-            this.log.debug(this.device.getName(), 'Not enough remaining livestream duration. Emptying livestream cache.');
-          }
-          this.stopLocalLiveStream();
-        }
+        this.stopLocalLiveStream();
       }
     }
   }

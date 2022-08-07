@@ -17,12 +17,12 @@ export type CameraConfig = {
   videoConfigEna: boolean;
   enableCamera: boolean;
   forcerefreshsnap: boolean;
-  useCachedLocalLivestream: boolean;
   refreshSnapshotIntervalMinutes?: number;
   snapshotHandlingMethod?: number;
   immediateRingNotificationWithoutSnapshot?: boolean;
   delayCameraSnapshot?:boolean;
-  talkback: boolean;
+  talkback?: boolean;
+  hsv?: boolean;
 };
 
 export type VideoConfig = {
@@ -48,6 +48,7 @@ export type VideoConfig = {
   debug?: boolean;
   debugReturn?: boolean;
   useSeparateProcesses?: boolean;
+  crop?: boolean;
 };
 
 export type StationConfig = {

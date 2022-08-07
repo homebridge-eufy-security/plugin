@@ -19,6 +19,7 @@ export const DEFAULT_CAMERACONFIG_VALUES = {
   unbridge: false,
   enableButton: true,
   motionButton: true,
+  hsv: false,
   rtsp: false,
   enableCamera: false,
   forcerefreshsnap: false,

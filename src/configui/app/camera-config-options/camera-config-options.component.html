@@ -10,8 +10,6 @@
     <div *ngIf="isCamera">
       <hr />
       <app-enable-camera [accessory]="accessory"></app-enable-camera>
-      <hr />
-      <app-livestream-cache [accessory]="accessory"></app-livestream-cache>
       <hr *ngIf="supportsRTSP" />
       <app-rtsp-streaming [accessory]="accessory" *ngIf="supportsRTSP"></app-rtsp-streaming>
       <hr />
@@ -33,6 +31,8 @@
       
       <!-- Put config options components here -->
       <app-camera-buttons [accessory]="accessory"></app-camera-buttons>
+      <hr />
+      <app-enable-hsv [accessory]="accessory"></app-enable-hsv>
       <hr />
       <app-unbridge-accessory [accessory]="accessory"></app-unbridge-accessory>
       

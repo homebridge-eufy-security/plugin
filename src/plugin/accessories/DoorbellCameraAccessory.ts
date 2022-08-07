@@ -1,4 +1,4 @@
-import { Service, PlatformAccessory } from 'homebridge';
+import { Service, PlatformAccessory, DoorbellOptions } from 'homebridge';
 
 import { EufySecurityPlatform } from '../platform';
 
@@ -26,7 +26,7 @@ export class DoorbellCameraAccessory extends CameraAccessory {
     accessory: PlatformAccessory,
     eufyDevice: DoorbellCamera,
   ) {
-    super(platform, accessory, eufyDevice);
+    super(platform, accessory, eufyDevice, true);
     this.DoorbellCamera = eufyDevice;
 
     this.platform.log.debug(this.accessory.displayName, 'Constructed Doorbell');
@@ -52,8 +52,24 @@ export class DoorbellCameraAccessory extends CameraAccessory {
       this.onDeviceRingsPushNotification(),
     );
 
-    this.doorbellService.setPrimaryService(true);
+    if (this.cameraControllerOptions) {
+      const doorbellOptions: DoorbellOptions = {
+        externalDoorbellService: this.doorbellService,
+      };
+      const controller = new this.platform.api.hap.DoorbellController({...this.cameraControllerOptions, ...doorbellOptions});
+      const operatingModeService = accessory.getService(this.platform.api.hap.Service.CameraOperatingMode);
+      if (operatingModeService) {
+        // if we don't remove the CameraOperatingMode Service from the accessory there might be
+        // a crash on startup of the plugin
+        accessory.removeService(operatingModeService);
+      }
+      this.streamingDelegate?.setController(controller);
+      this.recordingDelegate?.setController(controller);
+      accessory.configureController(controller);
+      this.cameraSetup(accessory);
+    }
 
+    this.doorbellService.setPrimaryService(true);
   }
 
   // We receive 2 push when Doorbell ring, mute the second by checking if we already send
@@ -62,9 +78,6 @@ export class DoorbellCameraAccessory extends CameraAccessory {
     if (!this.ring_triggered) {
       this.ring_triggered = true;
       this.platform.log.debug(this.accessory.displayName, 'DoorBell ringing');
-      if (this.cameraConfig.useCachedLocalLivestream && this.streamingDelegate) {
-        this.streamingDelegate.prepareCachedStream();
-      }
       this.doorbellService
         .getCharacteristic(this.platform.Characteristic.ProgrammableSwitchEvent)
         .updateValue(this.platform.Characteristic.ProgrammableSwitchEvent.SINGLE_PRESS);
