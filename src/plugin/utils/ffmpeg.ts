@@ -565,15 +565,19 @@ export class FFmpegParameters {
         filters.splice(noneFilter, 1);
       }
       if (noneFilter < 0 && this.width && this.height) {
-        const resizeFilter = 'scale=' +
-        '\'min(' + this.width + ',iw)\'' +
-        ':' +
-        '\'min(' + this.height + ',iw)\'' +
-        ':force_original_aspect_ratio=' + (this.crop ? 'increase' : 'decrease');
-        filters.push(resizeFilter);
-        filters.push('scale=\'trunc(iw/2)*2:trunc(ih/2)*2\''); // Force to fit encoder restrictions
         if (this.crop) {
+          const resizeFilter = `scale=${this.width}:${this.height}:force_original_aspect_ratio=increase`;
+          filters.push(resizeFilter);
           filters.push(`crop=${this.width}:${this.height}`);
+          filters.push(`scale='trunc(${this.width}/2)*2:trunc(${this.height}/2)*2'`); // Force to fit encoder restrictions
+        } else {
+          const resizeFilter = 'scale=' +
+          '\'min(' + this.width + ',iw)\'' +
+          ':' +
+          '\'min(' + this.height + ',ih)\'' +
+          ':force_original_aspect_ratio=decrease';
+          filters.push(resizeFilter);
+          filters.push('scale=\'trunc(iw/2)*2:trunc(ih/2)*2\''); // Force to fit encoder restrictions
         }
       }
       if (filters.length > 0) {
@@ -603,15 +607,19 @@ export class FFmpegParameters {
         filters.splice(noneFilter, 1);
       }
       if (noneFilter < 0 && this.width && this.height) {
-        const resizeFilter = 'scale=' +
-        '\'min(' + this.width + ',iw)\'' +
-        ':' +
-        '\'min(' + this.height + ',iw)\'' +
-        ':force_original_aspect_ratio=' + (this.crop ? 'increase' : 'decrease');
-        filters.push(resizeFilter);
-        filters.push('scale=\'trunc(iw/2)*2:trunc(ih/2)*2\''); // Force to fit encoder restrictions
         if (this.crop) {
+          const resizeFilter = `scale=${this.width}:${this.height}:force_original_aspect_ratio=increase`;
+          filters.push(resizeFilter);
           filters.push(`crop=${this.width}:${this.height}`);
+          filters.push(`scale='trunc(${this.width}/2)*2:trunc(${this.height}/2)*2'`); // Force to fit encoder restrictions
+        } else {
+          const resizeFilter = 'scale=' +
+          '\'min(' + this.width + ',iw)\'' +
+          ':' +
+          '\'min(' + this.height + ',ih)\'' +
+          ':force_original_aspect_ratio=decrease';
+          filters.push(resizeFilter);
+          filters.push('scale=\'trunc(iw/2)*2:trunc(ih/2)*2\''); // Force to fit encoder restrictions
         }
       }
       if (filters.length > 0) {
