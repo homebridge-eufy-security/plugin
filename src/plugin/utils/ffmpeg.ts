@@ -433,7 +433,7 @@ export class FFmpegParameters {
         const resizeFilter = 'scale=' +
         '\'min(' + this.width + ',iw)\'' +
         ':' +
-        '\'min(' + this.height + ',iw)\'' +
+        '\'min(' + this.height + ',ih)\'' +
         ':force_original_aspect_ratio=decrease';
         filters.push(resizeFilter);
         filters.push('scale=\'trunc(iw/2)*2:trunc(ih/2)*2\''); // Force to fit encoder restrictions
@@ -468,7 +468,7 @@ export class FFmpegParameters {
         const resizeFilter = 'scale=' +
         '\'min(' + this.width + ',iw)\'' +
         ':' +
-        '\'min(' + this.height + ',iw)\'' +
+        '\'min(' + this.height + ',ih)\'' +
         ':force_original_aspect_ratio=decrease';
         filters.push(resizeFilter);
         filters.push('scale=\'trunc(iw/2)*2:trunc(ih/2)*2\''); // Force to fit encoder restrictions
