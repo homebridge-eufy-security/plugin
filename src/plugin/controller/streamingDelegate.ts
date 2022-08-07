@@ -140,6 +140,8 @@ export class StreamingDelegate implements CameraStreamingDelegate {
   async prepareStream(request: PrepareStreamRequest, callback: PrepareStreamCallback): Promise<void> {
     const ipv6 = request.addressVersion === 'ipv6';
 
+    this.log.debug(this.cameraName, `stream prepare request with session id ${request.sessionID} was received.`);
+
     const options: pickPortOptions = {
       type: 'udp',
       ip: ipv6 ? '::' : '0.0.0.0',
@@ -329,6 +331,7 @@ export class StreamingDelegate implements CameraStreamingDelegate {
   handleStreamRequest(request: StreamingRequest, callback: StreamRequestCallback): void {
     switch (request.type) {
       case StreamRequestTypes.START:
+        this.log.debug(this.cameraName, `Received request to start stream with id ${request.sessionID}`);
         this.startStream(request, callback);
         break;
       case StreamRequestTypes.RECONFIGURE:
