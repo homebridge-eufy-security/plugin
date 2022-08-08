@@ -2,7 +2,13 @@
 
 You can find the complete detailled changelog for every beta release [here](https://github.com/homebridge-eufy-security/plugin/releases).
 
-## 2.2.0-beta.1 - latest changes
+## 2.2.0-beta.2 - latest changes
+
+### Fixed
+
+- Switches to turn camera and motion on/off should now be removed from HomeKit if the user switches the configuration
+
+## 2.2.0 (Beta)
 
 ### Added
 

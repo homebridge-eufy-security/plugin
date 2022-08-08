@@ -207,6 +207,13 @@ export class CameraAccessory extends DeviceAccessory {
       
     } else {
       this.platform.log.debug(this.accessory.displayName, 'has a motion sensor.');
+
+      // remove camera operating mode service if the user has disabled the camera through the config
+      const operatingModeService = accessory.getService(this.platform.api.hap.Service.CameraOperatingMode);
+      if (operatingModeService) {
+        this.platform.log.debug(this.accessory.displayName, 'removing CameraOperatingMode service.');
+        accessory.removeService(operatingModeService);
+      }
     }
 
     try {
@@ -231,6 +238,13 @@ export class CameraAccessory extends DeviceAccessory {
       } else {
         // eslint-disable-next-line max-len
         this.platform.log.debug(this.accessory.displayName, 'Looks like not compatible with isEnabled or this has been disabled within configuration');
+
+        // remove enableButton service if the user has disabled the it through the config
+        const enableButtonService = accessory.getService('Enabled');
+        if (enableButtonService) {
+          this.platform.log.debug(this.accessory.displayName, 'removing enableButton service.');
+          accessory.removeService(enableButtonService);
+        }
       }
     } catch (Error) {
       this.platform.log.error(this.accessory.displayName, 'raise error to check and attach switchEnabledService.', Error);
@@ -258,6 +272,13 @@ export class CameraAccessory extends DeviceAccessory {
       } else {
         // eslint-disable-next-line max-len
         this.platform.log.debug(this.accessory.displayName, 'Looks like not compatible with isMotionDetectionEnabled or this has been disabled within configuration');
+
+        // remove enableButton service if the user has disabled the it through the config
+        const motionButtonService = accessory.getService('Motion');
+        if (motionButtonService) {
+          this.platform.log.debug(this.accessory.displayName, 'removing motionButton service.');
+          accessory.removeService(motionButtonService);
+        }
       }
     } catch (Error) {
       this.platform.log.error(this.accessory.displayName, 'raise error to check and attach switchMotionService.', Error);
