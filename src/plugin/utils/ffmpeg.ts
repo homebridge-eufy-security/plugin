@@ -211,7 +211,6 @@ export class FFmpegParameters {
   }
 
   public setInputSource(value: string) {
-    // TODO: check for errors
     this.inputSoure = `-i ${value}`;
   }
 

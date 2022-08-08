@@ -38,8 +38,6 @@ export class ConfigOptionsInterpreter {
   }
 
   protected async updateConfig(options: any, accessory?: Accessory) {
-    // TODO: test extensively
-    // TODO: remove config since it initializes too late if member was inputed to child --> stack overflow
     let config = await this.pluginService.getConfig();
 
     if (!accessory) {
