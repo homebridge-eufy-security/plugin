@@ -153,6 +153,7 @@ export class SnapshotManager extends EventEmitter {
     if (this.currentSnapshot) {
       const diff = Math.abs((Date.now() - this.currentSnapshot.timestamp) / 1000);
       if (diff <= 15) {
+        this.log.debug(this.device.getName(), `returning snapshot that is just ${diff} seconds old.`);
         return this.resizeSnapshot(this.currentSnapshot.image, request);
       }
     }
@@ -171,12 +172,15 @@ export class SnapshotManager extends EventEmitter {
     try {
       if (this.cameraConfig.snapshotHandlingMethod === 1) {
         // return a preferablly most recent snapshot every time
+        this.log.debug(this.device.getName(), 'trying to get newest possible snapshot from camera.');
         snapshot = await this.getNewestSnapshotBuffer();
       } else if (this.cameraConfig.snapshotHandlingMethod === 2) {
         // balanced method
+        this.log.debug(this.device.getName(), 'trying to get snapshot from camera with balanced method.');
         snapshot = await this.getBalancedSnapshot();
       } else if (this.cameraConfig.snapshotHandlingMethod === 3) {
         // fastest method with potentially old snapshots
+        this.log.debug(this.device.getName(), 'trying to return cloud snapshot.');
         snapshot = await this.getNewestCloudSnapshot();
       } else {
         return Promise.reject('No suitable handling method for snapshots defined');
