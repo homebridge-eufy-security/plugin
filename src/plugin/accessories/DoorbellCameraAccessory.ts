@@ -63,6 +63,14 @@ export class DoorbellCameraAccessory extends CameraAccessory {
         // a crash on startup of the plugin
         accessory.removeService(operatingModeService);
       }
+      const rtpStreamingManagementService = accessory.getService(this.platform.api.hap.Service.CameraRTPStreamManagement);
+      if (rtpStreamingManagementService) {
+        // reset rtp stream configuration on startup
+        // this way codec changes are possible after
+        // the camera has been added to HomeKit
+        this.platform.log.debug(this.accessory.displayName, 'remove rtp stream managment for real...');
+        accessory.removeService(rtpStreamingManagementService);
+      }
       this.streamingDelegate?.setController(controller);
       this.recordingDelegate?.setController(controller);
       accessory.configureController(controller);
