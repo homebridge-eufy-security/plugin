@@ -4,6 +4,10 @@ You can find the complete detailled changelog for every beta release [here](http
 
 ## 2.2.0-beta.2 - latest changes
 
+### Changed
+
+- Improved verbose output for snapshot and ffmpeg processes
+
 ### Fixed
 
 - Switches to turn camera and motion on/off should now be removed from HomeKit if the user switches the configuration
