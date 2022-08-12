@@ -7,6 +7,7 @@ You can find the complete detailled changelog for every beta release [here](http
 ### Changed
 
 - Improved verbose output for snapshot and ffmpeg processes
+- Overhauled design of advanced video config
 
 ### Fixed
 
@@ -24,6 +25,12 @@ You can find the complete detailled changelog for every beta release [here](http
 
 - If HomeKit Secure Video is enabled, motion detection will not work while a recording is active. This is due to technical limitations for now. (see #6)
 - Removed livestream caching (a.k.a `useCachedLocalLivestream`) since the continued streaming could cause issues with HKSV and motion detection in general
+- Overhauled design of advanced video config
+- Improved verbose output for snapshot and ffmpeg processes
+
+### Fixed
+
+- Switches to turn camera and motion on/off should now be removed from HomeKit if the user switches the configuration
 
 ## 2.1.0 (RC)
 
