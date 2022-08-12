@@ -70,6 +70,7 @@ export class SnapshotManager extends EventEmitter {
   private refreshProcessRunning = false;
   private lastEvent = 0;
   private lastRingEvent = 0;
+  private lastPictureUrlChanged = 0;
 
   private snapshotRefreshTimer?: NodeJS.Timeout;
 
@@ -231,7 +232,7 @@ export class SnapshotManager extends EventEmitter {
       const newestEvent = (this.lastRingEvent > this.lastEvent) ? this.lastRingEvent : this.lastEvent;
       const diff = (Date.now() - newestEvent) / 1000;
       if (diff < 15) { // wait for cloud or camera snapshot
-        this.log.debug(this.device.getName(), 'Waiting on cloud snapshot...');
+        this.log.debug(this.device.getName(), 'Waiting on cloud or camera snapshot...');
         if (snapshotTimeout) {
           clearTimeout(snapshotTimeout);
         }
@@ -265,13 +266,30 @@ export class SnapshotManager extends EventEmitter {
       const diff = (Date.now() - newestEvent) / 1000;
       if (diff < 15) { // wait for cloud snapshot
         this.log.debug(this.device.getName(), 'Waiting on cloud snapshot...');
+
         const snapshotTimeout = setTimeout(() => {
           reject('No snapshot has been retrieved in time from eufy cloud.');
         }, 15000);
 
+        const pictureUrlTimeout = setTimeout(() => {
+          const diff = (Date.now() - this.lastPictureUrlChanged) / 1000;
+          if (diff > 5) {
+            // eslint-disable-next-line max-len
+            this.log.debug(this.device.getName(), 'There was no new cloud snapshot announced in time, although an event occured. Trying to return last cloud snapshot.');
+            if (this.currentSnapshot) {
+              resolve(this.currentSnapshot.image);
+            } else {
+              reject('No snapshot in memory');
+            }
+          }
+        }, 2500);
+
         this.once('new snapshot', () => {
           if (snapshotTimeout) {
             clearTimeout(snapshotTimeout);
+          }
+          if (pictureUrlTimeout) {
+            clearTimeout(pictureUrlTimeout);
           }
 
           if (this.currentSnapshot) {
@@ -305,6 +323,7 @@ export class SnapshotManager extends EventEmitter {
 
   private async onPropertyValueChanged(device: Device, name: string, value: PropertyValue): Promise<void> {
     if (name === 'pictureUrl') {
+      this.lastPictureUrlChanged = Date.now();
       this.handlePictureUrl(value as string);
     }
   }
