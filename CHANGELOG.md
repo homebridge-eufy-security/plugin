@@ -13,6 +13,7 @@ You can find the complete detailled changelog for every beta release [here](http
 
 - Improved verbose output for snapshot and ffmpeg processes
 - Overhauled design of advanced video config
+- Added explanatory description to snapshot handling method.
 
 ### Fixed
 
@@ -35,6 +36,7 @@ You can find the complete detailled changelog for every beta release [here](http
 - Removed livestream caching (a.k.a `useCachedLocalLivestream`) since the continued streaming could cause issues with HKSV and motion detection in general
 - Overhauled design of advanced video config
 - Improved verbose output for snapshot and ffmpeg processes
+- Added explanatory description to snapshot handling method.
 
 ### Fixed
 

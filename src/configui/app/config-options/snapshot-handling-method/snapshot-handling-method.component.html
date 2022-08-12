@@ -8,9 +8,16 @@
         <option [ngValue]=2>Balanced</option>
         <option [ngValue]=3>Cloud Snapshots</option>
       </select>
-  </div>
+    </div>
 
   </div>
+
+  <div class="alert alert-warning" role="alert" *ngIf="value === 1">
+    <b>Caution!</b> While Force Refresh Snapshots will deliver most up-to-date snapshots, this can have negative effects
+    on HomeKit behaviour. For example starting a livestream might be delayed as a side effect by this option.
+    See <a href="https://github.com/homebridge-eufy-security/plugin/wiki/Streaming-Settings#streams-take-a-long-time-to-start" target="_blank" rel="noopener noreferrer">here</a> for more informtaion.
+  </div>
+
   <small *ngIf="value === 1"><i>
     <b>Description:</b> The plugin will try to get the latest possible snapshot. If none is present the plugin will
     start a livestream to render one frame.<br />
