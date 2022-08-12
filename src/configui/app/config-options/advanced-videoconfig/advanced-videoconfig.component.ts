@@ -5,6 +5,8 @@ import { ConfigOptionsInterpreter } from '../config-options-interpreter';
 
 import { VideoConfig } from '../../../../plugin/utils/configTypes';
 
+import { faQuestionCircle } from '@fortawesome/free-regular-svg-icons';
+
 @Component({
   selector: 'app-advanced-videoconfig',
   templateUrl: './advanced-videoconfig.component.html',
@@ -13,6 +15,9 @@ import { VideoConfig } from '../../../../plugin/utils/configTypes';
 export class AdvancedVideoconfigComponent
   extends ConfigOptionsInterpreter
   implements OnInit {
+
+  faQuestionCircle = faQuestionCircle;
+
   constructor(pluginService: PluginService) {
     super(pluginService);
   }
