@@ -84,6 +84,7 @@ export class FFmpegParameters {
   public debug: boolean;
 
   // default parameters
+  processor?: string;
   private hideBanner = true;
   private useWallclockAsTimestamp = true;
 
@@ -256,6 +257,9 @@ export class FFmpegParameters {
   ) {
 
     const videoConfig = cameraConfig.videoConfig ??= {};
+    if (videoConfig.videoProcessor && videoConfig.videoProcessor !== '') {
+      this.processor = videoConfig.videoProcessor;
+    }
     if (videoConfig.readRate) {
       this.readrate = videoConfig.readRate;
     }
@@ -392,6 +396,10 @@ export class FFmpegParameters {
   public setupForRecording(videoConfig: VideoConfig, configuration: CameraRecordingConfiguration) {
     this.movflags = 'frag_keyframe+empty_moov+default_base_moof';
     this.maxMuxingQueueSize = 1024;
+
+    if (videoConfig.videoProcessor && videoConfig.videoProcessor !== '') {
+      this.processor = videoConfig.videoProcessor;
+    }
 
     if (this.isVideo) {
       if (videoConfig.vcodec && videoConfig.vcodec !== '') {
@@ -743,6 +751,14 @@ export class FFmpegParameters {
     }
     return 'Starting unknown stream';
   }
+
+  public hasCustomFfmpeg(): boolean {
+    return (this.processor !== undefined);
+  }
+
+  public getCustomFfmpeg(): string {
+    return (this.hasCustomFfmpeg()) ? this.processor! : '';
+  }
 }
 
 export class FFmpeg extends EventEmitter {
@@ -773,6 +789,10 @@ export class FFmpeg extends EventEmitter {
       this.parameters = parameters;
     } else {
       this.parameters = [parameters];
+    }
+
+    if (this.parameters[0].hasCustomFfmpeg()) {
+      this.ffmpegExec = this.parameters[0].getCustomFfmpeg();
     }
   }
 

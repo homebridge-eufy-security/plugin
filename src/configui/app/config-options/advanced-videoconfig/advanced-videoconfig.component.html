@@ -44,6 +44,19 @@
           </li>
 
           <li class="list-group-item">
+            <label for="videoProcessorInput" class="form-label">
+              <div class="form-check">
+                <input class="form-check-input" type="checkbox" id="videoProcessor" [checked]="videoProcessor !== undefined ? true: null" (change)="videoProcessor = (videoProcessor === undefined) ? '' : undefined; update();">
+                <label class="form-check-label" for="videoProcessor">
+                  (path to) ffmpeg executable
+                  <fa-icon [icon]="faQuestionCircle" class="m-1" ngbTooltip="If you have another ffmpeg binary (e.g. self compiled) that you want to use, you can enter the path here. By default the npm package 'ffmpeg-for-homebridge' will be used."></fa-icon>
+                </label>
+              </div>
+            </label>
+            <input type="text" id="videoProcessorInput" [(ngModel)]="videoProcessor" placeholder="ffmpeg-for-homebridge" class="form-control" [attr.disabled]="(videoProcessor === undefined) ? true : null" (change)="update()">
+          </li>
+
+          <li class="list-group-item">
             <div class="form-check">
               <input class="form-check-input" type="checkbox" id="useSeparateProcesses" [(ngModel)]="useSeparateProcesses" (change)="update()">
               <label class="form-check-label" for="useSeparateProcesses">

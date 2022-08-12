@@ -7,6 +7,7 @@ You can find the complete detailled changelog for every beta release [here](http
 ### Added
 
 - Added additional audio settings in advanced video configuration
+- Setting to choose custom path to ffmpeg executable.
 
 ### Changed
 
@@ -25,6 +26,7 @@ You can find the complete detailled changelog for every beta release [here](http
 - Plugin will show warnings if it encounters a captcha or 2FA request while logging in.
 - Setting to crop image to requested resolution. This might help with streaming issues when the HomeKit Controller stops the stream due to wrong stream configuration.
 - Added additional audio settings in advanced video configuration
+- Setting to choose custom path to ffmpeg executable.
 
 ### Changed
 

@@ -54,6 +54,7 @@ export class AdvancedVideoconfigComponent
   audioBitrate: number | undefined = undefined;
   acodecHK: string | undefined = undefined;
   acodecOptions: string | undefined = undefined;
+  videoProcessor: string | undefined = undefined;
 
   preset = 0;
   presetDescription?: string;
@@ -281,6 +282,9 @@ export class AdvancedVideoconfigComponent
     }
     if (this.acodecOptions !== undefined) {
       newConfig['acodecOptions'] = this.acodecOptions;
+    }
+    if (this.videoProcessor && this.videoProcessor !== '') {
+      newConfig['videoProcessor'] = this.videoProcessor;
     }
 
     this.updateConfig(

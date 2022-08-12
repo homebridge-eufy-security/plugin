@@ -52,6 +52,7 @@ export type VideoConfig = {
   debugReturn?: boolean;
   useSeparateProcesses?: boolean;
   crop?: boolean;
+  videoProcessor?: string;
 };
 
 export type StationConfig = {
