@@ -79,7 +79,13 @@ export class CameraAccessory extends DeviceAccessory {
           samplerate = AudioStreamingSamplerate.KHZ_24;
         }
 
+        let audioCodecType = AudioStreamingCodecType.AAC_ELD;
+        if (this.cameraConfig.videoConfig?.acodecHK) {
+          audioCodecType = this.cameraConfig.videoConfig.acodecHK as AudioStreamingCodecType;
+        }
+
         this.platform.log.debug(this.accessory.displayName, `Audio sample rate set to ${samplerate} kHz.`);
+        this.platform.log.debug(this.accessory.displayName, `Audio Codec for HK: ${audioCodecType}`);
 
         this.cameraControllerOptions = {
           cameraStreamCount: this.cameraConfig.videoConfig?.maxStreams || 2, // HomeKit requires at least 2 streams, but 1 is also just fine
@@ -117,10 +123,8 @@ export class CameraAccessory extends DeviceAccessory {
               twoWayAudio: this.cameraConfig.talkback,
               codecs: [
                 {
-                  type: AudioStreamingCodecType.AAC_ELD,
+                  type: audioCodecType,
                   samplerate: samplerate,
-                  /*type: AudioStreamingCodecType.OPUS,
-                                samplerate: AudioStreamingSamplerate.KHZ_24*/
                 },
               ],
             },

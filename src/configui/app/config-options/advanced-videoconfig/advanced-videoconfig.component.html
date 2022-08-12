@@ -228,16 +228,32 @@
         <ul class="list-group list-group-flush">
 
           <li class="list-group-item">
+            <label for="acodecHKInput" class="form-label">
+              <div class="form-check">
+                <input class="form-check-input" type="checkbox" id="acodecHK" [checked]="acodecHK !== undefined ? true: null" (change)="acodecHK = (acodecHK === undefined) ? 'AAC-eld' : undefined; update();">
+                <label class="form-check-label" for="acodecHK">
+                  Audio Codec that will be requested by HomeKit.
+                  <fa-icon [icon]="faQuestionCircle" class="m-1" ngbTooltip="Set the audio codec that will be requested by the HomeKit controller. The actual used codec will be determined by the plugin based by the request and the next setting for forced codec."></fa-icon>
+                </label>
+              </div>
+            </label>
+            <select class="form-select" id="acodecHKInput" [(ngModel)]="acodecHK" aria-label="acodecHK" [attr.disabled]="acodecHK === undefined ? true : null" (change)="update()">
+              <option [ngValue]="'AAC-eld'">AAC-eld</option>
+              <option [ngValue]="'OPUS'">OPUS</option>
+            </select>
+          </li>
+
+          <li class="list-group-item">
             <label for="acodecInput" class="form-label">
               <div class="form-check">
                 <input class="form-check-input" type="checkbox" id="acodec" [checked]="acodec !== undefined ? true: null" (change)="acodec = (acodec === undefined) ? '' : undefined; update();">
                 <label class="form-check-label" for="acodec">
-                  acodec
-                  <fa-icon [icon]="faQuestionCircle" class="m-1" ngbTooltip="Choose which audio codec should be used to encode the audio stream for HomeKit."></fa-icon>
+                  Forced audio codec
+                  <fa-icon [icon]="faQuestionCircle" class="m-1" ngbTooltip="Choose which audio codec should be used to encode the audio stream for HomeKit. This may overwrite the previous setting, but be aware that audio streaming will fail if these settings differ."></fa-icon>
                 </label>
               </div>
             </label>
-            <input type="text" id="acodecInput" [(ngModel)]="acodec" placeholder="libfdk_aac" class="form-control" [attr.disabled]="(acodec === undefined) ? true : null" (change)="update()">
+            <input type="text" id="acodecInput" [(ngModel)]="acodec" [attr.placeholder]="acodecPlaceholder" class="form-control" [attr.disabled]="(acodec === undefined) ? true : null" (change)="update()">
           </li>
 
           <li class="list-group-item">
@@ -250,7 +266,7 @@
                 </label>
               </div>
             </label>
-            <select class="form-select" [(ngModel)]="audioSampleRate" aria-label="Samplerate" [attr.disabled]="audioSampleRate === undefined ? true : null" (change)="update()">
+            <select class="form-select" id="samplerateInput" [(ngModel)]="audioSampleRate" aria-label="Samplerate" [attr.disabled]="audioSampleRate === undefined ? true : null" (change)="update()">
               <option [ngValue]=8>8 kHz</option>
               <option [ngValue]=16>16 kHz</option>
               <option [ngValue]=24>24 kHz</option>

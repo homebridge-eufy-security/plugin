@@ -52,9 +52,12 @@ export class AdvancedVideoconfigComponent
   crop: boolean | undefined = undefined;
   audioSampleRate: number | undefined = undefined;
   audioBitrate: number | undefined = undefined;
+  acodecHK: string | undefined = undefined;
 
   preset = 0;
   presetDescription?: string;
+
+  acodecPlaceholder = 'libfdk_aac';
 
   async readValue() {
     const config = await this.getCameraConfig(this.accessory?.uniqueId || '');
@@ -67,7 +70,22 @@ export class AdvancedVideoconfigComponent
       });
     }
 
+    this.placeholderUpdate();
     this.updatePreset();
+  }
+
+  private placeholderUpdate() {
+    switch (this.acodecHK) {
+      case 'ACC-eld':
+        this.acodecPlaceholder = 'libfdk_aac';
+        break;
+      case 'OPUS':
+        this.acodecPlaceholder = 'libopus';
+        break;
+      default:
+        this.acodecPlaceholder = 'libfdk_aac';
+        break;
+    }
   }
 
   loadPreset() {
@@ -253,6 +271,9 @@ export class AdvancedVideoconfigComponent
     if (this.audioBitrate !== undefined) {
       newConfig['audioBitrate'] = this.audioBitrate;
     }
+    if (this.acodecHK && this.acodecHK !== '') {
+      newConfig['acodecHK'] = this.acodecHK;
+    }
 
     this.updateConfig(
       {
@@ -261,6 +282,7 @@ export class AdvancedVideoconfigComponent
       this.accessory,
     );
 
+    this.placeholderUpdate();
     this.updatePreset();
   }
 }

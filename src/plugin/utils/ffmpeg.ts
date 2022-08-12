@@ -310,7 +310,15 @@ export class FFmpegParameters {
     }
     if (this.isAudio) {
       const req = request as StartStreamRequest;
-      let codec = req.audio.codec === AudioStreamingCodecType.OPUS ? 'libopus' : 'libfdk_aac';
+      let codec = 'libfdk_aac';
+      switch (req.audio.codec) {
+        case AudioStreamingCodecType.OPUS:
+          codec = 'libopus';
+          break;
+        default:
+          codec = 'libfdk_aac';
+          break;
+      }
       let codecOptions = req.audio.codec === AudioStreamingCodecType.OPUS ? '-application lowdelay' : '-profile:a aac_eld';
       if (videoConfig.acodec && videoConfig.acodec !== '') {
         codec = videoConfig.acodec;
@@ -380,7 +388,6 @@ export class FFmpegParameters {
     this.maxMuxingQueueSize = 1024;
 
     if (this.isVideo) {
-
       if (videoConfig.vcodec && videoConfig.vcodec !== '') {
         this.codec = videoConfig.vcodec;
       } else {
