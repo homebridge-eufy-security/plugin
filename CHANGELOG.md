@@ -2,11 +2,11 @@
 
 You can find the complete detailled changelog for every beta release [here](https://github.com/homebridge-eufy-security/plugin/releases).
 
-## 2.1.0-rc.2 - latest changes
+## 2.1.0-rc.3 - latest changes
 
 ### Fixed
 
-- Minor bug that might have caused incorrect calculated output resolution
+- Bug that caused faulty audio encoding parameters on certain codecs.
 
 ## 2.1.0 (RC)
 
