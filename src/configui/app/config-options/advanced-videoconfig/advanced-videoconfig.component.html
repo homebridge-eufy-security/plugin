@@ -160,7 +160,7 @@
                 </label>
               </div>
             </label>
-            <input type="text" id="encoderOptionsInput" [(ngModel)]="encoderOptions" placeholder="-preset ultrafast -tune zerolatency" class="form-control" [attr.disabled]="(encoderOptions === undefined || vcodec === 'copy') ? true : null" (change)="update()">
+            <input type="text" id="encoderOptionsInput" [(ngModel)]="encoderOptions" [attr.placeholder]="encoderOptions !== undefined ? '' : vcodecOptionsPlaceholder" class="form-control" [attr.disabled]="(encoderOptions === undefined || vcodec === 'copy') ? true : null" (change)="update()">
           </li>
 
           <li class="list-group-item">

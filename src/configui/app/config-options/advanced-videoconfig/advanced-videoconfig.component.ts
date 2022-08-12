@@ -61,6 +61,7 @@ export class AdvancedVideoconfigComponent
 
   acodecPlaceholder = 'libfdk_aac';
   acodecOptionsPlaceholder = '-profile:a aac_eld';
+  vcodecOptionsPlaceholder = '-preset ultrafast -tune zerolatency';
 
   async readValue() {
     const config = await this.getCameraConfig(this.accessory?.uniqueId || '');
@@ -90,6 +91,20 @@ export class AdvancedVideoconfigComponent
       default:
         this.acodecPlaceholder = 'libfdk_aac';
         this.acodecOptionsPlaceholder = '-profile:a aac_eld';
+        break;
+    }
+
+    switch (this.vcodec) {
+      case 'copy':
+        this.vcodecOptionsPlaceholder = '';
+        break;
+      case '':
+      case 'libx264':
+      case undefined:
+        this.vcodecOptionsPlaceholder = '-preset ultrafast -tune zerolatency';
+        break;
+      default:
+        this.vcodecOptionsPlaceholder = 'leave blank if you don\'t know';
         break;
     }
   }
@@ -241,7 +256,7 @@ export class AdvancedVideoconfigComponent
     if (this.videoFilter && this.videoFilter !== '') {
       newConfig['videoFilter'] = this.videoFilter;
     }
-    if (this.encoderOptions && this.encoderOptions !== '') {
+    if (this.encoderOptions !== undefined) {
       newConfig['encoderOptions'] = this.encoderOptions;
     }
     if (this.probeSize !== undefined) {

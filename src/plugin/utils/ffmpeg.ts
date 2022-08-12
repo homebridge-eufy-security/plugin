@@ -288,7 +288,7 @@ export class FFmpegParameters {
         this.bufsize = bitrate * 2;
         this.maxrate = bitrate;
         let encoderOptions = codec === 'libx264' ? '-preset ultrafast -tune zerolatency' : '';
-        if (videoConfig.encoderOptions && videoConfig.encoderOptions !== '') {
+        if (videoConfig.encoderOptions) {
           encoderOptions = videoConfig.encoderOptions;
         }
         this.codecOptions = encoderOptions;
