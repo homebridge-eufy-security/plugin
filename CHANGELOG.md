@@ -17,6 +17,7 @@ You can find the complete detailled changelog for every beta release [here](http
 ### Fixed
 
 - Switches to turn camera and motion on/off should now be removed from HomeKit if the user switches the configuration
+- Bug where no snapshot was returned after an event
 
 ## 2.2.0 (Beta)
 
@@ -38,6 +39,7 @@ You can find the complete detailled changelog for every beta release [here](http
 ### Fixed
 
 - Switches to turn camera and motion on/off should now be removed from HomeKit if the user switches the configuration
+- Bug where no snapshot was returned after an event
 
 ## 2.1.0 (RC)
 
