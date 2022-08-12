@@ -324,15 +324,10 @@ export class FFmpegParameters {
       }
       this.codec = codec;
       this.codecOptions = codecOptions;
-      let samplerate = req.audio.sample_rate;
-      if (videoConfig.audioSampleRate &&
-        (videoConfig.audioSampleRate === 8 || videoConfig.audioSampleRate === 16 || videoConfig.audioSampleRate === 24)) {
-        samplerate = videoConfig.audioSampleRate;
-      }
       if (this.codec !== ' copy') {
-        this.sampleRate = samplerate;
+        this.sampleRate = req.audio.sample_rate;
         this.channels = req.audio.channel;
-        this.bitrate = req.audio.max_bit_rate;
+        this.bitrate = videoConfig.audioBitrate ? videoConfig.audioBitrate : req.audio.max_bit_rate;
       }
     }
     if (this.isSnapshot) {
