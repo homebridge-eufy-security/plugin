@@ -4,6 +4,10 @@ You can find the complete detailled changelog for every beta release [here](http
 
 ## 2.2.0-beta.2 - latest changes
 
+### Added
+
+- Added additional audio settings in advanced video configuration
+
 ### Changed
 
 - Improved verbose output for snapshot and ffmpeg processes
@@ -20,6 +24,7 @@ You can find the complete detailled changelog for every beta release [here](http
 - HomeKit Secure Video (HKSV) Support (see #6)
 - Plugin will show warnings if it encounters a captcha or 2FA request while logging in.
 - Setting to crop image to requested resolution. This might help with streaming issues when the HomeKit Controller stops the stream due to wrong stream configuration.
+- Added additional audio settings in advanced video configuration
 
 ### Changed
 
