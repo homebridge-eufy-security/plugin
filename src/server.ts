@@ -234,7 +234,6 @@ class UiServer extends HomebridgePluginUiServer {
     }
   }
 
-  // TODO: test for different configurations (apt-install, npm -g install, windows, ...)
   async downloadLogs(): Promise<Buffer> {
     this.log.info(`compressing log files to ${this.logZipFilePath} and sending to client.`);
     if (!this.removeCompressedLogs()) {

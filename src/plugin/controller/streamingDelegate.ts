@@ -332,6 +332,7 @@ export class StreamingDelegate implements CameraStreamingDelegate {
     switch (request.type) {
       case StreamRequestTypes.START:
         this.log.debug(this.cameraName, `Received request to start stream with id ${request.sessionID}`);
+        this.log.debug(this.cameraName, `request data: ${JSON.stringify(request)}`);
         this.startStream(request, callback);
         break;
       case StreamRequestTypes.RECONFIGURE:

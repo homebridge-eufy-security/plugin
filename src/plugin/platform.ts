@@ -223,7 +223,7 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
     // clean old accessories after that time
     this.cleanCachedAccessoriesTimeout = setTimeout(() => {
       this.cleanCachedAccessories();
-    }, 45 * 1000);
+    }, 120 * 1000);
 
     let cameraMaxLivestreamDuration = this.config.CameraMaxLivestreamDuration ?? 30;
     if (cameraMaxLivestreamDuration > 86400) {

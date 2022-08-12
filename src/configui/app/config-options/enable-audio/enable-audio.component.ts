@@ -25,19 +25,12 @@ export class EnableAudioComponent extends ConfigOptionsInterpreter implements On
 
   @Input() accessory?: Accessory;
   value = false;
-  samplerate = 0;
 
   async readValue() {
     const config = await this.getCameraConfig(this.accessory?.uniqueId || '');
 
     if (config && config['videoConfig'] && Object.prototype.hasOwnProperty.call(config['videoConfig'], 'audio')) {
       this.value = config['videoConfig']['audio'];
-    }
-    if (config && config['videoConfig'] && Object.prototype.hasOwnProperty.call(config['videoConfig'], 'audioSampleRate')) {
-      const sr = config['videoConfig']['audioSampleRate'];
-      if (sr === 8 || sr === 16 || sr === 24) {
-        this.samplerate = sr;
-      }
     }
   }
 
@@ -59,7 +52,6 @@ export class EnableAudioComponent extends ConfigOptionsInterpreter implements On
       config['videoConfig'] = {};
     }
     config['videoConfig']['audio'] = this.value;
-    config['videoConfig']['audioSampleRate'] = this.samplerate;
 
     this.updateConfig(config, this.accessory);
   }

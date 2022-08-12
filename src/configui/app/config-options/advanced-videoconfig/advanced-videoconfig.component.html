@@ -27,120 +27,292 @@
       </div>
       <p></p>
 
-      <div class="input-group mb-1">
-        <div class="input-group-text">
-          <input class="form-check-input mt-0" type="checkbox" [(ngModel)]="debug" (change)="update()">
+      <div class="card mb-3">
+        <div class="card-header">
+          General Settings
         </div>
-        <span class="input-group-text" id="inputGroup-sizing-default">ffmpeg debug</span>
+        <ul class="list-group list-group-flush">
+
+          <li class="list-group-item">
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" id="ffmpegDebug" [(ngModel)]="debug" (change)="update()">
+              <label class="form-check-label" for="ffmpegDebug">
+                ffmpeg Debug
+                <fa-icon [icon]="faQuestionCircle" class="m-1" ngbTooltip="Enable debug messages in the plugin log for ffmpeg processes."></fa-icon>
+              </label>
+            </div>
+          </li>
+
+          <li class="list-group-item">
+            <label for="videoProcessorInput" class="form-label">
+              <div class="form-check">
+                <input class="form-check-input" type="checkbox" id="videoProcessor" [checked]="videoProcessor !== undefined ? true: null" (change)="videoProcessor = (videoProcessor === undefined) ? '' : undefined; update();">
+                <label class="form-check-label" for="videoProcessor">
+                  (path to) ffmpeg executable
+                  <fa-icon [icon]="faQuestionCircle" class="m-1" ngbTooltip="If you have another ffmpeg binary (e.g. self compiled) that you want to use, you can enter the path here. By default the npm package 'ffmpeg-for-homebridge' will be used."></fa-icon>
+                </label>
+              </div>
+            </label>
+            <input type="text" id="videoProcessorInput" [(ngModel)]="videoProcessor" placeholder="ffmpeg-for-homebridge" class="form-control" [attr.disabled]="(videoProcessor === undefined) ? true : null" (change)="update()">
+          </li>
+
+          <li class="list-group-item">
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" id="useSeparateProcesses" [(ngModel)]="useSeparateProcesses" (change)="update()">
+              <label class="form-check-label" for="useSeparateProcesses">
+                Use separate processes for video and audio
+                <fa-icon [icon]="faQuestionCircle" class="m-1" ngbTooltip="Start audio and video processes in their own process instead of mixing them up. This can reduce start up times of streams but also can cause errors in rare cases."></fa-icon>
+              </label>
+            </div>
+          </li>
+
+          <li class="list-group-item">
+            <div class="form-check">
+            <input class="form-check-input" type="checkbox" id="readRate" [(ngModel)]="readRate" (change)="update()">
+            <label class="form-check-label" for="readRate">
+              readRate
+              <fa-icon [icon]="faQuestionCircle" class="m-1" ngbTooltip="Add -re argument to ffmpeg processes. This is normally not necessary for streaming purposes."></fa-icon>
+            </label>
+          </div>
+        </li>
+
+        <li class="list-group-item">
+          <label for="probeSizeInput" class="form-label">
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" id="probeSize" [checked]="probeSize !== undefined ? true: null" (change)="probeSize = (probeSize === undefined) ? 0 : undefined; update();">
+              <label class="form-check-label" for="probeSize">
+                probeSize
+                <fa-icon [icon]="faQuestionCircle" class="m-1" ngbTooltip="Set the size of streaming data that is analyzed to get stream information."></fa-icon>
+              </label>
+            </div>
+          </label>
+          <input type="number" id="probeSizeInput" [(ngModel)]="probeSize" placeholder="0" class="form-control" [attr.disabled]="(probeSize === undefined) ? true : null" (change)="update()">
+        </li>
+
+        <li class="list-group-item">
+          <label for="analyzeDurationInput" class="form-label">
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" id="analyzeDuration" [checked]="analyzeDuration !== undefined ? true: null" (change)="analyzeDuration = (analyzeDuration === undefined) ? 0 : undefined; update();">
+              <label class="form-check-label" for="analyzeDuration">
+                analyzeDuration
+                <fa-icon [icon]="faQuestionCircle" class="m-1" ngbTooltip="Set how many microseconds are analyzed to probe the input. Higher values will introduce more latency."></fa-icon>
+              </label>
+            </div>
+          </label>
+          <input type="number" id="analyzeDurationInput" [(ngModel)]="analyzeDuration" placeholder="0" class="form-control" [attr.disabled]="(analyzeDuration === undefined) ? true : null" (change)="update()">
+        </li>
+
+        <li class="list-group-item">
+          <label for="maxStreamsInput" class="form-label">
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" id="maxStreams" [checked]="maxStreams !== undefined ? true: null" (change)="maxStreams = (maxStreams === undefined) ? 2 : undefined; update();">
+              <label class="form-check-label" for="maxStreams">
+                maxStreams
+                <fa-icon [icon]="faQuestionCircle" class="m-1" ngbTooltip="This setting tells the HomeKit Controller how many concurrent streams can be handled. Default: 2"></fa-icon>
+              </label>
+            </div>
+          </label>
+          <input type="number" id="maxStreamsInput" [(ngModel)]="maxStreams" placeholder="0" class="form-control" [attr.disabled]="(maxStreams === undefined) ? true : null" (change)="update()">
+        </li>
+
+        </ul>
       </div>
 
-      <div class="input-group mb-1">
-        <div class="input-group-text">
-          <input class="form-check-input mt-0" type="checkbox" [(ngModel)]="useSeparateProcesses" (change)="update()">
+      <div class="card mb-3">
+        <div class="card-header">
+          Video Settings
         </div>
-        <span class="input-group-text" id="inputGroup-sizing-default">use separate processes for video and audio</span>
+        <ul class="list-group list-group-flush">
+
+          <li class="list-group-item">
+            <label for="vcodecInput" class="form-label">
+              <div class="form-check">
+                <input class="form-check-input" type="checkbox" id="vcodec" [checked]="vcodec !== undefined ? true: null" (change)="vcodec = (vcodec === undefined) ? '' : undefined; update();">
+                <label class="form-check-label" for="vcodec">
+                  vcodec
+                  <fa-icon [icon]="faQuestionCircle" class="m-1" ngbTooltip="Choose which video codec should be used to encode the video stream for HomeKit."></fa-icon>
+                </label>
+              </div>
+            </label>
+            <input type="text" id="vcodecInput" [(ngModel)]="vcodec" placeholder="libx264" class="form-control" [attr.disabled]="(vcodec === undefined) ? true : null" (change)="update()">
+          </li>
+
+          <li class="list-group-item">
+            <label for="filterInput" class="form-label">
+              <div class="form-check">
+                <input class="form-check-input" type="checkbox" id="videoFilter" [attr.disabled]="vcodec === 'copy' ? true : null" [checked]="videoFilter !== undefined ? true: null" (change)="videoFilter = (videoFilter === undefined) ? '' : undefined; update();">
+                <label class="form-check-label" for="videoFilter" [attr.style]="vcodec === 'copy' ? 'text-decoration: line-through; color: lightgray;' : null">
+                  videoFilter
+                  <fa-icon [icon]="faQuestionCircle" class="m-1" ngbTooltip="Set custom filters for video encoding."></fa-icon>
+                </label>
+              </div>
+            </label>
+            <input type="text" id="filterInput" [(ngModel)]="videoFilter" placeholder="leave blank if you don't know" class="form-control" [attr.disabled]="(videoFilter === undefined || vcodec === 'copy') ? true : null" (change)="update()">
+          </li>
+
+          <li class="list-group-item">
+            <label for="encoderOptionsInput" class="form-label">
+              <div class="form-check">
+                <input class="form-check-input" type="checkbox" id="encoderOptions" [attr.disabled]="vcodec === 'copy' ? true : null" [checked]="encoderOptions !== undefined ? true: null" (change)="encoderOptions = (encoderOptions === undefined) ? '' : undefined; update();">
+                <label class="form-check-label" for="encoderOptions" [attr.style]="vcodec === 'copy' ? 'text-decoration: line-through; color: lightgray;' : null">
+                  encoderOptions
+                  <fa-icon [icon]="faQuestionCircle" class="m-1" ngbTooltip="Set custom codec options for video encoding."></fa-icon>
+                </label>
+              </div>
+            </label>
+            <input type="text" id="encoderOptionsInput" [(ngModel)]="encoderOptions" [attr.placeholder]="encoderOptions !== undefined ? '' : vcodecOptionsPlaceholder" class="form-control" [attr.disabled]="(encoderOptions === undefined || vcodec === 'copy') ? true : null" (change)="update()">
+          </li>
+
+          <li class="list-group-item">
+            <div class="row">
+              <div class="col-sm-5 col-12 mb-2 mb-sm-0">
+                <label for="maxWidthInput" class="form-label">
+                  <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="maxWidth" [attr.disabled]="vcodec === 'copy' ? true : null" [checked]="maxWidth !== undefined ? true: null" (change)="maxWidth = (maxWidth === undefined) ? 0 : undefined; update();">
+                    <label class="form-check-label" for="maxWidth" [attr.style]="vcodec === 'copy' ? 'text-decoration: line-through; color: lightgray;' : null">
+                      maxWidth
+                      <fa-icon [icon]="faQuestionCircle" class="m-1" ngbTooltip="Maximum width for encoded video stream. Lower Values might improve performance."></fa-icon>
+                    </label>
+                  </div>
+                </label>
+                <input type="number" id="maxWidthInput" [(ngModel)]="maxWidth" placeholder="0" class="form-control" [attr.disabled]="(maxWidth === undefined || vcodec === 'copy') ? true : null" (change)="update()">
+              </div>
+
+              <span class="col-2 d-none d-sm-flex justify-content-center align-items-end">x</span>
+
+              <div class="col-sm-5 col-12">
+                <label for="maxHeightInput" class="form-label">
+                  <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="maxHeight" [attr.disabled]="vcodec === 'copy' ? true : null" [checked]="maxHeight !== undefined ? true: null" (change)="maxHeight = (maxHeight === undefined) ? 0 : undefined; update();">
+                    <label class="form-check-label" for="maxHeight" [attr.style]="vcodec === 'copy' ? 'text-decoration: line-through; color: lightgray;' : null">
+                      maxHeight
+                      <fa-icon [icon]="faQuestionCircle" class="m-1" ngbTooltip="Maximum height for encoded video stream. Lower Values might improve performance."></fa-icon>
+                    </label>
+                  </div>
+                </label>
+                <input type="number" id="maxHeightInput" [(ngModel)]="maxHeight" placeholder="0" class="form-control" [attr.disabled]="(maxHeight === undefined || vcodec === 'copy') ? true : null" (change)="update()">
+              </div>
+            </div>
+          </li>
+
+          <li class="list-group-item">
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" id="crop" [attr.disabled]="vcodec === 'copy' ? true : null" [(ngModel)]="crop" (change)="update()">
+              <label class="form-check-label" for="crop" [attr.style]="vcodec === 'copy' ? 'text-decoration: line-through; color: lightgray;' : null">
+                force crop image to requested/defined resolution
+                <fa-icon [icon]="faQuestionCircle" class="m-1" ngbTooltip="The input might be in another aspect ratio than requested by HomeKit (e.g. Doorbells may stream 1600x1200 -> 4:3 while HomeKit requests 1920x1080 -> 16:9). This setting will ensure that the requested aspect ratio is hit by cropping the image accordingly."></fa-icon>
+              </label>
+            </div>
+          </li>
+
+          <li class="list-group-item">
+            <label for="maxFPSInput" class="form-label">
+              <div class="form-check">
+                <input class="form-check-input" type="checkbox" id="maxFPS" [attr.disabled]="vcodec === 'copy' ? true : null" [checked]="maxFPS !== undefined ? true: null" (change)="maxFPS = (maxFPS === undefined) ? 0 : undefined; update();">
+                <label class="form-check-label" for="maxFPS" [attr.style]="vcodec === 'copy' ? 'text-decoration: line-through; color: lightgray;' : null">
+                  fps
+                  <fa-icon [icon]="faQuestionCircle" class="m-1" ngbTooltip="Frames per second for the encoded video. If not set the value requested by the HomeKit Controller will be used."></fa-icon>
+                </label>
+              </div>
+            </label>
+            <input type="number" id="maxFPSInput" [(ngModel)]="maxFPS" placeholder="0" class="form-control" [attr.disabled]="(maxFPS === undefined || vcodec === 'copy') ? true : null" (change)="update()">
+          </li>
+
+          <li class="list-group-item">
+            <label for="mmaxBitrateInput" class="form-label">
+              <div class="form-check">
+                <input class="form-check-input" type="checkbox" id="maxBitrate" [attr.disabled]="vcodec === 'copy' ? true : null" [checked]="maxBitrate !== undefined ? true : null" (change)="maxBitrate = (maxBitrate === undefined) ? 0 : undefined; update();">
+                <label class="form-check-label" for="maxBitrate" [attr.style]="vcodec === 'copy' ? 'text-decoration: line-through; color: lightgray;' : null">
+                  bitrate
+                  <fa-icon [icon]="faQuestionCircle" class="m-1" ngbTooltip="Bitrate used for the encoded video. If not set the value requested by the HomeKit Controller will be used."></fa-icon>
+                </label>
+              </div>
+            </label>
+            <input type="number" id="maxBitrateInput" [(ngModel)]="maxBitrate" placeholder="0" class="form-control" [attr.disabled]="(maxBitrate === undefined || vcodec === 'copy') ? true : null" (change)="update()">
+          </li>
+
+        </ul>
       </div>
 
-      <div class="input-group mb-1">
-        <div class="input-group-text">
-          <input class="form-check-input mt-0" type="checkbox" [(ngModel)]="readRate" (change)="update()">
+      <div class="card mb-3">
+        <div class="card-header">
+          Audio Settings
         </div>
-        <span class="input-group-text" id="inputGroup-sizing-default">readRate</span>
-      </div>
+        <ul class="list-group list-group-flush">
 
-      <div class="input-group mb-1">
-        <div class="input-group-text">
-          <input class="form-check-input mt-0" type="checkbox" [checked]="vcodec !== undefined ? true: null" (change)="vcodec = (vcodec === undefined) ? '' : undefined; update();">
-        </div>
-        <span class="input-group-text" id="inputGroup-sizing-default">vcodec</span>
-        <input type="text" [(ngModel)]="vcodec" placeholder="libx264" class="form-control" [attr.disabled]="(vcodec === undefined) ? true : null" (change)="update()">
-      </div>
+          <li class="list-group-item">
+            <label for="acodecHKInput" class="form-label">
+              <div class="form-check">
+                <input class="form-check-input" type="checkbox" id="acodecHK" [checked]="acodecHK !== undefined ? true: null" (change)="acodecHK = (acodecHK === undefined) ? 'AAC-eld' : undefined; update();">
+                <label class="form-check-label" for="acodecHK">
+                  Audio Codec that will be requested by HomeKit.
+                  <fa-icon [icon]="faQuestionCircle" class="m-1" ngbTooltip="Set the audio codec that will be requested by the HomeKit controller. The actual used codec will be determined by the plugin based by the request and the next setting for forced codec."></fa-icon>
+                </label>
+              </div>
+            </label>
+            <select class="form-select" id="acodecHKInput" [(ngModel)]="acodecHK" aria-label="acodecHK" [attr.disabled]="acodecHK === undefined ? true : null" (change)="update()">
+              <option [ngValue]="'AAC-eld'">AAC-eld</option>
+              <option [ngValue]="'OPUS'">OPUS</option>
+            </select>
+          </li>
 
-      <div class="input-group mb-1">
-        <div class="input-group-text">
-          <input class="form-check-input mt-0" type="checkbox" [checked]="acodec !== undefined ? true: null" (change)="acodec = (acodec === undefined) ? '' : undefined; update();">
-        </div>
-        <span class="input-group-text" id="inputGroup-sizing-default">acodec</span>
-        <input type="text" [(ngModel)]="acodec" placeholder="libfdk_aac" class="form-control" [attr.disabled]="(acodec === undefined) ? true : null" (change)="update()">
-      </div>
+          <li class="list-group-item">
+            <label for="acodecInput" class="form-label">
+              <div class="form-check">
+                <input class="form-check-input" type="checkbox" id="acodec" [checked]="acodec !== undefined ? true: null" (change)="acodec = (acodec === undefined) ? '' : undefined; update();">
+                <label class="form-check-label" for="acodec">
+                  Forced audio codec
+                  <fa-icon [icon]="faQuestionCircle" class="m-1" ngbTooltip="Choose which audio codec should be used to encode the audio stream for HomeKit. This may overwrite the previous setting, but be aware that audio streaming will fail if these settings differ."></fa-icon>
+                </label>
+              </div>
+            </label>
+            <input type="text" id="acodecInput" [(ngModel)]="acodec" [attr.placeholder]="acodecPlaceholder" class="form-control" [attr.disabled]="(acodec === undefined) ? true : null" (change)="update()">
+          </li>
 
-      <div class="input-group mb-1">
-        <div class="input-group-text">
-          <input class="form-check-input mt-0" type="checkbox" [attr.disabled]="vcodec === 'copy' ? true : null" [checked]="videoFilter !== undefined ? true: null" (change)="videoFilter = (videoFilter === undefined) ? '' : undefined; update();">
-        </div>
-        <span class="input-group-text" id="inputGroup-sizing-default" [attr.style]="vcodec === 'copy' ? 'text-decoration: line-through; color: lightgray;' : null">videoFilter</span>
-        <input type="text" [(ngModel)]="videoFilter" placeholder="leave blank if you don't know" class="form-control" [attr.disabled]="(videoFilter === undefined || vcodec === 'copy') ? true : null" (change)="update()">
-      </div>
+          <li class="list-group-item">
+            <label for="acodecOptionsInput" class="form-label">
+              <div class="form-check">
+                <input class="form-check-input" type="checkbox" id="acodecOptions" [checked]="acodecOptions !== undefined ? true: null" (change)="acodecOptions = (acodecOptions === undefined) ? '' : undefined; update();">
+                <label class="form-check-label" for="acodecOptions">
+                  Audio Codec encoding options
+                  <fa-icon [icon]="faQuestionCircle" class="m-1" ngbTooltip="Set custom codec options for audio encoding."></fa-icon>
+                </label>
+              </div>
+            </label>
+            <input type="text" id="acodecOptionsInput" [(ngModel)]="acodecOptions" [attr.placeholder]="acodecOptions !== undefined ? '' : acodecOptionsPlaceholder" class="form-control" [attr.disabled]="(acodecOptions === undefined) ? true : null" (change)="update()">
+          </li>
 
-      <div class="input-group mb-1">
-        <div class="input-group-text">
-          <input class="form-check-input mt-0" type="checkbox" [attr.disabled]="vcodec === 'copy' ? true : null" [checked]="encoderOptions !== undefined ? true: null" (change)="encoderOptions = (encoderOptions === undefined) ? '' : undefined; update();">
-        </div>
-        <span class="input-group-text" id="inputGroup-sizing-default" [attr.style]="vcodec === 'copy' ? 'text-decoration: line-through; color: lightgray;' : null">encoderOptions</span>
-        <input type="text" [(ngModel)]="encoderOptions" placeholder="-preset ultrafast -tune zerolatency" class="form-control" [attr.disabled]="(encoderOptions === undefined || vcodec === 'copy') ? true : null" (change)="update()">
-      </div>
+          <li class="list-group-item">
+            <label for="samplerateInput" class="form-label">
+              <div class="form-check">
+                <input class="form-check-input" type="checkbox" id="samplerate" [checked]="audioSampleRate !== undefined ? true: null" (change)="audioSampleRate = (audioSampleRate === undefined) ? 16 : undefined; update();">
+                <label class="form-check-label" for="samplerate">
+                  samplerate
+                  <fa-icon [icon]="faQuestionCircle" class="m-1" ngbTooltip="Set the samplerate that the encoded audio should have. The HomeKit Controller might request another samplerate, which then will be used instead."></fa-icon>
+                </label>
+              </div>
+            </label>
+            <select class="form-select" id="samplerateInput" [(ngModel)]="audioSampleRate" aria-label="Samplerate" [attr.disabled]="audioSampleRate === undefined ? true : null" (change)="update()">
+              <option [ngValue]=8>8 kHz</option>
+              <option [ngValue]=16>16 kHz</option>
+              <option [ngValue]=24>24 kHz</option>
+            </select>
+          </li>
 
-      <div class="input-group mb-1">
-        <div class="input-group-text">
-          <input class="form-check-input mt-0" type="checkbox" [checked]="probeSize !== undefined ? true: null" (change)="probeSize = (probeSize === undefined) ? 0 : undefined; update();">
-        </div>
-        <span class="input-group-text" id="inputGroup-sizing-default">probeSize</span>
-        <input type="number" [(ngModel)]="probeSize" placeholder="0" class="form-control" [attr.disabled]="(probeSize === undefined) ? true : null" (change)="update()">
-      </div>
+          <li class="list-group-item">
+            <label for="aBitrateInput" class="form-label">
+              <div class="form-check">
+                <input class="form-check-input" type="checkbox" id="aBitrate" [checked]="audioBitrate !== undefined ? true: null" (change)="audioBitrate = (audioBitrate === undefined) ? 24 : undefined; update();">
+                <label class="form-check-label" for="aBitrate">
+                  audio bitrate
+                  <fa-icon [icon]="faQuestionCircle" class="m-1" ngbTooltip="Set the bitrate for encoded audio. Caution: if set to high the audio stream will be discarded by the HomeKit Controller."></fa-icon>
+                </label>
+              </div>
+            </label>
+            <input type="number" id="aBitrateInput" [(ngModel)]="audioBitrate" placeholder="24" class="form-control" [attr.disabled]="(audioBitrate === undefined) ? true : null" (change)="update()">
+          </li>
 
-      <div class="input-group mb-1">
-        <div class="input-group-text">
-          <input class="form-check-input mt-0" type="checkbox" [checked]="analyzeDuration !== undefined ? true: null" (change)="analyzeDuration = (analyzeDuration === undefined) ? 0 : undefined; update();">
-        </div>
-        <span class="input-group-text" id="inputGroup-sizing-default">analyzeDuration</span>
-        <input type="number" [(ngModel)]="analyzeDuration" placeholder="0" class="form-control" [attr.disabled]="(analyzeDuration === undefined) ? true : null" (change)="update()">
-      </div>
-
-      <div class="input-group mb-1">
-        <div class="input-group-text">
-          <input class="form-check-input mt-0" type="checkbox" [checked]="maxStreams !== undefined ? true: null" (change)="maxStreams = (maxStreams === undefined) ? 0 : undefined; update();">
-        </div>
-        <span class="input-group-text" id="inputGroup-sizing-default">maxStreams</span>
-        <input type="number" [(ngModel)]="maxStreams" placeholder="0" class="form-control" [attr.disabled]="(maxStreams === undefined) ? true : null" (change)="update()">
-      </div>
-
-      <div class="input-group mb-1">
-        <div class="input-group-text">
-          <input class="form-check-input mt-0" type="checkbox" [attr.disabled]="vcodec === 'copy' ? true : null" [checked]="maxWidth !== undefined ? true: null" (change)="maxWidth = (maxWidth === undefined) ? 0 : undefined; update();">
-        </div>
-        <span class="input-group-text" id="inputGroup-sizing-default" [attr.style]="vcodec === 'copy' ? 'text-decoration: line-through; color: lightgray;' : null">maxWidth</span>
-        <input type="number" [(ngModel)]="maxWidth" placeholder="0" class="form-control" [attr.disabled]="(maxWidth === undefined || vcodec === 'copy') ? true : null" (change)="update()">
-      </div>
-
-      <div class="input-group mb-1">
-        <div class="input-group-text">
-          <input class="form-check-input mt-0" type="checkbox" [attr.disabled]="vcodec === 'copy' ? true : null" [checked]="maxHeight !== undefined ? true: null" (change)="maxHeight = (maxHeight === undefined) ? 0 : undefined; update();">
-        </div>
-        <span class="input-group-text" id="inputGroup-sizing-default" [attr.style]="vcodec === 'copy' ? 'text-decoration: line-through; color: lightgray;' : null">maxHeight</span>
-        <input type="number" [(ngModel)]="maxHeight" placeholder="0" class="form-control" [attr.disabled]="(maxHeight === undefined || vcodec === 'copy') ? true : null" (change)="update()">
-      </div>
-
-      <div class="input-group mb-1">
-        <div class="input-group-text">
-          <input class="form-check-input mt-0" type="checkbox" [attr.disabled]="vcodec === 'copy' ? true : null" [(ngModel)]="crop" (change)="update()">
-        </div>
-        <span class="input-group-text" id="inputGroup-sizing-default" [attr.style]="vcodec === 'copy' ? 'text-decoration: line-through; color: lightgray;' : null">force crop image to requested/defined resolution</span>
-      </div>
-
-      <div class="input-group mb-1">
-        <div class="input-group-text">
-          <input class="form-check-input mt-0" type="checkbox" [attr.disabled]="vcodec === 'copy' ? true : null" [checked]="maxFPS !== undefined ? true: null" (change)="maxFPS = (maxFPS === undefined) ? 0 : undefined; update();">
-        </div>
-        <span class="input-group-text" id="inputGroup-sizing-default" [attr.style]="vcodec === 'copy' ? 'text-decoration: line-through; color: lightgray;' : null">fps</span>
-        <input type="number" [(ngModel)]="maxFPS" placeholder="0" class="form-control" [attr.disabled]="(maxFPS === undefined || vcodec === 'copy') ? true : null" (change)="update()">
-      </div>
-
-      <div class="input-group mb-1">
-        <div class="input-group-text">
-          <input class="form-check-input mt-0" type="checkbox" [attr.disabled]="vcodec === 'copy' ? true : null" [checked]="maxBitrate !== undefined ? true : null" (change)="maxBitrate = (maxBitrate === undefined) ? 0 : undefined; update();">
-        </div>
-        <span class="input-group-text" id="inputGroup-sizing-default" [attr.style]="vcodec === 'copy' ? 'text-decoration: line-through; color: lightgray;' : null">bitrate</span>
-        <input type="number" [(ngModel)]="maxBitrate" placeholder="0" class="form-control" [attr.disabled]="(maxBitrate === undefined || vcodec === 'copy') ? true : null" (change)="update()">
+        </ul>
       </div>
 
     </ng-template>

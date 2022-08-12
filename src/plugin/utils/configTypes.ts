@@ -45,10 +45,14 @@ export type VideoConfig = {
   encoderOptions?: string;
   audio?: boolean;
   audioSampleRate?: number;
+  audioBitrate?: number;
+  acodecHK?: string;
+  acodecOptions?: string;
   debug?: boolean;
   debugReturn?: boolean;
   useSeparateProcesses?: boolean;
   crop?: boolean;
+  videoProcessor?: string;
 };
 
 export type StationConfig = {

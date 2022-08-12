@@ -2,18 +2,46 @@
 
 You can find the complete detailled changelog for every beta release [here](https://github.com/homebridge-eufy-security/plugin/releases).
 
-## 2.2.0-beta.1 - latest changes
+## 2.2.0-beta.2 - latest changes
+
+### Added
+
+- Added additional audio settings in advanced video configuration
+- Setting to choose custom path to ffmpeg executable.
+
+### Changed
+
+- Improved verbose output for snapshot and ffmpeg processes
+- Overhauled design of advanced video config
+- Added explanatory description to snapshot handling method.
+
+### Fixed
+
+- Switches to turn camera and motion on/off should now be removed from HomeKit if the user switches the configuration
+- Bug where no snapshot was returned after an event
+
+## 2.2.0 (Beta)
 
 ### Added
 
 - HomeKit Secure Video (HKSV) Support (see #6)
 - Plugin will show warnings if it encounters a captcha or 2FA request while logging in.
 - Setting to crop image to requested resolution. This might help with streaming issues when the HomeKit Controller stops the stream due to wrong stream configuration.
+- Added additional audio settings in advanced video configuration
+- Setting to choose custom path to ffmpeg executable.
 
 ### Changed
 
 - If HomeKit Secure Video is enabled, motion detection will not work while a recording is active. This is due to technical limitations for now. (see #6)
 - Removed livestream caching (a.k.a `useCachedLocalLivestream`) since the continued streaming could cause issues with HKSV and motion detection in general
+- Overhauled design of advanced video config
+- Improved verbose output for snapshot and ffmpeg processes
+- Added explanatory description to snapshot handling method.
+
+### Fixed
+
+- Switches to turn camera and motion on/off should now be removed from HomeKit if the user switches the configuration
+- Bug where no snapshot was returned after an event
 
 ## 2.1.0 (RC)
 

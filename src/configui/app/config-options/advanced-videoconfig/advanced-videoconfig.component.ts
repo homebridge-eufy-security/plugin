@@ -5,6 +5,8 @@ import { ConfigOptionsInterpreter } from '../config-options-interpreter';
 
 import { VideoConfig } from '../../../../plugin/utils/configTypes';
 
+import { faQuestionCircle } from '@fortawesome/free-regular-svg-icons';
+
 @Component({
   selector: 'app-advanced-videoconfig',
   templateUrl: './advanced-videoconfig.component.html',
@@ -13,6 +15,9 @@ import { VideoConfig } from '../../../../plugin/utils/configTypes';
 export class AdvancedVideoconfigComponent
   extends ConfigOptionsInterpreter
   implements OnInit {
+
+  faQuestionCircle = faQuestionCircle;
+
   constructor(pluginService: PluginService) {
     super(pluginService);
   }
@@ -45,9 +50,18 @@ export class AdvancedVideoconfigComponent
   maxBitrate: number | undefined = undefined;
   useSeparateProcesses: boolean | undefined = undefined;
   crop: boolean | undefined = undefined;
+  audioSampleRate: number | undefined = undefined;
+  audioBitrate: number | undefined = undefined;
+  acodecHK: string | undefined = undefined;
+  acodecOptions: string | undefined = undefined;
+  videoProcessor: string | undefined = undefined;
 
   preset = 0;
   presetDescription?: string;
+
+  acodecPlaceholder = 'libfdk_aac';
+  acodecOptionsPlaceholder = '-profile:a aac_eld';
+  vcodecOptionsPlaceholder = '-preset ultrafast -tune zerolatency';
 
   async readValue() {
     const config = await this.getCameraConfig(this.accessory?.uniqueId || '');
@@ -60,7 +74,39 @@ export class AdvancedVideoconfigComponent
       });
     }
 
+    this.placeholderUpdate();
     this.updatePreset();
+  }
+
+  private placeholderUpdate() {
+    switch (this.acodecHK) {
+      case 'ACC-eld':
+        this.acodecPlaceholder = 'libfdk_aac';
+        this.acodecOptionsPlaceholder = '-profile:a aac_eld';
+        break;
+      case 'OPUS':
+        this.acodecPlaceholder = 'libopus';
+        this.acodecOptionsPlaceholder = '-application lowdelay';
+        break;
+      default:
+        this.acodecPlaceholder = 'libfdk_aac';
+        this.acodecOptionsPlaceholder = '-profile:a aac_eld';
+        break;
+    }
+
+    switch (this.vcodec) {
+      case 'copy':
+        this.vcodecOptionsPlaceholder = '';
+        break;
+      case '':
+      case 'libx264':
+      case undefined:
+        this.vcodecOptionsPlaceholder = '-preset ultrafast -tune zerolatency';
+        break;
+      default:
+        this.vcodecOptionsPlaceholder = 'leave blank if you don\'t know';
+        break;
+    }
   }
 
   loadPreset() {
@@ -210,7 +256,7 @@ export class AdvancedVideoconfigComponent
     if (this.videoFilter && this.videoFilter !== '') {
       newConfig['videoFilter'] = this.videoFilter;
     }
-    if (this.encoderOptions && this.encoderOptions !== '') {
+    if (this.encoderOptions !== undefined) {
       newConfig['encoderOptions'] = this.encoderOptions;
     }
     if (this.probeSize !== undefined) {
@@ -240,6 +286,21 @@ export class AdvancedVideoconfigComponent
     if (this.crop) {
       newConfig['crop'] = this.crop;
     }
+    if (this.audioSampleRate !== undefined) {
+      newConfig['audioSampleRate'] = this.audioSampleRate;
+    }
+    if (this.audioBitrate !== undefined) {
+      newConfig['audioBitrate'] = this.audioBitrate;
+    }
+    if (this.acodecHK && this.acodecHK !== '') {
+      newConfig['acodecHK'] = this.acodecHK;
+    }
+    if (this.acodecOptions !== undefined) {
+      newConfig['acodecOptions'] = this.acodecOptions;
+    }
+    if (this.videoProcessor && this.videoProcessor !== '') {
+      newConfig['videoProcessor'] = this.videoProcessor;
+    }
 
     this.updateConfig(
       {
@@ -248,6 +309,7 @@ export class AdvancedVideoconfigComponent
       this.accessory,
     );
 
+    this.placeholderUpdate();
     this.updatePreset();
   }
 }

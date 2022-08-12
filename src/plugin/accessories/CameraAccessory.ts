@@ -79,7 +79,13 @@ export class CameraAccessory extends DeviceAccessory {
           samplerate = AudioStreamingSamplerate.KHZ_24;
         }
 
+        let audioCodecType = AudioStreamingCodecType.AAC_ELD;
+        if (this.cameraConfig.videoConfig?.acodecHK) {
+          audioCodecType = this.cameraConfig.videoConfig.acodecHK as AudioStreamingCodecType;
+        }
+
         this.platform.log.debug(this.accessory.displayName, `Audio sample rate set to ${samplerate} kHz.`);
+        this.platform.log.debug(this.accessory.displayName, `Audio Codec for HK: ${audioCodecType}`);
 
         this.cameraControllerOptions = {
           cameraStreamCount: this.cameraConfig.videoConfig?.maxStreams || 2, // HomeKit requires at least 2 streams, but 1 is also just fine
@@ -117,10 +123,8 @@ export class CameraAccessory extends DeviceAccessory {
               twoWayAudio: this.cameraConfig.talkback,
               codecs: [
                 {
-                  type: AudioStreamingCodecType.AAC_ELD,
+                  type: audioCodecType,
                   samplerate: samplerate,
-                  /*type: AudioStreamingCodecType.OPUS,
-                                samplerate: AudioStreamingSamplerate.KHZ_24*/
                 },
               ],
             },
@@ -196,6 +200,14 @@ export class CameraAccessory extends DeviceAccessory {
             // a crash on startup of the plugin
             accessory.removeService(operatingModeService);
           }
+          const rtpStreamingManagementService = accessory.getService(this.platform.api.hap.Service.CameraRTPStreamManagement);
+          if (rtpStreamingManagementService) {
+            // reset rtp stream configuration on startup
+            // this way codec changes are possible after
+            // the camera has been added to HomeKit
+            this.platform.log.debug(this.accessory.displayName, 'remove rtp stream managment for real...');
+            accessory.removeService(rtpStreamingManagementService);
+          }
           this.streamingDelegate.setController(controller);
           this.recordingDelegate.setController(controller);
           accessory.configureController(controller);
@@ -207,6 +219,13 @@ export class CameraAccessory extends DeviceAccessory {
       
     } else {
       this.platform.log.debug(this.accessory.displayName, 'has a motion sensor.');
+
+      // remove camera operating mode service if the user has disabled the camera through the config
+      const operatingModeService = accessory.getService(this.platform.api.hap.Service.CameraOperatingMode);
+      if (operatingModeService) {
+        this.platform.log.debug(this.accessory.displayName, 'removing CameraOperatingMode service.');
+        accessory.removeService(operatingModeService);
+      }
     }
 
     try {
@@ -231,6 +250,13 @@ export class CameraAccessory extends DeviceAccessory {
       } else {
         // eslint-disable-next-line max-len
         this.platform.log.debug(this.accessory.displayName, 'Looks like not compatible with isEnabled or this has been disabled within configuration');
+
+        // remove enableButton service if the user has disabled the it through the config
+        const enableButtonService = accessory.getService('Enabled');
+        if (enableButtonService) {
+          this.platform.log.debug(this.accessory.displayName, 'removing enableButton service.');
+          accessory.removeService(enableButtonService);
+        }
       }
     } catch (Error) {
       this.platform.log.error(this.accessory.displayName, 'raise error to check and attach switchEnabledService.', Error);
@@ -258,6 +284,13 @@ export class CameraAccessory extends DeviceAccessory {
       } else {
         // eslint-disable-next-line max-len
         this.platform.log.debug(this.accessory.displayName, 'Looks like not compatible with isMotionDetectionEnabled or this has been disabled within configuration');
+
+        // remove enableButton service if the user has disabled the it through the config
+        const motionButtonService = accessory.getService('Motion');
+        if (motionButtonService) {
+          this.platform.log.debug(this.accessory.displayName, 'removing motionButton service.');
+          accessory.removeService(motionButtonService);
+        }
       }
     } catch (Error) {
       this.platform.log.error(this.accessory.displayName, 'raise error to check and attach switchMotionService.', Error);
