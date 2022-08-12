@@ -311,18 +311,24 @@ export class FFmpegParameters {
     if (this.isAudio) {
       const req = request as StartStreamRequest;
       let codec = 'libfdk_aac';
+      let codecOptions = '-profile:a aac_eld';
       switch (req.audio.codec) {
         case AudioStreamingCodecType.OPUS:
           codec = 'libopus';
+          codecOptions = '-application lowdelay';
           break;
         default:
           codec = 'libfdk_aac';
+          codecOptions = '-profile:a aac_eld';
           break;
       }
-      let codecOptions = req.audio.codec === AudioStreamingCodecType.OPUS ? '-application lowdelay' : '-profile:a aac_eld';
+      
       if (videoConfig.acodec && videoConfig.acodec !== '') {
         codec = videoConfig.acodec;
         codecOptions = '';
+      }
+      if (videoConfig.acodecOptions !== undefined) {
+        codecOptions = videoConfig.acodecOptions;
       }
       if (this.flagsGlobalHeader) {
         if (codecOptions !== '') {

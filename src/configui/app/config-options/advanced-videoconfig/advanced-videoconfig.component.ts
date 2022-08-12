@@ -53,11 +53,13 @@ export class AdvancedVideoconfigComponent
   audioSampleRate: number | undefined = undefined;
   audioBitrate: number | undefined = undefined;
   acodecHK: string | undefined = undefined;
+  acodecOptions: string | undefined = undefined;
 
   preset = 0;
   presetDescription?: string;
 
   acodecPlaceholder = 'libfdk_aac';
+  acodecOptionsPlaceholder = '-profile:a aac_eld';
 
   async readValue() {
     const config = await this.getCameraConfig(this.accessory?.uniqueId || '');
@@ -78,12 +80,15 @@ export class AdvancedVideoconfigComponent
     switch (this.acodecHK) {
       case 'ACC-eld':
         this.acodecPlaceholder = 'libfdk_aac';
+        this.acodecOptionsPlaceholder = '-profile:a aac_eld';
         break;
       case 'OPUS':
         this.acodecPlaceholder = 'libopus';
+        this.acodecOptionsPlaceholder = '-application lowdelay';
         break;
       default:
         this.acodecPlaceholder = 'libfdk_aac';
+        this.acodecOptionsPlaceholder = '-profile:a aac_eld';
         break;
     }
   }
@@ -273,6 +278,9 @@ export class AdvancedVideoconfigComponent
     }
     if (this.acodecHK && this.acodecHK !== '') {
       newConfig['acodecHK'] = this.acodecHK;
+    }
+    if (this.acodecOptions !== undefined) {
+      newConfig['acodecOptions'] = this.acodecOptions;
     }
 
     this.updateConfig(

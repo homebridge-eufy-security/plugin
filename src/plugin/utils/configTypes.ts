@@ -47,6 +47,7 @@ export type VideoConfig = {
   audioSampleRate?: number;
   audioBitrate?: number;
   acodecHK?: string;
+  acodecOptions?: string;
   debug?: boolean;
   debugReturn?: boolean;
   useSeparateProcesses?: boolean;

@@ -257,6 +257,19 @@
           </li>
 
           <li class="list-group-item">
+            <label for="acodecOptionsInput" class="form-label">
+              <div class="form-check">
+                <input class="form-check-input" type="checkbox" id="acodecOptions" [checked]="acodecOptions !== undefined ? true: null" (change)="acodecOptions = (acodecOptions === undefined) ? '' : undefined; update();">
+                <label class="form-check-label" for="acodecOptions">
+                  Audio Codec encoding options
+                  <fa-icon [icon]="faQuestionCircle" class="m-1" ngbTooltip="Set custom codec options for audio encoding."></fa-icon>
+                </label>
+              </div>
+            </label>
+            <input type="text" id="acodecOptionsInput" [(ngModel)]="acodec" [attr.placeholder]="acodecOptions !== undefined ? '' : acodecOptionsPlaceholder" class="form-control" [attr.disabled]="(acodecOptions === undefined) ? true : null" (change)="update()">
+          </li>
+
+          <li class="list-group-item">
             <label for="samplerateInput" class="form-label">
               <div class="form-check">
                 <input class="form-check-input" type="checkbox" id="samplerate" [checked]="audioSampleRate !== undefined ? true: null" (change)="audioSampleRate = (audioSampleRate === undefined) ? 16 : undefined; update();">
