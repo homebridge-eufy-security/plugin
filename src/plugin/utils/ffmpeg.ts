@@ -278,7 +278,10 @@ export class FFmpegParameters {
         codecOptions = '';
       }
       if (this.flagsGlobalHeader) {
-        codecOptions += ' -flags +global_header';
+        if (codecOptions !== '') {
+          codecOptions += ' ';
+        }
+        codecOptions += '-flags +global_header';
       }
       this.codec = codec;
       this.codecOptions = codecOptions;
@@ -287,9 +290,11 @@ export class FFmpegParameters {
         (videoConfig.audioSampleRate === 8 || videoConfig.audioSampleRate === 16 || videoConfig.audioSampleRate === 24)) {
         samplerate = videoConfig.audioSampleRate;
       }
-      this.sampleRate = samplerate;
-      this.channels = req.audio.channel;
-      this.bitrate = req.audio.max_bit_rate;
+      if (this.codec !== ' copy') {
+        this.sampleRate = samplerate;
+        this.channels = req.audio.channel;
+        this.bitrate = req.audio.max_bit_rate;
+      }
     }
     if (this.isSnapshot) {
       const req = request as SnapshotRequest;
