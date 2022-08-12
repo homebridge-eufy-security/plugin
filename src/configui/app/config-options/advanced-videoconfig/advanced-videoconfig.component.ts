@@ -50,6 +50,7 @@ export class AdvancedVideoconfigComponent
   maxBitrate: number | undefined = undefined;
   useSeparateProcesses: boolean | undefined = undefined;
   crop: boolean | undefined = undefined;
+  audioSampleRate: number | undefined = undefined;
 
   preset = 0;
   presetDescription?: string;
@@ -244,6 +245,9 @@ export class AdvancedVideoconfigComponent
     }
     if (this.crop) {
       newConfig['crop'] = this.crop;
+    }
+    if (this.audioSampleRate !== undefined) {
+      newConfig['audioSampleRate'] = this.audioSampleRate;
     }
 
     this.updateConfig(

@@ -240,6 +240,23 @@
             <input type="text" id="acodecInput" [(ngModel)]="acodec" placeholder="libfdk_aac" class="form-control" [attr.disabled]="(acodec === undefined) ? true : null" (change)="update()">
           </li>
 
+          <li class="list-group-item">
+            <label for="samplerateInput" class="form-label">
+              <div class="form-check">
+                <input class="form-check-input" type="checkbox" id="samplerate" [checked]="audioSampleRate !== undefined ? true: null" (change)="audioSampleRate = (audioSampleRate === undefined) ? 16 : undefined; update();">
+                <label class="form-check-label" for="samplerate">
+                  samplerate
+                  <fa-icon [icon]="faQuestionCircle" class="m-1" ngbTooltip="Set the samplerate that the encoded audio should have. The HomeKit Controller might request another samplerate, which then will be used instead."></fa-icon>
+                </label>
+              </div>
+            </label>
+            <select class="form-select" [(ngModel)]="audioSampleRate" aria-label="Samplerate" [attr.disabled]="audioSampleRate === undefined ? true : null" (change)="update()">
+              <option [ngValue]=8>8 kHz</option>
+              <option [ngValue]=16>16 kHz</option>
+              <option [ngValue]=24>24 kHz</option>
+            </select>
+          </li>
+
         </ul>
       </div>
 
