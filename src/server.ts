@@ -71,7 +71,9 @@ class UiServer extends HomebridgePluginUiServer {
     this.onRequest('/downloadLogs', this.downloadLogs.bind(this));
 
     this.pluginConfigInteractor = new EufyClientInteractor(this.storagePath, this.log);
-    this.onRequest('/getChargingStatus', this.pluginConfigInteractor.DeviceIsCharging.bind(this));
+    this.onRequest('/getChargingStatus', (sn: string) => {
+      return this.pluginConfigInteractor.DeviceIsCharging(sn);
+    });
 
     this.ready();
   }

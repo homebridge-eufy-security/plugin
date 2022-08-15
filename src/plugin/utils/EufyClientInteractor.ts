@@ -56,6 +56,7 @@ export class EufyClientInteractor extends EventEmitter implements PluginConfigIn
       this.server = net.createServer((socket) => {
         socket.on('data', (data) => {
           const request = JSON.parse(data.toString('utf-8')) as InteractorRequest;
+          this.log.debug(`incoming Interaction Request: for ${request.serialNumber}, type: ${request.type}`);
           this.processIPCRequest(socket, request);
         });
         socket.on('error', this.onSocketError.bind(this));
@@ -103,6 +104,7 @@ export class EufyClientInteractor extends EventEmitter implements PluginConfigIn
   }
 
   private ipcRequest(request: InteractorRequest): Promise<InteractorResponse> {
+    this.log.debug(`Interaction Request: for ${request.serialNumber}, type: ${request.type}`);
     return new Promise((resolve, reject) => {
       const port = this.loadPort();
       if (port <= 0) {
@@ -157,6 +159,8 @@ export class EufyClientInteractor extends EventEmitter implements PluginConfigIn
     } catch(err) {
       response.error = err as Error;
     }
+    // eslint-disable-next-line max-len
+    this.log.debug(`outgoing Interaction Response: for ${response.serialNumber}, type: ${response.type}, result: ${response.result}, error: ${response.error}`);
     socket.write(JSON.stringify(response));
   }
 
@@ -197,6 +201,8 @@ export class EufyClientInteractor extends EventEmitter implements PluginConfigIn
       response.error = err as Error;
     }
 
+    // eslint-disable-next-line max-len
+    this.log.debug(`Interaction Response: for ${response.serialNumber}, type: ${response.type}, result: ${response.result}, error: ${response.error}`);
     return Promise.resolve(response);
   }
 
