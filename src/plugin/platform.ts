@@ -150,7 +150,7 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
       country: this.config.country ?? 'US',
       language: 'en',
       persistentDir: this.eufyPath,
-      p2pConnectionSetup: 0,
+      p2pConnectionSetup: (this.config.preferLocalConnection) ? 1 : 2,
       pollingIntervalMinutes: this.config.pollingIntervalMinutes ?? 10,
       eventDurationSeconds: 10,
     } as EufySecurityConfig;
