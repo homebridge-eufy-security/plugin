@@ -46,6 +46,7 @@ import { Logger as TsLogger, ILogObject } from 'tslog';
 import * as rfs from 'rotating-file-stream';
 
 import fs from 'fs';
+import { EufyClientInteractor } from './utils/EufyClientInteractor';
 
 export class EufySecurityPlatform implements DynamicPlatformPlugin {
   public readonly Service: typeof Service = this.api.hap.Service;
@@ -65,6 +66,8 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
 
   private activeAccessoryIds: string[] = [];
   private cleanCachedAccessoriesTimeout?: NodeJS.Timeout;
+
+  private pluginConfigInteractor?: EufyClientInteractor;
 
   constructor(
     public readonly hblog: Logger,
@@ -234,6 +237,13 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
 
     this.eufyClient.setCameraMaxLivestreamDuration(cameraMaxLivestreamDuration);
     this.log.debug('CameraMaxLivestreamDuration:', this.eufyClient.getCameraMaxLivestreamDuration());
+
+    try {
+      this.pluginConfigInteractor = new EufyClientInteractor(this.eufyPath, this.log, this.eufyClient);
+      await this.pluginConfigInteractor.setupServer();
+    } catch (err) {
+      this.log.warn(err);
+    }
   }
 
   private tfaWarning() {
@@ -358,6 +368,10 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
   private async pluginShutdown() {
     if (this.cleanCachedAccessoriesTimeout) {
       clearTimeout(this.cleanCachedAccessoriesTimeout);
+    }
+
+    if (this.pluginConfigInteractor) {
+      this.pluginConfigInteractor.stopServer();
     }
 
     try {

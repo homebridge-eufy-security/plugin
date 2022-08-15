@@ -9,6 +9,7 @@ import { Zip } from 'zip-lib';
 
 import { Accessory } from './configui/app/accessory';
 import { LoginResult, LoginFailReason } from './configui/app/util/types';
+import { EufyClientInteractor } from './plugin/utils/EufyClientInteractor';
 
 class UiServer extends HomebridgePluginUiServer {
   storagePath: string;
@@ -21,6 +22,8 @@ class UiServer extends HomebridgePluginUiServer {
   private log: bunyan;
 
   private logZipFilePath: string;
+
+  private pluginConfigInteractor: EufyClientInteractor;
 
   constructor() {
     super();
@@ -66,6 +69,9 @@ class UiServer extends HomebridgePluginUiServer {
     this.onRequest('/storedAccessories', this.loadStoredAccessories.bind(this));
     this.onRequest('/reset', this.resetPlugin.bind(this));
     this.onRequest('/downloadLogs', this.downloadLogs.bind(this));
+
+    this.pluginConfigInteractor = new EufyClientInteractor(this.storagePath, this.log);
+    this.onRequest('/getChargingStatus', this.pluginConfigInteractor.DeviceIsCharging.bind(this));
 
     this.ready();
   }
@@ -191,6 +197,9 @@ class UiServer extends HomebridgePluginUiServer {
 
     this.eufyClient?.once('connect', () => {
       this.log.debug('connect event');
+      if (this.eufyClient) {
+        this.pluginConfigInteractor.setClient(this.eufyClient);
+      }
       resolveCallback({
         success: true,
       });
