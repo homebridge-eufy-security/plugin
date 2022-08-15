@@ -2,6 +2,8 @@ import { Component, Input, OnInit } from '@angular/core';
 import { Accessory } from '../../../app/accessory';
 import { PluginService } from '../../../app/plugin.service';
 import { DEFAULT_CAMERACONFIG_VALUES } from '../../../app/util/default-config-values';
+import { AccessoryService } from '../../accessory.service';
+import { ChargingStatus } from '../../util/eufy-security-client.utils';
 import { ConfigOptionsInterpreter } from '../config-options-interpreter';
 
 @Component({
@@ -10,12 +12,20 @@ import { ConfigOptionsInterpreter } from '../config-options-interpreter';
   styles: [],
 })
 export class PeriodicSnapshotRefreshComponent extends ConfigOptionsInterpreter implements OnInit {
-  constructor(pluginService: PluginService) {
+  constructor(
+    pluginService: PluginService,
+    private accessoryService: AccessoryService,
+  ) {
     super(pluginService);
   }
 
   ngOnInit(): void {
     this.readValue();
+
+    if (this.accessory) {
+      this.accessoryService.getChargingStatus(this.accessory.uniqueId)
+        .then((chargingStatus) => this.chargingStatus = chargingStatus);
+    }
   }
 
   /** Customize from here */
@@ -29,6 +39,8 @@ export class PeriodicSnapshotRefreshComponent extends ConfigOptionsInterpreter i
   value = DEFAULT_CAMERACONFIG_VALUES.refreshSnapshotIntervalMinutes;
   inputIsInvalid = false;
 
+  chargingStatus = ChargingStatus.PLUGGED;
+  
   async readValue() {
     const config = await this.getCameraConfig(this.accessory?.uniqueId || '');
 

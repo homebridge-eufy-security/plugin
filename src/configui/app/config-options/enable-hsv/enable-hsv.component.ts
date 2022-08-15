@@ -1,7 +1,9 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { Accessory } from '../../accessory';
+import { AccessoryService } from '../../accessory.service';
 import { PluginService } from '../../plugin.service';
 import { DEFAULT_CAMERACONFIG_VALUES } from '../../util/default-config-values';
+import { ChargingStatus } from '../../util/eufy-security-client.utils';
 import { ConfigOptionsInterpreter } from '../config-options-interpreter';
 
 @Component({
@@ -12,12 +14,20 @@ import { ConfigOptionsInterpreter } from '../config-options-interpreter';
 })
 export class EnableHsvComponent extends ConfigOptionsInterpreter implements OnInit {
 
-  constructor(pluginService: PluginService) {
+  constructor(
+    pluginService: PluginService,
+    private accessoryService: AccessoryService,
+  ) {
     super(pluginService);
   }
 
   ngOnInit(): void {
     this.readValue();
+
+    if (this.accessory) {
+      this.accessoryService.getChargingStatus(this.accessory.uniqueId)
+        .then((chargingStatus) => this.chargingStatus = chargingStatus);
+    }
   }
 
   /** Customize from here */
@@ -29,6 +39,8 @@ export class EnableHsvComponent extends ConfigOptionsInterpreter implements OnIn
 
   @Input() accessory?: Accessory;
   value = DEFAULT_CAMERACONFIG_VALUES.hsv;
+
+  chargingStatus = ChargingStatus.PLUGGED;
 
   async readValue() {
     const config = await this.getCameraConfig(this.accessory?.uniqueId || '');

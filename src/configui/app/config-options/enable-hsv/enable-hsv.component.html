@@ -7,6 +7,15 @@
     </div>
 
   </div>
+
+  <div class="alert alert-warning" role="alert" *ngIf="chargingStatus === 2 && value">
+    Since your device is battery powered and currently not charging we don't recommend using this setting. The battery life will most likely decrease significantly.
+  </div>
+
+  <div class="alert alert-secondary" role="alert" *ngIf="chargingStatus === 4 && value">
+    Please be advised that since your device is only solar powered we cannot guarantee optimal results with this setting. It might well be, that your battery is depleting faster than it can be recharged by the sun. This depends heavily on your exact use case.
+  </div>
+
   <small><i>
     This feature is in an experimental state and can have some side-effects due to technical limitations imposed by the connection to the eufy device.
     <p></p>
