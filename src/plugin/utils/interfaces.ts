@@ -7,5 +7,5 @@ export class EufyClientNotRunningError extends Error {
 }
 
 export interface PluginConfigInteractor {
-  DeviceIsCharging(sn: string): Promise<boolean>;
+  DeviceIsCharging(sn: string): Promise<number>;
 }

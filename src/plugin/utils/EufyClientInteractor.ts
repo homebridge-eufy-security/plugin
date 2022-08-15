@@ -21,7 +21,7 @@ type InteractorRequest = {
 type InteractorResponse = {
   serialNumber: string;
   type: InteractorRequestType;
-  result?: boolean;
+  result?: boolean | number;
   error?: Error;
 };
 
@@ -184,9 +184,9 @@ export class EufyClientInteractor extends EventEmitter implements PluginConfigIn
           accessory = await this.client.getDevice(request.serialNumber);
           if (!accessory.hasBattery()) {
             // device has no battery, so it is always powered with plug
-            response.result = true;
-          } else if (accessory.hasProperty(PropertyName.DeviceBatteryIsCharging)) {
-            response.result = accessory.getPropertyValue(PropertyName.DeviceBatteryIsCharging) as boolean;
+            response.result = 3;
+          } else if (accessory.hasProperty(PropertyName.DeviceChargingStatus)) {
+            response.result = accessory.getPropertyValue(PropertyName.DeviceChargingStatus) as number;
           } else {
             response.error = new Error('battery charging property could not be retrieved');
           }
@@ -214,7 +214,7 @@ export class EufyClientInteractor extends EventEmitter implements PluginConfigIn
     this.log.error(`There was an error on the PluginConfigInteractor server: ${err}`);
   }
   
-  async DeviceIsCharging(sn: string): Promise<boolean> {
+  async DeviceIsCharging(sn: string): Promise<number> {
     const request: InteractorRequest = {
       serialNumber: sn,
       type: InteractorRequestType.DeviceChargingStatus,
@@ -229,7 +229,7 @@ export class EufyClientInteractor extends EventEmitter implements PluginConfigIn
         return Promise.reject('there was no result');
       }
   
-      return Promise.resolve(response.result as boolean);
+      return Promise.resolve(response.result as number);
     } catch (err) {
       return Promise.reject(err);
     }
