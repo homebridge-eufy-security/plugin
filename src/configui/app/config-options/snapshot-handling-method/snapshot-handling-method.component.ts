@@ -6,6 +6,7 @@ import { ConfigOptionsInterpreter } from '../config-options-interpreter';
 
 import { faPlusCircle, faMinusCircle, faCircle } from '@fortawesome/free-solid-svg-icons';
 import { AccessoryService } from '../../accessory.service';
+import { ChargingStatus } from '../../util/eufy-security-client.utils';
 
 @Component({
   selector: 'app-snapshot-handling-method',
@@ -25,10 +26,7 @@ export class SnapshotHandlingMethodComponent extends ConfigOptionsInterpreter im
     
     if (this.accessory) {
       this.accessoryService.getChargingStatus(this.accessory.uniqueId)
-        .then((value) => console.log(`value: ${value}`))
-        .catch((err) => console.log(`ERROR: ${err}`));
-    } else {
-      console.log('unable to get charging status since there was no accessory');
+        .then((chargingStatus) => this.chargingStatus = chargingStatus);
     }
   }
 
@@ -45,6 +43,8 @@ export class SnapshotHandlingMethodComponent extends ConfigOptionsInterpreter im
 
   @Input() accessory?: Accessory;
   value = DEFAULT_CAMERACONFIG_VALUES.snapshotHandlingMethod;
+
+  chargingStatus = ChargingStatus.PLUGGED;
 
   async readValue() {
     const config = await this.getCameraConfig(this.accessory?.uniqueId || '');
