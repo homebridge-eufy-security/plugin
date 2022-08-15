@@ -43,6 +43,7 @@ import { OmitLogFilesComponent } from './config-options/omit-log-files/omit-log-
 import { TalkbackComponent } from './config-options/talkback/talkback.component';
 import { DownloadLogsComponent } from './config-options/download-logs/download-logs.component';
 import { EnableHsvComponent } from './config-options/enable-hsv/enable-hsv.component';
+import { PreferLocalComponent } from './config-options/prefer-local/prefer-local.component';
 
 @NgModule({
   declarations: [
@@ -79,6 +80,7 @@ import { EnableHsvComponent } from './config-options/enable-hsv/enable-hsv.compo
     TalkbackComponent,
     DownloadLogsComponent,
     EnableHsvComponent,
+    PreferLocalComponent,
   ],
   imports: [BrowserModule, FormsModule, NgbModule, AppRoutingModule, FontAwesomeModule],
   providers: [{ provide: LocationStrategy, useClass: HashLocationStrategy }],

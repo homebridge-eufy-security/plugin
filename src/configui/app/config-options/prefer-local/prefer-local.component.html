@@ -1,0 +1,13 @@
+<div class="settingsItem row p-3">
+  <div class="d-flex justify-content-between align-items-center mb-2">
+    <span>Prefer Local Connection</span>
+    
+    <div class="form-check form-switch">
+      <input class="form-check-input" type="checkbox" role="switch" [(ngModel)]="value" id="flexSwitchCheckDefault" (change)="update()">
+    </div>
+
+  </div>
+  <small><i>
+    When enabled, the plugin tries to connect to the eufy devices only locally.
+  </i></small>
+</div>
