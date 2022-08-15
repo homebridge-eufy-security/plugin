@@ -7,6 +7,7 @@ You can find the complete detailled changelog for every beta release [here](http
 ### Added
 
 - Config UI will now warn the user if a setting might decrease battery life drastically
+- Option to set connection method in eufy-security-client to 'local'
 
 ## 2.2.0 (Beta)
 
@@ -18,6 +19,7 @@ You can find the complete detailled changelog for every beta release [here](http
 - Added additional audio settings in advanced video configuration
 - Setting to choose custom path to ffmpeg executable.
 - Config UI will now warn the user if a setting might decrease battery life drastically
+- Option to set connection method in eufy-security-client to 'local'
 
 ### Changed
 
