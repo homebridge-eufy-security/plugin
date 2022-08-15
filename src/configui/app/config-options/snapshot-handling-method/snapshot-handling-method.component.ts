@@ -5,6 +5,7 @@ import { DEFAULT_CAMERACONFIG_VALUES } from '../../../app/util/default-config-va
 import { ConfigOptionsInterpreter } from '../config-options-interpreter';
 
 import { faPlusCircle, faMinusCircle, faCircle } from '@fortawesome/free-solid-svg-icons';
+import { AccessoryService } from '../../accessory.service';
 
 @Component({
   selector: 'app-snapshot-handling-method',
@@ -12,12 +13,23 @@ import { faPlusCircle, faMinusCircle, faCircle } from '@fortawesome/free-solid-s
   styles: [],
 })
 export class SnapshotHandlingMethodComponent extends ConfigOptionsInterpreter implements OnInit {
-  constructor(pluginService: PluginService) {
+  constructor(
+    pluginService: PluginService,
+    private accessoryService: AccessoryService,
+  ) {
     super(pluginService);
   }
 
   ngOnInit(): void {
     this.readValue();
+    
+    if (this.accessory) {
+      this.accessoryService.getChargingStatus(this.accessory.uniqueId)
+        .then((value) => console.log(`value: ${value}`))
+        .catch((err) => console.log(`ERROR: ${err}`));
+    } else {
+      console.log('unable to get charging status since there was no accessory');
+    }
   }
 
   /** Customize from here */
