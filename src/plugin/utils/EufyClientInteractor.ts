@@ -281,7 +281,7 @@ export class EufyClientInteractor extends EventEmitter implements PluginConfigIn
       if (response.error) {
         return Promise.reject(response.error.message);
       }
-      if (!response.result) {
+      if (response.result === undefined) {
         return Promise.reject('there was no result');
       }
   
@@ -303,7 +303,7 @@ export class EufyClientInteractor extends EventEmitter implements PluginConfigIn
       if (response.error) {
         return Promise.reject(response.error.message);
       }
-      if (!response.result) {
+      if (response.result === undefined) {
         return Promise.reject('there was no result');
       }
   
