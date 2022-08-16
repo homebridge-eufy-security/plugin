@@ -8,7 +8,7 @@
 
   </div>
   <div class="alert alert-danger" role="alert" *ngIf="error !== undefined">
-    There was an error setting the RTSP status: {{ error }}
+    There was an error setting the RTSP status: {{ error.message }}
   </div>
   <div class="alert alert-success" role="alert" *ngIf="rtspUrl !== undefined && rtspUrl === ''">
     RTSP setting could successfully be disabled.

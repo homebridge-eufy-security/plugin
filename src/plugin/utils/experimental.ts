@@ -26,14 +26,11 @@ const DeviceExperimentalModification: PropertyMetadataBoolean = {
 
 const addRTSPPropertiesToAllDevices = () => {
   for (const deviceType in DeviceType) {
-    if (isNaN(Number(deviceType))) {
-      continue;
-    }
-    addRTSPPropertiesToDevice(Number(deviceType));
+    addRTSPPropertiesToDevice(deviceType);
   }
 };
 
-const addRTSPPropertiesToDevice = (deviceType: number) => {
+const addRTSPPropertiesToDevice = (deviceType: string) => {
   let changed = false;
 
   if (!DeviceProperties[deviceType][PropertyName.DeviceRTSPStream]) {
