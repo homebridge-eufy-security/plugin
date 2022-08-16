@@ -2,7 +2,7 @@ import { DeviceProperties, DeviceType, PropertyName, DeviceRTSPStreamProperty, D
 
 export const initializeExperimentalMode = () => {
   addRTSPPropertiesToAllDevices();
-}
+};
 
 const addRTSPPropertiesToAllDevices = () => {
   for (const deviceType in DeviceType) {

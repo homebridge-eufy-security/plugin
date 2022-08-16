@@ -19,6 +19,8 @@ export class CameraConfigOptionsComponent extends ConfigOptionsInterpreter imple
   supportsRTSP = false;
   supportsTalkback = false;
 
+  experimentalMode = false;
+
   constructor(pluginService: PluginService, private route: ActivatedRoute) {
     super(pluginService);
   }
@@ -32,6 +34,15 @@ export class CameraConfigOptionsComponent extends ConfigOptionsInterpreter imple
       this.isCamera = Device.isCamera(this.accessory.type);
       this.supportsRTSP = Device.supportsRTSP(this.accessory.type);
       this.supportsTalkback = Device.supportsTalkback(this.accessory.type);
+
+      if (Object.prototype.hasOwnProperty.call(this.config, 'experimentalMode') && this.config['experimentalMode']) {
+
+        // check if experimental settings are available
+        if (!this.supportsRTSP) {
+          this.experimentalMode = true;
+          this.supportsRTSP = true;
+        }
+      }
 
       // reset rtsp and talkback setting if these are not supported
       if (!this.supportsRTSP) {

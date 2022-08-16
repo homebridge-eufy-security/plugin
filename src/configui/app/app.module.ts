@@ -45,6 +45,7 @@ import { DownloadLogsComponent } from './config-options/download-logs/download-l
 import { EnableHsvComponent } from './config-options/enable-hsv/enable-hsv.component';
 import { PreferLocalComponent } from './config-options/prefer-local/prefer-local.component';
 import { ExperimentalModeComponent } from './config-options/experimental-mode/experimental-mode.component';
+import { ExperimentalRtspComponent } from './config-options/experimental-rtsp/experimental-rtsp.component';
 
 @NgModule({
   declarations: [
@@ -83,6 +84,7 @@ import { ExperimentalModeComponent } from './config-options/experimental-mode/ex
     EnableHsvComponent,
     PreferLocalComponent,
     ExperimentalModeComponent,
+    ExperimentalRtspComponent,
   ],
   imports: [BrowserModule, FormsModule, NgbModule, AppRoutingModule, FontAwesomeModule],
   providers: [{ provide: LocationStrategy, useClass: HashLocationStrategy }],
