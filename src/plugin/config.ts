@@ -27,4 +27,5 @@ export interface EufySecurityPlatformConfig extends PlatformConfig {
   stations: StationConfig[];
   cleanCache: boolean;
   preferLocalConnection: boolean;
+  experimentalMode: boolean;
 }
