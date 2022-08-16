@@ -25,15 +25,14 @@ const DeviceExperimentalModification: PropertyMetadataBoolean = {
 };
 
 const addRTSPPropertiesToAllDevices = () => {
-  for (const deviceType in DeviceType) {
-    addRTSPPropertiesToDevice(deviceType);
-  }
+  const deviceTypes = Object.values(DeviceType).filter(t => !isNaN(Number(t)));
+  deviceTypes.forEach(deviceType => addRTSPPropertiesToDevice(deviceType));
 };
 
-const addRTSPPropertiesToDevice = (deviceType: string) => {
+const addRTSPPropertiesToDevice = (deviceType: string | DeviceType) => {
   let changed = false;
 
-  if (!DeviceProperties[deviceType][PropertyName.DeviceRTSPStream]) {
+  if (DeviceProperties[deviceType] && !DeviceProperties[deviceType][PropertyName.DeviceRTSPStream]) {
     DeviceProperties[deviceType] = {
       ...DeviceProperties[deviceType],
       [PropertyName.DeviceRTSPStream]: DeviceRTSPStreamProperty,
@@ -41,7 +40,7 @@ const addRTSPPropertiesToDevice = (deviceType: string) => {
     changed = true;
   }
 
-  if (!DeviceProperties[deviceType][PropertyName.DeviceRTSPStreamUrl]) {
+  if (DeviceProperties[deviceType] && !DeviceProperties[deviceType][PropertyName.DeviceRTSPStreamUrl]) {
     DeviceProperties[deviceType] = {
       ...DeviceProperties[deviceType],
       [PropertyName.DeviceRTSPStreamUrl]: DeviceRTSPStreamUrlProperty,
@@ -49,7 +48,7 @@ const addRTSPPropertiesToDevice = (deviceType: string) => {
     changed = true;
   }
 
-  if (changed && !DeviceProperties[deviceType][PropertyName['ExperimentalModification']]) {
+  if (changed && DeviceProperties[deviceType] && !DeviceProperties[deviceType][PropertyName['ExperimentalModification']]) {
     DeviceProperties[deviceType] = {
       ...DeviceProperties[deviceType],
       [PropertyName['ExperimentalModification']]: DeviceExperimentalModification,
