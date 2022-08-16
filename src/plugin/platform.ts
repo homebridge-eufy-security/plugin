@@ -47,6 +47,7 @@ import * as rfs from 'rotating-file-stream';
 
 import fs from 'fs';
 import { EufyClientInteractor } from './utils/EufyClientInteractor';
+import { initializeExperimentalMode } from './utils/experimental';
 
 export class EufySecurityPlatform implements DynamicPlatformPlugin {
   public readonly Service: typeof Service = this.api.hap.Service;
@@ -171,6 +172,11 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
         this.log.debug('but the new one is already present');
       }
       fs.unlinkSync(this.api.user.storagePath() + '/persistent.json');
+    }
+
+    // initialize experimental mode
+    if (this.config.experimentalMode) {
+      initializeExperimentalMode();
     }
 
     this.api.on('didFinishLaunching', async () => {
