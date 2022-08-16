@@ -176,6 +176,7 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
 
     // initialize experimental mode
     if (this.config.experimentalMode) {
+      this.log.warn('Experimental Mode is enabled!');
       initializeExperimentalMode();
     }
 

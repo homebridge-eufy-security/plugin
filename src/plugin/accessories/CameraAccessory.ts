@@ -16,6 +16,7 @@ import { StreamingDelegate } from '../controller/streamingDelegate';
 
 import { CameraConfig } from '../utils/configTypes';
 import { RecordingDelegate } from '../controller/recordingDelegate';
+import { setRTSPCapability } from '../utils/experimental';
 
 /**
  * Platform Accessory
@@ -319,6 +320,14 @@ export class CameraAccessory extends DeviceAccessory {
     } catch (Error) {
       this.platform.log.error(this.accessory.displayName, 'raise error to check and attach switchLightService.', Error);
     }
+
+    // experimental mode
+    if (this.platform.config.experimentalMode && this.eufyDevice.hasProperty('experimentalModification')) {
+      const value = !!this.cameraConfig.experimentalRTSP;
+      const station = this.platform.getStationById(this.eufyDevice.getStationSerial());
+      this.platform.log.debug(this.accessory.displayName, `Setting experimental RTSP capabilities to: ${value}`);
+      setRTSPCapability(station, this.eufyDevice, value);
+    }
   }
 
   private getCameraConfig() {
@@ -340,6 +349,8 @@ export class CameraAccessory extends DeviceAccessory {
     config.immediateRingNotificationWithoutSnapshot = config.immediateRingNotificationWithoutSnapshot ??= false;
     config.delayCameraSnapshot = config.delayCameraSnapshot ??= false;
     config.hsv = config.hsv ??= false;
+
+    config.experimentalRTSP = config.experimentalRTSP ??= false;
 
     if (config.hsv && !this.platform.api.versionGreaterOrEqual('1.4.0')) {
       config.hsv = false;
