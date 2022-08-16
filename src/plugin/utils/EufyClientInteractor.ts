@@ -2,7 +2,7 @@ import EventEmitter from 'events';
 import fs from 'fs';
 import net from 'net';
 
-import { Device, EufySecurity, Station, PropertyName } from 'eufy-security-client';
+import { Device, EufySecurity, Station, PropertyName, PropertyValue } from 'eufy-security-client';
 import pickPort from 'pick-port';
 
 import { EufyClientNotRunningError, PluginConfigInteractor } from './interfaces';
@@ -10,18 +10,20 @@ import { Logger } from './logger';
 import bunyan from 'bunyan';
 
 enum InteractorRequestType {
-  DeviceChargingStatus = 'deviceChargingStatus'
+  DeviceChargingStatus = 'deviceChargingStatus',
+  DeviceChangeExperimentalRTSPStatus = 'deviceExperimentalRtspStatusChange',
 }
 
 type InteractorRequest = {
   serialNumber: string;
   type: InteractorRequestType;
+  value?: boolean;
 };
 
 type InteractorResponse = {
   serialNumber: string;
   type: InteractorRequestType;
-  result?: boolean | number;
+  result?: boolean | number | string;
   error?: Error;
 };
 
@@ -175,23 +177,14 @@ export class EufyClientInteractor extends EventEmitter implements PluginConfigIn
       type: request.type,
     };
 
-    let accessory: Device | Station | undefined = undefined;
-
     try {
       switch (request.type) {
         case InteractorRequestType.DeviceChargingStatus:
-
-          accessory = await this.client.getDevice(request.serialNumber);
-          if (!accessory.hasBattery()) {
-            // device has no battery, so it is always powered with plug
-            response.result = 3;
-          } else if (accessory.hasProperty(PropertyName.DeviceChargingStatus)) {
-            response.result = accessory.getPropertyValue(PropertyName.DeviceChargingStatus) as number;
-          } else {
-            response.error = new Error('battery charging property could not be retrieved');
-          }
+          response.result = await this.getChargingStatus(request);
           break;
-      
+        case InteractorRequestType.DeviceChangeExperimentalRTSPStatus:
+          response.result = await this.getExperimentalRTSPResult(request);
+          break;
         default:
           response.error = new Error('Request type not implemented.');
           break;
@@ -204,6 +197,66 @@ export class EufyClientInteractor extends EventEmitter implements PluginConfigIn
     // eslint-disable-next-line max-len
     this.log.debug(`Interaction Response: for ${response.serialNumber}, type: ${response.type}, result: ${response.result}, error: ${response.error}`);
     return Promise.resolve(response);
+  }
+
+  private async getChargingStatus(request: InteractorRequest): Promise<number> {
+    const device = await this.client!.getDevice(request.serialNumber);
+    return new Promise((resolve, reject) => {
+      if (!device.hasBattery()) {
+        // device has no battery, so it is always powered with plug
+        resolve(3);
+      } else if (device.hasProperty(PropertyName.DeviceChargingStatus)) {
+        resolve(device.getPropertyValue(PropertyName.DeviceChargingStatus) as number);
+      } else {
+        reject(new Error('battery charging property could not be retrieved'));
+      }
+    });
+  }
+
+  private async getExperimentalRTSPResult(request): Promise<string> {
+    const device = await this.client!.getDevice(request.serialNumber);
+    const station = this.client!.getStation(device.getStationSerial());
+
+    return new Promise((resolve, reject) => {
+      if (request.value === undefined) {
+        reject(new Error('no value was given'));
+      } else if(!device.hasProperty(PropertyName.DeviceRTSPStream) &&
+        !device.hasProperty(PropertyName['ExperimentalModification'])) {
+  
+        reject(new Error('device has no experimental rtsp setting'));
+      } else {
+        let to: NodeJS.Timeout | undefined = undefined;
+
+        const propertyListener = (d: Device, name: string, value: PropertyValue) => {
+          if (request.value) {
+            if (device.getSerial() === d.getSerial() && name === PropertyName.DeviceRTSPStreamUrl) {
+              if (to) {
+                clearTimeout(to);
+              }
+              device.removeListener('property changed', propertyListener);
+              resolve(value as string);
+            }
+          } else {
+            if (device.getSerial() === d.getSerial() && name === PropertyName.DeviceRTSPStream && value === false) {
+              if (to) {
+                clearTimeout(to);
+              }
+              device.removeListener('property changed', propertyListener);
+              resolve('');
+            }
+          }
+        };
+
+        to = setTimeout(() => {
+          device.removeListener('property changed', propertyListener);
+          reject(new Error('setting rtsp feature timed out'));
+        }, 5000);
+
+        device.on('property changed', propertyListener);
+
+        station.setRTSPStream(device, request.value);
+      }
+    });
   }
 
   private onSocketError(err: Error) {
@@ -235,4 +288,25 @@ export class EufyClientInteractor extends EventEmitter implements PluginConfigIn
     }
   }
 
+  async DeviceSetExperimentalRTSP(sn: string, value: boolean): Promise<string> {
+    const request: InteractorRequest = {
+      serialNumber: sn,
+      type: InteractorRequestType.DeviceChangeExperimentalRTSPStatus,
+      value: value,
+    };
+    try {
+      const response = await this.processDirectRequest(request);
+      
+      if (response.error) {
+        return Promise.reject(response.error.message);
+      }
+      if (!response.result) {
+        return Promise.reject('there was no result');
+      }
+  
+      return Promise.resolve(response.result as string);
+    } catch (err) {
+      return Promise.reject(err);
+    }
+  }
 }

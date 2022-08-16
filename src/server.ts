@@ -74,6 +74,13 @@ class UiServer extends HomebridgePluginUiServer {
     this.onRequest('/getChargingStatus', (sn: string) => {
       return this.pluginConfigInteractor.DeviceIsCharging(sn);
     });
+    this.onRequest('/setExperimentalRTSP',
+      (options: {
+        sn: string;
+        value: boolean;
+      }) => {
+        return this.pluginConfigInteractor.DeviceSetExperimentalRTSP(options.sn, options.value);
+      });
 
     this.ready();
   }

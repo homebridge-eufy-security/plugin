@@ -8,4 +8,5 @@ export class EufyClientNotRunningError extends Error {
 
 export interface PluginConfigInteractor {
   DeviceIsCharging(sn: string): Promise<number>;
+  DeviceSetExperimentalRTSP(sn: string, value: boolean): Promise<string>;
 }

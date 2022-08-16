@@ -1,5 +1,6 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { Accessory } from '../../accessory';
+import { AccessoryService } from '../../accessory.service';
 import { PluginService } from '../../plugin.service';
 import { ConfigOptionsInterpreter } from '../config-options-interpreter';
 
@@ -7,11 +8,14 @@ import { ConfigOptionsInterpreter } from '../config-options-interpreter';
   selector: 'app-experimental-rtsp',
   templateUrl: './experimental-rtsp.component.html',
   styles: [
-  ]
+  ],
 })
 export class ExperimentalRtspComponent extends ConfigOptionsInterpreter implements OnInit {
 
-  constructor(pluginService: PluginService) {
+  constructor(
+    pluginService: PluginService,
+    private accessoryService: AccessoryService,
+  ) {
     super(pluginService);
   }
 
@@ -33,6 +37,9 @@ export class ExperimentalRtspComponent extends ConfigOptionsInterpreter implemen
 
   rtspSetting = false;
 
+  rtspUrl?: string;
+  error?: Error;
+
   async readValue() {
     const config = await this.getCameraConfig(this.accessory?.uniqueId || '');
 
@@ -52,6 +59,13 @@ export class ExperimentalRtspComponent extends ConfigOptionsInterpreter implemen
       },
       this.accessory,
     );
+
+    if (this.accessory) {
+      this.accessoryService.setExperimentalRTSPStatus(this.accessory.uniqueId, this.value)
+        .then(url => this.rtspUrl = url)
+        .catch(err => this.error = err);
+    }
+
   }
 
 }

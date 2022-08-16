@@ -7,11 +7,10 @@ import { ChargingStatus } from './util/eufy-security-client.utils';
 export class AccessoryService {
 
   public async getChargingStatus(sn: string): Promise<ChargingStatus> {
-    try {
-      const response = await window.homebridge.request('/getChargingStatus', sn);
-      return Promise.resolve(response);
-    } catch (err) {
-      return Promise.reject(err);
-    }
+    return window.homebridge.request('/getChargingStatus', sn);
+  }
+
+  public async setExperimentalRTSPStatus(sn: string, value: boolean): Promise<string> {
+    return window.homebridge.request('/setExperimentalRTSP', { sn: sn, value: value});
   }
 }
