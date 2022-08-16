@@ -8,6 +8,7 @@ import pickPort from 'pick-port';
 import { EufyClientNotRunningError, PluginConfigInteractor } from './interfaces';
 import { Logger } from './logger';
 import bunyan from 'bunyan';
+import { initializeExperimentalMode } from './experimental';
 
 enum InteractorRequestType {
   DeviceChargingStatus = 'deviceChargingStatus',
@@ -214,6 +215,8 @@ export class EufyClientInteractor extends EventEmitter implements PluginConfigIn
   }
 
   private async getExperimentalRTSPResult(request): Promise<string> {
+    initializeExperimentalMode();
+
     const device = await this.client!.getDevice(request.serialNumber);
     const station = this.client!.getStation(device.getStationSerial());
 
