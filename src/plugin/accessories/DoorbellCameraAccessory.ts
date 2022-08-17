@@ -68,7 +68,6 @@ export class DoorbellCameraAccessory extends CameraAccessory {
         // reset rtp stream configuration on startup
         // this way codec changes are possible after
         // the camera has been added to HomeKit
-        this.platform.log.debug(this.accessory.displayName, 'remove rtp stream managment for real...');
         accessory.removeService(rtpStreamingManagementService);
       }
       this.streamingDelegate?.setController(controller);

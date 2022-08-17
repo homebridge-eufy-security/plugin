@@ -43,6 +43,8 @@ export class ExperimentalRtspComponent extends ConfigOptionsInterpreter implemen
   state?: boolean;
   url?: string;
 
+  waiting = false;
+
   async readValue() {
     const config = await this.getCameraConfig(this.accessory?.uniqueId || '');
 
@@ -61,6 +63,7 @@ export class ExperimentalRtspComponent extends ConfigOptionsInterpreter implemen
     if (this.accessory) {
       this.accessoryService.getExperimentalRTSPStatus(this.accessory.uniqueId)
         .then(result => {
+          this.waiting = false;
           this.state = result.state;
           this.url = result.url;
         });
@@ -76,6 +79,7 @@ export class ExperimentalRtspComponent extends ConfigOptionsInterpreter implemen
     );
 
     if (this.accessory) {
+      this.waiting = true;
       this.accessoryService.setExperimentalRTSPStatus(this.accessory.uniqueId, this.value)
         .then(url => {
           this.rtspUrl = url;

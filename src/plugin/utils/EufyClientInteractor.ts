@@ -236,7 +236,7 @@ export class EufyClientInteractor extends EventEmitter implements PluginConfigIn
 
         const propertyListener = (d: Device, name: string, value: PropertyValue) => {
           if (request.value) {
-            if (device.getSerial() === d.getSerial() && name === PropertyName.DeviceRTSPStreamUrl) {
+            if (device.getSerial() === d.getSerial() && name === PropertyName.DeviceRTSPStreamUrl && value) {
               if (to) {
                 clearTimeout(to);
               }
@@ -257,7 +257,7 @@ export class EufyClientInteractor extends EventEmitter implements PluginConfigIn
         to = setTimeout(() => {
           device.removeListener('property changed', propertyListener);
           reject(new Error('setting rtsp feature timed out'));
-        }, 5000);
+        }, 15000);
 
         device.on('property changed', propertyListener);
 
