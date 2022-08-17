@@ -1,7 +1,7 @@
 import { Duplex, Writable } from 'stream';
 
 import { EufySecurityPlatform } from '../platform';
-import { EufySecurity, Device, Station } from 'eufy-security-client';
+import { Device, Station } from 'eufy-security-client';
 
 export class TalkbackStream extends Duplex {
 
@@ -53,6 +53,10 @@ export class TalkbackStream extends Duplex {
   }
 
   public stopTalkbackStream(): void {
+    // remove event listeners
+    this.platform.eufyClient.removeListener('station talkback start', this.onTalkbackStarted.bind(this));
+    this.platform.eufyClient.removeListener('station talkback stop', this.onTalkbackStopped.bind(this));
+
     this.stopTalkback();
     this.unpipe();
     this.destroy();
