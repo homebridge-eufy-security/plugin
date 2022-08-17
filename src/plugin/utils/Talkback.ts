@@ -14,14 +14,22 @@ export class TalkbackStream extends Duplex {
 
   private targetStream?: Writable;
 
+  private talkbackStartedHandle = (station: Station, device: Device, stream: Writable) => {
+    this.onTalkbackStarted(station, device, stream);
+  };
+
+  private talkbackStoppedHandle = (station: Station, device: Device) => {
+    this.onTalkbackStopped(station, device);
+  };
+
   constructor(platform: EufySecurityPlatform, camera: Device) {
     super();
 
     this.platform = platform;
     this.camera = camera;
 
-    this.platform.eufyClient.on('station talkback start', this.onTalkbackStarted.bind(this));
-    this.platform.eufyClient.on('station talkback stop', this.onTalkbackStopped.bind(this));
+    this.platform.eufyClient.on('station talkback start', this.talkbackStartedHandle);
+    this.platform.eufyClient.on('station talkback stop', this.talkbackStoppedHandle);
   }
 
   private onTalkbackStarted(station: Station, device: Device, stream: Writable) {
@@ -54,8 +62,8 @@ export class TalkbackStream extends Duplex {
 
   public stopTalkbackStream(): void {
     // remove event listeners
-    this.platform.eufyClient.removeListener('station talkback start', this.onTalkbackStarted.bind(this));
-    this.platform.eufyClient.removeListener('station talkback stop', this.onTalkbackStopped.bind(this));
+    this.platform.eufyClient.removeListener('station talkback start', this.talkbackStartedHandle);
+    this.platform.eufyClient.removeListener('station talkback stop', this.talkbackStoppedHandle);
 
     this.stopTalkback();
     this.unpipe();
