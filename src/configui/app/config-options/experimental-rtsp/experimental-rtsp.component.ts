@@ -54,6 +54,10 @@ export class ExperimentalRtspComponent extends ConfigOptionsInterpreter implemen
       this.rtspSetting = config['rtsp'];
     }
 
+    this.getCurrentRTSPValues();
+  }
+
+  private getCurrentRTSPValues() {
     if (this.accessory) {
       this.accessoryService.getExperimentalRTSPStatus(this.accessory.uniqueId)
         .then(result => {
@@ -73,7 +77,10 @@ export class ExperimentalRtspComponent extends ConfigOptionsInterpreter implemen
 
     if (this.accessory) {
       this.accessoryService.setExperimentalRTSPStatus(this.accessory.uniqueId, this.value)
-        .then(url => this.rtspUrl = url)
+        .then(url => {
+          this.rtspUrl = url;
+          this.getCurrentRTSPValues();
+        })
         .catch(err => this.error = err);
     }
 
