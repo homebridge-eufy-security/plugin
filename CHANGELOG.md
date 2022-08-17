@@ -14,6 +14,7 @@ You can find the complete detailled changelog for every beta release [here](http
 ### Fixed
 
 - Bug that caused a crash with node version prior to v14.18
+- Possible memory leak caused by not correctly released EventListeners
 
 ## 2.2.0 (Beta)
 
