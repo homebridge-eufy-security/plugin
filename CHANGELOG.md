@@ -11,6 +11,10 @@ You can find the complete detailled changelog for every beta release [here](http
 - Config UI will now warn the user if a setting might decrease battery life drastically
 - Option to set connection method in eufy-security-client to 'local'
 
+### Fixed
+
+- Bug that caused a crash with node version prior to v14.18
+
 ## 2.2.0 (Beta)
 
 ### Added
@@ -37,6 +41,7 @@ You can find the complete detailled changelog for every beta release [here](http
 
 - Switches to turn camera and motion on/off should now be removed from HomeKit if the user switches the configuration
 - Bug where no snapshot was returned after an event
+- Bug that caused a crash with node version prior to v14.18
 
 ## 2.1.0 (RC)
 
