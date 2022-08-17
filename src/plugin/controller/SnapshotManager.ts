@@ -1,6 +1,6 @@
-import https from 'node:https';
-import { readFileSync } from 'node:fs';
-import { EventEmitter, Readable } from 'node:stream';
+import https from 'https';
+import { readFileSync } from 'fs';
+import { EventEmitter, Readable } from 'stream';
 
 import { Camera, Device, PropertyName, PropertyValue } from 'eufy-security-client';
 import ffmpegPath from 'ffmpeg-for-homebridge';
