@@ -271,11 +271,14 @@ export class EufyClientInteractor extends EventEmitter implements PluginConfigIn
 
     try {
       const device = await this.client!.getDevice(request.serialNumber);
-      const state = device.getPropertyValue(PropertyName.DeviceRTSPStream);
-      const url = device.getPropertyValue(PropertyName.DeviceRTSPStreamUrl);
+      let state = device.getPropertyValue(PropertyName.DeviceRTSPStream) as boolean;
+      const url = device.getPropertyValue(PropertyName.DeviceRTSPStreamUrl) as string;
+      if (url && url !== '') {
+        state = true;
+      }
       return Promise.resolve({
-        state: state as boolean,
-        url: url as string,
+        state: state,
+        url: url,
       });
     } catch (err) {
       return Promise.reject(err);
