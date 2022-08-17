@@ -13,6 +13,7 @@ import { initializeExperimentalMode } from './experimental';
 enum InteractorRequestType {
   DeviceChargingStatus = 'deviceChargingStatus',
   DeviceChangeExperimentalRTSPStatus = 'deviceExperimentalRtspStatusChange',
+  DeviceGetExperimentalRTSPStatus = 'deviceExperimentalRtspStatusGet',
 }
 
 type InteractorRequest = {
@@ -24,7 +25,7 @@ type InteractorRequest = {
 type InteractorResponse = {
   serialNumber: string;
   type: InteractorRequestType;
-  result?: boolean | number | string;
+  result?: boolean | number | string | { state: boolean; url?: string };
   error?: Error;
 };
 
@@ -184,7 +185,10 @@ export class EufyClientInteractor extends EventEmitter implements PluginConfigIn
           response.result = await this.getChargingStatus(request);
           break;
         case InteractorRequestType.DeviceChangeExperimentalRTSPStatus:
-          response.result = await this.getExperimentalRTSPResult(request);
+          response.result = await this.getExperimentalRTSPStatusChangeResult(request);
+          break;
+        case InteractorRequestType.DeviceGetExperimentalRTSPStatus:
+          response.result = await this.getExperimentalRTSPState(request);
           break;
         default:
           response.error = new Error('Request type not implemented.');
@@ -214,7 +218,7 @@ export class EufyClientInteractor extends EventEmitter implements PluginConfigIn
     });
   }
 
-  private async getExperimentalRTSPResult(request): Promise<string> {
+  private async getExperimentalRTSPStatusChangeResult(request): Promise<string> {
     initializeExperimentalMode();
 
     const device = await this.client!.getDevice(request.serialNumber);
@@ -260,6 +264,22 @@ export class EufyClientInteractor extends EventEmitter implements PluginConfigIn
         station.setRTSPStream(device, request.value);
       }
     });
+  }
+
+  private async getExperimentalRTSPState(request: InteractorRequest): Promise<{ state: boolean; url?: string }> {
+    initializeExperimentalMode();
+
+    try {
+      const device = await this.client!.getDevice(request.serialNumber);
+      const state = device.getPropertyValue(PropertyName.DeviceRTSPStream);
+      const url = device.getPropertyValue(PropertyName.DeviceRTSPStreamUrl);
+      return Promise.resolve({
+        state: state as boolean,
+        url: url as string,
+      });
+    } catch (err) {
+      return Promise.reject(err);
+    }
   }
 
   private onSocketError(err: Error) {
@@ -308,6 +328,27 @@ export class EufyClientInteractor extends EventEmitter implements PluginConfigIn
       }
   
       return Promise.resolve(response.result as string);
+    } catch (err) {
+      return Promise.reject(err);
+    }
+  }
+
+  async DeviceGetExperimentalRTSPStatus(sn: string): Promise<{ state: boolean; url?: string }> {
+    const request: InteractorRequest = {
+      serialNumber: sn,
+      type: InteractorRequestType.DeviceGetExperimentalRTSPStatus,
+    };
+    try {
+      const response = await this.processDirectRequest(request);
+      
+      if (response.error) {
+        return Promise.reject(response.error.message);
+      }
+      if (response.result === undefined) {
+        return Promise.reject('there was no result');
+      }
+  
+      return Promise.resolve(response.result as { state: boolean; url?: string });
     } catch (err) {
       return Promise.reject(err);
     }

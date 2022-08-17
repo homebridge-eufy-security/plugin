@@ -40,6 +40,9 @@ export class ExperimentalRtspComponent extends ConfigOptionsInterpreter implemen
   rtspUrl?: string;
   error?: Error;
 
+  state?: boolean;
+  url?: string;
+
   async readValue() {
     const config = await this.getCameraConfig(this.accessory?.uniqueId || '');
 
@@ -49,6 +52,14 @@ export class ExperimentalRtspComponent extends ConfigOptionsInterpreter implemen
 
     if (config && Object.prototype.hasOwnProperty.call(config, 'rtsp')) {
       this.rtspSetting = config['rtsp'];
+    }
+
+    if (this.accessory) {
+      this.accessoryService.getExperimentalRTSPStatus(this.accessory.uniqueId)
+        .then(result => {
+          this.state = result.state;
+          this.url = result.url;
+        });
     }
   }
 

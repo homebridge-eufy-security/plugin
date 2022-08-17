@@ -71,9 +71,11 @@ class UiServer extends HomebridgePluginUiServer {
     this.onRequest('/downloadLogs', this.downloadLogs.bind(this));
 
     this.pluginConfigInteractor = new EufyClientInteractor(this.storagePath, this.log);
+
     this.onRequest('/getChargingStatus', (sn: string) => {
       return this.pluginConfigInteractor.DeviceIsCharging(sn);
     });
+
     this.onRequest('/setExperimentalRTSP',
       (options: {
         sn: string;
@@ -81,6 +83,10 @@ class UiServer extends HomebridgePluginUiServer {
       }) => {
         return this.pluginConfigInteractor.DeviceSetExperimentalRTSP(options.sn, options.value);
       });
+      
+    this.onRequest('/getExperimentalRTSPStatus', (sn: string) => {
+      return this.pluginConfigInteractor.DeviceGetExperimentalRTSPStatus(sn);
+    });
 
     this.ready();
   }

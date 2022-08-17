@@ -10,13 +10,15 @@
   <div class="alert alert-danger" role="alert" *ngIf="error !== undefined">
     There was an error setting the RTSP status: {{ error.message }}
   </div>
-  <div class="alert alert-success" role="alert" *ngIf="rtspUrl !== undefined && rtspUrl !== ''">
+  <!-- <div class="alert alert-success" role="alert" *ngIf="rtspUrl !== undefined && rtspUrl !== ''">
     RTSP setting could successfully be enabled. RTSP url is {{ rtspUrl }}<br>
     You can test this for example with the VLC player.
-  </div>
+  </div> -->
   <div class="alert alert-warning" role="alert" *ngIf="value && !rtspSetting">
     To utilize RTSP streaming, you'll also have to enable the RTSP setting above.
   </div>
+  <div *ngIf="state">Current RTSP state of this device: <b>{{ state ? 'On' : 'Off' }}</b></div><br />
+  <div *ngIf="url">RTSP url for this device: {{ url }}</div><p></p>
   <small><i>
     Most devices that don't support RTSP streaming officially have the ability nonetheless. You can try to enable it with this setting.<br />
   </i></small>
