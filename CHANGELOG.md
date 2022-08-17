@@ -6,6 +6,8 @@ You can find the complete detailled changelog for every beta release [here](http
 
 ### Added
 
+- Experimental Mode
+- Experimental Mode Option: Enabling RTSP streaming on all devices (e.g. Doorbells can now stream via RTSP)
 - Config UI will now warn the user if a setting might decrease battery life drastically
 - Option to set connection method in eufy-security-client to 'local'
 
@@ -14,6 +16,8 @@ You can find the complete detailled changelog for every beta release [here](http
 ### Added
 
 - HomeKit Secure Video (HKSV) Support (see #6)
+- Experimental Mode
+- Experimental Mode Option: Enabling RTSP streaming on all devices (e.g. Doorbells can now stream via RTSP)
 - Plugin will show warnings if it encounters a captcha or 2FA request while logging in.
 - Setting to crop image to requested resolution. This might help with streaming issues when the HomeKit Controller stops the stream due to wrong stream configuration.
 - Added additional audio settings in advanced video configuration
