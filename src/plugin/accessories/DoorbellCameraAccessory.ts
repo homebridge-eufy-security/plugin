@@ -57,19 +57,6 @@ export class DoorbellCameraAccessory extends CameraAccessory {
         externalDoorbellService: this.doorbellService,
       };
       const controller = new this.platform.api.hap.DoorbellController({...this.cameraControllerOptions, ...doorbellOptions});
-      const operatingModeService = accessory.getService(this.platform.api.hap.Service.CameraOperatingMode);
-      if (operatingModeService) {
-        // if we don't remove the CameraOperatingMode Service from the accessory there might be
-        // a crash on startup of the plugin
-        accessory.removeService(operatingModeService);
-      }
-      const rtpStreamingManagementService = accessory.getService(this.platform.api.hap.Service.CameraRTPStreamManagement);
-      if (rtpStreamingManagementService) {
-        // reset rtp stream configuration on startup
-        // this way codec changes are possible after
-        // the camera has been added to HomeKit
-        accessory.removeService(rtpStreamingManagementService);
-      }
       this.streamingDelegate?.setController(controller);
       this.recordingDelegate?.setController(controller);
       accessory.configureController(controller);

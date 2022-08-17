@@ -74,6 +74,22 @@ export abstract class DeviceAccessory {
       this.platform.log.error(this.accessory.displayName, 'raise error to check and attach a battery.', Error);
     }
 
+    // check for operating mode and rtp stream management services (will only be on camera accessories)
+    // remove this on startup so that possible changed settings (HKSV, codecs, ...) can take effect
+    const operatingModeService = accessory.getService(this.platform.api.hap.Service.CameraOperatingMode);
+    if (operatingModeService) {
+      // if we don't remove the CameraOperatingMode Service from the accessory there might be
+      // a crash on startup of the plugin
+      accessory.removeService(operatingModeService);
+    }
+    const rtpStreamingManagementService = accessory.getService(this.platform.api.hap.Service.CameraRTPStreamManagement);
+    if (rtpStreamingManagementService) {
+      // reset rtp stream configuration on startup
+      // this way codec changes are possible after
+      // the camera has been added to HomeKit
+      accessory.removeService(rtpStreamingManagementService);
+    }
+
     if (this.platform.config.enableDetailedLogging) {
       this.eufyDevice.on('raw property changed', (device: Device, type: number, value: string) =>
         this.handleRawPropertyChange(device, type, value),
