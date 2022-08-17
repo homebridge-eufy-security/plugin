@@ -6,7 +6,7 @@ import { ConfigOptionsInterpreter } from '../config-options-interpreter';
   selector: 'app-experimental-mode',
   templateUrl: './experimental-mode.component.html',
   styles: [
-  ]
+  ],
 })
 export class ExperimentalModeComponent extends ConfigOptionsInterpreter implements OnInit {
 
