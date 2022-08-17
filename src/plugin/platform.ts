@@ -46,12 +46,14 @@ import { Logger as TsLogger, ILogObject } from 'tslog';
 import * as rfs from 'rotating-file-stream';
 
 import fs from 'fs';
+import { EufyClientInteractor } from './utils/EufyClientInteractor';
+import { initializeExperimentalMode } from './utils/experimental';
 
 export class EufySecurityPlatform implements DynamicPlatformPlugin {
   public readonly Service: typeof Service = this.api.hap.Service;
   public readonly Characteristic: typeof Characteristic = this.api.hap.Characteristic;
 
-  public eufyClient;
+  public eufyClient!: EufySecurity;
 
   // this is used to track restored cached accessories
   public readonly accessories: PlatformAccessory[] = [];
@@ -65,6 +67,8 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
 
   private activeAccessoryIds: string[] = [];
   private cleanCachedAccessoriesTimeout?: NodeJS.Timeout;
+
+  private pluginConfigInteractor?: EufyClientInteractor;
 
   constructor(
     public readonly hblog: Logger,
@@ -147,7 +151,7 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
       country: this.config.country ?? 'US',
       language: 'en',
       persistentDir: this.eufyPath,
-      p2pConnectionSetup: 0,
+      p2pConnectionSetup: (this.config.preferLocalConnection) ? 1 : 2,
       pollingIntervalMinutes: this.config.pollingIntervalMinutes ?? 10,
       eventDurationSeconds: 10,
     } as EufySecurityConfig;
@@ -168,6 +172,12 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
         this.log.debug('but the new one is already present');
       }
       fs.unlinkSync(this.api.user.storagePath() + '/persistent.json');
+    }
+
+    // initialize experimental mode
+    if (this.config.experimentalMode) {
+      this.log.warn('Experimental Mode is enabled!');
+      initializeExperimentalMode();
     }
 
     this.api.on('didFinishLaunching', async () => {
@@ -234,6 +244,13 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
 
     this.eufyClient.setCameraMaxLivestreamDuration(cameraMaxLivestreamDuration);
     this.log.debug('CameraMaxLivestreamDuration:', this.eufyClient.getCameraMaxLivestreamDuration());
+
+    try {
+      this.pluginConfigInteractor = new EufyClientInteractor(this.eufyPath, this.log, this.eufyClient);
+      await this.pluginConfigInteractor.setupServer();
+    } catch (err) {
+      this.log.warn(err);
+    }
   }
 
   private tfaWarning() {
@@ -358,6 +375,10 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
   private async pluginShutdown() {
     if (this.cleanCachedAccessoriesTimeout) {
       clearTimeout(this.cleanCachedAccessoriesTimeout);
+    }
+
+    if (this.pluginConfigInteractor) {
+      this.pluginConfigInteractor.stopServer();
     }
 
     try {

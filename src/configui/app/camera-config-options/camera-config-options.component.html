@@ -65,5 +65,18 @@
 
   <p></p>
 
+  <div class="card" *ngIf="accessory && experimentalMode">
+    <div class="card-header">
+        <b>Experimental Mode - Options</b> for <i>{{accessory.displayName}} ({{accessory.uniqueId}})</i>
+    </div>
+    <div class="card-body pt-0 pb-4">
+      
+      <app-experimental-rtsp [accessory]="accessory"></app-experimental-rtsp>
+      
+    </div>
+  </div>
+
+  <p></p>
+
   <app-advanced-videoconfig [accessory]="accessory"></app-advanced-videoconfig>
 </div>

@@ -1,0 +1,33 @@
+<div class="settingsItem row p-3">
+  <div class="d-flex justify-content-between align-items-center mb-2">
+    <span>Enable experimental RTSP streaming capabilities</span>
+    
+    <div class="form-check form-switch">
+      <input class="form-check-input" type="checkbox" role="switch" [(ngModel)]="value" id="flexSwitchCheckDefault" (change)="update()">
+    </div>
+
+  </div>
+  <div class="alert alert-danger" role="alert" *ngIf="error !== undefined">
+    There was an error setting the RTSP status: {{ error.message }}
+  </div>
+  <!-- <div class="alert alert-success" role="alert" *ngIf="rtspUrl !== undefined && rtspUrl !== ''">
+    RTSP setting could successfully be enabled. RTSP url is {{ rtspUrl }}<br>
+    You can test this for example with the VLC player.
+  </div> -->
+  <div class="alert alert-warning" role="alert" *ngIf="value && !rtspSetting">
+    To utilize RTSP streaming, you'll also have to enable the RTSP setting above.
+  </div>
+  <div class="d-flex justify-content-between align-items-center mb-2">
+    <div *ngIf="state !== undefined">Current RTSP state of this device:</div>
+    <div class="spinner-border spinner-border-sm" role="status" *ngIf="waiting">
+      <span class="sr-only">Loading...</span>
+    </div>
+    <b  *ngIf="!waiting">{{ state ? 'On' : 'Off' }}</b>
+  </div>
+  <div class="d-flex justify-content-between align-items-center mb-2">
+    <div *ngIf="url">RTSP url for this device:</div> <div>{{ url }}</div>
+  </div>
+  <small><i>
+    Most devices that don't support RTSP streaming officially have the ability nonetheless. You can try to enable it with this setting.<br />
+  </i></small>
+</div>

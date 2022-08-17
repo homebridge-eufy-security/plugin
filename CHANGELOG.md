@@ -2,33 +2,33 @@
 
 You can find the complete detailled changelog for every beta release [here](https://github.com/homebridge-eufy-security/plugin/releases).
 
-## 2.2.0-beta.2 - latest changes
+## 2.2.0-beta.3 - latest changes
 
 ### Added
 
-- Added additional audio settings in advanced video configuration
-- Setting to choose custom path to ffmpeg executable.
-
-### Changed
-
-- Improved verbose output for snapshot and ffmpeg processes
-- Overhauled design of advanced video config
-- Added explanatory description to snapshot handling method.
+- Experimental Mode
+- Experimental Mode Option: Enabling RTSP streaming on all devices (e.g. Doorbells can now stream via RTSP)
+- Config UI will now warn the user if a setting might decrease battery life drastically
+- Option to set connection method in eufy-security-client to 'local'
 
 ### Fixed
 
-- Switches to turn camera and motion on/off should now be removed from HomeKit if the user switches the configuration
-- Bug where no snapshot was returned after an event
+- Bug that caused a crash with node version prior to v14.18
+- Possible memory leak caused by not correctly released EventListeners
 
 ## 2.2.0 (Beta)
 
 ### Added
 
 - HomeKit Secure Video (HKSV) Support (see #6)
+- Experimental Mode
+- Experimental Mode Option: Enabling RTSP streaming on all devices (e.g. Doorbells can now stream via RTSP)
 - Plugin will show warnings if it encounters a captcha or 2FA request while logging in.
 - Setting to crop image to requested resolution. This might help with streaming issues when the HomeKit Controller stops the stream due to wrong stream configuration.
 - Added additional audio settings in advanced video configuration
 - Setting to choose custom path to ffmpeg executable.
+- Config UI will now warn the user if a setting might decrease battery life drastically
+- Option to set connection method in eufy-security-client to 'local'
 
 ### Changed
 
@@ -42,6 +42,7 @@ You can find the complete detailled changelog for every beta release [here](http
 
 - Switches to turn camera and motion on/off should now be removed from HomeKit if the user switches the configuration
 - Bug where no snapshot was returned after an event
+- Bug that caused a crash with node version prior to v14.18
 
 ## 2.1.0 (RC)
 

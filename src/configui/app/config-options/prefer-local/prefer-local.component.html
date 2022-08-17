@@ -1,0 +1,13 @@
+<div class="settingsItem row p-3">
+  <div class="d-flex justify-content-between align-items-center mb-2">
+    <span>Prefer Local Connection</span>
+    
+    <div class="form-check form-switch">
+      <input class="form-check-input" type="checkbox" role="switch" [(ngModel)]="value" id="flexSwitchCheckDefault" (change)="update()">
+    </div>
+
+  </div>
+  <small><i>
+    This setting only affects the way the plugin tries to connect to your eufy stations and devices (Default: trying local and via public ip). <b>You will still need an active internet connection to establish a connection in the first place, even if you enable this setting.</b> 
+  </i></small>
+</div>

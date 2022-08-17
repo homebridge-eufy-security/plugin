@@ -16,6 +16,7 @@ import { StreamingDelegate } from '../controller/streamingDelegate';
 
 import { CameraConfig } from '../utils/configTypes';
 import { RecordingDelegate } from '../controller/recordingDelegate';
+import { setRTSPCapability } from '../utils/experimental';
 
 /**
  * Platform Accessory
@@ -194,20 +195,6 @@ export class CameraAccessory extends DeviceAccessory {
 
         if (!isDoorbell) {
           const controller = new this.platform.api.hap.CameraController(this.cameraControllerOptions);
-          const operatingModeService = accessory.getService(this.platform.api.hap.Service.CameraOperatingMode);
-          if (operatingModeService) {
-            // if we don't remove the CameraOperatingMode Service from the accessory there might be
-            // a crash on startup of the plugin
-            accessory.removeService(operatingModeService);
-          }
-          const rtpStreamingManagementService = accessory.getService(this.platform.api.hap.Service.CameraRTPStreamManagement);
-          if (rtpStreamingManagementService) {
-            // reset rtp stream configuration on startup
-            // this way codec changes are possible after
-            // the camera has been added to HomeKit
-            this.platform.log.debug(this.accessory.displayName, 'remove rtp stream managment for real...');
-            accessory.removeService(rtpStreamingManagementService);
-          }
           this.streamingDelegate.setController(controller);
           this.recordingDelegate.setController(controller);
           accessory.configureController(controller);
@@ -319,6 +306,14 @@ export class CameraAccessory extends DeviceAccessory {
     } catch (Error) {
       this.platform.log.error(this.accessory.displayName, 'raise error to check and attach switchLightService.', Error);
     }
+
+    // experimental mode
+    if (this.platform.config.experimentalMode && this.eufyDevice.hasProperty('experimentalModification')) {
+      const value = !!this.cameraConfig.experimentalRTSP;
+      const station = this.platform.getStationById(this.eufyDevice.getStationSerial());
+      this.platform.log.debug(this.accessory.displayName, `Setting experimental RTSP capabilities to: ${value}`);
+      setRTSPCapability(station, this.eufyDevice, value);
+    }
   }
 
   private getCameraConfig() {
@@ -340,6 +335,8 @@ export class CameraAccessory extends DeviceAccessory {
     config.immediateRingNotificationWithoutSnapshot = config.immediateRingNotificationWithoutSnapshot ??= false;
     config.delayCameraSnapshot = config.delayCameraSnapshot ??= false;
     config.hsv = config.hsv ??= false;
+
+    config.experimentalRTSP = config.experimentalRTSP ??= false;
 
     if (config.hsv && !this.platform.api.versionGreaterOrEqual('1.4.0')) {
       config.hsv = false;

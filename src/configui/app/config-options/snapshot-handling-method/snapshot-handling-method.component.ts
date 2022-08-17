@@ -5,6 +5,8 @@ import { DEFAULT_CAMERACONFIG_VALUES } from '../../../app/util/default-config-va
 import { ConfigOptionsInterpreter } from '../config-options-interpreter';
 
 import { faPlusCircle, faMinusCircle, faCircle } from '@fortawesome/free-solid-svg-icons';
+import { AccessoryService } from '../../accessory.service';
+import { ChargingStatus } from '../../util/eufy-security-client.utils';
 
 @Component({
   selector: 'app-snapshot-handling-method',
@@ -12,12 +14,20 @@ import { faPlusCircle, faMinusCircle, faCircle } from '@fortawesome/free-solid-s
   styles: [],
 })
 export class SnapshotHandlingMethodComponent extends ConfigOptionsInterpreter implements OnInit {
-  constructor(pluginService: PluginService) {
+  constructor(
+    pluginService: PluginService,
+    private accessoryService: AccessoryService,
+  ) {
     super(pluginService);
   }
 
   ngOnInit(): void {
     this.readValue();
+    
+    if (this.accessory) {
+      this.accessoryService.getChargingStatus(this.accessory.uniqueId)
+        .then((chargingStatus) => this.chargingStatus = chargingStatus);
+    }
   }
 
   /** Customize from here */
@@ -33,6 +43,8 @@ export class SnapshotHandlingMethodComponent extends ConfigOptionsInterpreter im
 
   @Input() accessory?: Accessory;
   value = DEFAULT_CAMERACONFIG_VALUES.snapshotHandlingMethod;
+
+  chargingStatus = ChargingStatus.PLUGGED;
 
   async readValue() {
     const config = await this.getCameraConfig(this.accessory?.uniqueId || '');
