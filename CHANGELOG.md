@@ -2,19 +2,11 @@
 
 You can find the complete detailled changelog for every beta release [here](https://github.com/homebridge-eufy-security/plugin/releases).
 
-## 2.2.0-beta.3 - latest changes
+## 2.2.0-beta.4 - latest changes
 
-### Added
+### Changed
 
-- Experimental Mode
-- Experimental Mode Option: Enabling RTSP streaming on all devices (e.g. Doorbells can now stream via RTSP)
-- Config UI will now warn the user if a setting might decrease battery life drastically
-- Option to set connection method in eufy-security-client to 'local'
-
-### Fixed
-
-- Bug that caused a crash with node version prior to v14.18
-- Possible memory leak caused by not correctly released EventListeners
+- Updated dependency to eufy-security-client@2.2.0-rc.1
 
 ## 2.2.0 (Beta)
 
@@ -37,6 +29,7 @@ You can find the complete detailled changelog for every beta release [here](http
 - Overhauled design of advanced video config
 - Improved verbose output for snapshot and ffmpeg processes
 - Added explanatory description to snapshot handling method.
+- Updated to latest dependency: eufy-security-client
 
 ### Fixed
 
