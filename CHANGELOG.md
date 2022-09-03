@@ -2,13 +2,7 @@
 
 You can find the complete detailled changelog for every beta release [here](https://github.com/homebridge-eufy-security/plugin/releases).
 
-## 2.1.0-rc.5 - latest changes
-
-### Fixed
-
-- Possible memory leak caused by not correctly released EventListeners
-
-## 2.1.0 (RC)
+## 2.1.0 (2022-09-03)
 
 ### Added
 
@@ -64,6 +58,7 @@ You can find the complete detailled changelog for every beta release [here](http
 - Fix issue that streams were only rendered in 640x480 - see #46
 - Fixed smartlocks - see #110
 - Fixed occasional EPIPE Error when streaming - see #14
+- Possible memory leak caused by not correctly released EventListeners
 
 ## 2.0.1 (20.06.2022)
 
