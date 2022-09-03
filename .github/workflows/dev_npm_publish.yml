@@ -14,7 +14,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        node-version: [12, 14, 16]
+        node-version: [14, 16]
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-node@v2
@@ -37,7 +37,7 @@ jobs:
       - run: git config --global user.email '<>'
       - run: npm version prerelease --preid=beta -m "[BETA] %s"
       - run: npm update homebridge-eufy-security
-      - run: git push
+      - run: git push --follow-tags
 
   publish:
     runs-on: ubuntu-latest

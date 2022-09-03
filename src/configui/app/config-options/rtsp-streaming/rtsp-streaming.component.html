@@ -1,0 +1,17 @@
+<div class="settingsItem row p-3">
+  <div class="d-flex justify-content-between align-items-center mb-2">
+    <span>Use RTSP streaming</span>
+    
+    <div class="form-check form-switch">
+      <input class="form-check-input" type="checkbox" role="switch" [(ngModel)]="value" id="flexSwitchCheckDefault" (change)="update()">
+    </div>
+
+  </div>
+  <div class="alert alert-danger" role="alert" *ngIf="talkbackIsEnabled && value">
+    Talkback will not work while 'RTSP Streaming' is enabled!
+  </div>
+  <small><i>
+    Try to utilize RTSP capabilities of some devices. This may result in improved streaming stability.
+    Please be advised that RTSP must be enable within Eufy App first!<br />
+  </i></small>
+</div>

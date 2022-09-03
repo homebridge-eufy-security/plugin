@@ -1,0 +1,14 @@
+<div class="settingsItem row p-3">
+  <div class="d-flex justify-content-between align-items-center mb-2">
+    <span>Night-Vision Improvement for camera snapshots</span>
+    
+    <div class="form-check form-switch">
+      <input class="form-check-input" type="checkbox" role="switch" [(ngModel)]="value" id="flexSwitchCheckDefault" (change)="update()">
+    </div>
+
+  </div>
+  <small><i>
+    Force night vision on dark snapshots to improve the image.<br />
+    <b>The snapshot request will be delayed by half a second if you enable this setting.</b>
+  </i></small>
+</div>

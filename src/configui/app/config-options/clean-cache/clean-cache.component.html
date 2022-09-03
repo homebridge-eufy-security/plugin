@@ -1,0 +1,13 @@
+<div class="settingsItem row p-3">
+  <div class="d-flex justify-content-between align-items-center mb-2">
+    <span>Clean cache automatically</span>
+    
+    <div class="form-check form-switch">
+      <input class="form-check-input" type="checkbox" role="switch" [(ngModel)]="model" id="flexSwitchCheckDefault" (change)="update()">
+    </div>
+
+  </div>
+  <small><i>
+    When enabled, you let the plugin clean accessory when removed from the Eufy app.
+  </i></small>
+</div>

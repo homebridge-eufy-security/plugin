@@ -1,0 +1,30 @@
+<div class="settingsItem row p-3">
+  <div class="d-flex justify-content-between align-items-center mb-2">
+    <span>Periodic Snapshot Refresh</span>
+    
+    <div class="form-check form-switch">
+      <input class="form-check-input" type="checkbox" role="switch" [attr.checked]="value > 0 ? true : null" id="flexSwitchCheckDefault" (change)="switchSetting()">
+    </div>
+
+  </div>
+
+  <div class="d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center mb-2">
+    <span>Refresh Interval</span>
+    
+    <div class="col-12 col-sm-4">
+      <div class="input-group input-group-sm">
+        <input type="number" [attr.class]="inputIsInvalid ? 'form-control text-end is-invalid' : 'form-control text-end'" [(ngModel)]="value" aria-label="Polling interval minutes" aria-describedby="basic-addon2" (change)="update()">
+        <div class="input-group-append">
+          <span class="input-group-text" id="basic-addon2">minutes</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <small><i>
+    This option will force a snapshot to be generated every x minutes. This snapshot will then be used for homekit. So that your snapshots will never be older than this.<br />
+    Best used with 'Cloud Snapshots' handling method.<br />
+    Every setting below 5 minutes will be discarded due to performance reasons.<br />
+    <b>Don't use this with the 'Force Refresh Snapshots' method, since it will have negligible effects other than slowing down homebridge and decreasing possible battery life.</b>
+  </i></small>
+</div>

@@ -1,5 +1,70 @@
 # Change Log
 
+You can find the complete detailled changelog for every beta release [here](https://github.com/homebridge-eufy-security/plugin/releases).
+
+## 2.1.0 (2022-09-03)
+
+### Added
+
+- Talkback support #103
+- Improved snapshot handling: 3 different snapshot methods
+- Feature to improve camera snapshots at night (night vision)
+- Feature to automatically generate camera snapshots a given period of time, so that snapshots are more up-to-date
+- Feature allowing enabling and disabling motion detection throug switch if camera is used as a motion sensor only
+- Feature allowing enabling and disabling the camera throug switch even if camera is used as a motion sensor only
+- Control Station alarm through HomeKit (reset the alarm and even trigger it with HomeKit automations. You can now trigger the alarm even with third party accessories - e.g. with devices from vendors other than eufy) - see #26
+- Feature to download log files through plugin configuration ui
+- Setting to disable log file storage to disk (possible fix for #93)
+- Setting to choose that separate ffmpeg processes for audio and video streaming will be used (this can increase performance)
+- Setting to choose audio sample rate
+- Presets (`copy`, `performance`) for advanced video config
+
+### Changed
+
+- Complete redesign of the config ui screen
+- RTSP setting is now only avaiable on compatible devices
+- Updated to latest version of eufy-security-client (2.1.2) (fix for #72 and #38)
+- Refactored whole project structure to resemble the new workspace layout (plugin + custom ui)
+- Reimplementation of device discovery algorithm to better reflect best practices mentioned in [this comment](https://github.com/bropat/eufy-security-client/issues/167#issuecomment-1155388624)
+- Added timeouts for guard mode changes. If these fail HomeKit will no longer get stuck, trying to change the guard mode and an error will be written to the log output (see #39)
+- Limit value for maximum streaming duration to prevent unexpected behaviour (see #111)
+- Additional debug messages to help with issues
+- Updated repo funding details (Readme.md and package.json)
+- Cleaned up dependencies
+- Using tslog instead of bunyan for logging of eufy-security-client messages since bunyan would not print deep nested objects correctly
+- Logging for eufy-security-client is moved to separate log file: `eufy-log.log`
+- Refactored handling of ffmpeg processes
+- Deprecated option `forcerefreshsnap` was removed and will no longer be evaluated - use `snapshotHandlingMethod` instead
+- Removed `mapvideo`, `mapaudio`, `maxDelay` and `forceMax` options from advanced VideoConfig since they are deprecated
+
+### Fixed
+
+- Plugin crash if guard modes were configured incorrectly (see #52)
+- Plugin crashed if station was disarmed with certain configured guard modes
+- Config ui crash due to a wrong node version requirement (#44)
+- Livestream could not be started if previous local livestream cache was not shut down correctly (e.g. #43)
+- Livestream was not working if videoconfig was populated with empty values
+- Plugin may have crashed due to a race condition regarding log file rotation (see #56)
+- Motion events were not reseted correctly in some cases. So new events would not be recognized
+- Push notifications stopped working if the configuration editor was opened and the plugin not restarted aftwerwards (see #59)
+- Options enableCamera and enableMotion were not working in specific configuration situations (see #48)
+- Unbridge setting was not working for doorbell cameras (see #79)
+- Fixed #81
+- Fixed all lint warnings and errors
+- Fixed npm warnings
+- Smart lock states could be wrong on plugin startup (further improvements needed for smartlocks)
+- Setting to 'enable audio' was not working - audio was always streamed
+- Setting `maxFPS` in advanced camera configuration should now work as expected (see #125)
+- Fix issue that streams were only rendered in 640x480 - see #46
+- Fixed smartlocks - see #110
+- Fixed occasional EPIPE Error when streaming - see #14
+- Possible memory leak caused by not correctly released EventListeners
+
+## 2.0.1 (20.06.2022)
+
+### Fixed
+- locked dependency version to prevent breaking changes
+
 ## 2.0 (25/05/2022)
 
 ### Added

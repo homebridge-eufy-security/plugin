@@ -37,7 +37,7 @@ body:
     id: plugin_version
     attributes:
       label: Plugin Version
-      description: What version of homebridge are you running?
+      description: What version of the plugin are you running?
       options:
         - v2.0.x (Supported)
         - beta (Best Effort)
@@ -91,6 +91,15 @@ body:
     attributes:
       label: Relevant log output
       description: Please copy and paste any relevant log output. This will be automatically formatted into code, so no need for backticks.
+      render: shell
+    validations:
+      required: true
+
+  - type: textarea
+    id: config
+    attributes:
+      label: config
+      description: Please copy and paste your config json. Please make sure to remove any private information.
       render: shell
     validations:
       required: true

@@ -1,0 +1,26 @@
+<div class="settingsItem row p-3">
+  <div class="alert alert-danger" role="alert" *ngIf="failed">
+    {{ failureMessage }}
+  </div>
+  <div class="d-flex flex-column flex-sm-row justify-content-between align-items-center mb-2">
+    <span class="mb-3 mb-sm-0">Download Logs</span>
+    
+    <button type="button" *ngIf="!hasDownloaded" class="btn btn-secondary col-12 col-sm-4" (click)="downloadLogs()" [attr.disabled]="isDownloading ? true : null">
+      <span *ngIf="isDownloading" class="spinner-border spinner-border-sm" role="status"
+          aria-hidden="true"></span>
+      <span *ngIf="!isDownloading">Download Logs</span>
+      <span *ngIf="isDownloading"> Generating Log File...</span>
+    </button>
+
+    <a *ngIf="hasDownloaded" (click)="openLink()" class="btn btn-success col-12 col-sm-4">
+      <span>Download Logs</span>
+    </a>
+  </div>
+  <small *ngIf="downloadMessage"><i>
+    {{ downloadMessage }}
+  </i></small>
+  <small *ngIf="hasDownloaded"><i>
+    The log file should have downloaded. If not click the button again. The file will be named 'Unknown.zip', due to technical reasons.<br />
+    <b>Please make sure that you have pop-ups allowed for this site. If you're not sure, maybe this <a href="https://www.howtogeek.com/773082/how-to-disable-pop-up-blocker-in-chrome-firefox-edge-safari/" target="_blank" rel="noopener noreferrer">site</a> can help.</b>
+  </i></small>
+</div>

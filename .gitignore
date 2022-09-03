@@ -124,3 +124,9 @@ dist
 .history
 
 .github/workflows/
+
+.angular
+
+homebridge-ui/
+
+TODO

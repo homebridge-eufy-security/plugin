@@ -133,3 +133,12 @@ dist
 .yarn/unplugged
 .yarn/build-state.yml
 .pnp.*
+
+# new workspace
+angular.json
+tsconfig.configui.app.json
+tsconfig.configui.json
+tsconfig.configui.server.json
+tsconfig.configui.spec.json
+tsconfig.plugin.json
+karma.conf.js

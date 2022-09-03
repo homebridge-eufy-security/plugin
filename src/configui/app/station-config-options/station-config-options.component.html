@@ -1,0 +1,16 @@
+<a routerLink="/accessories" class="btn btn-secondary mb-3">Back to Devices List</a>
+<div class="card" *ngIf="accessory">
+  <div class="card-header">
+      <b>Station Settings</b> for <i>{{accessory.displayName}} ({{accessory.uniqueId}})</i>
+  </div>
+  <div class="card-body pt-0 pb-4">
+    
+    <!-- Put config options components here -->
+    <app-ignore-accessory [accessory]="accessory"></app-ignore-accessory>
+    <!-- <hr />
+    <app-guard-modes-mapping [accessory]="accessory"></app-guard-modes-mapping> -->
+    <hr />
+    <app-manual-alarm-modes [accessory]="accessory"></app-manual-alarm-modes>
+    
+  </div>
+</div>

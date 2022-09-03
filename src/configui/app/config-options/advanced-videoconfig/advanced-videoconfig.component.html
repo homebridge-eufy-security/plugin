@@ -1,0 +1,141 @@
+<ngb-accordion #acc="ngbAccordion">
+  <ngb-panel>
+    <ng-template ngbPanelTitle class="accordion-header">
+      <span><b>Advanced Video Config</b></span>
+    </ng-template>
+    <ng-template ngbPanelHeader>
+      <button ngbPanelToggle class="accordion-button"><span><b>Advanced Video Config</b></span></button>
+    </ng-template>
+    <ng-template ngbPanelContent>
+
+      The following options directly change the way how ffmpeg is configured when a stream is started. If configured incorrectly these will most likely result in faulty streams or bad streaming performance.
+      <p></p>
+      You can try the following presets to improve your streaming experience. We do not guarantee that these will work for you.<p></p>
+      <div class="d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center mb-2">
+      
+        <div class="col-12 col-sm-4">
+          <select class="form-select" [(ngModel)]="preset" aria-label="Presets" (change)="loadPreset()">
+            <option [ngValue]=0>No Preset (default)</option>
+            <option [ngValue]=1>Copy</option>
+            <option [ngValue]=2>Performance</option>
+            <option [ngValue]=3>Custom</option>
+          </select>
+        </div>
+      </div>
+      <div *ngIf="presetDescription">
+        {{ presetDescription }}
+      </div>
+      <p></p>
+
+      <div class="input-group mb-1">
+        <div class="input-group-text">
+          <input class="form-check-input mt-0" type="checkbox" [(ngModel)]="debug" (change)="update()">
+        </div>
+        <span class="input-group-text" id="inputGroup-sizing-default">ffmpeg debug</span>
+      </div>
+
+      <div class="input-group mb-1">
+        <div class="input-group-text">
+          <input class="form-check-input mt-0" type="checkbox" [(ngModel)]="useSeparateProcesses" (change)="update()">
+        </div>
+        <span class="input-group-text" id="inputGroup-sizing-default">use separate processes for video and audio</span>
+      </div>
+
+      <div class="input-group mb-1">
+        <div class="input-group-text">
+          <input class="form-check-input mt-0" type="checkbox" [(ngModel)]="readRate" (change)="update()">
+        </div>
+        <span class="input-group-text" id="inputGroup-sizing-default">readRate</span>
+      </div>
+
+      <div class="input-group mb-1">
+        <div class="input-group-text">
+          <input class="form-check-input mt-0" type="checkbox" [checked]="vcodec !== undefined ? true: null" (change)="vcodec = (vcodec === undefined) ? '' : undefined; update();">
+        </div>
+        <span class="input-group-text" id="inputGroup-sizing-default">vcodec</span>
+        <input type="text" [(ngModel)]="vcodec" placeholder="libx264" class="form-control" [attr.disabled]="(vcodec === undefined) ? true : null" (change)="update()">
+      </div>
+
+      <div class="input-group mb-1">
+        <div class="input-group-text">
+          <input class="form-check-input mt-0" type="checkbox" [checked]="acodec !== undefined ? true: null" (change)="acodec = (acodec === undefined) ? '' : undefined; update();">
+        </div>
+        <span class="input-group-text" id="inputGroup-sizing-default">acodec</span>
+        <input type="text" [(ngModel)]="acodec" placeholder="libfdk_aac" class="form-control" [attr.disabled]="(acodec === undefined) ? true : null" (change)="update()">
+      </div>
+
+      <div class="input-group mb-1">
+        <div class="input-group-text">
+          <input class="form-check-input mt-0" type="checkbox" [attr.disabled]="vcodec === 'copy' ? true : null" [checked]="videoFilter !== undefined ? true: null" (change)="videoFilter = (videoFilter === undefined) ? '' : undefined; update();">
+        </div>
+        <span class="input-group-text" id="inputGroup-sizing-default" [attr.style]="vcodec === 'copy' ? 'text-decoration: line-through; color: lightgray;' : null">videoFilter</span>
+        <input type="text" [(ngModel)]="videoFilter" placeholder="leave blank if you don't know" class="form-control" [attr.disabled]="(videoFilter === undefined || vcodec === 'copy') ? true : null" (change)="update()">
+      </div>
+
+      <div class="input-group mb-1">
+        <div class="input-group-text">
+          <input class="form-check-input mt-0" type="checkbox" [attr.disabled]="vcodec === 'copy' ? true : null" [checked]="encoderOptions !== undefined ? true: null" (change)="encoderOptions = (encoderOptions === undefined) ? '' : undefined; update();">
+        </div>
+        <span class="input-group-text" id="inputGroup-sizing-default" [attr.style]="vcodec === 'copy' ? 'text-decoration: line-through; color: lightgray;' : null">encoderOptions</span>
+        <input type="text" [(ngModel)]="encoderOptions" placeholder="-preset ultrafast -tune zerolatency" class="form-control" [attr.disabled]="(encoderOptions === undefined || vcodec === 'copy') ? true : null" (change)="update()">
+      </div>
+
+      <div class="input-group mb-1">
+        <div class="input-group-text">
+          <input class="form-check-input mt-0" type="checkbox" [checked]="probeSize !== undefined ? true: null" (change)="probeSize = (probeSize === undefined) ? 0 : undefined; update();">
+        </div>
+        <span class="input-group-text" id="inputGroup-sizing-default">probeSize</span>
+        <input type="number" [(ngModel)]="probeSize" placeholder="0" class="form-control" [attr.disabled]="(probeSize === undefined) ? true : null" (change)="update()">
+      </div>
+
+      <div class="input-group mb-1">
+        <div class="input-group-text">
+          <input class="form-check-input mt-0" type="checkbox" [checked]="analyzeDuration !== undefined ? true: null" (change)="analyzeDuration = (analyzeDuration === undefined) ? 0 : undefined; update();">
+        </div>
+        <span class="input-group-text" id="inputGroup-sizing-default">analyzeDuration</span>
+        <input type="number" [(ngModel)]="analyzeDuration" placeholder="0" class="form-control" [attr.disabled]="(analyzeDuration === undefined) ? true : null" (change)="update()">
+      </div>
+
+      <div class="input-group mb-1">
+        <div class="input-group-text">
+          <input class="form-check-input mt-0" type="checkbox" [checked]="maxStreams !== undefined ? true: null" (change)="maxStreams = (maxStreams === undefined) ? 0 : undefined; update();">
+        </div>
+        <span class="input-group-text" id="inputGroup-sizing-default">maxStreams</span>
+        <input type="number" [(ngModel)]="maxStreams" placeholder="0" class="form-control" [attr.disabled]="(maxStreams === undefined) ? true : null" (change)="update()">
+      </div>
+
+      <div class="input-group mb-1">
+        <div class="input-group-text">
+          <input class="form-check-input mt-0" type="checkbox" [attr.disabled]="vcodec === 'copy' ? true : null" [checked]="maxWidth !== undefined ? true: null" (change)="maxWidth = (maxWidth === undefined) ? 0 : undefined; update();">
+        </div>
+        <span class="input-group-text" id="inputGroup-sizing-default" [attr.style]="vcodec === 'copy' ? 'text-decoration: line-through; color: lightgray;' : null">maxWidth</span>
+        <input type="number" [(ngModel)]="maxWidth" placeholder="0" class="form-control" [attr.disabled]="(maxWidth === undefined || vcodec === 'copy') ? true : null" (change)="update()">
+      </div>
+
+      <div class="input-group mb-1">
+        <div class="input-group-text">
+          <input class="form-check-input mt-0" type="checkbox" [attr.disabled]="vcodec === 'copy' ? true : null" [checked]="maxHeight !== undefined ? true: null" (change)="maxHeight = (maxHeight === undefined) ? 0 : undefined; update();">
+        </div>
+        <span class="input-group-text" id="inputGroup-sizing-default" [attr.style]="vcodec === 'copy' ? 'text-decoration: line-through; color: lightgray;' : null">maxHeight</span>
+        <input type="number" [(ngModel)]="maxHeight" placeholder="0" class="form-control" [attr.disabled]="(maxHeight === undefined || vcodec === 'copy') ? true : null" (change)="update()">
+      </div>
+
+      <div class="input-group mb-1">
+        <div class="input-group-text">
+          <input class="form-check-input mt-0" type="checkbox" [attr.disabled]="vcodec === 'copy' ? true : null" [checked]="maxFPS !== undefined ? true: null" (change)="maxFPS = (maxFPS === undefined) ? 0 : undefined; update();">
+        </div>
+        <span class="input-group-text" id="inputGroup-sizing-default" [attr.style]="vcodec === 'copy' ? 'text-decoration: line-through; color: lightgray;' : null">fps</span>
+        <input type="number" [(ngModel)]="maxFPS" placeholder="0" class="form-control" [attr.disabled]="(maxFPS === undefined || vcodec === 'copy') ? true : null" (change)="update()">
+      </div>
+
+      <div class="input-group mb-1">
+        <div class="input-group-text">
+          <input class="form-check-input mt-0" type="checkbox" [attr.disabled]="vcodec === 'copy' ? true : null" [checked]="maxBitrate !== undefined ? true : null" (change)="maxBitrate = (maxBitrate === undefined) ? 0 : undefined; update();">
+        </div>
+        <span class="input-group-text" id="inputGroup-sizing-default" [attr.style]="vcodec === 'copy' ? 'text-decoration: line-through; color: lightgray;' : null">bitrate</span>
+        <input type="number" [(ngModel)]="maxBitrate" placeholder="0" class="form-control" [attr.disabled]="(maxBitrate === undefined || vcodec === 'copy') ? true : null" (change)="update()">
+      </div>
+
+    </ng-template>
+  </ngb-panel>
+</ngb-accordion>

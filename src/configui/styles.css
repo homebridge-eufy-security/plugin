@@ -1,0 +1,78 @@
+/* You can add global styles to this file, and also import other style files */
+
+.form-switch {
+  transform: scale(1.4);
+}
+
+.btn-secondary {
+  background-color: #a6c!important;
+  border-color: #565e64;
+}
+
+.form-check-input:checked {
+  background-color: #a6c!important;
+  border-color: #565e64;
+}
+
+.config-ui-x-dark-mode .form-check-input:checked {
+  background-color: #ffa000 !important;
+  border-color: #565e64;
+}
+
+.settingsItem {
+  padding-bottom: 0 !important;
+}
+
+@media (min-width: 421px) {
+  .pluginContent {
+    width: 420px !important;
+  }
+
+  .container {
+    max-width: 420px;
+  }
+}
+
+@media (min-width: 721px) {
+  .pluginContent {
+    width: 720px !important;
+  }
+
+  .container {
+    max-width: 720px;
+  }
+}
+
+.config-ui-x-dark-mode .btn-secondary {
+  background-color: #2e2e2e !important;
+  color: #fff !important;
+}
+
+.config-ui-x-dark-mode .btn-success {
+  background-color: #ffa000 !important;
+  color: #fff !important;
+}
+
+.config-ui-x-dark-mode * .accordion-item {
+  background-color: #2b2b2b !important;
+  color: white !important;
+}
+
+.config-ui-x-dark-mode * .accordion-button {
+  background-color: #2b2b2b !important;
+  color: white !important;
+}
+
+.config-ui-x-dark-mode * .accordion-button:not(.collapsed) {
+  background-color: #2b2b2b !important;
+  color: white !important;
+}
+
+.config-ui-x-dark-mode * .accordion-body {
+  background-color: #2b2b2b !important;
+  color: white !important;
+}
+
+.config-ui-x-dark-mode * .btn-danger {
+  color: white !important;
+}

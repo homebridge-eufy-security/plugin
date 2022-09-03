@@ -1,0 +1,28 @@
+<div class="settingsItem row p-3">
+  <div class="d-flex justify-content-between align-items-center mb-2">
+    <span>Enable Audio</span>
+    
+    <div class="form-check form-switch">
+      <input class="form-check-input" type="checkbox" role="switch" [(ngModel)]="value" id="flexSwitchCheckDefault" (change)="update()">
+    </div>
+
+  </div>
+  <small><i>
+    Try to enable audio streaming for this device.<br />
+    If you encounter problems try to disable this setting.
+  </i></small>
+
+  <p></p>
+
+  <div class="d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center mb-2">
+    <span>Force Audio Sample Rate</span>
+
+    <div class="col-12 col-sm-4">
+      <select class="form-select" [(ngModel)]="samplerate" aria-label="Samplerate" [attr.disabled]="!value ? true : null" (change)="update()">
+        <option [ngValue]=0>Default Sample Rate</option>
+        <option [ngValue]=8>8 kHz</option>
+        <option [ngValue]=16>16 kHz</option>
+        <option [ngValue]=24>24 kHz</option>
+      </select>
+  </div>
+</div>

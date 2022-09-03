@@ -1,0 +1,24 @@
+
+<div class="row d-flex justify-content-center">
+
+  <!-- Reset failed alert -->
+  <p class="col-11 col-sm-7" *ngIf="failed">
+      <ngb-alert [dismissible]="true" type="danger" (closed)="failed = false">
+          <svg class="bi flex-shrink-0 me-2" width="24" height="24" role="img" aria-label="Login Error">
+              <use xlink:href="#exclamation-triangle-fill" />
+          </svg>
+          <strong>Reset was not successful!</strong>
+      </ngb-alert>
+  </p>
+  <!-- Reset failed alert end -->
+
+  <div class="col-11 col-sm-7 card p-4">
+
+    <h3 class="text-center mb-4">Are you sure that you want to erase everything?</h3>
+    <div class="d-flex flex-column flex-sm-row justify-content-between align-items-center">
+      <button type="button" (click)="cancel()" class="btn btn-secondary col-11 col-sm-3 mb-sm-0 mb-3" [attr.disabled]="disabled ? true : null">No</button>
+      <button type="button" (click)="resetEverything()" class="btn btn-danger col-11 col-sm-3" [attr.disabled]="disabled ? true : null">Do it!</button>
+    </div>
+
+  </div>
+</div>

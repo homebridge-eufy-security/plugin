@@ -1,0 +1,163 @@
+<svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
+    <symbol id="info-fill" fill="currentColor" viewBox="0 0 16 16">
+        <path
+            d="M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16zm.93-9.412-1 4.705c-.07.34.029.533.304.533.194 0 .487-.07.686-.246l-.088.416c-.287.346-.92.598-1.465.598-.703 0-1.002-.422-.808-1.319l.738-3.468c.064-.293.006-.399-.287-.47l-.451-.081.082-.381 2.29-.287zM8 5.5a1 1 0 1 1 0-2 1 1 0 0 1 0 2z" />
+    </symbol>
+    <symbol id="exclamation-triangle-fill" fill="currentColor" viewBox="0 0 16 16">
+        <path
+            d="M8.982 1.566a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767L8.982 1.566zM8 5c.535 0 .954.462.9.995l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 5.995A.905.905 0 0 1 8 5zm.002 6a1 1 0 1 1 0 2 1 1 0 0 1 0-2z" />
+    </symbol>
+</svg>
+
+<ng-template #popInfo>
+    If you login here the new connection might interfere with any already established connection that was made by the
+    eufy plugin itself.<p></p>
+    <i>So even if you do not change any settings we recommened that you restart the plugin after you've connected to the
+        eufy cloud here.</i>
+</ng-template>
+
+
+
+<div class="row d-flex justify-content-center">
+
+    <!-- Login failed alert -->
+    <p class="col-11 col-sm-7" *ngIf="loginFailed">
+        <ngb-alert [dismissible]="true" type="danger" (closed)="resetLoginFailed()">
+            <svg class="bi flex-shrink-0 me-2" width="24" height="24" role="img" aria-label="Login Error">
+                <use xlink:href="#exclamation-triangle-fill" />
+            </svg>
+            <strong>Login was not successful!</strong>
+        </ngb-alert>
+    </p>
+    <!-- Login failed alert end -->
+
+    <div class="col-11 col-sm-7 card p-4">
+
+        <!-- Login form start -->
+        <div *ngIf="loginStep === 1">
+            <div *ngIf="!firstLoginAssumed" class="alert alert-warning d-flex align-items-center" role="alert">
+                <svg class="bi flex-shrink-0 me-2" width="24" height="24" role="img" aria-label="Warning:">
+                    <use xlink:href="#info-fill" />
+                </svg>
+                <div>
+                    Please make sure to restart plugin after you're done.
+                    <u role="button" popoverTitle="Please restart after login" [autoClose]="'outside'"
+                        [ngbPopover]="popInfo">
+                        Tell me why...
+                    </u>
+                </div>
+            </div>
+            <div class="form-floating mb-3">
+                <input type="email" [attr.class]="emailIsValid ? 'form-control' : 'form-control is-invalid'" id="floatingInput" placeholder="name@example.com"
+                    [(ngModel)]="credentials.username" [attr.disabled]="loginInProgress ? true : null" ngModel email>
+                <label for="floatingInput">Email address</label>
+            </div>
+            <p></p>
+            <div class="form-floating mb-3">
+                <input type="password" [attr.class]="passwordIsValid ? 'form-control' : 'form-control is-invalid'" id="floatingPassword" placeholder="Password"
+                    [(ngModel)]="credentials.password" [attr.disabled]="loginInProgress ? true : null">
+                <label for="floatingPassword">Password</label>
+            </div>
+
+            <div class="row">
+                <div class="col-12 col-sm-6 mb-3 mb-sm0">
+                    <select class="form-select mb-3" aria-label="select country"
+                        [attr.disabled]="loginInProgress ? true : null" [(ngModel)]="credentials.country">
+                        <option *ngFor="let country of countries" [attr.value]="country.short"
+                            [attr.selected]="credentials.country === country.short ? true : null">{{country.long}}
+                        </option>
+                    </select>
+                    <small><i>
+                        Make sure to use the same country that you use to login with the eufy app.
+                    </i></small>
+                </div>
+                <span class="col-0 col-sm-1"></span>
+                <div class="col-12 col-sm-5 text-end mb-3">
+                    <button class="btn btn-success col-12 mb-3" type="button" [attr.disabled]="loginInProgress ? true : null"
+                        (click)="login()">
+                        <span *ngIf="loginInProgress" class="spinner-border spinner-border-sm" role="status"
+                            aria-hidden="true"></span>
+                        Login
+                        <span *ngIf="loginInProgress">...</span>
+                    </button>
+                    
+                    <button class="btn btn-secondary col-12" type="button" [attr.disabled]="loginInProgress ? true : null" (click)="cancelLogin()">
+                        Cancel
+                    </button>
+                </div>
+            </div>
+        </div>
+        <!-- Login form end -->
+
+        <!-- TFA form start -->
+        <div *ngIf="loginStep === 2">
+            <div class="row mb-3">You should have gotten a 2FA verification code from eufy in your mail. Please enter this below.</div>
+
+            <div class="row d-flex justify-content-center">
+                <div class="form-floating mb-3 col-8 col-sm-6">
+                    <input type="text" [attr.class]="otpIsValid ? 'form-control' : 'form-control is-invalid'" id="floatingOTP" placeholder=""
+                        [(ngModel)]="otp" [attr.disabled]="loginInProgress ? true : null">
+                    <label for="floatingOTP">2FA Code</label>
+                </div>
+            </div>
+            
+            <div class="row d-flex justify-content-center mb-3">
+                <div class="col-8 col-sm-6">
+                    <button class="btn btn-success col-12" type="button" [attr.disabled]="loginInProgress ? true : null"
+                        (click)="login()">
+                        <span *ngIf="loginInProgress" class="spinner-border spinner-border-sm" role="status"
+                            aria-hidden="true"></span>
+                        Verify
+                        <span *ngIf="loginInProgress">...</span>
+                    </button>
+                </div>
+            </div>
+            <div class="row d-flex justify-content-center">
+                <div class="col-8 col-sm-6">
+                    <button class="btn btn-secondary col-12" type="button" [attr.disabled]="loginInProgress ? true : null" (click)="cancelLogin()">
+                        Cancel
+                    </button>
+                </div>
+            </div>
+        </div>
+        <!-- TFA form end -->
+
+        <!-- Captcha form start -->
+        <div *ngIf="loginStep === 3">
+            <div class="row mb-3">Please enter the captcha below.</div>
+            
+            <div class="row d-flex justify-content-center mb-3">
+                <img class="col-10 col-sm-8" [src]="captchaImageData" />
+            </div>
+
+            <div class="row d-flex justify-content-center">
+                <div class="form-floating mb-3 col-8 col-sm-6">
+                    <input type="text" [attr.class]="captchaIsValid ? 'form-control' : 'form-control is-invalid'" id="floatingOTP" placeholder=""
+                        [(ngModel)]="captcha" [attr.disabled]="loginInProgress ? true : null">
+                    <label for="floatingOTP">Captcha</label>
+                </div>
+            </div>
+
+            <div class="row d-flex justify-content-center mb-3">
+                <div class="col-8 col-sm-6">
+                    <button class="btn btn-success col-12" type="button" [attr.disabled]="loginInProgress ? true : null"
+                        (click)="login()">
+                        <span *ngIf="loginInProgress" class="spinner-border spinner-border-sm" role="status"
+                            aria-hidden="true"></span>
+                        Verify
+                        <span *ngIf="loginInProgress">...</span>
+                    </button>
+                </div>
+            </div>
+            <div class="row d-flex justify-content-center">
+                <div class="col-8 col-sm-6">
+                    <button class="btn btn-secondary col-12" type="button" [attr.disabled]="loginInProgress ? true : null" (click)="cancelLogin()">
+                        Cancel
+                    </button>
+                </div>
+            </div>
+        </div>
+        <!-- Captcha form end -->
+
+    </div>
+</div>
