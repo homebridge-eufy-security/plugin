@@ -285,6 +285,26 @@ export class EufyClientInteractor extends EventEmitter implements PluginConfigIn
     }
   }
 
+  private async getStationDevicesMap(request: InteractorRequest): Promise<Map<string, string[]>> {
+    try {
+      const stations = this.client!.getStations();
+      const devices = await this.client!.getDevices();
+      const result = new Map<string, string[]>();
+      for (const device of devices) {
+        const stationSN = device.getStationSerial();
+        const devicesArray = result.get(stationSN);
+        if (devicesArray) {
+          devicesArray.push(device.getSerial());
+        } else {
+          result.set(stationSN, [device.getSerial()]);
+        }
+      }
+      return Promise.resolve(result);
+    } catch (err) {
+      return Promise.reject(err);
+    }
+  }
+
   private onSocketError(err: Error) {
     this.log.error(`There was an error on the PluginConfigInteractor socket: ${err}`);
   }
