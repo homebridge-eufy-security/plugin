@@ -17,4 +17,8 @@ export class AccessoryService {
   public async getExperimentalRTSPStatus(sn: string): Promise<{ state: boolean; url?: string }> {
     return window.homebridge.request('/getExperimentalRTSPStatus', sn);
   }
+
+  public async getStationsDevicesMapping(): Promise<Map<string, string[]>> {
+    return window.homebridge.request('/getStationDeviceMapping');
+  }
 }
