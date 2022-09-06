@@ -14,6 +14,7 @@ enum InteractorRequestType {
   DeviceChargingStatus = 'deviceChargingStatus',
   DeviceChangeExperimentalRTSPStatus = 'deviceExperimentalRtspStatusChange',
   DeviceGetExperimentalRTSPStatus = 'deviceExperimentalRtspStatusGet',
+  GetStationDevicesMapping = 'stationDevicesMapping',
 }
 
 type InteractorRequest = {
@@ -25,7 +26,7 @@ type InteractorRequest = {
 type InteractorResponse = {
   serialNumber: string;
   type: InteractorRequestType;
-  result?: boolean | number | string | { state: boolean; url?: string };
+  result?: boolean | number | string | { state: boolean; url?: string } | Map<string, string[]>;
   error?: Error;
 };
 
@@ -189,6 +190,9 @@ export class EufyClientInteractor extends EventEmitter implements PluginConfigIn
           break;
         case InteractorRequestType.DeviceGetExperimentalRTSPStatus:
           response.result = await this.getExperimentalRTSPState(request);
+          break;
+        case InteractorRequestType.GetStationDevicesMapping:
+          response.result = await this.getStationDevicesMap(request);
           break;
         default:
           response.error = new Error('Request type not implemented.');
@@ -372,6 +376,27 @@ export class EufyClientInteractor extends EventEmitter implements PluginConfigIn
       }
   
       return Promise.resolve(response.result as { state: boolean; url?: string });
+    } catch (err) {
+      return Promise.reject(err);
+    }
+  }
+
+  async GetStationDevicesMapping(): Promise<Map<string, string[]>> {
+    const request: InteractorRequest = {
+      serialNumber: '',
+      type: InteractorRequestType.GetStationDevicesMapping,
+    };
+    try {
+      const response = await this.processDirectRequest(request);
+      
+      if (response.error) {
+        return Promise.reject(response.error.message);
+      }
+      if (response.result === undefined) {
+        return Promise.reject('there was no result');
+      }
+  
+      return Promise.resolve(response.result as Map<string, string[]>);
     } catch (err) {
       return Promise.reject(err);
     }
