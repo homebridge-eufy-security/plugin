@@ -26,7 +26,7 @@ type InteractorRequest = {
 type InteractorResponse = {
   serialNumber: string;
   type: InteractorRequestType;
-  result?: boolean | number | string | { state: boolean; url?: string } | Map<string, string[]>;
+  result?: boolean | number | string | { state: boolean; url?: string } | unknown;
   error?: Error;
 };
 
@@ -289,18 +289,18 @@ export class EufyClientInteractor extends EventEmitter implements PluginConfigIn
     }
   }
 
-  private async getStationDevicesMap(request: InteractorRequest): Promise<Map<string, string[]>> {
+  private async getStationDevicesMap(request: InteractorRequest): Promise<unknown> {
     try {
       const stations = this.client!.getStations();
       const devices = await this.client!.getDevices();
-      const result = new Map<string, string[]>();
+      const result = {};
       for (const device of devices) {
         const stationSN = device.getStationSerial();
-        const devicesArray = result.get(stationSN);
-        if (devicesArray) {
+        const devicesArray = result[stationSN];
+        if (Array.isArray(devicesArray)) {
           devicesArray.push(device.getSerial());
         } else {
-          result.set(stationSN, [device.getSerial()]);
+          result[stationSN] = [device.getSerial()];
         }
       }
       return Promise.resolve(result);
@@ -381,7 +381,7 @@ export class EufyClientInteractor extends EventEmitter implements PluginConfigIn
     }
   }
 
-  async GetStationDevicesMapping(): Promise<Map<string, string[]>> {
+  async GetStationDevicesMapping(): Promise<unknown> {
     const request: InteractorRequest = {
       serialNumber: '',
       type: InteractorRequestType.GetStationDevicesMapping,
@@ -396,7 +396,7 @@ export class EufyClientInteractor extends EventEmitter implements PluginConfigIn
         return Promise.reject('there was no result');
       }
   
-      return Promise.resolve(response.result as Map<string, string[]>);
+      return Promise.resolve(response.result as unknown);
     } catch (err) {
       return Promise.reject(err);
     }
