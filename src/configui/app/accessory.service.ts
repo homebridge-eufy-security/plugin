@@ -22,13 +22,19 @@ export class AccessoryService {
     return window.homebridge.request('/getStationDeviceMapping');
   }
 
-  public async getCamerasOnSameStation(sn: string): Promise<string[]> {
+  public async getCamerasOnSameStation(sn: string, ignoredDevices: string[] = []): Promise<string[]> {
     
     try {
       const mapping = await this.getStationsCamerasMapping() as object;
       for (const devices of Object.values(mapping)) {
         if (Array.isArray(devices) && devices.indexOf(sn) > -1) {
-          return Promise.resolve(devices as string[]);
+          const result = [sn];
+          for (const device of devices) {
+            if (device !== sn && ignoredDevices.indexOf(device) === -1) {
+              result.push(device as string);
+            }
+          }
+          return Promise.resolve(result);
         }
       }
 
