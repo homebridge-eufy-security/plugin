@@ -21,4 +21,21 @@ export class AccessoryService {
   public async getStationsDevicesMapping(): Promise<unknown> {
     return window.homebridge.request('/getStationDeviceMapping');
   }
+
+  public async getDevicesOnSameStation(sn: string): Promise<string[]> {
+    
+    try {
+      const mapping = await this.getStationsDevicesMapping() as object;
+      for (const devices of Object.values(mapping)) {
+        if (Array.isArray(devices) && devices.indexOf(sn) > -1) {
+          return Promise.resolve(devices as string[]);
+        }
+      }
+
+      // sn was not found in mapping
+      throw new Error('no valid station - devices mapping was found');
+    } catch (err) {
+      return Promise.reject(err);
+    }
+  }
 }

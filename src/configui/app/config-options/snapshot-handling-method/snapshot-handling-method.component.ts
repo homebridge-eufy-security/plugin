@@ -27,6 +27,15 @@ export class SnapshotHandlingMethodComponent extends ConfigOptionsInterpreter im
     if (this.accessory) {
       this.accessoryService.getChargingStatus(this.accessory.uniqueId)
         .then((chargingStatus) => this.chargingStatus = chargingStatus);
+      
+      this.accessoryService.getDevicesOnSameStation(this.accessory.uniqueId)
+        .then(devices => {
+          this.devicesOnSameStation = devices.length;
+          if (this.devicesOnSameStation > 1) {
+            this.value = 3;
+            this.update();
+          }
+        });
     }
   }
 
@@ -45,6 +54,7 @@ export class SnapshotHandlingMethodComponent extends ConfigOptionsInterpreter im
   value = DEFAULT_CAMERACONFIG_VALUES.snapshotHandlingMethod;
 
   chargingStatus = ChargingStatus.PLUGGED;
+  devicesOnSameStation = 1;
 
   async readValue() {
     const config = await this.getCameraConfig(this.accessory?.uniqueId || '');
