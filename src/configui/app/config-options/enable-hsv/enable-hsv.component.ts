@@ -23,11 +23,6 @@ export class EnableHsvComponent extends ConfigOptionsInterpreter implements OnIn
 
   ngOnInit(): void {
     this.readValue();
-
-    if (this.accessory) {
-      this.accessoryService.getChargingStatus(this.accessory.uniqueId)
-        .then((chargingStatus) => this.chargingStatus = chargingStatus);
-    }
   }
 
   /** Customize from here */
@@ -41,12 +36,28 @@ export class EnableHsvComponent extends ConfigOptionsInterpreter implements OnIn
   value = DEFAULT_CAMERACONFIG_VALUES.hsv;
 
   chargingStatus = ChargingStatus.PLUGGED;
+  camerasOnSameStation: string[] = [];
 
   async readValue() {
     const config = await this.getCameraConfig(this.accessory?.uniqueId || '');
 
     if (config && Object.prototype.hasOwnProperty.call(config, 'hsv')) {
       this.value = config['hsv'];
+    }
+
+    if (this.accessory) {
+      this.accessoryService.getChargingStatus(this.accessory.uniqueId)
+        .then((chargingStatus) => this.chargingStatus = chargingStatus);
+
+      const ignoredDevices = (config && Object.prototype.hasOwnProperty.call(config, 'ignoreDevices')) ? config['ignoreDevices'] : [];
+      this.accessoryService.getCamerasOnSameStation(this.accessory.uniqueId, ignoredDevices)
+        .then(devices => {
+          this.camerasOnSameStation = devices;
+          if (this.camerasOnSameStation.length > 1) {
+            this.value = false;
+            this.update();
+          }
+        });
     }
   }
 

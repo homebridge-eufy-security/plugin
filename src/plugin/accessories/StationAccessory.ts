@@ -3,7 +3,7 @@ import { Service, PlatformAccessory, CharacteristicValue } from 'homebridge';
 import { EufySecurityPlatform } from '../platform';
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore  
-import { Station, DeviceType, PropertyName, PropertyValue, AlarmEvent } from 'eufy-security-client';
+import { Station, DeviceType, PropertyName, PropertyValue, AlarmEvent, CommandResult, ErrorCode } from 'eufy-security-client';
 import { StationConfig } from '../utils/configTypes';
 
 /**
@@ -127,6 +127,9 @@ export class StationAccessory {
         this.handlePropertyChange(device, name, value),
       );
     }
+
+    // warn user if station command returns with error
+    this.eufyStation.on('command result', this.handleCommandResult.bind(this));
   }
 
   private getStationConfig() {
@@ -452,5 +455,29 @@ export class StationAccessory {
         value,
       },
     );
+  }
+
+  private handleCommandResult(station: Station, result: CommandResult) {
+    if (result.return_code !== ErrorCode.ERROR_PPCS_SUCCESSFUL) {
+      const resultErrors = [
+        ErrorCode.ERROR_COMMAND_TIMEOUT,
+        ErrorCode.ERROR_CONNECT_TIMEOUT,
+        ErrorCode.ERROR_DEV_BUSY,
+        ErrorCode.ERROR_DEV_CLOSE,
+        ErrorCode.ERROR_DEV_OFFLINE,
+        ErrorCode.ERROR_FAILED_TO_REQUEST,
+        ErrorCode.ERROR_INVALID_ACCOUNT,
+        ErrorCode.ERROR_INVALID_COMMAND,
+        ErrorCode.ERROR_NETWORK_NOT_AVAILABLE,
+        ErrorCode.ERROR_WAIT_TIMEOUT,
+      ];
+      if (resultErrors.indexOf(result.return_code) !== -1) {
+        // eslint-disable-next-line max-len
+        this.platform.log.error(`station ${this.accessory.displayName} (${station.getSerial()}) experienced an Error: ${ErrorCode[result.return_code]} (${result.return_code}) | (command: ${result.command_type})`);
+      } else {
+        // eslint-disable-next-line max-len
+        this.platform.log.warn(`station ${this.accessory.displayName} (${station.getSerial()}) experienced a command return code error: ${ErrorCode[result.return_code]} (${result.return_code}) (command: ${result.command_type})`);
+      }
+    }
   }
 }

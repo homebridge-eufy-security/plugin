@@ -23,11 +23,6 @@ export class SnapshotHandlingMethodComponent extends ConfigOptionsInterpreter im
 
   ngOnInit(): void {
     this.readValue();
-    
-    if (this.accessory) {
-      this.accessoryService.getChargingStatus(this.accessory.uniqueId)
-        .then((chargingStatus) => this.chargingStatus = chargingStatus);
-    }
   }
 
   /** Customize from here */
@@ -45,6 +40,7 @@ export class SnapshotHandlingMethodComponent extends ConfigOptionsInterpreter im
   value = DEFAULT_CAMERACONFIG_VALUES.snapshotHandlingMethod;
 
   chargingStatus = ChargingStatus.PLUGGED;
+  camerasOnSameStation: string[] = [];
 
   async readValue() {
     const config = await this.getCameraConfig(this.accessory?.uniqueId || '');
@@ -53,6 +49,21 @@ export class SnapshotHandlingMethodComponent extends ConfigOptionsInterpreter im
       this.value = config['snapshotHandlingMethod'];
     } else if (config && Object.prototype.hasOwnProperty.call(config, 'forcerefreshsnap')) {
       this.value = config['forcerefreshsnap'] ? 1 : 3;
+    }
+
+    if (this.accessory) {
+      this.accessoryService.getChargingStatus(this.accessory.uniqueId)
+        .then((chargingStatus) => this.chargingStatus = chargingStatus);
+      
+      const ignoredDevices = (config && Object.prototype.hasOwnProperty.call(config, 'ignoreDevices')) ? config['ignoreDevices'] : [];
+      this.accessoryService.getCamerasOnSameStation(this.accessory.uniqueId, ignoredDevices)
+        .then(devices => {
+          this.camerasOnSameStation = devices;
+          if (this.camerasOnSameStation.length > 1) {
+            this.value = 3;
+            this.update();
+          }
+        });
     }
   }
 

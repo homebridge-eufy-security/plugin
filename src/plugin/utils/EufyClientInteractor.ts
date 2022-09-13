@@ -14,6 +14,7 @@ enum InteractorRequestType {
   DeviceChargingStatus = 'deviceChargingStatus',
   DeviceChangeExperimentalRTSPStatus = 'deviceExperimentalRtspStatusChange',
   DeviceGetExperimentalRTSPStatus = 'deviceExperimentalRtspStatusGet',
+  GetStationDevicesMapping = 'stationDevicesMapping',
 }
 
 type InteractorRequest = {
@@ -25,7 +26,7 @@ type InteractorRequest = {
 type InteractorResponse = {
   serialNumber: string;
   type: InteractorRequestType;
-  result?: boolean | number | string | { state: boolean; url?: string };
+  result?: boolean | number | string | { state: boolean; url?: string } | unknown;
   error?: Error;
 };
 
@@ -190,6 +191,9 @@ export class EufyClientInteractor extends EventEmitter implements PluginConfigIn
         case InteractorRequestType.DeviceGetExperimentalRTSPStatus:
           response.result = await this.getExperimentalRTSPState(request);
           break;
+        case InteractorRequestType.GetStationDevicesMapping:
+          response.result = await this.getStationCamerasMap(request);
+          break;
         default:
           response.error = new Error('Request type not implemented.');
           break;
@@ -285,6 +289,29 @@ export class EufyClientInteractor extends EventEmitter implements PluginConfigIn
     }
   }
 
+  private async getStationCamerasMap(request: InteractorRequest): Promise<unknown> {
+    try {
+      const stations = this.client!.getStations();
+      const devices = await this.client!.getDevices();
+      const result = {};
+      for (const device of devices) {
+        if (!device.isCamera()) {
+          continue;
+        }
+        const stationSN = device.getStationSerial();
+        const devicesArray = result[stationSN];
+        if (Array.isArray(devicesArray)) {
+          devicesArray.push(device.getSerial());
+        } else {
+          result[stationSN] = [device.getSerial()];
+        }
+      }
+      return Promise.resolve(result);
+    } catch (err) {
+      return Promise.reject(err);
+    }
+  }
+
   private onSocketError(err: Error) {
     this.log.error(`There was an error on the PluginConfigInteractor socket: ${err}`);
   }
@@ -352,6 +379,27 @@ export class EufyClientInteractor extends EventEmitter implements PluginConfigIn
       }
   
       return Promise.resolve(response.result as { state: boolean; url?: string });
+    } catch (err) {
+      return Promise.reject(err);
+    }
+  }
+
+  async GetStationCamerasMapping(): Promise<unknown> {
+    const request: InteractorRequest = {
+      serialNumber: '',
+      type: InteractorRequestType.GetStationDevicesMapping,
+    };
+    try {
+      const response = await this.processDirectRequest(request);
+      
+      if (response.error) {
+        return Promise.reject(response.error.message);
+      }
+      if (response.result === undefined) {
+        return Promise.reject('there was no result');
+      }
+  
+      return Promise.resolve(response.result as unknown);
     } catch (err) {
       return Promise.reject(err);
     }

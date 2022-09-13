@@ -74,12 +74,11 @@ class VideostreamProxy extends Readable {
   private pushNewDataImmediately = false;
   private dataFramesCount = 0;
 
-  constructor(id: number, cacheData: Array<Buffer>, manager: LocalLivestreamManager, log: Logger) {
+  constructor(id: number, manager: LocalLivestreamManager, log: Logger) {
     super();
 
     this.livestreamId = id;
     this.manager = manager;
-    this.cacheData = cacheData;
     this.log = log;
     this.resetKillTimeout();
   }
@@ -153,7 +152,6 @@ export class LocalLivestreamManager extends EventEmitter {
   private log: Logger;
 
   private livestreamCount = 1;
-  private iFrameCache: Array<Buffer> = [];
 
   private proxyStreams: Set<ProxyStream> = new Set<ProxyStream>();
 
@@ -195,7 +193,6 @@ export class LocalLivestreamManager extends EventEmitter {
       this.stationStream.videostream.destroy();
     }
     this.stationStream = null;
-    this.iFrameCache = [];
     this.livestreamStartedAt = null;
 
     if (this.connectionTimeout) {
@@ -307,12 +304,6 @@ export class LocalLivestreamManager extends EventEmitter {
       }
       this.initialize(); // important to prevent unwanted behaviour when the eufy station emits the 'livestream start' event multiple times
       videostream.on('data', (data) => {
-        if(this.isIFrame(data)) { // cache iFrames to speed up livestream encoding
-          this.iFrameCache = [data];
-        } else if (this.iFrameCache.length > 0) {
-          this.iFrameCache.push(data);
-        }
-
         this.proxyStreams.forEach((proxyStream) => {
           proxyStream.videostream.newVideoData(data);
         });
@@ -361,7 +352,7 @@ export class LocalLivestreamManager extends EventEmitter {
       if (this.livestreamCount > 1024) {
         this.livestreamCount = 1;
       }
-      const videostream = new VideostreamProxy(id, this.iFrameCache, this, this.log);
+      const videostream = new VideostreamProxy(id, this, this.log);
       const audiostream = new AudiostreamProxy(this.log);
       const proxyStream = { id, videostream, audiostream };
       this.proxyStreams.add(proxyStream);
@@ -404,18 +395,5 @@ export class LocalLivestreamManager extends EventEmitter {
         this.stopLocalLiveStream();
       }
     }
-  }
-
-  private isIFrame(data: Buffer): boolean {
-    const validValues = [64, 66, 68, 78, 101, 103];
-    if (data !== undefined && data.length > 0) {
-      if (data.length >= 5) {
-        const startcode = [...data.slice(0, 5)];
-        if (validValues.includes(startcode[3]) || validValues.includes(startcode[4])) {
-          return true;
-        }
-      }
-    }
-    return false;
   }
 }
