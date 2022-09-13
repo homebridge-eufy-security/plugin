@@ -88,7 +88,7 @@ class UiServer extends HomebridgePluginUiServer {
       return this.pluginConfigInteractor.DeviceGetExperimentalRTSPStatus(sn);
     });
     this.onRequest('/getStationDeviceMapping', () => {
-      return this.pluginConfigInteractor.GetStationDevicesMapping();
+      return this.pluginConfigInteractor.GetStationCamerasMapping();
     });
 
     this.ready();

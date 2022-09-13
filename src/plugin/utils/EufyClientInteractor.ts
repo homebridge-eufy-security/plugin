@@ -192,7 +192,7 @@ export class EufyClientInteractor extends EventEmitter implements PluginConfigIn
           response.result = await this.getExperimentalRTSPState(request);
           break;
         case InteractorRequestType.GetStationDevicesMapping:
-          response.result = await this.getStationDevicesMap(request);
+          response.result = await this.getStationCamerasMap(request);
           break;
         default:
           response.error = new Error('Request type not implemented.');
@@ -289,12 +289,15 @@ export class EufyClientInteractor extends EventEmitter implements PluginConfigIn
     }
   }
 
-  private async getStationDevicesMap(request: InteractorRequest): Promise<unknown> {
+  private async getStationCamerasMap(request: InteractorRequest): Promise<unknown> {
     try {
       const stations = this.client!.getStations();
       const devices = await this.client!.getDevices();
       const result = {};
       for (const device of devices) {
+        if (!device.isCamera()) {
+          continue;
+        }
         const stationSN = device.getStationSerial();
         const devicesArray = result[stationSN];
         if (Array.isArray(devicesArray)) {
@@ -381,7 +384,7 @@ export class EufyClientInteractor extends EventEmitter implements PluginConfigIn
     }
   }
 
-  async GetStationDevicesMapping(): Promise<unknown> {
+  async GetStationCamerasMapping(): Promise<unknown> {
     const request: InteractorRequest = {
       serialNumber: '',
       type: InteractorRequestType.GetStationDevicesMapping,

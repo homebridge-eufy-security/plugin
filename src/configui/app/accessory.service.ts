@@ -18,14 +18,14 @@ export class AccessoryService {
     return window.homebridge.request('/getExperimentalRTSPStatus', sn);
   }
 
-  public async getStationsDevicesMapping(): Promise<unknown> {
+  public async getStationsCamerasMapping(): Promise<unknown> {
     return window.homebridge.request('/getStationDeviceMapping');
   }
 
-  public async getDevicesOnSameStation(sn: string): Promise<string[]> {
+  public async getCamerasOnSameStation(sn: string): Promise<string[]> {
     
     try {
-      const mapping = await this.getStationsDevicesMapping() as object;
+      const mapping = await this.getStationsCamerasMapping() as object;
       for (const devices of Object.values(mapping)) {
         if (Array.isArray(devices) && devices.indexOf(sn) > -1) {
           return Promise.resolve(devices as string[]);
