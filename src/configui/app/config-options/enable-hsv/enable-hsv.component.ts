@@ -27,6 +27,15 @@ export class EnableHsvComponent extends ConfigOptionsInterpreter implements OnIn
     if (this.accessory) {
       this.accessoryService.getChargingStatus(this.accessory.uniqueId)
         .then((chargingStatus) => this.chargingStatus = chargingStatus);
+
+      this.accessoryService.getCamerasOnSameStation(this.accessory.uniqueId)
+        .then(devices => {
+          this.camerasOnSameStation = devices;
+          if (this.camerasOnSameStation.length > 1) {
+            this.value = false;
+            this.update();
+          }
+        });
     }
   }
 
@@ -41,6 +50,7 @@ export class EnableHsvComponent extends ConfigOptionsInterpreter implements OnIn
   value = DEFAULT_CAMERACONFIG_VALUES.hsv;
 
   chargingStatus = ChargingStatus.PLUGGED;
+  camerasOnSameStation: string[] = [];
 
   async readValue() {
     const config = await this.getCameraConfig(this.accessory?.uniqueId || '');
