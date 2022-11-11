@@ -149,6 +149,7 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
       username: this.config.username,
       password: this.config.password,
       country: this.config.country ?? 'US',
+      trustedDeviceName: this.config.deviceName ?? 'My Phone',
       language: 'en',
       persistentDir: this.eufyPath,
       p2pConnectionSetup: (this.config.preferLocalConnection) ? 1 : 2,

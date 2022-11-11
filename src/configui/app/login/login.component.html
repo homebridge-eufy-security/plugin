@@ -58,6 +58,12 @@
                     [(ngModel)]="credentials.password" [attr.disabled]="loginInProgress ? true : null">
                 <label for="floatingPassword">Password</label>
             </div>
+            <p></p>
+            <div class="form-floating mb-3">
+                <input type="text" [attr.class]="passwordIsValid ? 'form-control' : 'form-control is-invalid'" id="floatingDevice" placeholder="Device Name"
+                    [(ngModel)]="credentials.deviceName" [attr.disabled]="loginInProgress ? true : null">
+                <label for="floatingDevice">Device Name</label>
+            </div>
 
             <div class="row">
                 <div class="col-12 col-sm-6 mb-3 mb-sm0">

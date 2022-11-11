@@ -10,6 +10,7 @@ import { CameraConfig, StationConfig } from './utils/configTypes';
 export interface EufySecurityPlatformConfig extends PlatformConfig {
   username: string;
   password: string;
+  deviceName: string;
   enableDetailedLogging: number;
   omitLogFiles: boolean;
   enableCamera: boolean;

@@ -3,6 +3,7 @@ export type Credentials = {
   username: string;
   password: string;
   country: string;
+  deviceName: string;
 };
 
 export enum LoginFailReason {

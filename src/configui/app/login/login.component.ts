@@ -24,6 +24,7 @@ export class LoginComponent implements OnInit {
     username: '',
     password: '',
     country: 'US',
+    deviceName: '',
   };
 
   otp = '';

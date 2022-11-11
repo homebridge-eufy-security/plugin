@@ -102,6 +102,7 @@ class UiServer extends HomebridgePluginUiServer {
       this.config.username = options.username;
       this.config.password = options.password;
       this.config.country = options.country;
+      this.config.trustedDeviceName = options.deviceName;
       try {
         this.eufyClient = await EufySecurity.initialize(this.config, this.log);
       } catch (err) {
