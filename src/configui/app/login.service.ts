@@ -24,6 +24,7 @@ export class LoginService {
         username: config['username'],
         password: config['password'],
         country: config['country'] ? config['country'] : 'US',
+        deviceName: config['deviceName'],
       });
     } catch (err) {
       return Promise.reject('no config');
@@ -51,6 +52,7 @@ export class LoginService {
     config['username'] = credentials.username;
     config['password'] = credentials.password;
     config['country'] = credentials.country;
+    config['deviceName'] = credentials.deviceName;
 
     await this.pluginService.updateConfig(config, true);
   }
