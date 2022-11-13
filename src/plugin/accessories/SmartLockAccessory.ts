@@ -76,7 +76,7 @@ export class SmartLockAccessory extends DeviceAccessory {
 
     try {
       const stationSerial = this.SmartLock.getStationSerial();
-      const station = this.platform.getStationById(stationSerial);
+      const station = await this.platform.getStationById(stationSerial);
       await station.lockDevice(this.SmartLock, !!value);
     } catch (err) {
       this.platform.log.error(this.accessory.displayName, 'Lock target state could not be set: ' + err);
