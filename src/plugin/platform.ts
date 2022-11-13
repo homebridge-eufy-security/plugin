@@ -498,6 +498,7 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
       case DeviceType.FLOODLIGHT_CAMERA_8424:
         a = new CameraAccessory(this, accessory, device as Camera);
         unbridge = (a.cameraConfig.enableCamera) ? a.cameraConfig.unbridge ??= false : false;
+        a.setExperimentalMode();
         break;
       case DeviceType.DOORBELL:
       case DeviceType.BATTERY_DOORBELL:
@@ -506,6 +507,7 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
       case DeviceType.DOORBELL_SOLO:
         a = new DoorbellCameraAccessory(this, accessory, device as DoorbellCamera);
         unbridge = (a.cameraConfig.enableCamera) ? a.cameraConfig.unbridge ??= false : false;
+        a.setExperimentalMode();
         break;
       case DeviceType.SENSOR:
         new EntrySensorAccessory(this, accessory, device as EntrySensor);

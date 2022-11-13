@@ -226,7 +226,7 @@ export class EufyClientInteractor extends EventEmitter implements PluginConfigIn
     initializeExperimentalMode();
 
     const device = await this.client!.getDevice(request.serialNumber);
-    const station = this.client!.getStation(device.getStationSerial());
+    const station = await this.client!.getStation(device.getStationSerial());
 
     return new Promise((resolve, reject) => {
       if (request.value === undefined) {
