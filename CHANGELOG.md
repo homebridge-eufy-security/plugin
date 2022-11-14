@@ -2,15 +2,7 @@
 
 You can find the complete detailled changelog for every beta release [here](https://github.com/homebridge-eufy-security/plugin/releases).
 
-## 2.2.0-beta.5 - latest changes
-
-### Changed
-
-- Warn the user if multiple cameras are connected through the same station and limit critical options for these cameras (snapshot method and HKSV)
-- Log errors in command results from eufy-security-client library to homebridge
-- Removed overhead in stream processing improve performance
-
-## 2.2.0 (Beta)
+## 2.2.0
 
 ### Added
 
@@ -32,6 +24,9 @@ You can find the complete detailled changelog for every beta release [here](http
 - Improved verbose output for snapshot and ffmpeg processes
 - Added explanatory description to snapshot handling method.
 - Updated to latest dependency: eufy-security-client
+- Warn the user if multiple cameras are connected through the same station and limit critical options for these cameras (snapshot method and HKSV)
+- Log errors in command results from eufy-security-client library to homebridge
+- Removed overhead in stream processing improve performance
 - Warn the user if multiple cameras are connected through the same station and limit critical options for these cameras (snapshot method and HKSV)
 - Log errors in command results from eufy-security-client library to homebridge
 - Removed overhead in stream processing improve performance
