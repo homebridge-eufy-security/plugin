@@ -42,7 +42,7 @@ You can find the complete detailled changelog for every beta release [here](http
 - Bug where no snapshot was returned after an event
 - Bug that caused a crash with node version prior to v14.18
 
-## 2.1.0 (RC)
+## 2.1.0 (2022-09-03)
 
 ### Added
 
@@ -99,6 +99,7 @@ You can find the complete detailled changelog for every beta release [here](http
 - Fixed smartlocks - see #110
 - Fixed occasional EPIPE Error when streaming - see #14
 - Streams might have been aborted after 30-60 seconds due to stream backpressuring
+- Possible memory leak caused by not correctly released EventListeners
 
 ## 2.0.1 (20.06.2022)
 
