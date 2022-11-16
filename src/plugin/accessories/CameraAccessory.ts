@@ -278,9 +278,9 @@ export class CameraAccessory extends DeviceAccessory {
   /**
    * Handle requests to set the "HomeKit Camera Active" characteristic
    */
-  handleHomeKitCameraOperatingModeIndicatorSet(value) {
+  async handleHomeKitCameraOperatingModeIndicatorSet(value) {
     this.platform.log.debug(this.accessory.displayName, 'SET HomeKitCameraOperatingModeIndicator:', value);
-    const station = this.platform.getStationById(this.eufyDevice.getStationSerial());
+    const station = await this.platform.getStationById(this.eufyDevice.getStationSerial());
     station.setStatusLed(this.eufyDevice, value as boolean);
     this.CameraService.getCharacteristic(this.characteristic.CameraOperatingModeIndicator).updateValue(value as boolean);
   }
@@ -302,9 +302,9 @@ export class CameraAccessory extends DeviceAccessory {
   /**
    * Handle requests to set the "HomeKit Camera Active" characteristic
    */
-  handleHomeKitNightVisionSet(value) {
+  async handleHomeKitNightVisionSet(value) {
     this.platform.log.debug(this.accessory.displayName, 'SET handleHomeKitNightVisionSet:', value);
-    const station = this.platform.getStationById(this.eufyDevice.getStationSerial());
+    const station = await this.platform.getStationById(this.eufyDevice.getStationSerial());
     station.setNightVision(this.eufyDevice, value as number);
     this.CameraService.getCharacteristic(this.characteristic.NightVision).updateValue(value as boolean);
   }
@@ -400,7 +400,7 @@ export class CameraAccessory extends DeviceAccessory {
 
   async handleEnableSet(value: CharacteristicValue) {
     this.platform.log.debug(this.accessory.displayName, 'SET DeviceEnabled:', value);
-    const station = this.platform.getStationById(this.eufyDevice.getStationSerial());
+    const station = await this.platform.getStationById(this.eufyDevice.getStationSerial());
     station.enableDevice(this.eufyDevice, value as boolean);
     if (this.cameraConfig.enableCamera) {
       this.CameraService.getCharacteristic(this.characteristic.ManuallyDisabled).updateValue(!value as boolean);
@@ -420,7 +420,7 @@ export class CameraAccessory extends DeviceAccessory {
 
   async handleMotionOnSet(value: CharacteristicValue) {
     this.platform.log.debug(this.accessory.displayName, 'SET DeviceMotionDetection:', value);
-    const station = this.platform.getStationById(this.eufyDevice.getStationSerial());
+    const station = await this.platform.getStationById(this.eufyDevice.getStationSerial());
     station.setMotionDetection(this.eufyDevice, value as boolean);
   }
 
@@ -437,7 +437,7 @@ export class CameraAccessory extends DeviceAccessory {
 
   async handleLightOnSet(value: CharacteristicValue) {
     this.platform.log.debug(this.accessory.displayName, 'SET DeviceLight:', value);
-    const station = this.platform.getStationById(this.eufyDevice.getStationSerial());
+    const station = await this.platform.getStationById(this.eufyDevice.getStationSerial());
     station.switchLight(this.eufyDevice, value as boolean);
   }
 }
