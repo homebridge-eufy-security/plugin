@@ -26,7 +26,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        node-version: [14, 16]
+        node-version: [16]
     steps:
       - uses: actions/checkout@v2
         with:
@@ -57,8 +57,8 @@ jobs:
       - run: git config --global user.email '<>'
       - run: npm version ${{ github.event.inputs.version }} --preid=${{ github.event.inputs.preid }} -m "[${{ github.event.inputs.tag }}] %s"
       - run: npm update homebridge-eufy-security
-      - run: git push
-      - run: git push origin --tags
+      - run: git push --force
+      - run: git push origin --tags --force
       - name: "Restore 'include administrators' default branch protection"
         uses: benjefferies/branch-protection-bot@master
         if: always() # Force to always run this step to ensure "include administrators" is always turned back on
@@ -73,6 +73,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2
         with:
+          node-version: 16
           ref: ${{ github.event.inputs.branch }}
       - uses: actions/setup-node@v2
         with:
