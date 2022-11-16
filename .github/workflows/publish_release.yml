@@ -43,13 +43,13 @@ jobs:
     needs: build
     steps:
       - name: Temporarily disable "include administrators" branch protection
-      - uses: benjefferies/branch-protection-bot@master
+        uses: benjefferies/branch-protection-bot@master
         if: always()
         with:
           access_token: ${{ secrets.BUILD_SVC_PAT }}
           branch: ${{ github.event.repository.default_branch }}
       - name: Push the change
-      - uses: actions/checkout@v2
+        uses: actions/checkout@v2
         with:
           ref: ${{ github.event.inputs.branch }}
           token: ${{ secrets.BUILD_SVC_PAT }}
@@ -60,7 +60,7 @@ jobs:
       - run: git push
       - run: git push origin --tags
       - name: "Restore 'include administrators' default branch protection"
-      - uses: benjefferies/branch-protection-bot@master
+        uses: benjefferies/branch-protection-bot@master
         if: always() # Force to always run this step to ensure "include administrators" is always turned back on
         with:
             access_token: ${{ secrets.BUILD_SVC_PAT }}
