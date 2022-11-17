@@ -2,6 +2,18 @@
 
 You can find the complete detailled changelog for every beta release [here](https://github.com/homebridge-eufy-security/plugin/releases).
 
+## 2.1.3 (2022-11-17)
+
+### Fixed
+
+- Due to active blocking of the plugin by eufy the login was temporarily not possible. Thanks to @baeuric and @schliemann (and of course @bropat) for the fix.
+  Learn more here: #201 and [this thread](https://github.com/bropat/eufy-security-client/issues/242)
+
+### Changed
+
+- New Login field "Device Name" which sets the device type with which the api calls to the eufy cloud are simulated. If left blank a random device will be chosen.
+- Updated eufy-security-client to latest version 2.2.3
+
 ## 2.1.0 (2022-09-03)
 
 ### Added
