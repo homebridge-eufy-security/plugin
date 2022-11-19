@@ -2,21 +2,11 @@
 
 You can find the complete detailled changelog for every beta release [here](https://github.com/homebridge-eufy-security/plugin/releases).
 
-## 2.2.0-beta.6 to beta.8 - latest changes
-
-### Added
-
-- Support for Homebase 3, Eufy Camera 3 and Eufy Camera 3C
+## 2.2.0-beta.9 - latest changes
 
 ### Fixed
 
-- Due to active blocking of the plugin by eufy the login was temporarily not possible. Thanks to @baeuric and @schliemann (and of course @bropat) for the fix.
-  Learn more here: #201 and [this thread](https://github.com/bropat/eufy-security-client/issues/242)
-
-### Changed
-
-- New Login field "Device Name" which sets the device type with which the api calls to the eufy cloud are simulated. If left blank a random device will be chosen.
-- Updated eufy-security-client to latest version 2.2.3
+- Fixed support for Homebase 3, Eufy Cam 3 and Eufy Cam 3C
 
 ## 2.2.0 (Beta)
 
