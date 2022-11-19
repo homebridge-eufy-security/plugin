@@ -74,6 +74,8 @@ export class Device {
       type === DeviceType.CAMERA2 ||
       type === DeviceType.CAMERA_E ||
       type === DeviceType.CAMERA2C ||
+      type === DeviceType.CAMERA3 ||
+      type === DeviceType.CAMERA3C ||
       type === DeviceType.INDOOR_CAMERA ||
       type === DeviceType.INDOOR_PT_CAMERA ||
       type === DeviceType.FLOODLIGHT ||
@@ -110,6 +112,8 @@ export class Device {
       type === DeviceType.CAMERA2 ||
       type === DeviceType.CAMERA2C ||
       type === DeviceType.CAMERA2C_PRO ||
+      type === DeviceType.CAMERA3 ||
+      type === DeviceType.CAMERA3C ||
       type === DeviceType.CAMERA_E ||
       type === DeviceType.INDOOR_CAMERA ||
       type === DeviceType.INDOOR_CAMERA_1080 ||
@@ -129,6 +133,8 @@ export class Device {
       type === DeviceType.CAMERA2C ||
       type === DeviceType.CAMERA2C_PRO ||
       type === DeviceType.CAMERA2_PRO ||
+      type === DeviceType.CAMERA3 ||
+      type === DeviceType.CAMERA3C ||
       type === DeviceType.DOORBELL ||
       type === DeviceType.BATTERY_DOORBELL ||
       type === DeviceType.BATTERY_DOORBELL_2 ||
