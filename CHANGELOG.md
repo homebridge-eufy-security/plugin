@@ -31,6 +31,7 @@ You can find the complete detailled changelog for every beta release [here](http
 - Setting to choose custom path to ffmpeg executable.
 - Config UI will now warn the user if a setting might decrease battery life drastically
 - Option to set connection method in eufy-security-client to 'local'
+- Support for Homebase 3, Eufy Camera 3 and Eufy Camera 3C
 
 ### Changed
 
