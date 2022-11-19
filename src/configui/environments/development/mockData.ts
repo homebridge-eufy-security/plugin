@@ -164,6 +164,18 @@ export const DEFAULT_STORED_ACCESSORIES: Accessory[] = [
     type: 16,
   },
   {
+    uniqueId: 'TxxxxP000CAMERA3',
+    displayName: 'CAMERA_3',
+    station: false,
+    type: 19,
+  },
+  {
+    uniqueId: 'TxxxxP00CAMERA3C',
+    displayName: 'CAMERA_3C',
+    station: false,
+    type: 23,
+  },
+  {
     uniqueId: 'TxxxxP0000000014',
     displayName: 'INDOOR_CAMERA',
     station: false,
@@ -385,6 +397,12 @@ export const DEFAULT_STORED_ACCESSORIES: Accessory[] = [
     displayName: 'DOORBELL_SOLO',
     station: true,
     type: 93,
+  },
+  {
+    uniqueId: 'TxxxxP0HOMEBASE3',
+    displayName: 'Homebase 3',
+    station: true,
+    type: 18,
   },
   {
     uniqueId: 'TxxxxP0000000003',

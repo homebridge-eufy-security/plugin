@@ -2,13 +2,21 @@
 
 You can find the complete detailled changelog for every beta release [here](https://github.com/homebridge-eufy-security/plugin/releases).
 
-## 2.2.0-beta.5 - latest changes
+## 2.2.0-beta.6 to beta.8 - latest changes
+
+### Added
+
+- Support for Homebase 3, Eufy Camera 3 and Eufy Camera 3C
+
+### Fixed
+
+- Due to active blocking of the plugin by eufy the login was temporarily not possible. Thanks to @baeuric and @schliemann (and of course @bropat) for the fix.
+  Learn more here: #201 and [this thread](https://github.com/bropat/eufy-security-client/issues/242)
 
 ### Changed
 
-- Warn the user if multiple cameras are connected through the same station and limit critical options for these cameras (snapshot method and HKSV)
-- Log errors in command results from eufy-security-client library to homebridge
-- Removed overhead in stream processing improve performance
+- New Login field "Device Name" which sets the device type with which the api calls to the eufy cloud are simulated. If left blank a random device will be chosen.
+- Updated eufy-security-client to latest version 2.2.3
 
 ## 2.2.0 (Beta)
 
@@ -23,6 +31,7 @@ You can find the complete detailled changelog for every beta release [here](http
 - Setting to choose custom path to ffmpeg executable.
 - Config UI will now warn the user if a setting might decrease battery life drastically
 - Option to set connection method in eufy-security-client to 'local'
+- Support for Homebase 3, Eufy Camera 3 and Eufy Camera 3C
 
 ### Changed
 
