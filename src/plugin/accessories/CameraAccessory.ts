@@ -340,6 +340,7 @@ export class CameraAccessory extends DeviceAccessory {
     config.immediateRingNotificationWithoutSnapshot = config.immediateRingNotificationWithoutSnapshot ??= false;
     config.delayCameraSnapshot = config.delayCameraSnapshot ??= false;
     config.hsv = config.hsv ??= false;
+    config.hsvConfig = config.hsvConfig ??= {};
 
     config.experimentalRTSP = config.experimentalRTSP ??= false;
 

@@ -10,7 +10,7 @@ import {
   RecordingPacket,
 } from 'homebridge';
 import { EufySecurityPlatform } from '../platform';
-import { CameraConfig } from '../utils/configTypes';
+import { CameraConfig, VideoConfig } from '../utils/configTypes';
 import { FFmpeg, FFmpegParameters } from '../utils/ffmpeg';
 import { Logger } from '../utils/logger';
 import net from 'net';
@@ -104,8 +104,14 @@ export class RecordingDelegate implements CameraRecordingDelegate {
       const videoParams = await FFmpegParameters.forVideoRecording();
       const audioParams = await FFmpegParameters.forAudioRecording();
 
-      videoParams.setupForRecording(this.cameraConfig.videoConfig || {}, this.configuration!);
-      audioParams.setupForRecording(this.cameraConfig.videoConfig || {}, this.configuration!);
+      const hsvConfig: VideoConfig = this.cameraConfig.hsvConfig ?? {};
+      
+      if (this.cameraConfig.videoConfig && this.cameraConfig.videoConfig.videoProcessor) {
+        hsvConfig.videoProcessor = this.cameraConfig.videoConfig.videoProcessor;
+      }
+
+      videoParams.setupForRecording(hsvConfig, this.configuration!);
+      audioParams.setupForRecording(hsvConfig, this.configuration!);
 
       const rtsp = is_rtsp_ready(this.camera, this.cameraConfig, this.log);
       
