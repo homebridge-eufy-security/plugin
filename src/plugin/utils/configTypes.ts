@@ -11,6 +11,7 @@ export type CameraConfig = {
   motionDoorbell?: boolean;
   unbridge?: boolean;
   videoConfig?: VideoConfig;
+  hsvConfig?: VideoConfig;
   enableButton: boolean;
   motionButton: boolean;
   rtsp: boolean;
