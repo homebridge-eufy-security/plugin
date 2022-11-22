@@ -699,7 +699,7 @@ export class FFmpegParameters {
       if (parameters[1].processAudio) {
         params.push(parameters[1].inputSoure);
       } else {
-        params.push('-f lavfi -i anullsrc=cl=1 -shortest');
+        params.push('-f lavfi -i anullsrc -shortest');
       }
     }
     if (parameters.length === 1) { 
