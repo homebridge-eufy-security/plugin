@@ -440,7 +440,7 @@ export class FFmpegParameters {
 
     if (this.isAudio) {
 
-      if (videoConfig.audio !== true) {
+      if (videoConfig.audio === false) {
         this.processAudio = false;
       }
 
