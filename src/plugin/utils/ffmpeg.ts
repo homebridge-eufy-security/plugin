@@ -430,6 +430,7 @@ export class FFmpegParameters {
         this.width = configuration.videoCodec.resolution[0];
         this.height = configuration.videoCodec.resolution[1];
         this.fps = videoConfig.maxFPS ?? configuration.videoCodec.resolution[2];
+        this.crop = true; // always force requested resolution
         // if (videoConfig.crop) {
         //   this.crop = videoConfig.crop;
         // }
