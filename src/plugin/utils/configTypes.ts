@@ -24,6 +24,7 @@ export type CameraConfig = {
   delayCameraSnapshot?:boolean;
   talkback?: boolean;
   hsv?: boolean;
+  hsvRecordingDuration?: number;
   experimentalRTSP?: boolean;
 };
 

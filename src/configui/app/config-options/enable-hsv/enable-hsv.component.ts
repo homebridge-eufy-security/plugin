@@ -64,6 +64,7 @@ export class EnableHsvComponent extends ConfigOptionsInterpreter implements OnIn
   // acodecHK: string | undefined = undefined;
   // acodecOptions: string | undefined = undefined;
   // videoProcessor: string | undefined = undefined;
+  recordingDuration = DEFAULT_CAMERACONFIG_VALUES.hsvRecordingDuration;
 
   // acodecPlaceholder = 'libfdk_aac';
   // acodecOptionsPlaceholder = '-profile:a aac_eld';
@@ -77,6 +78,10 @@ export class EnableHsvComponent extends ConfigOptionsInterpreter implements OnIn
 
     if (config && Object.prototype.hasOwnProperty.call(config, 'hsv')) {
       this.value = config['hsv'];
+    }
+
+    if (config && Object.prototype.hasOwnProperty.call(config, 'hsvRecordingDuration')) {
+      this.recordingDuration = config['hsvRecordingDuration'];
     }
 
     if (config && Object.prototype.hasOwnProperty.call(config, 'hsvConfig')) {
@@ -170,6 +175,7 @@ export class EnableHsvComponent extends ConfigOptionsInterpreter implements OnIn
     this.updateConfig(
       {
         hsv: this.value,
+        hsvRecordingDuration: this.recordingDuration,
         hsvConfig: newConfig,
       },
       this.accessory,

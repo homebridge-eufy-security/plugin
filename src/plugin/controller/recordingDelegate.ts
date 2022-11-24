@@ -17,7 +17,7 @@ import net from 'net';
 import { is_rtsp_ready } from '../utils/utils';
 import { LocalLivestreamManager } from './LocalLivestreamManager';
 
-const MAX_RECORDING_MINUTES = 3;
+const MAX_RECORDING_MINUTES = 1; // should never be used
 
 const HKSVQuitReason = [
   'Normal',
@@ -137,7 +137,7 @@ export class RecordingDelegate implements CameraRecordingDelegate {
 
       this.session = await ffmpeg.startFragmentedMP4Session();
 
-      let timer = MAX_RECORDING_MINUTES * 60;
+      let timer = this.cameraConfig.hsvRecordingDuration ?? MAX_RECORDING_MINUTES*60;
       if (this.platform.config.CameraMaxLivestreamDuration < timer) {
         timer = this.platform.config.CameraMaxLivestreamDuration;
       }

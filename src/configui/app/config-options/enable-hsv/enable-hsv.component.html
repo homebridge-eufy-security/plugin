@@ -53,6 +53,15 @@
         <ul class="list-group list-group-flush">
 
           <li class="list-group-item">
+            <label for="recordingDurationInput" class="form-label">
+              <span>Maximum Recording Duration
+                <fa-icon [icon]="faQuestionCircle" class="m-1" ngbTooltip="Duration a HKSV event will be recorded. The recording may be ended sooner by HomeKit, but mostly the whole time will be recorded and analyzed regarding motion, people and so on. Don't use too high values for battery powered devices."></fa-icon>
+              </span>
+            </label>
+            <input type="number" id="recordingDurationInput" [(ngModel)]="recordingDuration" placeholder="90" min="10" max="300" class="form-control" (change)="update()">
+          </li>
+
+          <li class="list-group-item">
             <label for="vcodecInput" class="form-label">
               <div class="form-check">
                 <input class="form-check-input" type="checkbox" id="vcodec" [checked]="vcodec !== undefined ? true: null" (change)="vcodec = (vcodec === undefined) ? '' : undefined; update();">
@@ -147,7 +156,7 @@
           </li>
 
           <li class="list-group-item">
-            <label for="mmaxBitrateInput" class="form-label">
+            <label for="maxBitrateInput" class="form-label">
               <div class="form-check">
                 <input class="form-check-input" type="checkbox" id="maxBitrate" [attr.disabled]="vcodec === 'copy' ? true : null" [checked]="maxBitrate !== undefined ? true : null" (change)="maxBitrate = (maxBitrate === undefined) ? 0 : undefined; update();">
                 <label class="form-check-label" for="maxBitrate" [attr.style]="vcodec === 'copy' ? 'text-decoration: line-through; color: lightgray;' : null">
