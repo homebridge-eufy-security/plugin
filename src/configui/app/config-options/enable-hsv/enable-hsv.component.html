@@ -123,7 +123,7 @@
             </div>
           </li> -->
 
-          <!-- <li class="list-group-item">
+          <li class="list-group-item">
             <div class="form-check">
               <input class="form-check-input" type="checkbox" id="crop" [attr.disabled]="vcodec === 'copy' ? true : null" [(ngModel)]="crop" (change)="update()">
               <label class="form-check-label" for="crop" [attr.style]="vcodec === 'copy' ? 'text-decoration: line-through; color: lightgray;' : null">
@@ -131,7 +131,7 @@
                 <fa-icon [icon]="faQuestionCircle" class="m-1" ngbTooltip="The input might be in another aspect ratio than requested by HomeKit (e.g. Doorbells may stream 1600x1200 -> 4:3 while HomeKit requests 1920x1080 -> 16:9). This setting will ensure that the requested aspect ratio is hit by cropping the image accordingly."></fa-icon>
               </label>
             </div>
-          </li> -->
+          </li>
 
           <li class="list-group-item">
             <label for="maxFPSInput" class="form-label">

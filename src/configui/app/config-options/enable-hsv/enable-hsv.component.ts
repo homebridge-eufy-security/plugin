@@ -57,7 +57,7 @@ export class EnableHsvComponent extends ConfigOptionsInterpreter implements OnIn
   maxFPS: number | undefined = undefined;
   maxBitrate: number | undefined = undefined;
   // useSeparateProcesses: boolean | undefined = undefined;
-  // crop: boolean | undefined = undefined;
+  crop = true;
   audio = true;
   // audioSampleRate: number | undefined = undefined;
   // audioBitrate: number | undefined = undefined;
@@ -147,6 +147,9 @@ export class EnableHsvComponent extends ConfigOptionsInterpreter implements OnIn
     
     if (!this.audio) {
       newConfig['audio'] = this.audio;
+    }
+    if (!this.crop) {
+      newConfig['crop'] = this.crop;
     }
     if (this.vcodec && this.vcodec !== '') {
       newConfig['vcodec'] = this.vcodec;
