@@ -10,14 +10,14 @@ import {
   RecordingPacket,
 } from 'homebridge';
 import { EufySecurityPlatform } from '../platform';
-import { CameraConfig } from '../utils/configTypes';
+import { CameraConfig, VideoConfig } from '../utils/configTypes';
 import { FFmpeg, FFmpegParameters } from '../utils/ffmpeg';
 import { Logger } from '../utils/logger';
 import net from 'net';
 import { is_rtsp_ready } from '../utils/utils';
 import { LocalLivestreamManager } from './LocalLivestreamManager';
 
-const MAX_RECORDING_MINUTES = 3;
+const MAX_RECORDING_MINUTES = 1; // should never be used
 
 const HKSVQuitReason = [
   'Normal',
@@ -104,8 +104,14 @@ export class RecordingDelegate implements CameraRecordingDelegate {
       const videoParams = await FFmpegParameters.forVideoRecording();
       const audioParams = await FFmpegParameters.forAudioRecording();
 
-      videoParams.setupForRecording(this.cameraConfig.videoConfig || {}, this.configuration!);
-      audioParams.setupForRecording(this.cameraConfig.videoConfig || {}, this.configuration!);
+      const hsvConfig: VideoConfig = this.cameraConfig.hsvConfig ?? {};
+      
+      if (this.cameraConfig.videoConfig && this.cameraConfig.videoConfig.videoProcessor) {
+        hsvConfig.videoProcessor = this.cameraConfig.videoConfig.videoProcessor;
+      }
+
+      videoParams.setupForRecording(hsvConfig, this.configuration!);
+      audioParams.setupForRecording(hsvConfig, this.configuration!);
 
       const rtsp = is_rtsp_ready(this.camera, this.cameraConfig, this.log);
       
@@ -131,7 +137,7 @@ export class RecordingDelegate implements CameraRecordingDelegate {
 
       this.session = await ffmpeg.startFragmentedMP4Session();
 
-      let timer = MAX_RECORDING_MINUTES * 60;
+      let timer = this.cameraConfig.hsvRecordingDuration ?? MAX_RECORDING_MINUTES*60;
       if (this.platform.config.CameraMaxLivestreamDuration < timer) {
         timer = this.platform.config.CameraMaxLivestreamDuration;
       }

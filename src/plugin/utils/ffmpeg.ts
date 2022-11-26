@@ -138,6 +138,7 @@ export class FFmpegParameters {
   private movflags?: string;
   private maxMuxingQueueSize?: number;
   private iFrameInterval?: number;
+  private processAudio = true;
 
   private constructor(port: number, isVideo: boolean, isAudio: boolean, isSnapshot: boolean, debug = false) {
     this.progressPort = port;
@@ -425,19 +426,21 @@ export class FFmpegParameters {
         this.codecOptions = `-profile:v ${profile} -level:v ${level}`;
       }
       if (this.codec !== 'copy') {
-        this.bitrate = configuration.videoCodec.parameters.bitRate;
+        this.bitrate = videoConfig.maxBitrate ?? configuration.videoCodec.parameters.bitRate;
         this.width = configuration.videoCodec.resolution[0];
         this.height = configuration.videoCodec.resolution[1];
-        this.fps = configuration.videoCodec.resolution[2];
-        if (videoConfig.crop) {
-          this.crop = videoConfig.crop;
-        }
+        this.fps = videoConfig.maxFPS ?? configuration.videoCodec.resolution[2];
+        this.crop = (videoConfig.crop !== false); // only false if 'crop: false' was specifically set
       }
 
       this.iFrameInterval = configuration.videoCodec.parameters.iFrameInterval;
     }
 
     if (this.isAudio) {
+
+      if (videoConfig.audio === false) {
+        this.processAudio = false;
+      }
 
       if (videoConfig.acodec && videoConfig.acodec !== '') {
         this.codec = videoConfig.acodec;
@@ -609,7 +612,7 @@ export class FFmpegParameters {
       params.push(this.maxrate ? `-maxrate ${this.maxrate}k` : '');
     }
     
-    if (this.isAudio) {
+    if (this.isAudio && this.processAudio) {
       // audio parameters
       params.push('-acodec ' + this.codec);
       params.push(this.codecOptions ? this.codecOptions : '');
@@ -691,7 +694,11 @@ export class FFmpegParameters {
     // input
     params.push(parameters[0].inputSoure);
     if (parameters.length > 1 && parameters[0].inputSoure !== parameters[1].inputSoure) { // don't include extra audio source for rtsp
-      params.push(parameters[1].inputSoure);
+      if (parameters[1].processAudio) {
+        params.push(parameters[1].inputSoure);
+      } else {
+        params.push('-f lavfi -i anullsrc -shortest');
+      }
     }
     if (parameters.length === 1) { 
       params.push('-an');
@@ -704,7 +711,9 @@ export class FFmpegParameters {
 
     // audio encoding
     if (parameters.length > 1) {
-      params.push('-bsf:a aac_adtstoasc');
+      if (parameters[1].processAudio) {
+        params.push('-bsf:a aac_adtstoasc');
+      }
       params = params.concat(parameters[1].buildEncodingParameters());
     }
 

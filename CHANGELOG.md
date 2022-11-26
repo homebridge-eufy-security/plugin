@@ -2,11 +2,12 @@
 
 You can find the complete detailled changelog for every beta release [here](https://github.com/homebridge-eufy-security/plugin/releases).
 
-## 2.2.0-beta.9 - latest changes
+## 2.2.0-beta.10 - latest changes
 
-### Fixed
+### Changed
 
-- Fixed support for Homebase 3, Eufy Cam 3 and Eufy Cam 3C
+- Updated dependency: eufy-security-client to 2.3.0
+- Added separate settings for HKSV encoding
 
 ## 2.2.0 (Beta)
 
