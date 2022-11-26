@@ -20,6 +20,7 @@ export const DEFAULT_CAMERACONFIG_VALUES = {
   enableButton: true,
   motionButton: true,
   hsv: false,
+  hsvRecordingDuration: 90,
   rtsp: false,
   enableCamera: false,
   forcerefreshsnap: false,

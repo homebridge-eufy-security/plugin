@@ -11,6 +11,7 @@ export type CameraConfig = {
   motionDoorbell?: boolean;
   unbridge?: boolean;
   videoConfig?: VideoConfig;
+  hsvConfig?: VideoConfig;
   enableButton: boolean;
   motionButton: boolean;
   rtsp: boolean;
@@ -23,6 +24,7 @@ export type CameraConfig = {
   delayCameraSnapshot?:boolean;
   talkback?: boolean;
   hsv?: boolean;
+  hsvRecordingDuration?: number;
   experimentalRTSP?: boolean;
 };
 

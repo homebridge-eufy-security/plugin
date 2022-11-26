@@ -340,8 +340,27 @@ export class CameraAccessory extends DeviceAccessory {
     config.immediateRingNotificationWithoutSnapshot = config.immediateRingNotificationWithoutSnapshot ??= false;
     config.delayCameraSnapshot = config.delayCameraSnapshot ??= false;
     config.hsv = config.hsv ??= false;
+    config.hsvRecordingDuration = config.hsvRecordingDuration ??= 90;
+    config.hsvConfig = config.hsvConfig ??= {};
 
     config.experimentalRTSP = config.experimentalRTSP ??= false;
+
+    if (config.hsvRecordingDuration < 10) {
+      this.platform.log.warn(
+        this.accessory.displayName,
+        'HomeKit Secure Video recording duration is set to ' + config.hsvRecordingDuration + '. Reverting to minimum of 10 seconds.',
+      );
+      config.hsvRecordingDuration = 10;
+    }
+
+    if (config.hsvRecordingDuration > 300) {
+      this.platform.log.warn(
+        this.accessory.displayName,
+        'HomeKit Secure Video recording duration is set to ' + config.hsvRecordingDuration +
+        '. Will set it to a maximum of 5 minutes to prevent errors.',
+      );
+      config.hsvRecordingDuration = 300;
+    }
 
     if (config.hsv && !this.platform.api.versionGreaterOrEqual('1.4.0')) {
       config.hsv = false;
