@@ -4,9 +4,10 @@ You can find the complete detailled changelog for every beta release [here](http
 
 ## 2.2.0-beta.10 - latest changes
 
-### Fixed
+### Changed
 
 - Updated dependency: eufy-security-client to 2.3.0
+- Added separate settings for HKSV encoding
 
 ## 2.2.0 (Beta)
 
