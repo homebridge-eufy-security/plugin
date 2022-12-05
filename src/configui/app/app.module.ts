@@ -46,7 +46,8 @@ import { EnableHsvComponent } from './config-options/enable-hsv/enable-hsv.compo
 import { PreferLocalComponent } from './config-options/prefer-local/prefer-local.component';
 import { ExperimentalModeComponent } from './config-options/experimental-mode/experimental-mode.component';
 import { ExperimentalRtspComponent } from './config-options/experimental-rtsp/experimental-rtsp.component';
-import { IgnoreMultipleDevicesWarningComponent } from './config-options/ignore-multiple-devices-warning/ignore-multiple-devices-warning.component';
+import { IgnoreMultipleDevicesWarningComponent }
+  from './config-options/ignore-multiple-devices-warning/ignore-multiple-devices-warning.component';
 
 @NgModule({
   declarations: [
