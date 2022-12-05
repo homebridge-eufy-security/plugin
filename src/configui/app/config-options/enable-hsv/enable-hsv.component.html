@@ -3,14 +3,14 @@
     <span>Use HomeKit Secure Video</span>
     
     <div class="form-check form-switch">
-      <input class="form-check-input" type="checkbox" role="switch" [(ngModel)]="value" id="flexSwitchCheckDefault" [attr.disabled]="camerasOnSameStation.length > 1 ? true : null" (change)="update()">
+      <input class="form-check-input" type="checkbox" role="switch" [(ngModel)]="value" id="flexSwitchCheckDefault" [attr.disabled]="(camerasOnSameStation.length > 1 && !ignoreMultipleDevicesWarning) ? true : null" (change)="update()">
     </div>
 
   </div>
 
   <div class="alert alert-warning" role="alert" *ngIf="camerasOnSameStation.length > 1">
     There are other cameras connected through the same station as this device. One station can only ever stream from one camera at the same time.
-    Therefore it is not possible to use HomeKit Secure Video with this camera since this would lead to conflicts.<p></p>
+    Therefore it is not recommened to use HomeKit Secure Video with this camera since this would likely lead to conflicts.<p></p>
     Cameras on the same station:
     <ul>
       <li *ngFor="let sn of camerasOnSameStation">{{ sn }}</li>

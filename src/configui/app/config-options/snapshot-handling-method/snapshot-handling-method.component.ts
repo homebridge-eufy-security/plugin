@@ -1,7 +1,7 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { Accessory } from '../../../app/accessory';
 import { PluginService } from '../../../app/plugin.service';
-import { DEFAULT_CAMERACONFIG_VALUES } from '../../../app/util/default-config-values';
+import { DEFAULT_CAMERACONFIG_VALUES, DEFAULT_CONFIG_VALUES } from '../../../app/util/default-config-values';
 import { ConfigOptionsInterpreter } from '../config-options-interpreter';
 
 import { faPlusCircle, faMinusCircle, faCircle } from '@fortawesome/free-solid-svg-icons';
@@ -42,6 +42,8 @@ export class SnapshotHandlingMethodComponent extends ConfigOptionsInterpreter im
   chargingStatus = ChargingStatus.PLUGGED;
   camerasOnSameStation: string[] = [];
 
+  ignoreMultipleDevicesWarning = DEFAULT_CONFIG_VALUES.ignoreMultipleDevicesWarning;
+
   async readValue() {
     const config = await this.getCameraConfig(this.accessory?.uniqueId || '');
 
@@ -64,6 +66,10 @@ export class SnapshotHandlingMethodComponent extends ConfigOptionsInterpreter im
             this.update();
           }
         });
+      
+      if (Object.prototype.hasOwnProperty.call(this.config, 'ignoreMultipleDevicesWarning')) {
+        this.ignoreMultipleDevicesWarning = this.config['ignoreMultipleDevicesWarning'];
+      }
     }
   }
 

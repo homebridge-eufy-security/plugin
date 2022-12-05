@@ -29,4 +29,5 @@ export interface EufySecurityPlatformConfig extends PlatformConfig {
   cleanCache: boolean;
   preferLocalConnection: boolean;
   experimentalMode: boolean;
+  ignoreMultipleDevicesWarning: boolean;
 }

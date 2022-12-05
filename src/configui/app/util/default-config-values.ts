@@ -13,6 +13,7 @@ export const DEFAULT_CONFIG_VALUES = {
   ffmpegdebug: false, // deprecated?
   cameras: [],
   cleanCache: true,
+  ignoreMultipleDevicesWarning: false,
 };
 
 export const DEFAULT_CAMERACONFIG_VALUES = {
