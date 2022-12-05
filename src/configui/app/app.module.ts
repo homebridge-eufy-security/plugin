@@ -48,6 +48,7 @@ import { ExperimentalModeComponent } from './config-options/experimental-mode/ex
 import { ExperimentalRtspComponent } from './config-options/experimental-rtsp/experimental-rtsp.component';
 import { IgnoreMultipleDevicesWarningComponent }
   from './config-options/ignore-multiple-devices-warning/ignore-multiple-devices-warning.component';
+import { SyncStationModesComponent } from './config-options/sync-station-modes/sync-station-modes.component';
 
 @NgModule({
   declarations: [
@@ -88,6 +89,7 @@ import { IgnoreMultipleDevicesWarningComponent }
     ExperimentalModeComponent,
     ExperimentalRtspComponent,
     IgnoreMultipleDevicesWarningComponent,
+    SyncStationModesComponent,
   ],
   imports: [BrowserModule, FormsModule, NgbModule, AppRoutingModule, FontAwesomeModule],
   providers: [{ provide: LocationStrategy, useClass: HashLocationStrategy }],

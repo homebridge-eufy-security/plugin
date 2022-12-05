@@ -354,17 +354,17 @@ export class StationAccessory {
           }, 5000);
         }, 5000);
       } else {
-        this.platform.log.debug(this.accessory.displayName, 'station was already set to :' + this.getGuardModeName(value));
+        this.platform.log.info(this.accessory.displayName, 'station was already set to :' + this.getGuardModeName(value));
       }
 
       this.manualTriggerService
         .getCharacteristic(this.characteristic.On)
         .updateValue(false);
       
-      if (!this.dontSync) {
+      if (!this.dontSync && this.platform.config.syncStationModes) {
         this.dontSync = false;
         // try to sync all stations
-        this.platform.log.debug(this.accessory.displayName, 'syncing guard mode with other stations');
+        this.platform.log.info(this.accessory.displayName, 'syncing guard mode with other stations');
         this.platform.getStationAccessories().forEach(stationAccessory => {
           if (stationAccessory.getStationSerial() !== this.getStationSerial()) {
             this.platform.log.debug(this.accessory.displayName, 'syncing station (' + stationAccessory.getStationSerial() + ').');
