@@ -46,6 +46,7 @@ import { EnableHsvComponent } from './config-options/enable-hsv/enable-hsv.compo
 import { PreferLocalComponent } from './config-options/prefer-local/prefer-local.component';
 import { ExperimentalModeComponent } from './config-options/experimental-mode/experimental-mode.component';
 import { ExperimentalRtspComponent } from './config-options/experimental-rtsp/experimental-rtsp.component';
+import { IgnoreMultipleDevicesWarningComponent } from './config-options/ignore-multiple-devices-warning/ignore-multiple-devices-warning.component';
 
 @NgModule({
   declarations: [
@@ -85,6 +86,7 @@ import { ExperimentalRtspComponent } from './config-options/experimental-rtsp/ex
     PreferLocalComponent,
     ExperimentalModeComponent,
     ExperimentalRtspComponent,
+    IgnoreMultipleDevicesWarningComponent,
   ],
   imports: [BrowserModule, FormsModule, NgbModule, AppRoutingModule, FontAwesomeModule],
   providers: [{ provide: LocationStrategy, useClass: HashLocationStrategy }],

@@ -2,12 +2,11 @@
 
 You can find the complete detailled changelog for every beta release [here](https://github.com/homebridge-eufy-security/plugin/releases).
 
-## 2.2.0-beta.10 - latest changes
+## 2.2.0-beta.11 - latest changes
 
 ### Changed
 
-- Updated dependency: eufy-security-client to 2.3.0
-- Added separate settings for HKSV encoding
+- The user can now force enable the options for HKSV and live snapshot methods even if there are multiple cameras connected through one station.
 
 ## 2.2.0 (Beta)
 

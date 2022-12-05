@@ -2,7 +2,7 @@ import { Component, Input, OnInit } from '@angular/core';
 import { Accessory } from '../../accessory';
 import { AccessoryService } from '../../accessory.service';
 import { PluginService } from '../../plugin.service';
-import { DEFAULT_CAMERACONFIG_VALUES } from '../../util/default-config-values';
+import { DEFAULT_CAMERACONFIG_VALUES, DEFAULT_CONFIG_VALUES } from '../../util/default-config-values';
 import { ChargingStatus } from '../../util/eufy-security-client.utils';
 import { ConfigOptionsInterpreter } from '../config-options-interpreter';
 
@@ -73,6 +73,8 @@ export class EnableHsvComponent extends ConfigOptionsInterpreter implements OnIn
   chargingStatus = ChargingStatus.PLUGGED;
   camerasOnSameStation: string[] = [];
 
+  ignoreMultipleDevicesWarning = DEFAULT_CONFIG_VALUES.ignoreMultipleDevicesWarning;
+  
   async readValue() {
     const config = await this.getCameraConfig(this.accessory?.uniqueId || '');
 
@@ -105,6 +107,10 @@ export class EnableHsvComponent extends ConfigOptionsInterpreter implements OnIn
             this.update();
           }
         });
+
+      if (Object.prototype.hasOwnProperty.call(this.config, 'ignoreMultipleDevicesWarning')) {
+        this.ignoreMultipleDevicesWarning = this.config['ignoreMultipleDevicesWarning'];
+      }
     }
 
     this.placeholderUpdate();

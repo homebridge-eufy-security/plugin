@@ -3,7 +3,7 @@
     <span>Snapshot Handling Method</span>
 
     <div class="col-12 col-sm-4">
-      <select class="form-select" [(ngModel)]="value" aria-label="Device Operation Mode" [attr.disabled]="camerasOnSameStation.length > 1 ? true : null" (change)="update()">
+      <select class="form-select" [(ngModel)]="value" aria-label="Device Operation Mode" [attr.disabled]="(camerasOnSameStation.length > 1 && !ignoreMultipleDevicesWarning) ? true : null" (change)="update()">
         <option [ngValue]=1>Force Refresh Snapshots</option>
         <option [ngValue]=2>Balanced</option>
         <option [ngValue]=3>Cloud Snapshots</option>
@@ -14,7 +14,7 @@
 
   <div class="alert alert-warning" role="alert" *ngIf="camerasOnSameStation.length > 1">
     There are other cameras connected through the same station as this device. One station can only ever stream from one camera at the same time.
-    Therefore it is not possible to use another snapshot method other than cloud snapshots.<p></p>
+    Therefore it is not recommened to use another snapshot method other than cloud snapshots.<p></p>
     Cameras on the same station:
     <ul>
       <li *ngFor="let sn of camerasOnSameStation">{{ sn }}</li>
