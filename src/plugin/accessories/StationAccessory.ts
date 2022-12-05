@@ -1,4 +1,4 @@
-import { Service, PlatformAccessory, CharacteristicValue } from 'homebridge';
+import { Service, PlatformAccessory, CharacteristicValue, Characteristic } from 'homebridge';
 
 import { EufySecurityPlatform } from '../platform';
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
@@ -338,18 +338,24 @@ export class StationAccessory {
       }
       this.platform.log.debug(this.accessory.displayName, 'SET StationGuardMode:' + mode);
       this.platform.log.info(this.accessory.displayName, 'Request to change station guard mode to: ' + this.getGuardModeName(value) + '.');
-      this.eufyStation.setGuardMode(mode);
-
-      this.guardModeChangeTimeout = setTimeout(() => {
-        this.platform.log.warn(
-          this.accessory.displayName,
-          'Changing guard mode to ' + this.getGuardModeName(value) + 'did not complete. Retry...');
+      
+      const current = this.service.getCharacteristic(this.characteristic.SecuritySystemCurrentState).value;
+      if (current !== value) {
         this.eufyStation.setGuardMode(mode);
 
-        this.retryGuardModeChangeTimeout = setTimeout(() => {
-          this.platform.log.error(this.accessory.displayName, 'Changing guard mode to ' + this.getGuardModeName(value) + ' timed out!');
+        this.guardModeChangeTimeout = setTimeout(() => {
+          this.platform.log.warn(
+            this.accessory.displayName,
+            'Changing guard mode to ' + this.getGuardModeName(value) + 'did not complete. Retry...');
+          this.eufyStation.setGuardMode(mode);
+  
+          this.retryGuardModeChangeTimeout = setTimeout(() => {
+            this.platform.log.error(this.accessory.displayName, 'Changing guard mode to ' + this.getGuardModeName(value) + ' timed out!');
+          }, 5000);
         }, 5000);
-      }, 5000);
+      } else {
+        this.platform.log.debug(this.accessory.displayName, 'station was already set to :' + this.getGuardModeName(value));
+      }
 
       this.manualTriggerService
         .getCharacteristic(this.characteristic.On)
