@@ -57,19 +57,19 @@ export class SnapshotHandlingMethodComponent extends ConfigOptionsInterpreter im
       this.accessoryService.getChargingStatus(this.accessory.uniqueId)
         .then((chargingStatus) => this.chargingStatus = chargingStatus);
       
+      if (Object.prototype.hasOwnProperty.call(this.config, 'ignoreMultipleDevicesWarning')) {
+        this.ignoreMultipleDevicesWarning = this.config['ignoreMultipleDevicesWarning'];
+      }
+      
       const ignoredDevices = (config && Object.prototype.hasOwnProperty.call(config, 'ignoreDevices')) ? config['ignoreDevices'] : [];
       this.accessoryService.getCamerasOnSameStation(this.accessory.uniqueId, ignoredDevices)
         .then(devices => {
           this.camerasOnSameStation = devices;
-          if (this.camerasOnSameStation.length > 1) {
+          if (this.camerasOnSameStation.length > 1 && !this.ignoreMultipleDevicesWarning) {
             this.value = 3;
             this.update();
           }
         });
-      
-      if (Object.prototype.hasOwnProperty.call(this.config, 'ignoreMultipleDevicesWarning')) {
-        this.ignoreMultipleDevicesWarning = this.config['ignoreMultipleDevicesWarning'];
-      }
     }
   }
 
