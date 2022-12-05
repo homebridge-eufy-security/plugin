@@ -37,6 +37,8 @@ export class StationAccessory {
   private guardModeChangeTimeout: NodeJS.Timeout | null = null;
   private retryGuardModeChangeTimeout: NodeJS.Timeout | null = null;
 
+  private dontSync = false;
+
   constructor(
     private readonly platform: EufySecurityPlatform,
     private readonly accessory: PlatformAccessory,
@@ -353,12 +355,17 @@ export class StationAccessory {
         .getCharacteristic(this.characteristic.On)
         .updateValue(false);
       
-      // try to sync all stations
-      this.platform.getStationAccessories().forEach(stationAccessory => {
-        if (stationAccessory.getStationSerial() !== this.getStationSerial()) {
-          stationAccessory.syncStationMode(value);
-        }
-      });
+      if (!this.dontSync) {
+        this.dontSync = false;
+        // try to sync all stations
+        this.platform.log.debug(this.accessory.displayName, 'syncing guard mode with other stations');
+        this.platform.getStationAccessories().forEach(stationAccessory => {
+          if (stationAccessory.getStationSerial() !== this.getStationSerial()) {
+            this.platform.log.debug(this.accessory.displayName, 'syncing station (' + stationAccessory.getStationSerial() + ').');
+            stationAccessory.syncStationMode(value);
+          }
+        });
+      }
 
     } catch (error) {
       this.platform.log.error(this.accessory.displayName + ': Error Setting security mode!', error);
@@ -430,6 +437,7 @@ export class StationAccessory {
   }
 
   public syncStationMode(mode: CharacteristicValue) {
+    this.dontSync = true;
     this.service
       .getCharacteristic(this.characteristic.SecuritySystemTargetState)
       .setValue(mode);
