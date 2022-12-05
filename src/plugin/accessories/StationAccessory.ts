@@ -352,6 +352,14 @@ export class StationAccessory {
       this.manualTriggerService
         .getCharacteristic(this.characteristic.On)
         .updateValue(false);
+      
+      // try to sync all stations
+      this.platform.getStationAccessories().forEach(stationAccessory => {
+        if (stationAccessory.getStationSerial() !== this.getStationSerial()) {
+          stationAccessory.syncStationMode(value);
+        }
+      });
+
     } catch (error) {
       this.platform.log.error(this.accessory.displayName + ': Error Setting security mode!', error);
     }
@@ -419,6 +427,16 @@ export class StationAccessory {
     if (this.alarm_delay_timeout) {
       clearTimeout(this.alarm_delay_timeout);
     }
+  }
+
+  public syncStationMode(mode: CharacteristicValue) {
+    this.service
+      .getCharacteristic(this.characteristic.SecuritySystemTargetState)
+      .setValue(mode);
+  }
+
+  public getStationSerial(): string {
+    return this.station.getSerial();
   }
 
   private getGuardModeName(value: CharacteristicValue): string {
