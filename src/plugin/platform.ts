@@ -162,7 +162,6 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
     this.config.ignoreStations = this.config.ignoreStations ??= [];
     this.config.ignoreDevices = this.config.ignoreDevices ??= [];
     this.config.cleanCache = this.config.cleanCache ??= true;
-    this.config.syncStationModes = this.config.syncStationModes ??= false;
 
     this.log.info('Country set:', this.config.country ?? 'US');
 
@@ -182,6 +181,11 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
     if (this.config.experimentalMode) {
       this.log.warn('Experimental Mode is enabled!');
       initializeExperimentalMode();
+    }
+
+    this.config.syncStationModes = this.config.syncStationModes ??= false;
+    if (this.config.syncStationModes) {
+      this.log.debug('Stations are set to sync their guard modes.');
     }
 
     this.api.on('didFinishLaunching', async () => {
