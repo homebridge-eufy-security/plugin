@@ -2,11 +2,11 @@
 
 You can find the complete detailled changelog for every beta release [here](https://github.com/homebridge-eufy-security/plugin/releases).
 
-## 2.2.0-beta.11 - latest changes
+## 2.2.0-beta.13 - latest changes
 
-### Changed
+### Added
 
-- The user can now force enable the options for HKSV and live snapshot methods even if there are multiple cameras connected through one station.
+- Setting to sync the guard modes of all stations.
 
 ## 2.2.0 (Beta)
 

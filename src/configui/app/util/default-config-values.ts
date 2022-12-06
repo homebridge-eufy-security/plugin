@@ -14,6 +14,7 @@ export const DEFAULT_CONFIG_VALUES = {
   cameras: [],
   cleanCache: true,
   ignoreMultipleDevicesWarning: false,
+  syncStationModes: false,
 };
 
 export const DEFAULT_CAMERACONFIG_VALUES = {

@@ -70,6 +70,8 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
 
   private pluginConfigInteractor?: EufyClientInteractor;
 
+  private stations: StationAccessory[] = [];
+
   constructor(
     public readonly hblog: Logger,
     config: PlatformConfig,
@@ -179,6 +181,11 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
     if (this.config.experimentalMode) {
       this.log.warn('Experimental Mode is enabled!');
       initializeExperimentalMode();
+    }
+
+    this.config.syncStationModes = this.config.syncStationModes ??= false;
+    if (this.config.syncStationModes) {
+      this.log.debug('Stations are set to sync their guard modes.');
     }
 
     this.api.on('didFinishLaunching', async () => {
@@ -465,10 +472,12 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
     }
 
     let a;
+    let tmp;
 
     switch (type) {
       case DeviceType.STATION:
-        new StationAccessory(this, accessory, device as Station);
+        tmp = new StationAccessory(this, accessory, device as Station);
+        this.stations.push(tmp);
         break;
       case DeviceType.MOTION_SENSOR:
         new MotionSensorAccessory(this, accessory, device as MotionSensor);
@@ -548,6 +557,10 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
 
   public getStationById(id: string) {
     return this.eufyClient.getStation(id);
+  }
+
+  public getStationAccessories(): StationAccessory[] {
+    return this.stations;
   }
 
   private clean_config() {

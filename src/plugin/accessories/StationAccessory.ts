@@ -1,4 +1,4 @@
-import { Service, PlatformAccessory, CharacteristicValue } from 'homebridge';
+import { Service, PlatformAccessory, CharacteristicValue, Characteristic } from 'homebridge';
 
 import { EufySecurityPlatform } from '../platform';
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
@@ -36,6 +36,8 @@ export class StationAccessory {
 
   private guardModeChangeTimeout: NodeJS.Timeout | null = null;
   private retryGuardModeChangeTimeout: NodeJS.Timeout | null = null;
+
+  private dontSync = false;
 
   constructor(
     private readonly platform: EufySecurityPlatform,
@@ -336,22 +338,41 @@ export class StationAccessory {
       }
       this.platform.log.debug(this.accessory.displayName, 'SET StationGuardMode:' + mode);
       this.platform.log.info(this.accessory.displayName, 'Request to change station guard mode to: ' + this.getGuardModeName(value) + '.');
-      this.eufyStation.setGuardMode(mode);
-
-      this.guardModeChangeTimeout = setTimeout(() => {
-        this.platform.log.warn(
-          this.accessory.displayName,
-          'Changing guard mode to ' + this.getGuardModeName(value) + 'did not complete. Retry...');
+      
+      const current = this.service.getCharacteristic(this.characteristic.SecuritySystemCurrentState).value;
+      if (current !== value) {
         this.eufyStation.setGuardMode(mode);
 
-        this.retryGuardModeChangeTimeout = setTimeout(() => {
-          this.platform.log.error(this.accessory.displayName, 'Changing guard mode to ' + this.getGuardModeName(value) + ' timed out!');
+        this.guardModeChangeTimeout = setTimeout(() => {
+          this.platform.log.warn(
+            this.accessory.displayName,
+            'Changing guard mode to ' + this.getGuardModeName(value) + 'did not complete. Retry...');
+          this.eufyStation.setGuardMode(mode);
+  
+          this.retryGuardModeChangeTimeout = setTimeout(() => {
+            this.platform.log.error(this.accessory.displayName, 'Changing guard mode to ' + this.getGuardModeName(value) + ' timed out!');
+          }, 5000);
         }, 5000);
-      }, 5000);
+      } else {
+        this.platform.log.info(this.accessory.displayName, 'station was already set to :' + this.getGuardModeName(value));
+      }
 
       this.manualTriggerService
         .getCharacteristic(this.characteristic.On)
         .updateValue(false);
+      
+      if (!this.dontSync && this.platform.config.syncStationModes) {
+        this.dontSync = false;
+        // try to sync all stations
+        this.platform.log.info(this.accessory.displayName, 'syncing guard mode with other stations');
+        this.platform.getStationAccessories().forEach(stationAccessory => {
+          if (stationAccessory.getStationSerial() !== this.getStationSerial()) {
+            this.platform.log.debug(this.accessory.displayName, 'syncing station (' + stationAccessory.getStationSerial() + ').');
+            stationAccessory.syncStationMode(value);
+          }
+        });
+      }
+
     } catch (error) {
       this.platform.log.error(this.accessory.displayName + ': Error Setting security mode!', error);
     }
@@ -419,6 +440,17 @@ export class StationAccessory {
     if (this.alarm_delay_timeout) {
       clearTimeout(this.alarm_delay_timeout);
     }
+  }
+
+  public syncStationMode(mode: CharacteristicValue) {
+    this.dontSync = true;
+    this.service
+      .getCharacteristic(this.characteristic.SecuritySystemTargetState)
+      .setValue(mode);
+  }
+
+  public getStationSerial(): string {
+    return this.station.getSerial();
   }
 
   private getGuardModeName(value: CharacteristicValue): string {
