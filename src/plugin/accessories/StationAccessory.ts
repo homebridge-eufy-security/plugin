@@ -101,6 +101,11 @@ export class StationAccessory {
       accessory.displayName + ' alarm switch',
     );
 
+    this.manualTriggerService.setCharacteristic(
+      this.platform.Characteristic.ConfiguredName,
+      accessory.displayName + ' alarm switch',
+    );
+
     this.manualTriggerService
       .getCharacteristic(this.characteristic.On)
       .onGet(this.handleManualTriggerSwitchStateGet.bind(this))
