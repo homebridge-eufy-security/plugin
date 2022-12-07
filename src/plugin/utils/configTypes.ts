@@ -26,6 +26,7 @@ export type CameraConfig = {
   hsv?: boolean;
   hsvRecordingDuration?: number;
   experimentalRTSP?: boolean;
+  indoorChimeButton?: boolean;
 };
 
 export type VideoConfig = {

@@ -343,6 +343,8 @@ export class CameraAccessory extends DeviceAccessory {
     config.hsvRecordingDuration = config.hsvRecordingDuration ??= 90;
     config.hsvConfig = config.hsvConfig ??= {};
 
+    config.indoorChimeButton = config.indoorChimeButton ??= false;
+
     config.experimentalRTSP = config.experimentalRTSP ??= false;
 
     if (config.hsvRecordingDuration < 10) {

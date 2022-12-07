@@ -1,4 +1,4 @@
-import { Service, PlatformAccessory, DoorbellOptions } from 'homebridge';
+import { Service, PlatformAccessory, DoorbellOptions, CharacteristicValue } from 'homebridge';
 
 import { EufySecurityPlatform } from '../platform';
 
@@ -6,7 +6,7 @@ import { EufySecurityPlatform } from '../platform';
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore  
-import { DoorbellCamera, Device } from 'eufy-security-client';
+import { DoorbellCamera, Device, PropertyName } from 'eufy-security-client';
 import { CameraAccessory } from './CameraAccessory';
 
 /**
@@ -20,6 +20,8 @@ export class DoorbellCameraAccessory extends CameraAccessory {
   private ring_triggered: boolean;
 
   private doorbellService: Service;
+
+  private indoorChimeSwitchService?: Service;
 
   constructor(
     platform: EufySecurityPlatform,
@@ -64,6 +66,31 @@ export class DoorbellCameraAccessory extends CameraAccessory {
     }
 
     this.doorbellService.setPrimaryService(true);
+
+    // add indoor chime switch
+    if ((this.eufyDevice.isDoorbell() || this.eufyDevice.isWiredDoorbell()) && this.cameraConfig.indoorChimeButton) {
+      try {
+        this.platform.log.debug(this.accessory.displayName, 'indoorChimeSwitch config:', this.cameraConfig.indoorChimeButton);
+        this.platform.log.debug(this.accessory.displayName, 'has a indoorChime, so append indoorChimeSwitchService to it.');
+
+        this.indoorChimeSwitchService =
+          this.accessory.getService('indoorChimeSwitch') || 
+          this.accessory.addService(this.platform.Service.Switch, 'indoorChimeSwitch', 'indoorChime');
+        
+        this.indoorChimeSwitchService.setCharacteristic(this.platform.Characteristic.Name, this.accessory.displayName + ' indoor chime');
+        this.indoorChimeSwitchService.setCharacteristic(this.platform.Characteristic.Identifier,
+          this.accessory.displayName + ' indoor chime2');
+        this.indoorChimeSwitchService.setCharacteristic(this.platform.Characteristic.ConfiguredName,
+          this.accessory.displayName + ' indoor chime3');
+
+        this.indoorChimeSwitchService.getCharacteristic(this.characteristic.On)
+          .onGet(this.handleIndoorChimeGet.bind(this))
+          .onSet(this.handleIndoorChimeSet.bind(this));
+
+      } catch (err) {
+        this.platform.log.error(this.accessory.displayName, 'raise error in indoorChimeSwitchService.', err);
+      }
+    }
   }
 
   // We receive 2 push when Doorbell ring, mute the second by checking if we already send
@@ -80,4 +107,24 @@ export class DoorbellCameraAccessory extends CameraAccessory {
     }
   }
 
+  async handleIndoorChimeGet(): Promise<CharacteristicValue> {
+    try {
+      const currentValue = this.eufyDevice.getPropertyValue(PropertyName.DeviceChimeIndoor);
+      this.platform.log.debug(this.accessory.displayName, 'GET DeviceChimeIndoor:', currentValue);
+      return currentValue as boolean;
+    } catch {
+      this.platform.log.debug(this.accessory.displayName, 'handleIndoorChimeGet', 'Wrong return value');
+      return false;
+    }
+  }
+
+  async handleIndoorChimeSet(value: CharacteristicValue) {
+    try {
+      this.platform.log.debug(this.accessory.displayName, 'SET DeviceChimeIndoor:', value);
+      const station = await this.platform.getStationById(this.eufyDevice.getStationSerial());
+      await station.enableIndoorChime(this.eufyDevice, value as boolean);
+    } catch (err) {
+      this.platform.log.debug(this.accessory.displayName, 'handleIndoorChimeSet error', err);
+    }
+  }
 }
