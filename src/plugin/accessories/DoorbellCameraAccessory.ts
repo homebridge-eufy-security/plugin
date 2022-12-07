@@ -68,8 +68,8 @@ export class DoorbellCameraAccessory extends CameraAccessory {
     this.doorbellService.setPrimaryService(true);
 
     // add indoor chime switch
-    if ((this.eufyDevice.isDoorbell() || this.eufyDevice.isWiredDoorbell()) && this.cameraConfig.indoorChimeButton) {
-      try {
+    try {
+      if ((this.eufyDevice.isDoorbell() || this.eufyDevice.isWiredDoorbell()) && this.cameraConfig.indoorChimeButton) {
         this.platform.log.debug(this.accessory.displayName, 'indoorChimeSwitch config:', this.cameraConfig.indoorChimeButton);
         this.platform.log.debug(this.accessory.displayName, 'has a indoorChime, so append indoorChimeSwitchService to it.');
 
@@ -78,18 +78,26 @@ export class DoorbellCameraAccessory extends CameraAccessory {
           this.accessory.addService(this.platform.Service.Switch, 'indoorChimeSwitch', 'indoorChime');
         
         this.indoorChimeSwitchService.setCharacteristic(this.platform.Characteristic.Name, this.accessory.displayName + ' indoor chime');
-        this.indoorChimeSwitchService.setCharacteristic(this.platform.Characteristic.Identifier,
-          this.accessory.displayName + ' indoor chime2');
         this.indoorChimeSwitchService.setCharacteristic(this.platform.Characteristic.ConfiguredName,
-          this.accessory.displayName + ' indoor chime3');
+          this.accessory.displayName + ' indoor chime');
 
         this.indoorChimeSwitchService.getCharacteristic(this.characteristic.On)
           .onGet(this.handleIndoorChimeGet.bind(this))
           .onSet(this.handleIndoorChimeSet.bind(this));
+      } else {
+        this.platform.log.debug(this.accessory.displayName,
+          'Looks like not compatible with indoorChime or this has been disabled within configuration');
 
-      } catch (err) {
-        this.platform.log.error(this.accessory.displayName, 'raise error in indoorChimeSwitchService.', err);
+        // remove indoorChimeButton service if the user has disabled the it through the config
+        this.indoorChimeSwitchService = accessory.getService('indoorChimeSwitch');
+        if (this.indoorChimeSwitchService) {
+          this.platform.log.debug(this.accessory.displayName, 'removing indoorChimeSwitch service.');
+          accessory.removeService(this.indoorChimeSwitchService);
+        }
       }
+
+    } catch (err) {
+      this.platform.log.error(this.accessory.displayName, 'raise error in indoorChimeSwitchService.', err);
     }
   }
 
