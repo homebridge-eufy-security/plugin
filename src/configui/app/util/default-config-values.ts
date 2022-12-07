@@ -32,4 +32,5 @@ export const DEFAULT_CAMERACONFIG_VALUES = {
   snapshotHandlingMethod: 3,
   immediateRingNotificationWithoutSnapshot: false,
   delayCameraSnapshot: false,
+  indoorChimeButton: false,
 };

@@ -69,7 +69,7 @@ export class DoorbellCameraAccessory extends CameraAccessory {
 
     // add indoor chime switch
     try {
-      if ((this.eufyDevice.isDoorbell() || this.eufyDevice.isWiredDoorbell()) && this.cameraConfig.indoorChimeButton) {
+      if ((this.eufyDevice.isBatteryDoorbell() || this.eufyDevice.isWiredDoorbell()) && this.cameraConfig.indoorChimeButton) {
         this.platform.log.debug(this.accessory.displayName, 'indoorChimeSwitch config:', this.cameraConfig.indoorChimeButton);
         this.platform.log.debug(this.accessory.displayName, 'has a indoorChime, so append indoorChimeSwitchService to it.');
 
