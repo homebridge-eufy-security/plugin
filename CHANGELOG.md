@@ -7,10 +7,11 @@ You can find the complete detailled changelog for every beta release [here](http
 ### Added
 
 - Setting to add a switch to turn indoor chime on/off on some doorbells
+- Setting for mono/stereo talkback configuration (needed for certain devices)
 
 ### Fixed
 
-- Naming of switches ('Camera Motion' / 'Camera Enabled') should now be correct on iOS 16
+- Talkback was not working properly due to wrong channel configuration (can now be chosen: mono/stereo) #196
 
 ## 2.2.0 (Beta)
 
@@ -28,6 +29,7 @@ You can find the complete detailled changelog for every beta release [here](http
 - Support for Homebase 3, Eufy Camera 3 and Eufy Camera 3C
 - Setting to sync the guard modes of all stations.
 - Setting to add a switch to turn indoor chime on/off on some doorbells
+- Setting for mono/stereo talkback configuration (needed for certain devices)
 
 ### Changed
 
@@ -46,7 +48,7 @@ You can find the complete detailled changelog for every beta release [here](http
 - Switches to turn camera and motion on/off should now be removed from HomeKit if the user switches the configuration
 - Bug where no snapshot was returned after an event
 - Bug that caused a crash with node version prior to v14.18
-- Naming of Camera switches should now be correct on iOS 16
+- Talkback was not working properly due to wrong channel configuration (can now be chosen: mono/stereo) #196
 
 ## 2.1.0 (RC)
 
