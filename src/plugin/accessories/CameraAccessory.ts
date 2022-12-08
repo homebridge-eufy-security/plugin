@@ -230,10 +230,10 @@ export class CameraAccessory extends DeviceAccessory {
           accessory.displayName + ' Enabled',
         );
 
-        switchEnabledService.setCharacteristic(
-          this.platform.Characteristic.ConfiguredName,
-          accessory.displayName + ' Enabled',
-        );
+        // switchEnabledService.setCharacteristic(
+        //   this.platform.Characteristic.ConfiguredName,
+        //   accessory.displayName + ' Enabled',
+        // );
 
         switchEnabledService.getCharacteristic(this.characteristic.On)
           .onGet(this.handleEnableGet.bind(this))
@@ -269,10 +269,10 @@ export class CameraAccessory extends DeviceAccessory {
           accessory.displayName + ' Motion',
         );
 
-        switchMotionService.setCharacteristic(
-          this.platform.Characteristic.ConfiguredName,
-          accessory.displayName + ' Motion',
-        );
+        // switchMotionService.setCharacteristic(
+        //   this.platform.Characteristic.ConfiguredName,
+        //   accessory.displayName + ' Motion',
+        // );
 
         switchMotionService.getCharacteristic(this.characteristic.On)
           .onGet(this.handleMotionOnGet.bind(this))
@@ -306,10 +306,10 @@ export class CameraAccessory extends DeviceAccessory {
           accessory.displayName + ' Light',
         );
 
-        switchLightService.setCharacteristic(
-          this.platform.Characteristic.ConfiguredName,
-          accessory.displayName + ' Light',
-        );
+        // switchLightService.setCharacteristic(
+        //   this.platform.Characteristic.ConfiguredName,
+        //   accessory.displayName + ' Light',
+        // );
 
         switchLightService.getCharacteristic(this.characteristic.On)
           .onGet(this.handleLightOnGet.bind(this))

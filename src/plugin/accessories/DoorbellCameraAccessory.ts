@@ -78,8 +78,8 @@ export class DoorbellCameraAccessory extends CameraAccessory {
           this.accessory.addService(this.platform.Service.Switch, 'indoorChimeSwitch', 'indoorChime');
         
         this.indoorChimeSwitchService.setCharacteristic(this.platform.Characteristic.Name, this.accessory.displayName + ' indoor chime');
-        this.indoorChimeSwitchService.setCharacteristic(this.platform.Characteristic.ConfiguredName,
-          this.accessory.displayName + ' indoor chime');
+        // this.indoorChimeSwitchService.setCharacteristic(this.platform.Characteristic.ConfiguredName,
+        //   this.accessory.displayName + ' indoor chime');
 
         this.indoorChimeSwitchService.getCharacteristic(this.characteristic.On)
           .onGet(this.handleIndoorChimeGet.bind(this))

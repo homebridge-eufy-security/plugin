@@ -101,10 +101,10 @@ export class StationAccessory {
       accessory.displayName + ' alarm',
     );
 
-    this.manualTriggerService.setCharacteristic(
-      this.platform.Characteristic.ConfiguredName,
-      accessory.displayName + ' alarm',
-    );
+    // this.manualTriggerService.setCharacteristic(
+    //   this.platform.Characteristic.ConfiguredName,
+    //   accessory.displayName + ' alarm',
+    // );
 
     this.manualTriggerService
       .getCharacteristic(this.characteristic.On)
