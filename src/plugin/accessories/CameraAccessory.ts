@@ -392,6 +392,7 @@ export class CameraAccessory extends DeviceAccessory {
     }
 
     config.talkback = config.talkback ??= false;
+    config.talkbackChannels = config.talkbackChannels ??= 1;
     if (config.talkback && !this.eufyDevice.hasCommand(CommandName.DeviceStartTalkback)) {
       this.platform.log.warn(this.accessory.displayName, 'Talkback for this device is not supported!');
       config.talkback = false;
@@ -399,6 +400,11 @@ export class CameraAccessory extends DeviceAccessory {
     if (config.talkback && config.rtsp) {
       this.platform.log.warn(this.accessory.displayName, 'Talkback cannot be used with rtsp option. Ignoring talkback setting.');
       config.talkback = false;
+    }
+    if (config.talkbackChannels !== 1 && config.talkbackChannels !== 2) {
+      this.platform.log.warn(this.accessory.displayName,
+        'Talkback cannot be used with ' + config.talkbackChannels + '. Setting it to mono.');
+      config.talkbackChannels = 1;
     }
 
     return config;

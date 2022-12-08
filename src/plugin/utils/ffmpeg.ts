@@ -544,6 +544,10 @@ export class FFmpegParameters {
     this.setInputSource(`tcp://127.0.0.1:${port}`);
   }
 
+  public setTalkbackChannels(channels: number) {
+    this.channels = channels;
+  }
+
   private buildGenericParameters(): string[] {
     const params: string[] = [];
 

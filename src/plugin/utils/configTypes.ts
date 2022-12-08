@@ -23,6 +23,7 @@ export type CameraConfig = {
   immediateRingNotificationWithoutSnapshot?: boolean;
   delayCameraSnapshot?:boolean;
   talkback?: boolean;
+  talkbackChannels?: number;
   hsv?: boolean;
   hsvRecordingDuration?: number;
   experimentalRTSP?: boolean;
