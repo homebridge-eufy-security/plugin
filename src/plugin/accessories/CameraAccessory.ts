@@ -230,6 +230,11 @@ export class CameraAccessory extends DeviceAccessory {
           accessory.displayName + ' Enabled',
         );
 
+        // switchEnabledService.setCharacteristic(
+        //   this.platform.Characteristic.ConfiguredName,
+        //   accessory.displayName + ' Enabled',
+        // );
+
         switchEnabledService.getCharacteristic(this.characteristic.On)
           .onGet(this.handleEnableGet.bind(this))
           .onSet(this.handleEnableSet.bind(this));
@@ -264,6 +269,11 @@ export class CameraAccessory extends DeviceAccessory {
           accessory.displayName + ' Motion',
         );
 
+        // switchMotionService.setCharacteristic(
+        //   this.platform.Characteristic.ConfiguredName,
+        //   accessory.displayName + ' Motion',
+        // );
+
         switchMotionService.getCharacteristic(this.characteristic.On)
           .onGet(this.handleMotionOnGet.bind(this))
           .onSet(this.handleMotionOnSet.bind(this));
@@ -295,6 +305,11 @@ export class CameraAccessory extends DeviceAccessory {
           this.platform.Characteristic.Name,
           accessory.displayName + ' Light',
         );
+
+        // switchLightService.setCharacteristic(
+        //   this.platform.Characteristic.ConfiguredName,
+        //   accessory.displayName + ' Light',
+        // );
 
         switchLightService.getCharacteristic(this.characteristic.On)
           .onGet(this.handleLightOnGet.bind(this))
@@ -343,6 +358,8 @@ export class CameraAccessory extends DeviceAccessory {
     config.hsvRecordingDuration = config.hsvRecordingDuration ??= 90;
     config.hsvConfig = config.hsvConfig ??= {};
 
+    config.indoorChimeButton = config.indoorChimeButton ??= false;
+
     config.experimentalRTSP = config.experimentalRTSP ??= false;
 
     if (config.hsvRecordingDuration < 10) {
@@ -375,6 +392,7 @@ export class CameraAccessory extends DeviceAccessory {
     }
 
     config.talkback = config.talkback ??= false;
+    config.talkbackChannels = config.talkbackChannels ??= 1;
     if (config.talkback && !this.eufyDevice.hasCommand(CommandName.DeviceStartTalkback)) {
       this.platform.log.warn(this.accessory.displayName, 'Talkback for this device is not supported!');
       config.talkback = false;
@@ -382,6 +400,11 @@ export class CameraAccessory extends DeviceAccessory {
     if (config.talkback && config.rtsp) {
       this.platform.log.warn(this.accessory.displayName, 'Talkback cannot be used with rtsp option. Ignoring talkback setting.');
       config.talkback = false;
+    }
+    if (config.talkbackChannels !== 1 && config.talkbackChannels !== 2) {
+      this.platform.log.warn(this.accessory.displayName,
+        'Talkback cannot be used with ' + config.talkbackChannels + '. Setting it to mono.');
+      config.talkbackChannels = 1;
     }
 
     return config;

@@ -2,11 +2,16 @@
 
 You can find the complete detailled changelog for every beta release [here](https://github.com/homebridge-eufy-security/plugin/releases).
 
-## 2.2.0-beta.13 - latest changes
+## 2.2.0-beta.14 - latest changes
 
 ### Added
 
-- Setting to sync the guard modes of all stations.
+- Setting to add a switch to turn indoor chime on/off on some doorbells
+- Setting for mono/stereo talkback configuration (needed for certain devices)
+
+### Fixed
+
+- Talkback was not working properly due to wrong channel configuration (can now be chosen: mono/stereo) #196
 
 ## 2.2.0 (Beta)
 
@@ -22,6 +27,9 @@ You can find the complete detailled changelog for every beta release [here](http
 - Config UI will now warn the user if a setting might decrease battery life drastically
 - Option to set connection method in eufy-security-client to 'local'
 - Support for Homebase 3, Eufy Camera 3 and Eufy Camera 3C
+- Setting to sync the guard modes of all stations.
+- Setting to add a switch to turn indoor chime on/off on some doorbells
+- Setting for mono/stereo talkback configuration (needed for certain devices)
 
 ### Changed
 
@@ -40,6 +48,7 @@ You can find the complete detailled changelog for every beta release [here](http
 - Switches to turn camera and motion on/off should now be removed from HomeKit if the user switches the configuration
 - Bug where no snapshot was returned after an event
 - Bug that caused a crash with node version prior to v14.18
+- Talkback was not working properly due to wrong channel configuration (can now be chosen: mono/stereo) #196
 
 ## 2.1.0 (RC)
 
