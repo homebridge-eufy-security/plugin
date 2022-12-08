@@ -1,6 +1,7 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { Accessory } from '../../accessory';
 import { PluginService } from '../../plugin.service';
+import { DEFAULT_CAMERACONFIG_VALUES } from '../../util/default-config-values';
 import { ConfigOptionsInterpreter } from '../config-options-interpreter';
 
 @Component({
@@ -29,7 +30,8 @@ export class TalkbackComponent extends ConfigOptionsInterpreter implements OnIni
   /** updateConfig() takes an optional second parameter to specify the accessoriy for which the setting is changed */
 
   @Input() accessory?: Accessory;
-  value = false;
+  value = DEFAULT_CAMERACONFIG_VALUES.talkback;
+  talkbackChannels = DEFAULT_CAMERACONFIG_VALUES.talkbackChannels;
 
   rtspIsEnabled = false;
 
@@ -38,6 +40,10 @@ export class TalkbackComponent extends ConfigOptionsInterpreter implements OnIni
 
     if (config && Object.prototype.hasOwnProperty.call(config, 'talkback')) {
       this.value = config['talkback'];
+    }
+
+    if (config && Object.prototype.hasOwnProperty.call(config, 'talkbackChannels')) {
+      this.talkbackChannels = config['talkbackChannels'];
     }
 
     if (config && Object.prototype.hasOwnProperty.call(config, 'rtsp')) {
@@ -49,6 +55,7 @@ export class TalkbackComponent extends ConfigOptionsInterpreter implements OnIni
     this.updateConfig(
       {
         talkback: this.value,
+        talkbackChannels: this.talkbackChannels,
       },
       this.accessory,
     );
