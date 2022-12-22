@@ -3,7 +3,7 @@ name: BETA NPM Build Version Publish
 on: 
   push:
     branches:
-    - beta
+    - beta-disabled
     paths-ignore:
       - '.github/**'
       - '**.md'
