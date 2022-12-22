@@ -3,7 +3,7 @@ name: BETA_Build_PR
 on: 
   pull_request:
     branches:
-    - beta-disabled
+    - beta
     paths-ignore:
       - '.github/**'
       - '**.md'
