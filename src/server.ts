@@ -94,7 +94,25 @@ class UiServer extends HomebridgePluginUiServer {
     this.ready();
   }
 
+  async resetPersistentData(): Promise<void> {
+    try {
+      fs.unlinkSync(this.storagePath + '/persistent.json');
+    } catch (err) {
+      return Promise.reject(err);
+    }
+  }
+
   async login(options): Promise<LoginResult> {
+
+    // delete persistent.json if new login
+    try {
+      if (options && options.username && options.password) {
+        this.log.info('deleting persistent.json due to new login');
+        await this.resetPersistentData();
+      }
+    } catch (err) {
+      this.log.error('Could not delete persistent.json due to error: ' + err);
+    }
 
     if (!this.eufyClient && options && options.username && options.password && options.country) {
       this.accessories = []; // clear accessories array so that it can be filled with all devices after login

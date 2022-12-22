@@ -2,16 +2,15 @@
 
 You can find the complete detailled changelog for every beta release [here](https://github.com/homebridge-eufy-security/plugin/releases).
 
-## 2.2.0-beta.14 - latest changes
+## 2.2.0-beta.15 - latest changes
 
-### Added
+### Changed
 
-- Setting to add a switch to turn indoor chime on/off on some doorbells
-- Setting for mono/stereo talkback configuration (needed for certain devices)
+- eufy-security-client library is now added as forked dependency to enable direct changes
 
 ### Fixed
 
-- Talkback was not working properly due to wrong channel configuration (can now be chosen: mono/stereo) #196
+- Trying to fix login issue #250
 
 ## 2.2.0 (Beta)
 
@@ -42,6 +41,7 @@ You can find the complete detailled changelog for every beta release [here](http
 - Warn the user if multiple cameras are connected through the same station and limit critical options for these cameras (snapshot method and HKSV)
 - Log errors in command results from eufy-security-client library to homebridge
 - Removed overhead in stream processing improve performance
+- eufy-security-client library is now added as forked dependency to enable direct changes
 
 ### Fixed
 
