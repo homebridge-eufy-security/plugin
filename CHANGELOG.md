@@ -11,6 +11,7 @@ You can find the complete detailled changelog for every beta release [here](http
 ### Fixed
 
 - Trying to fix login issue #250
+- Fixed installation issues with previous betas
 
 ## 2.2.0 (Beta)
 
