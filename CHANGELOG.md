@@ -2,7 +2,7 @@
 
 You can find the complete detailled changelog for every beta release [here](https://github.com/homebridge-eufy-security/plugin/releases).
 
-## 2.2.0-beta.16 - latest changes
+## 2.2.0-beta.17 - latest changes
 
 ### Changed
 
@@ -12,6 +12,7 @@ You can find the complete detailled changelog for every beta release [here](http
 
 - Trying to fix login issue #250
 - Fixed installation issues with previous betas
+- Package size was dramatically reduced by removing cache files
 
 ## 2.2.0 (Beta)
 
