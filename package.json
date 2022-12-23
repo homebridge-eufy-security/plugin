@@ -33,8 +33,7 @@
   "scripts": {
     "lint": "eslint src/** --max-warnings=0",
     "watch": "npm run build && npm link && nodemon",
-    "build": "npm run build-client && npm run build-plugin && npm run build-configui",
-    "build-client": "cd eufy-security-client && npm ci && npm run build && cd ..",
+    "build": "npm run build-plugin && npm run build-configui",
     "build-plugin": "rimraf ./dist && tsc --project tsconfig.plugin.json",
     "build-configui": "rimraf ./homebridge-ui && ng build --base-href /api/plugins/settings-ui/homebridge-eufy-security/ && tsc --project tsconfig.configui.server.json",
     "serve-configui": "ng serve",
@@ -52,7 +51,7 @@
     "@homebridge/plugin-ui-utils": "^0.0.19",
     "bunyan": "^1.8.15",
     "bunyan-debug-stream": "^2.0.1",
-    "eufy-security-client": "file:eufy-security-client",
+    "eufy-security-client": "https://github.com/homebridge-eufy-security/eufy-security-client/archive/refs/tags/plugin-2.2.0-beta.17.tar.gz",
     "ffmpeg-for-homebridge": "0.1.4",
     "pick-port": "^1.0.1",
     "rotating-file-stream": "^3.0.4",
