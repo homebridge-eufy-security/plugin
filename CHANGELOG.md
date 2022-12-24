@@ -2,7 +2,17 @@
 
 You can find the complete detailled changelog for every beta release [here](https://github.com/homebridge-eufy-security/plugin/releases).
 
-## 2.1.3 (2022-11-17)
+## 2.1.4 (2022-12-24)
+
+### Changed
+
+- Updated to latest eufy-security-client 2.4.0
+
+### Fixed
+
+- Changed login process to use new v2 api (due to changes made by eufy recently)
+
+## 2.1.3
 
 ### Fixed
 
