@@ -1,7 +1,7 @@
 {
   "displayName": "Homebridge Eufy Security",
   "name": "homebridge-eufy-security",
-  "version": "2.2.0-beta.17",
+  "version": "2.2.0-beta.18",
   "description": "Control Eufy Security from homebridge.",
   "license": "Apache-2.0",
   "repository": {
@@ -51,7 +51,7 @@
     "@homebridge/plugin-ui-utils": "^0.0.19",
     "bunyan": "^1.8.15",
     "bunyan-debug-stream": "^2.0.1",
-    "eufy-security-client": "https://github.com/homebridge-eufy-security/eufy-security-client/archive/refs/tags/plugin-2.2.0-beta.17.tar.gz",
+    "eufy-security-client": "^2.4.2",
     "ffmpeg-for-homebridge": "0.1.4",
     "pick-port": "^1.0.1",
     "rotating-file-stream": "^3.0.4",
