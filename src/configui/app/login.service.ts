@@ -23,7 +23,7 @@ export class LoginService {
       return Promise.resolve({
         username: config['username'],
         password: config['password'],
-        country: config['country'] ? config['country'] : 'US',
+        country: config['country'] ? config['country'] : 'IE',
         deviceName: config['deviceName'],
       });
     } catch (err) {
