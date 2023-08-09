@@ -428,6 +428,7 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
 
     switch (type) {
       case DeviceType.STATION:
+      case DeviceType.HB3:
         new StationAccessory(this, accessory, device as Station);
         break;
       case DeviceType.MOTION_SENSOR:
@@ -443,6 +444,11 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
       case DeviceType.FLOODLIGHT:
       case DeviceType.CAMERA2C_PRO:
       case DeviceType.CAMERA2_PRO:
+      case DeviceType.CAMERA3C:
+      case DeviceType.CAMERA3:
+      case DeviceType.CAMERA_GUN:
+      case DeviceType.CAMERA_FG:
+      case DeviceType.CAMERA3:
       case DeviceType.INDOOR_CAMERA_1080:
       case DeviceType.INDOOR_PT_CAMERA_1080:
       case DeviceType.SOLO_CAMERA:
@@ -456,6 +462,12 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
       case DeviceType.FLOODLIGHT_CAMERA_8422:
       case DeviceType.FLOODLIGHT_CAMERA_8423:
       case DeviceType.FLOODLIGHT_CAMERA_8424:
+      case DeviceType.WALL_LIGHT_CAM:
+      case DeviceType.WALL_LIGHT_CAM_81A0:
+      case DeviceType.CAMERA_GARAGE_T8453_COMMON:
+      case DeviceType.CAMERA_GARAGE_T8453:
+      case DeviceType.CAMERA_GARAGE_T8452:
+      case DeviceType.CAMERA_FG:
         a = new CameraAccessory(this, accessory, device as Camera);
         unbridge = (a.cameraConfig.enableCamera) ? a.cameraConfig.unbridge ??= false : false;
         break;
