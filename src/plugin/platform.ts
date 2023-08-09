@@ -448,7 +448,6 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
       case DeviceType.CAMERA3:
       case DeviceType.CAMERA_GUN:
       case DeviceType.CAMERA_FG:
-      case DeviceType.CAMERA3:
       case DeviceType.INDOOR_CAMERA_1080:
       case DeviceType.INDOOR_PT_CAMERA_1080:
       case DeviceType.SOLO_CAMERA:
@@ -467,7 +466,6 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
       case DeviceType.CAMERA_GARAGE_T8453_COMMON:
       case DeviceType.CAMERA_GARAGE_T8453:
       case DeviceType.CAMERA_GARAGE_T8452:
-      case DeviceType.CAMERA_FG:
         a = new CameraAccessory(this, accessory, device as Camera);
         unbridge = (a.cameraConfig.enableCamera) ? a.cameraConfig.unbridge ??= false : false;
         break;
