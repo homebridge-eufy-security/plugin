@@ -56,94 +56,42 @@ export class CameraAccessory extends DeviceAccessory {
       } catch (Error) {
         this.platform.log.error(this.accessory.displayName, 'raise error to check and attach livestream function.', Error);
       }
-      
+
     } else {
       this.platform.log.debug(this.accessory.displayName, 'has a motion sensor.');
     }
 
+    this.service = this.setupMotionFunction(accessory);
+    this.setupEnableButton();
+    this.setupMotionButton();
+    this.setupLightButton();
+
+  }
+
+  private setupButtonService(serviceName: string, configValue: boolean | undefined, PropertyName: PropertyName, serviceType: 'switch' | 'lightbulb') {
     try {
-      this.service = this.motionFunction(accessory);
-    } catch (Error) {
-      this.platform.log.error(this.accessory.displayName, 'raise error to check and attach motion function.', Error);
-    }
-
-    try {
-      this.platform.log.debug(this.accessory.displayName, 'enableButton config:', this.cameraConfig.enableButton);
-      if (this.cameraConfig.enableButton
-        && this.eufyDevice.hasProperty('enabled')) {
-        this.platform.log.debug(this.accessory.displayName, 'has a isEnabled, so append switchEnabledService characteristic to him.');
-
-        const switchEnabledService =
-          this.accessory.getService('Enabled') ||
-          this.accessory.addService(this.platform.Service.Switch, 'Enabled', 'enabled');
-
-        switchEnabledService.setCharacteristic(
-          this.platform.Characteristic.Name,
-          accessory.displayName + ' Enabled',
-        );
-
-        switchEnabledService.getCharacteristic(this.characteristic.On)
-          .onGet(this.handleEnableGet.bind(this))
-          .onSet(this.handleEnableSet.bind(this));
-
+      this.platform.log.debug(this.accessory.displayName, `${serviceName} config:`, configValue);
+      if (configValue && this.eufyDevice.hasProperty(PropertyName)) {
+        this.platform.log.debug(this.accessory.displayName, `has a ${PropertyName}, so append ${serviceType}${serviceName} characteristic to it.`);
+        this.setupSwitchService(serviceName, serviceType, configValue, PropertyName);
       } else {
-        // eslint-disable-next-line max-len
-        this.platform.log.debug(this.accessory.displayName, 'Looks like not compatible with isEnabled or this has been disabled within configuration');
+        this.platform.log.debug(this.accessory.displayName, `Looks like not compatible with ${PropertyName} or this has been disabled within configuration`);
       }
     } catch (Error) {
-      this.platform.log.error(this.accessory.displayName, 'raise error to check and attach switchEnabledService.', Error);
+      this.platform.log.error(this.accessory.displayName, `raise error to check and attach ${serviceType}${serviceName}.`, Error);
     }
+  }
 
-    try {
-      this.platform.log.debug(this.accessory.displayName, 'motionButton config:', this.cameraConfig.motionButton);
-      if (this.cameraConfig.motionButton && this.eufyDevice.hasProperty('motionDetection')) {
-        // eslint-disable-next-line max-len
-        this.platform.log.debug(this.accessory.displayName, 'has a isMotionDetectionEnabled, so append switchMotionService characteristic to him.');
+  private setupEnableButton() {
+    this.setupButtonService('Enabled', this.cameraConfig.enableButton, PropertyName.DeviceEnabled, 'switch');
+  }
 
-        const switchMotionService =
-          this.accessory.getService('Motion') ||
-          this.accessory.addService(this.platform.Service.Switch, 'Motion', 'motion');
+  private setupMotionButton() {
+    this.setupButtonService('Motion', this.cameraConfig.motionButton, PropertyName.DeviceMotionDetection, 'switch');
+  }
 
-        switchMotionService.setCharacteristic(
-          this.platform.Characteristic.Name,
-          accessory.displayName + ' Motion',
-        );
-
-        switchMotionService.getCharacteristic(this.characteristic.On)
-          .onGet(this.handleMotionOnGet.bind(this))
-          .onSet(this.handleMotionOnSet.bind(this));
-
-      } else {
-        // eslint-disable-next-line max-len
-        this.platform.log.debug(this.accessory.displayName, 'Looks like not compatible with isMotionDetectionEnabled or this has been disabled within configuration');
-      }
-    } catch (Error) {
-      this.platform.log.error(this.accessory.displayName, 'raise error to check and attach switchMotionService.', Error);
-    }
-
-    try {
-      if (this.eufyDevice.hasProperty('light') && (typeof this.eufyDevice.isFloodLight === 'function' && this.eufyDevice.isFloodLight())) {
-        this.platform.log.debug(this.accessory.displayName, 'has a DeviceLight, so append switchLightService characteristic to him.');
-
-        const switchLightService =
-          this.accessory.getService('Light') ||
-          this.accessory.addService(this.platform.Service.Switch, 'Light', 'light');
-
-        switchLightService.setCharacteristic(
-          this.platform.Characteristic.Name,
-          accessory.displayName + ' Light',
-        );
-
-        switchLightService.getCharacteristic(this.characteristic.On)
-          .onGet(this.handleLightOnGet.bind(this))
-          .onSet(this.handleLightOnSet.bind(this));
-
-      } else {
-        this.platform.log.debug(this.accessory.displayName, 'Looks like not compatible with DeviceLight');
-      }
-    } catch (Error) {
-      this.platform.log.error(this.accessory.displayName, 'raise error to check and attach switchLightService.', Error);
-    }
+  private setupLightButton() {
+    this.setupButtonService('Light', true, PropertyName.DeviceLight, 'lightbulb');
   }
 
   private getCameraConfig() {
@@ -192,7 +140,7 @@ export class CameraAccessory extends DeviceAccessory {
 
     service.setCharacteristic(
       this.characteristic.Name,
-      accessory.displayName,
+      this.accessory.displayName,
     );
 
     service
@@ -309,35 +257,40 @@ export class CameraAccessory extends DeviceAccessory {
     this.CameraService.getCharacteristic(this.characteristic.NightVision).updateValue(value as boolean);
   }
 
-  private motionFunction(
+  private setupMotionFunction(
     accessory: PlatformAccessory,
   ): Service {
-    const service =
-      this.accessory.getService(this.platform.Service.MotionSensor) ||
-      this.accessory.addService(this.platform.Service.MotionSensor);
+    try {
+      const service =
+        this.accessory.getService(this.platform.Service.MotionSensor) ||
+        this.accessory.addService(this.platform.Service.MotionSensor);
 
-    service.setCharacteristic(
-      this.characteristic.Name,
-      accessory.displayName,
-    );
+      service.setCharacteristic(
+        this.characteristic.Name,
+        this.accessory.displayName,
+      );
 
-    service
-      .getCharacteristic(this.characteristic.MotionDetected)
-      .onGet(this.handleMotionDetectedGet.bind(this));
+      service
+        .getCharacteristic(this.characteristic.MotionDetected)
+        .onGet(this.handleMotionDetectedGet.bind(this));
 
-    this.eufyDevice.on('motion detected', (device: Device, motion: boolean) =>
-      this.onDeviceMotionDetectedPushNotification(device, motion),
-    );
+      this.eufyDevice.on('motion detected', (device: Device, motion: boolean) =>
+        this.onDeviceMotionDetectedPushNotification(device, motion),
+      );
 
-    this.eufyDevice.on('person detected', (device: Device, motion: boolean) =>
-      this.onDeviceMotionDetectedPushNotification(device, motion),
-    );
+      this.eufyDevice.on('person detected', (device: Device, motion: boolean) =>
+        this.onDeviceMotionDetectedPushNotification(device, motion),
+      );
 
-    this.eufyDevice.on('pet detected', (device: Device, motion: boolean) =>
-      this.onDeviceMotionDetectedPushNotification(device, motion),
-    );
+      this.eufyDevice.on('pet detected', (device: Device, motion: boolean) =>
+        this.onDeviceMotionDetectedPushNotification(device, motion),
+      );
 
-    return service as Service;
+      return service as Service;
+    } catch (Error) {
+      this.platform.log.error(this.accessory.displayName, 'raise error to check and attach motion function.', Error);
+      throw Error;
+    }
   }
 
   async handleMotionDetectedGet(): Promise<CharacteristicValue> {
@@ -376,17 +329,6 @@ export class CameraAccessory extends DeviceAccessory {
       .updateValue(motion);
   }
 
-  async handleEnableGet(): Promise<CharacteristicValue> {
-    try {
-      const currentValue = this.eufyDevice.getPropertyValue(PropertyName.DeviceEnabled);
-      this.platform.log.debug(this.accessory.displayName, 'GET DeviceEnabled:', currentValue);
-      return currentValue as boolean;
-    } catch {
-      this.platform.log.debug(this.accessory.displayName, 'handleEnableGet', 'Wrong return value');
-      return false;
-    }
-  }
-
   async handleManuallyDisabledGet(): Promise<CharacteristicValue> {
     try {
       const currentValue = this.eufyDevice.getPropertyValue(PropertyName.DeviceEnabled);
@@ -398,46 +340,61 @@ export class CameraAccessory extends DeviceAccessory {
     }
   }
 
-  async handleEnableSet(value: CharacteristicValue) {
-    this.platform.log.debug(this.accessory.displayName, 'SET DeviceEnabled:', value);
-    const station = await this.platform.getStationById(this.eufyDevice.getStationSerial());
-    station.enableDevice(this.eufyDevice, value as boolean);
-    if (this.cameraConfig.enableCamera) {
-      this.CameraService.getCharacteristic(this.characteristic.ManuallyDisabled).updateValue(!value as boolean);
+  private setupSwitchService(
+    serviceName: string,
+    serviceType: 'switch' | 'lightbulb',
+    configValue: boolean | undefined,
+    propertyName: PropertyName
+  ) {
+    if (configValue && this.eufyDevice.hasProperty(propertyName)) {
+
+      const platformService = 'lightbulb' ? this.platform.Service.Lightbulb : this.platform.Service.Switch
+
+      const service =
+        this.accessory.getService(serviceType) ||
+        this.accessory.addService(platformService, serviceType);
+
+      service.setCharacteristic(
+        this.characteristic.Name,
+        this.accessory.displayName + ' ' + serviceName
+      );
+
+      service.getCharacteristic(this.characteristic.On)
+        .onGet(this.getPropertyValue.bind(this, propertyName))
+        .onSet(this.setPropertyValue.bind(this, propertyName));
+    } else {
+      this.platform.log.debug(this.accessory.displayName, `Looks like not compatible with ${propertyName} or this has been disabled within configuration`);
     }
   }
 
-  async handleMotionOnGet(): Promise<CharacteristicValue> {
+  private async getPropertyValue(propertyName: PropertyName): Promise<CharacteristicValue> {
     try {
-      const currentValue = await this.eufyDevice.getPropertyValue(PropertyName.DeviceMotionDetection);
-      this.platform.log.debug(this.accessory.displayName, 'GET DeviceMotionDetection:', currentValue);
-      return currentValue as boolean;
-    } catch {
-      this.platform.log.debug(this.accessory.displayName, 'handleMotionOnGet', 'Wrong return value');
+      const value = await this.eufyDevice.getPropertyValue(propertyName);
+      this.platform.log.debug(this.accessory.displayName, `GET ${propertyName}:`, value);
+      return value as boolean;
+    } catch (error) {
+      this.platform.log.debug(this.accessory.displayName, `Error getting ${propertyName}:`, error);
       return false;
     }
   }
 
-  async handleMotionOnSet(value: CharacteristicValue) {
-    this.platform.log.debug(this.accessory.displayName, 'SET DeviceMotionDetection:', value);
-    const station = await this.platform.getStationById(this.eufyDevice.getStationSerial());
-    station.setMotionDetection(this.eufyDevice, value as boolean);
-  }
-
-  async handleLightOnGet(): Promise<CharacteristicValue> {
+  private async setPropertyValue(propertyName: string, value: CharacteristicValue) {
     try {
-      const currentValue = await this.eufyDevice.getPropertyValue(PropertyName.DeviceLight);
-      this.platform.log.debug(this.accessory.displayName, 'GET DeviceLight:', currentValue);
-      return currentValue as boolean;
-    } catch {
-      this.platform.log.debug(this.accessory.displayName, 'handleLightOnGet', 'Wrong return value');
-      return false;
-    }
-  }
+      this.platform.log.debug(this.accessory.displayName, `SET ${propertyName}:`, value);
+      const station = await this.platform.getStationById(this.eufyDevice.getStationSerial());
 
-  async handleLightOnSet(value: CharacteristicValue) {
-    this.platform.log.debug(this.accessory.displayName, 'SET DeviceLight:', value);
-    const station = await this.platform.getStationById(this.eufyDevice.getStationSerial());
-    station.switchLight(this.eufyDevice, value as boolean);
+      if (propertyName === 'DeviceEnabled') {
+        station.enableDevice(this.eufyDevice, value as boolean);
+        if (this.cameraConfig.enableCamera) {
+          this.CameraService.getCharacteristic(this.characteristic.ManuallyDisabled).updateValue(!value as boolean);
+        }
+      } else if (propertyName === 'DeviceMotionDetection') {
+        station.setMotionDetection(this.eufyDevice, value as boolean);
+      } else if (propertyName === 'DeviceLight') {
+        station.switchLight(this.eufyDevice, value as boolean);
+      }
+    } catch (error) {
+      this.platform.log.error(this.accessory.displayName, `Error setting ${propertyName}:`, error);
+    }
   }
 }
