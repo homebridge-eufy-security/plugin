@@ -68,13 +68,20 @@ export class CameraAccessory extends DeviceAccessory {
 
   }
 
-  private setupButtonService(serviceName: string, configValue: boolean | undefined, PropertyName: PropertyName, serviceType: 'switch' | 'lightbulb') {
+  private setupButtonService(
+    serviceName: string,
+    configValue: boolean | undefined,
+    PropertyName: PropertyName,
+    serviceType: 'switch' | 'lightbulb',
+  ) {
     try {
       this.platform.log.debug(this.accessory.displayName, `${serviceName} config:`, configValue);
       if (configValue && this.eufyDevice.hasProperty(PropertyName)) {
+        // eslint-disable-next-line max-len
         this.platform.log.debug(this.accessory.displayName, `has a ${PropertyName}, so append ${serviceType}${serviceName} characteristic to it.`);
         this.setupSwitchService(serviceName, serviceType, configValue, PropertyName);
       } else {
+        // eslint-disable-next-line max-len
         this.platform.log.debug(this.accessory.displayName, `Looks like not compatible with ${PropertyName} or this has been disabled within configuration`);
       }
     } catch (Error) {
@@ -344,11 +351,11 @@ export class CameraAccessory extends DeviceAccessory {
     serviceName: string,
     serviceType: 'switch' | 'lightbulb',
     configValue: boolean | undefined,
-    propertyName: PropertyName
+    propertyName: PropertyName,
   ) {
     if (configValue && this.eufyDevice.hasProperty(propertyName)) {
 
-      const platformService = 'lightbulb' ? this.platform.Service.Lightbulb : this.platform.Service.Switch
+      const platformService = (serviceType === 'lightbulb') ? this.platform.Service.Lightbulb : this.platform.Service.Switch;
 
       const service =
         this.accessory.getService(serviceType) ||
@@ -356,13 +363,14 @@ export class CameraAccessory extends DeviceAccessory {
 
       service.setCharacteristic(
         this.characteristic.Name,
-        this.accessory.displayName + ' ' + serviceName
+        this.accessory.displayName + ' ' + serviceName,
       );
 
       service.getCharacteristic(this.characteristic.On)
         .onGet(this.getPropertyValue.bind(this, propertyName))
         .onSet(this.setPropertyValue.bind(this, propertyName));
     } else {
+      // eslint-disable-next-line max-len
       this.platform.log.debug(this.accessory.displayName, `Looks like not compatible with ${propertyName} or this has been disabled within configuration`);
     }
   }
