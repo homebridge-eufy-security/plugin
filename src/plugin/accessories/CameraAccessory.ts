@@ -56,7 +56,7 @@ export class CameraAccessory extends DeviceAccessory {
       } catch (Error) {
         this.platform.log.error(this.accessory.displayName, 'raise error to check and attach livestream function.', Error);
       }
-      
+
     } else {
       this.platform.log.debug(this.accessory.displayName, 'has a motion sensor.');
     }
@@ -325,19 +325,28 @@ export class CameraAccessory extends DeviceAccessory {
       .getCharacteristic(this.characteristic.MotionDetected)
       .onGet(this.handleMotionDetectedGet.bind(this));
 
-    this.eufyDevice.on('motion detected', (device: Device, motion: boolean) =>
-      this.onDeviceMotionDetectedPushNotification(device, motion),
-    );
+    // List of event types
+    const eventTypes = [
+      'motion detected',
+      'person detected',
+      'pet detected',
+      'vehicle detected',
+      'sound detected',
+      'crying detected',
+      'dog detected'
+    ];
 
-    this.eufyDevice.on('person detected', (device: Device, motion: boolean) =>
-      this.onDeviceMotionDetectedPushNotification(device, motion),
-    );
-
-    this.eufyDevice.on('pet detected', (device: Device, motion: boolean) =>
-      this.onDeviceMotionDetectedPushNotification(device, motion),
-    );
+    // Attach the common event handler to each event type
+    for (const eventType of eventTypes) {
+      this.eufyDevice.on(eventType, this.handleMotionEvents);
+    }
 
     return service as Service;
+  }
+
+  // Define a common event handler
+  private handleMotionEvents(device: Device, motion: boolean) {
+    this.onDeviceMotionDetectedPushNotification(device, motion);
   }
 
   async handleMotionDetectedGet(): Promise<CharacteristicValue> {
