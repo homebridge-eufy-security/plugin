@@ -7,7 +7,7 @@ import { DeviceAccessory } from './Device';
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore  
-import { Camera, Device, PropertyName, CommandName, VideoCodec } from 'eufy-security-client';
+import { Camera, Device, DeviceEvents, PropertyName, CommandName, VideoCodec } from 'eufy-security-client';
 import { StreamingDelegate } from '../controller/streamingDelegate';
 
 import { CameraConfig, VideoConfig } from '../utils/configTypes';
@@ -326,27 +326,25 @@ export class CameraAccessory extends DeviceAccessory {
       .onGet(this.handleMotionDetectedGet.bind(this));
 
     // List of event types
-    const eventTypes = [
+    const eventTypesToHandle: (keyof DeviceEvents)[] = [
       'motion detected',
       'person detected',
       'pet detected',
       'vehicle detected',
       'sound detected',
       'crying detected',
-      'dog detected'
+      'dog detected',
+      'stranger person detected'
     ];
 
     // Attach the common event handler to each event type
-    for (const eventType of eventTypes) {
-      this.eufyDevice.on(eventType, this.handleMotionEvents);
-    }
+    eventTypesToHandle.forEach(eventType => {
+      this.platform.log.debug(this.accessory.displayName, 'SETON Firing on:', eventType);
+      this.eufyDevice.on(eventType, (device: Device, motion: boolean) =>
+        this.onDeviceEventDetectedPushNotification(device, motion, eventType));
+    });
 
     return service as Service;
-  }
-
-  // Define a common event handler
-  private handleMotionEvents(device: Device, motion: boolean) {
-    this.onDeviceMotionDetectedPushNotification(device, motion);
   }
 
   async handleMotionDetectedGet(): Promise<CharacteristicValue> {
@@ -360,10 +358,12 @@ export class CameraAccessory extends DeviceAccessory {
     }
   }
 
-  private onDeviceMotionDetectedPushNotification(
+  private onDeviceEventDetectedPushNotification(
     device: Device,
     motion: boolean,
+    eventType: string,
   ): void {
+    this.platform.log.info(this.accessory.displayName, `ON Event Detected (${eventType}): ${motion}`);
     if (motion) {
       this.motionTimeout = setTimeout(() => {
         this.platform.log.debug(this.accessory.displayName, 'Reseting motion through timout.');
@@ -376,7 +376,6 @@ export class CameraAccessory extends DeviceAccessory {
         clearTimeout(this.motionTimeout);
       }
     }
-    this.platform.log.debug(this.accessory.displayName, 'ON DeviceMotionDetected:', motion);
     if (this.cameraConfig.useCachedLocalLivestream && this.streamingDelegate && motion) {
       this.streamingDelegate.prepareCachedStream();
     }
