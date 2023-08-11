@@ -56,8 +56,6 @@ jobs:
           token: ${{ secrets.BUILD_SVC_PAT }}
       - run: git config --global user.name '[GitHub Bot]'
       - run: git config --global user.email '<>'
-      - run: npm install
-      - run: npm ci
       - run: npm version ${{ github.event.inputs.version }} --preid=${{ github.event.inputs.preid }} -m "[${{ github.event.inputs.tag }}] %s"
       - run: npm update homebridge-eufy-security
       - run: git push --force
