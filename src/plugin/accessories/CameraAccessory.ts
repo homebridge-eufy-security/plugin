@@ -7,7 +7,7 @@ import { DeviceAccessory } from './Device';
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore  
-import { Camera, Device, PropertyName, CommandName, VideoCodec } from 'eufy-security-client';
+import { Camera, Device, DeviceEvents, PropertyName, CommandName, VideoCodec } from 'eufy-security-client';
 import { StreamingDelegate } from '../controller/streamingDelegate';
 
 import { CameraConfig, VideoConfig } from '../utils/configTypes';
@@ -56,7 +56,7 @@ export class CameraAccessory extends DeviceAccessory {
       } catch (Error) {
         this.platform.log.error(this.accessory.displayName, 'raise error to check and attach livestream function.', Error);
       }
-      
+
     } else {
       this.platform.log.debug(this.accessory.displayName, 'has a motion sensor.');
     }
@@ -325,17 +325,24 @@ export class CameraAccessory extends DeviceAccessory {
       .getCharacteristic(this.characteristic.MotionDetected)
       .onGet(this.handleMotionDetectedGet.bind(this));
 
-    this.eufyDevice.on('motion detected', (device: Device, motion: boolean) =>
-      this.onDeviceMotionDetectedPushNotification(device, motion),
-    );
+    // List of event types
+    const eventTypesToHandle: (keyof DeviceEvents)[] = [
+      'motion detected',
+      'person detected',
+      'pet detected',
+      'vehicle detected',
+      'sound detected',
+      'crying detected',
+      'dog detected',
+      'stranger person detected'
+    ];
 
-    this.eufyDevice.on('person detected', (device: Device, motion: boolean) =>
-      this.onDeviceMotionDetectedPushNotification(device, motion),
-    );
-
-    this.eufyDevice.on('pet detected', (device: Device, motion: boolean) =>
-      this.onDeviceMotionDetectedPushNotification(device, motion),
-    );
+    // Attach the common event handler to each event type
+    eventTypesToHandle.forEach(eventType => {
+      this.platform.log.debug(this.accessory.displayName, 'SETON Firing on:', eventType);
+      this.eufyDevice.on(eventType, (device: Device, motion: boolean) =>
+        this.onDeviceEventDetectedPushNotification(device, motion, eventType));
+    });
 
     return service as Service;
   }
@@ -351,10 +358,12 @@ export class CameraAccessory extends DeviceAccessory {
     }
   }
 
-  private onDeviceMotionDetectedPushNotification(
+  private onDeviceEventDetectedPushNotification(
     device: Device,
     motion: boolean,
+    eventType: string,
   ): void {
+    this.platform.log.info(this.accessory.displayName, `ON Event Detected (${eventType}): ${motion}`);
     if (motion) {
       this.motionTimeout = setTimeout(() => {
         this.platform.log.debug(this.accessory.displayName, 'Reseting motion through timout.');
@@ -367,7 +376,6 @@ export class CameraAccessory extends DeviceAccessory {
         clearTimeout(this.motionTimeout);
       }
     }
-    this.platform.log.debug(this.accessory.displayName, 'ON DeviceMotionDetected:', motion);
     if (this.cameraConfig.useCachedLocalLivestream && this.streamingDelegate && motion) {
       this.streamingDelegate.prepareCachedStream();
     }
