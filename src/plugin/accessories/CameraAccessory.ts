@@ -167,7 +167,7 @@ export class CameraAccessory extends DeviceAccessory {
     if (this.eufyDevice.hasProperty('enabled')) {
       service
         .getCharacteristic(this.characteristic.ManuallyDisabled)
-        .onGet(this.handleManuallyDisabledGet.bind(this));
+        .onGet(this.getPropertyValue.bind(this, PropertyName.DeviceEnabled));
     }
 
     if (this.eufyDevice.hasProperty('statusLed')) {
@@ -279,42 +279,31 @@ export class CameraAccessory extends DeviceAccessory {
 
       service
         .getCharacteristic(this.characteristic.MotionDetected)
-        .onGet(this.handleMotionDetectedGet.bind(this));
+        .onGet(this.getPropertyValue.bind(this, PropertyName.DeviceMotionDetected));
 
-    // List of event types
-    const eventTypesToHandle: (keyof DeviceEvents)[] = [
-      'motion detected',
-      'person detected',
-      'pet detected',
-      'vehicle detected',
-      'sound detected',
-      'crying detected',
-      'dog detected',
-      'stranger person detected',
-    ];
+      // List of event types
+      const eventTypesToHandle: (keyof DeviceEvents)[] = [
+        'motion detected',
+        'person detected',
+        'pet detected',
+        'vehicle detected',
+        'sound detected',
+        'crying detected',
+        'dog detected',
+        'stranger person detected',
+      ];
 
-    // Attach the common event handler to each event type
-    eventTypesToHandle.forEach(eventType => {
-      this.platform.log.debug(this.accessory.displayName, 'SETON Firing on:', eventType);
-      this.eufyDevice.on(eventType, (device: Device, motion: boolean) =>
-        this.onDeviceEventDetectedPushNotification(device, motion, eventType));
-    });
+      // Attach the common event handler to each event type
+      eventTypesToHandle.forEach(eventType => {
+        this.platform.log.debug(this.accessory.displayName, 'SETON Firing on:', eventType);
+        this.eufyDevice.on(eventType, (device: Device, motion: boolean) =>
+          this.onDeviceEventDetectedPushNotification(device, motion, eventType));
+      });
 
       return service as Service;
     } catch (Error) {
       this.platform.log.error(this.accessory.displayName, 'raise error to check and attach motion function.', Error);
       throw Error;
-    }
-  }
-
-  async handleMotionDetectedGet(): Promise<CharacteristicValue> {
-    try {
-      const currentValue = this.eufyDevice.getPropertyValue(PropertyName.DeviceMotionDetected);
-      this.platform.log.debug(this.accessory.displayName, 'GET DeviceMotionDetected:', currentValue);
-      return currentValue as boolean;
-    } catch {
-      this.platform.log.debug(this.accessory.displayName, 'handleMotionDetectedGet', 'Wrong return value');
-      return false;
     }
   }
 
@@ -344,17 +333,6 @@ export class CameraAccessory extends DeviceAccessory {
       .updateValue(motion);
   }
 
-  async handleManuallyDisabledGet(): Promise<CharacteristicValue> {
-    try {
-      const currentValue = this.eufyDevice.getPropertyValue(PropertyName.DeviceEnabled);
-      this.platform.log.debug(this.accessory.displayName, 'GET DeviceEnabled:', currentValue);
-      return !currentValue as boolean;
-    } catch {
-      this.platform.log.debug(this.accessory.displayName, 'handleManuallyDisabledGet', 'Wrong return value');
-      return false;
-    }
-  }
-
   private setupSwitchService(
     serviceName: string,
     serviceType: 'switch' | 'lightbulb',
@@ -366,8 +344,8 @@ export class CameraAccessory extends DeviceAccessory {
       const platformService = (serviceType === 'lightbulb') ? this.platform.Service.Lightbulb : this.platform.Service.Switch;
 
       const service =
-        this.accessory.getService(serviceType) ||
-        this.accessory.addService(platformService, serviceType);
+        this.accessory.getService(serviceName) ||
+        this.accessory.addService(platformService, serviceName, serviceType);
 
       service.setCharacteristic(
         this.characteristic.Name,
