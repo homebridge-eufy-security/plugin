@@ -334,7 +334,7 @@ export class CameraAccessory extends DeviceAccessory {
       'sound detected',
       'crying detected',
       'dog detected',
-      'stranger person detected'
+      'stranger person detected',
     ];
 
     // Attach the common event handler to each event type
