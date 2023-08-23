@@ -40,7 +40,7 @@ import {
   // @ts-ignore 
 } from 'eufy-security-client';
 
-import { Logger as TsLogger, ILogObj } from 'tslog';
+import { Logger as TsLogger } from 'tslog';
 import { createStream } from 'rotating-file-stream';
 
 import fs from 'fs';

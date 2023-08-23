@@ -76,7 +76,6 @@
     "@fortawesome/free-solid-svg-icons": "^6.4.2",
     "@ng-bootstrap/ng-bootstrap": "^15.1.1",
     "@popperjs/core": "^2.11.8",
-    "@types/bunyan": "^1.8.8",
     "@types/jasmine": "~4.3.5",
     "@types/node": "^20.5.3",
     "@typescript-eslint/eslint-plugin": "^6.4.1",
