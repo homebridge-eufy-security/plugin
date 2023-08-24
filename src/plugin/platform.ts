@@ -40,10 +40,8 @@ import {
   // @ts-ignore 
 } from 'eufy-security-client';
 
-import bunyan from 'bunyan';
-import bunyanDebugStream from 'bunyan-debug-stream';
-import { Logger as TsLogger, ILogObject } from 'tslog';
-import * as rfs from 'rotating-file-stream';
+import { Logger as TsLogger } from 'tslog';
+import { createStream } from 'rotating-file-stream';
 
 import fs from 'fs';
 import { EufyClientInteractor } from './utils/EufyClientInteractor';
@@ -87,53 +85,66 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
 
     const plugin = require('../package.json');
 
+    const mainLogObj = {
+      // eslint-disable-next-line max-len
+      prettyLogTemplate: `[{{mm}}/{{dd}}/{{yyyy}} {{hh}}:{{MM}}:{{ss}}]\t[EufySecurity-${plugin.version}]\t{{logLevelName}}\t[{{fileNameWithLine}}{{name}}]\t`,
+      prettyErrorTemplate: '\n{{errorName}} {{errorMessage}}\nerror stack:\n{{errorStack}}',
+      prettyErrorStackTemplate: '  • {{fileName}}\t{{method}}\n\t{{fileNameWithLine}}',
+      prettyErrorParentNamesSeparator: ':',
+      prettyErrorLoggerNameDelimiter: '\t',
+      stylePrettyLogs: true,
+      minLevel: (this.config.enableDetailedLogging) ? 2 : 3,
+      // prettyLogTimeZone: 'UTC',
+      prettyLogStyles: {
+        logLevelName: {
+          '*': ['bold', 'black', 'bgWhiteBright', 'dim'],
+          SILLY: ['bold', 'white'],
+          TRACE: ['bold', 'whiteBright'],
+          DEBUG: ['bold', 'green'],
+          INFO: ['bold', 'blue'],
+          WARN: ['bold', 'yellow'],
+          ERROR: ['bold', 'red'],
+          FATAL: ['bold', 'redBright'],
+        },
+        dateIsoStr: 'white',
+        filePathWithLine: 'white',
+        name: ['white', 'bold'],
+        nameWithDelimiterPrefix: ['white', 'bold'],
+        nameWithDelimiterSuffix: ['white', 'bold'],
+        errorName: ['bold', 'bgRedBright', 'whiteBright'],
+        fileName: ['yellow'],
+      },
+    };
+
+    this.log = new TsLogger(mainLogObj);
+
     const omitLogFiles = this.config.omitLogFiles ?? false;
 
-    const logStreams: bunyan.Stream[] = [{
-      level: (this.config.enableDetailedLogging) ? 'debug' : 'info',
-      type: 'raw',
-      stream: bunyanDebugStream({
-        forceColor: true,
-        showProcess: false,
-        showPid: false,
-        showDate: (time) => {
-          return '[' + time.toLocaleString('en-US') + ']';
-        },
-      }),
-    }];
-
     if (!omitLogFiles) {
-      logStreams.push({
-        level: (this.config.enableDetailedLogging) ? 'debug' : 'info',
-        type: 'rotating-file',
-        path: this.eufyPath + '/log-lib.log',
-        period: '1d',   // daily rotation
-        count: 3,        // keep 3 back copies
-      });
-    }
 
-    this.log = bunyan.createLogger({
-      name: '[EufySecurity-' + plugin.version + ']',
-      hostname: '',
-      streams: logStreams,
-      serializers: bunyanDebugStream.stdSerializers,
-    });
-
-    if (!omitLogFiles) {
-      // use tslog for eufy-security-client
-
-      const logFileNameGenerator: rfs.Generator = (index): string => {
-        const filename = 'eufy-log.log';
-        return (index === null) ? filename : filename + '.' + (index as number - 1);
-      };
-
-      const eufyLogStream = rfs.createStream(logFileNameGenerator, {
+      const pluginLogStream = createStream('log-lib.log', {
         path: this.eufyPath,
         interval: '1d',
         rotate: 3,
         maxSize: '200M',
       });
-      this.tsLogger = new TsLogger({ stdErr: eufyLogStream, stdOut: eufyLogStream, colorizePrettyLogs: false });
+
+      this.log.attachTransport((logObj) => {
+        pluginLogStream.write(JSON.stringify(logObj) + '\n');
+      });
+
+      // use tslog for eufy-security-client
+
+      const eufyLogStream = createStream('eufy-log.log', {
+        path: this.eufyPath,
+        interval: '1d',
+        rotate: 3,
+        maxSize: '200M',
+      });
+
+      this.tsLogger = new TsLogger().attachTransport((logObj) => {
+        eufyLogStream.write(JSON.stringify(logObj) + '\n');
+      });
     }
 
     this.log.warn('warning: planned changes, see https://github.com/homebridge-eufy-security/plugin/issues/1');
@@ -289,10 +300,10 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
     if (station.getRawStation().member.member_type === 1) {
       this.log.info('You\'re using guest admin account with this plugin! This is recommanded way!');
     } else {
-      this.log.warn('You\'re not using guest admin account with this plugin! This is not recommanded way!');
-      this.log.warn('Please look here for more details:');
-      this.log.warn('https://github.com/homebridge-eufy-security/plugin/wiki/Installation');
-      this.log.warn(station.getSerial() + ' type: ' + station.getRawStation().member.member_type);
+      this.log.error('You\'re not using guest admin account with this plugin! This is not recommanded way!');
+      this.log.error('Please look here for more details:');
+      this.log.error('https://github.com/homebridge-eufy-security/plugin/wiki/Installation');
+      this.log.error(station.getSerial() + ' type: ' + station.getRawStation().member.member_type);
     }
 
     if (this.config.ignoreStations.indexOf(station.getSerial()) !== -1) {
@@ -309,7 +320,7 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
       } as DeviceIdentifier,
       eufyDevice: station,
     };
-    
+
     this.processAccessory(deviceContainer);
   }
 
@@ -335,7 +346,7 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
       } as DeviceIdentifier,
       eufyDevice: device,
     };
-    
+
     this.processAccessory(deviceContainer);
   }
 
@@ -412,7 +423,7 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
     if (this.config.cleanCache) {
       this.log.info('Looking for old cached accessories that seem to be outdated...');
       let num = 0;
-      
+
       const staleAccessories = this.accessories.filter((item) => {
         return this.activeAccessoryIds.indexOf(item.UUID) === -1;
       });
@@ -476,8 +487,8 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
 
     switch (type) {
       case DeviceType.STATION:
-        tmp = new StationAccessory(this, accessory, device as Station);
-        this.stations.push(tmp);
+      case DeviceType.HB3:
+        new StationAccessory(this, accessory, device as Station);
         break;
       case DeviceType.MOTION_SENSOR:
         new MotionSensorAccessory(this, accessory, device as MotionSensor);
@@ -492,8 +503,10 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
       case DeviceType.FLOODLIGHT:
       case DeviceType.CAMERA2C_PRO:
       case DeviceType.CAMERA2_PRO:
-      case DeviceType.CAMERA3:
       case DeviceType.CAMERA3C:
+      case DeviceType.CAMERA3:
+      case DeviceType.CAMERA_GUN:
+      case DeviceType.CAMERA_FG:
       case DeviceType.INDOOR_CAMERA_1080:
       case DeviceType.INDOOR_PT_CAMERA_1080:
       case DeviceType.SOLO_CAMERA:
@@ -507,6 +520,11 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
       case DeviceType.FLOODLIGHT_CAMERA_8422:
       case DeviceType.FLOODLIGHT_CAMERA_8423:
       case DeviceType.FLOODLIGHT_CAMERA_8424:
+      case DeviceType.WALL_LIGHT_CAM:
+      case DeviceType.WALL_LIGHT_CAM_81A0:
+      case DeviceType.CAMERA_GARAGE_T8453_COMMON:
+      case DeviceType.CAMERA_GARAGE_T8453:
+      case DeviceType.CAMERA_GARAGE_T8452:
         a = new CameraAccessory(this, accessory, device as Camera);
         unbridge = (a.cameraConfig.enableCamera) ? a.cameraConfig.unbridge ??= false : false;
         a.setExperimentalMode();
@@ -620,7 +638,7 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
       const cameras = (Array.isArray(pluginConfig.cameras)) ? pluginConfig.cameras : null;
 
       if (cameras && this.accessories.length > 0) {
-        for(let i=0; i<cameras.length; i++) {
+        for (let i = 0; i < cameras.length; i++) {
           const camera = cameras[i];
           const cachedAccessory = this.accessories.find((acc) => camera.serialNumber === acc.context['device'].uniqueId);
           if (cachedAccessory && Device.isDoorbell(cachedAccessory.context['device'].type) && !camera.enableCamera) {

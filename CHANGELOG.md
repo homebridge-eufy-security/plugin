@@ -44,15 +44,23 @@ You can find the complete detailled changelog for every beta release [here](http
 - Log errors in command results from eufy-security-client library to homebridge
 - Removed overhead in stream processing improve performance
 - eufy-security-client library is now added as forked dependency to enable direct changes
+## 2.1.4 (2022-12-24)
+
+### Changed
+
+- Updated to latest eufy-security-client 2.4.0
 
 ### Fixed
 
-- Switches to turn camera and motion on/off should now be removed from HomeKit if the user switches the configuration
-- Bug where no snapshot was returned after an event
-- Bug that caused a crash with node version prior to v14.18
-- Talkback was not working properly due to wrong channel configuration (can now be chosen: mono/stereo) #196
+- Changed login process to use new v2 api (due to changes made by eufy recently)
 
-## 2.1.0 (RC)
+## 2.1.3
+
+### Fixed
+
+- Possible memory leak caused by not correctly released EventListeners
+
+## 2.1.0 (2022-09-03)
 
 ### Added
 
@@ -108,7 +116,6 @@ You can find the complete detailled changelog for every beta release [here](http
 - Fix issue that streams were only rendered in 640x480 - see #46
 - Fixed smartlocks - see #110
 - Fixed occasional EPIPE Error when streaming - see #14
-- Streams might have been aborted after 30-60 seconds due to stream backpressuring
 
 ## 2.0.1 (20.06.2022)
 
