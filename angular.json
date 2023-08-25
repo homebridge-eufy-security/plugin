@@ -114,8 +114,5 @@
       }
     }
   },
-  "defaultProject": "config-ui",
-  "cli": {
-    "analytics": false
-  }
+  "defaultProject": "config-ui"
 }

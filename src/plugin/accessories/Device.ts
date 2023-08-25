@@ -100,7 +100,7 @@ export abstract class DeviceAccessory {
     }
   }
 
-  protected handleRawPropertyChange(
+  private handleRawPropertyChange(
     device: Device,
     type: number,
     value: string,
@@ -113,7 +113,7 @@ export abstract class DeviceAccessory {
     );
   }
 
-  protected handlePropertyChange(
+  private handlePropertyChange(
     device: Device,
     name: string,
     value: PropertyValue,

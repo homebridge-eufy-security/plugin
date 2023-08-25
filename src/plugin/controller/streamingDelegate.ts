@@ -68,7 +68,7 @@ export class StreamingDelegate implements CameraStreamingDelegate {
   private readonly cameraName: string;
   private cameraConfig: CameraConfig;
   private videoConfig: VideoConfig;
-  readonly controller?: CameraController;
+  private controller?: CameraController;
 
   private readonly platform: EufySecurityPlatform;
   private readonly device: Camera;

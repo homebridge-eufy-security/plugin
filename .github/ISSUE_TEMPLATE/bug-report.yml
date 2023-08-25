@@ -51,8 +51,7 @@ body:
       label: HomeBridge Version
       description: What version of homebridge are you running?
       options:
-        - v1.6.x (Supported)
-        - v1.4.x (UnSupported)
+        - v1.4.x (Supported)
         - v1.3.x (UnSupported)
         - other (UnSupported)
     validations:
@@ -64,8 +63,9 @@ body:
       label: NodeJS Version
       description: What NodeJS version used to run homebridge?
       options:
-        - v18 (Supported)
-        - v16 (UnSupported)
+        - v12 (Supported)
+        - v14 (Supported)
+        - v16 (Supported)
         - other (UnSupported)
     validations:
       required: true
@@ -79,8 +79,8 @@ body:
         - Raspbian 10+ (Supported)
         - Ubuntu 18.04+ (Supported)
         - Debian 10+ (Supported)
-        - Windows 10+ (UnSupported)
-        - Mac OS X 11+ (UnSupported)
+        - Windows 10+ (Supported)
+        - Mac OS X 11+ (Supported)
         - Docker (UnSupported)
         - Other (UnSupported)
     validations:

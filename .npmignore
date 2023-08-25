@@ -135,7 +135,7 @@ dist
 .pnp.*
 
 # new workspace
-.angular/
+./angular
 angular.json
 tsconfig.configui.app.json
 tsconfig.configui.json

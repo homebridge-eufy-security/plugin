@@ -47,20 +47,11 @@ export enum DeviceType {
   INDOOR_COST_DOWN_CAMERA = 100,
   CAMERA_GUN = 101,
   CAMERA_SNAIL = 102,
-  CAMERA_FG = 110, //T8150
-  CAMERA_GARAGE_T8453_COMMON = 131,
-  CAMERA_GARAGE_T8452 = 132,
-  CAMERA_GARAGE_T8453 = 133,
+  CAMERA_FG = 110,
   SMART_SAFE_7400 = 140,
   SMART_SAFE_7401 = 141,
   SMART_SAFE_7402 = 142,
   SMART_SAFE_7403 = 143,
-  WALL_LIGHT_CAM = 151,
-  SMART_TRACK_LINK = 157, //T87B0
-  SMART_TRACK_CARD = 159, //T87B2
-  LOCK_8502 = 180,
-  LOCK_8506 = 181,
-  WALL_LIGHT_CAM_81A0 = 10005,
 }
 
 export class Device {
@@ -112,8 +103,6 @@ export class Device {
       type === DeviceType.DOORBELL_SOLO ||
       type === DeviceType.CAMERA2C_PRO ||
       type === DeviceType.CAMERA2_PRO ||
-      type === DeviceType.CAMERA3 ||
-      type === DeviceType.CAMERA3C ||
       type === DeviceType.INDOOR_CAMERA_1080 ||
       type === DeviceType.INDOOR_PT_CAMERA_1080 ||
       type === DeviceType.SOLO_CAMERA ||
@@ -127,13 +116,7 @@ export class Device {
       type === DeviceType.INDOOR_COST_DOWN_CAMERA ||
       type === DeviceType.FLOODLIGHT_CAMERA_8422 ||
       type === DeviceType.FLOODLIGHT_CAMERA_8423 ||
-      type === DeviceType.FLOODLIGHT_CAMERA_8424 ||
-      type === DeviceType.WALL_LIGHT_CAM ||
-      type === DeviceType.WALL_LIGHT_CAM_81A0 ||
-      type === DeviceType.CAMERA_GARAGE_T8453_COMMON ||
-      type === DeviceType.CAMERA_GARAGE_T8453 ||
-      type === DeviceType.CAMERA_GARAGE_T8452 ||
-      type === DeviceType.CAMERA_FG
+      type === DeviceType.FLOODLIGHT_CAMERA_8424
     ) {
       return true;
     }
@@ -157,11 +140,7 @@ export class Device {
       type === DeviceType.INDOOR_PT_CAMERA ||
       type === DeviceType.INDOOR_PT_CAMERA_1080 ||
       type === DeviceType.INDOOR_COST_DOWN_CAMERA ||
-      type === DeviceType.FLOODLIGHT_CAMERA_8423 ||
-      type === DeviceType.CAMERA_GARAGE_T8453_COMMON ||
-      type === DeviceType.CAMERA_GARAGE_T8453 ||
-      type === DeviceType.CAMERA_GARAGE_T8452 ||
-      type === DeviceType.CAMERA_FG
+      type === DeviceType.FLOODLIGHT_CAMERA_8423
     );
   }
 
@@ -194,13 +173,7 @@ export class Device {
       type === DeviceType.FLOODLIGHT ||
       type === DeviceType.FLOODLIGHT_CAMERA_8422 ||
       type === DeviceType.FLOODLIGHT_CAMERA_8423 ||
-      type === DeviceType.FLOODLIGHT_CAMERA_8424 ||
-      type === DeviceType.WALL_LIGHT_CAM ||
-      type === DeviceType.WALL_LIGHT_CAM_81A0 ||
-      type === DeviceType.CAMERA_GARAGE_T8453_COMMON ||
-      type === DeviceType.CAMERA_GARAGE_T8453 ||
-      type === DeviceType.CAMERA_GARAGE_T8452 ||
-      type === DeviceType.CAMERA_FG
+      type === DeviceType.FLOODLIGHT_CAMERA_8424
     );
   }
 }

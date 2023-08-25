@@ -60,9 +60,8 @@
             </div>
             <p></p>
             <div class="form-floating mb-3">
-                <ng-template #deviceNameExplanation>You can leave this field blank.<p></p>This will set the an option in the api calls to the eufy cloud, so that the servers think this plugin uses the official eufy app on the given device. If left blank the plugin will use a random device identifier. See <a href="https://github.com/homebridge-eufy-security/plugin/issues/201"  target="_blank" rel="noopener noreferrer" style="color: white">this disussion</a> to learn more.</ng-template>
                 <input type="text" [attr.class]="passwordIsValid ? 'form-control' : 'form-control is-invalid'" id="floatingDevice" placeholder="Device Name"
-                    [(ngModel)]="credentials.deviceName" [attr.disabled]="loginInProgress ? true : null" placement="top" [ngbTooltip]="deviceNameExplanation" [closeDelay]="2500">
+                    [(ngModel)]="credentials.deviceName" [attr.disabled]="loginInProgress ? true : null">
                 <label for="floatingDevice">Device Name</label>
             </div>
 

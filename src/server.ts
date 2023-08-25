@@ -4,8 +4,7 @@ import { HomebridgePluginUiServer } from '@homebridge/plugin-ui-utils';
 
 import fs from 'fs';
 import path from 'path';
-import { Logger as TsLogger } from 'tslog';
-import { createStream } from 'rotating-file-stream';
+import bunyan from 'bunyan';
 import { Zip } from 'zip-lib';
 
 import { Accessory } from './configui/app/accessory';
@@ -20,7 +19,7 @@ class UiServer extends HomebridgePluginUiServer {
   config: EufySecurityConfig;
   eufyClient: EufySecurity | null;
 
-  private log;
+  private log: bunyan;
 
   private logZipFilePath: string;
 
@@ -37,48 +36,16 @@ class UiServer extends HomebridgePluginUiServer {
 
     const plugin = require('../package.json');
 
-    const mainLogObj = {
-      // eslint-disable-next-line max-len
-      prettyLogTemplate: `[{{mm}}/{{dd}}/{{yyyy}} {{hh}}:{{MM}}:{{ss}}]\t[EufySecurity-${plugin.version}]\t{{logLevelName}}\t[{{fileNameWithLine}}{{name}}]\t`,
-      prettyErrorTemplate: '\n{{errorName}} {{errorMessage}}\nerror stack:\n{{errorStack}}',
-      prettyErrorStackTemplate: '  • {{fileName}}\t{{method}}\n\t{{fileNameWithLine}}',
-      prettyErrorParentNamesSeparator: ':',
-      prettyErrorLoggerNameDelimiter: '\t',
-      stylePrettyLogs: true,
-      minLevel: 3,
-      // prettyLogTimeZone: 'UTC',
-      prettyLogStyles: {
-        logLevelName: {
-          '*': ['bold', 'black', 'bgWhiteBright', 'dim'],
-          SILLY: ['bold', 'white'],
-          TRACE: ['bold', 'whiteBright'],
-          DEBUG: ['bold', 'green'],
-          INFO: ['bold', 'blue'],
-          WARN: ['bold', 'yellow'],
-          ERROR: ['bold', 'red'],
-          FATAL: ['bold', 'redBright'],
-        },
-        dateIsoStr: 'white',
-        filePathWithLine: 'white',
-        name: ['white', 'bold'],
-        nameWithDelimiterPrefix: ['white', 'bold'],
-        nameWithDelimiterSuffix: ['white', 'bold'],
-        errorName: ['bold', 'bgRedBright', 'whiteBright'],
-        fileName: ['yellow'],
-      },
-    };
-
-    this.log = new TsLogger(mainLogObj);
-
-    const pluginLogStream = createStream('configui-server.log', {
-      path: this.storagePath,
-      interval: '1d',
-      rotate: 3,
-      maxSize: '200M',
-    });
-
-    this.log.attachTransport((logObj) => {
-      pluginLogStream.write(JSON.stringify(logObj) + '\n');
+    this.log = bunyan.createLogger({
+      name: '[EufySecurity-' + plugin.version + ']',
+      hostname: '',
+      streams: [{
+        level: 'debug',
+        type: 'rotating-file',
+        path: this.storagePath + '/configui-server.log',
+        period: '1d',
+        count: 3,
+      }],
     });
 
     this.log.debug('Using bropats eufy-security-client library in version ' + libVersion);
