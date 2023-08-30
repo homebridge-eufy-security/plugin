@@ -167,6 +167,7 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
     this.config.ignoreStations = this.config.ignoreStations ??= [];
     this.config.ignoreDevices = this.config.ignoreDevices ??= [];
     this.config.cleanCache = this.config.cleanCache ??= true;
+    this.config.unbridge = this.config.unbridge ??= true;
 
     this.log.info('Country set:', this.config.country ?? 'US');
 
