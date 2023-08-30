@@ -9,7 +9,6 @@ export type CameraConfig = {
   switches?: boolean;
   motionTimeout?: number;
   motionDoorbell?: boolean;
-  unbridge?: boolean;
   videoConfig?: VideoConfig;
   enableButton: boolean;
   motionButton: boolean;

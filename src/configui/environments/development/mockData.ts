@@ -517,6 +517,7 @@ export const DEFAULT_PLUGIN_CONFIG: PluginConfig = {
   enableDetailedLogging: true,
   CameraMaxLivestreamDuration: 60,
   cleanCache: true,
+  unbridge: true,
   cameras: [
     {
       serialNumber: 'T8210P1111111111',
@@ -524,7 +525,6 @@ export const DEFAULT_PLUGIN_CONFIG: PluginConfig = {
       enableButton: true,
       motionButton: true,
       rtsp: false,
-      unbridge: false,
       forcerefreshsnap: false,
       useCachedLocalLivestream: true,
       useEnhancedSnapshotBehaviour: true,

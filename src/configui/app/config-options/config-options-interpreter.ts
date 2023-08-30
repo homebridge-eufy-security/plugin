@@ -3,16 +3,17 @@
 import { PluginConfig } from '@homebridge/plugin-ui-utils/dist/ui.interface';
 import { Accessory } from '../accessory';
 import { PluginService } from '../plugin.service';
+import { DEFAULT_CONFIG_VALUES } from '../../app/util/default-config-values';
 
 export class ConfigOptionsInterpreter {
   config: PluginConfig;
 
   constructor(protected pluginService: PluginService) {
-    this.config = {};
+    this.config = DEFAULT_CONFIG_VALUES;
     this.pluginService
       .getConfig()
       .then((config) => {
-        this.config = config;
+        this.config = {...this.config, config};
       })
       .catch((err) => console.log('Could not get config in config interpreter: ' + err));
   }
@@ -44,6 +45,7 @@ export class ConfigOptionsInterpreter {
 
     if (!accessory) {
       config = {
+        ...DEFAULT_CONFIG_VALUES,
         ...config,
         ...options,
       };

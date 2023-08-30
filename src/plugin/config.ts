@@ -27,4 +27,5 @@ export interface EufySecurityPlatformConfig extends PlatformConfig {
   cameras: CameraConfig[];
   stations: StationConfig[];
   cleanCache: boolean;
+  unbridge: boolean;
 }
