@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { PluginService } from '../../../app/plugin.service';
 import { ConfigOptionsInterpreter } from '../config-options-interpreter';
+import { DEFAULT_CONFIG_VALUES } from '../../../app/util/default-config-values';
 
 @Component({
   selector: 'app-unbridge-accessory',
@@ -25,9 +26,10 @@ export class UnbridgeAccessoryComponent extends ConfigOptionsInterpreter impleme
   model = false;
 
   readValue() {
-    if (Object.prototype.hasOwnProperty.call(this.config, 'unbridge')) {
-      this.model = this.config['unbridge'];
-    }
+    const unbridgeValue = Object.prototype.hasOwnProperty.call(this.config, 'unbridge')
+      ? this.config['unbridge']
+      : DEFAULT_CONFIG_VALUES.unbridge;
+    this.model = unbridgeValue;
   }
 
   update() {
