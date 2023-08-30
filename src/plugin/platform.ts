@@ -258,10 +258,11 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
     if (station.getRawStation().member.member_type === 1) {
       this.log.info('You\'re using guest admin account with this plugin! This is recommanded way!');
     } else {
-      this.log.error('You\'re not using guest admin account with this plugin! This is not recommanded way!');
-      this.log.error('Please look here for more details:');
-      this.log.error('https://github.com/homebridge-eufy-security/plugin/wiki/Installation');
-      this.log.error(station.getSerial() + ' type: ' + station.getRawStation().member.member_type);
+      throw Error(`
+      You're not using guest admin account with this plugin! This is not recommanded way!
+      Please look here for more details: https://github.com/homebridge-eufy-security/plugin/wiki/Installation
+      ${station.getSerial()} type: ${station.getRawStation().member.member_type}
+      `);
     }
 
     if (this.config.ignoreStations.indexOf(station.getSerial()) !== -1) {
@@ -496,24 +497,35 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
         this.log.warn('This accessory is not compatible with HomeBridge Eufy Security plugin:', accessory.displayName, 'Type:', type);
         return;
     }
+    
+    const isCamera = (device as Device).isCamera();
 
     if (exist) {
-      if (!this.config.unbridge) {
-        this.log.info('Updating accessory:', accessory.displayName);
+      if (!isCamera) {
+        // Rule: if a device exists and it's not a camera
         this.api.updatePlatformAccessories([accessory]);
-        return;
-      } else {
-        this.log.info(`Removing cached accessory ${accessory.UUID} ${accessory.displayName}`);
+        this.log.info(`Updating existing accessory: ${accessory.displayName}`);
+      } else if (this.config.unbridge) {
+        // Rule: if a device exists, it's a camera, and unbridge is true
         this.api.unregisterPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [accessory]);
+        this.log.info(`Unregistering unbridged accessory: ${accessory.displayName}`);
       }
-    }
-
-    if (this.config.unbridge) {
-      this.log.info('Adding new unbridged accessory:', accessory.displayName);
-      this.api.publishExternalAccessories(PLUGIN_NAME, [accessory]);
     } else {
-      this.log.info('Adding new accessory:', accessory.displayName);
-      this.api.registerPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [accessory]);
+      if (!isCamera) {
+        // Rule: if a device doesn't exist and it's not a camera
+        this.api.registerPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [accessory]);
+        this.log.info(`Registering new accessory: ${accessory.displayName}`);
+      } else {
+        if (this.config.unbridge) {
+          // Rule: if a device doesn't exist, it's a camera, and unbridge is true
+          this.api.publishExternalAccessories(PLUGIN_NAME, [accessory]);
+          this.log.info(`Publishing unbridged accessory externally: ${accessory.displayName}`);
+        } else {
+          // Rule: if a device doesn't exist, it's a camera, and unbridge is false
+          this.api.registerPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [accessory]);
+          this.log.info(`Registering new accessory: ${accessory.displayName}`);
+        }
+      }
     }
 
   }
