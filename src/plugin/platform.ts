@@ -434,8 +434,6 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
       }
     }
 
-    let a;
-
     switch (type) {
       case DeviceType.STATION:
       case DeviceType.HB3:
