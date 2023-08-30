@@ -20,8 +20,7 @@ import { EntrySensorAccessory } from './accessories/EntrySensorAccessory';
 import { MotionSensorAccessory } from './accessories/MotionSensorAccessory';
 import { CameraAccessory } from './accessories/CameraAccessory';
 import { DoorbellCameraAccessory } from './accessories/DoorbellCameraAccessory';
-import { KeypadAccessory } from './accessories/KeypadAccessory';
-import { SmartLockAccessory } from './accessories/SmartLockAccessory';
+import { LockAccessory } from './accessories/LockAccessory';
 
 import {
   EufySecurity,
@@ -492,7 +491,7 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
       case DeviceType.LOCK_WIFI:
       case DeviceType.LOCK_BLE_NO_FINGER:
       case DeviceType.LOCK_WIFI_NO_FINGER:
-        new SmartLockAccessory(this, accessory, device as Lock);
+        new LockAccessory(this, accessory, device as Lock);
         break;
       default:
         this.log.warn('This accessory is not compatible with HomeBridge Eufy Security plugin:', accessory.displayName, 'Type:', type);

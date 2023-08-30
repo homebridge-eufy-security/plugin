@@ -1,13 +1,10 @@
-import { Service, PlatformAccessory, CharacteristicValue } from 'homebridge';
-
+import { PlatformAccessory } from 'homebridge';
 import { EufySecurityPlatform } from '../platform';
 import { DeviceAccessory } from './Device';
 
-// import { HttpService, LocalLookupService, DeviceClientService, CommandType } from 'eufy-node-client';
-
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore  
-import { Device, MotionSensor, PropertyName } from 'eufy-security-client';
+import { MotionSensor, PropertyName } from 'eufy-security-client';
 
 /**
  * Platform Accessory
@@ -16,68 +13,29 @@ import { Device, MotionSensor, PropertyName } from 'eufy-security-client';
  */
 export class MotionSensorAccessory extends DeviceAccessory {
 
-  protected service: Service;
-  protected MotionSensor: MotionSensor;
-
   constructor(
     platform: EufySecurityPlatform,
     accessory: PlatformAccessory,
-    eufyDevice: MotionSensor,
+    device: MotionSensor,
   ) {
-    super(platform, accessory, eufyDevice);
+    super(platform, accessory, device);
 
-    this.platform.log.debug(this.accessory.displayName, 'Constructed Motion Sensor');
+    this.platform.log.debug(`${this.accessory.displayName} Constructed Motion Sensor`);
 
-    this.MotionSensor = eufyDevice;
+    if (this.device.hasProperty('motionDetected')) {
 
-    this.service =
-      this.accessory.getService(this.platform.Service.MotionSensor) ||
-      this.accessory.addService(this.platform.Service.MotionSensor);
+      this.registerCharacteristic({
+        serviceType: this.platform.Service.MotionSensor,
+        characteristicType: this.platform.Characteristic.MotionDetected,
+        getValue: (data) => this.device.getPropertyValue(PropertyName.DeviceMotionDetected),
+        onSimpleValue: 'motion detected',
+      });
 
-    this.service.setCharacteristic(
-      this.platform.Characteristic.Name,
-      this.accessory.displayName,
-    );
+      this.initSensorService(this.platform.Service.MotionSensor);
 
-    try {
-      if (this.eufyDevice.hasProperty('motionDetected')) {
-        this.platform.log.debug(this.accessory.displayName, 'has a motionDetected, so append MotionDetected characteristic to him.');
-
-        // create handlers for required characteristics
-        this.service
-          .getCharacteristic(this.platform.Characteristic.MotionDetected)
-          .onGet(this.handleMotionDetectedGet.bind(this));
-
-        this.MotionSensor.on('motion detected', (device: Device, motion: boolean) =>
-          this.onDeviceMotionDetectedPushNotification(device, motion),
-        );
-
-      } else {
-        this.platform.log.warn(this.accessory.displayName, 'has no motionDetected');
-      }
-    } catch (Error) {
-      this.platform.log.error(this.accessory.displayName, 'raise error to check and attach a motionDetected.', Error);
+    } else {
+      this.platform.log.warn(`${this.accessory.displayName} has no motionDetected`);
+      throw Error(`${this.accessory.displayName} raise error to check and attach a motionDetected: ${Error}`);
     }
-  }
-
-  async handleMotionDetectedGet(): Promise<CharacteristicValue> {
-    try {
-      const currentValue = this.MotionSensor.getPropertyValue(PropertyName.DeviceMotionDetected);
-      this.platform.log.debug(this.accessory.displayName, 'GET DeviceMotionDetected:', currentValue);
-      return currentValue as boolean;
-    } catch {
-      this.platform.log.error(this.accessory.displayName, 'handleMotionDetectedGet', 'Wrong return value');
-      return false;
-    }
-  }
-
-  private onDeviceMotionDetectedPushNotification(
-    device: Device,
-    motion: boolean,
-  ): void {
-    this.platform.log.debug(this.accessory.displayName, 'Handle Camera motion:', motion);
-    this.service
-      .getCharacteristic(this.characteristic.MotionDetected)
-      .updateValue(motion);
   }
 }
