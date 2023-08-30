@@ -404,8 +404,6 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
 
     this.log.debug(accessory.displayName, 'UUID:', accessory.UUID);
 
-    let unbridge = false;
-
     const station = container.deviceIdentifier.station;
     let type = container.deviceIdentifier.type;
     const device = container.eufyDevice;
@@ -478,16 +476,14 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
       case DeviceType.CAMERA_GARAGE_T8453_COMMON:
       case DeviceType.CAMERA_GARAGE_T8453:
       case DeviceType.CAMERA_GARAGE_T8452:
-        a = new CameraAccessory(this, accessory, device as Camera);
-        unbridge = (a.cameraConfig.enableCamera) ? a.cameraConfig.unbridge ??= false : false;
+        new CameraAccessory(this, accessory, device as Camera);
         break;
       case DeviceType.DOORBELL:
       case DeviceType.BATTERY_DOORBELL:
       case DeviceType.BATTERY_DOORBELL_2:
       case DeviceType.BATTERY_DOORBELL_PLUS:
       case DeviceType.DOORBELL_SOLO:
-        a = new DoorbellCameraAccessory(this, accessory, device as DoorbellCamera);
-        unbridge = (a.cameraConfig.enableCamera) ? a.cameraConfig.unbridge ??= false : false;
+        new DoorbellCameraAccessory(this, accessory, device as DoorbellCamera);
         break;
       case DeviceType.SENSOR:
         new EntrySensorAccessory(this, accessory, device as EntrySensor);
@@ -504,7 +500,7 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
     }
 
     if (exist) {
-      if (!unbridge) {
+      if (!this.config.unbridge) {
         this.log.info('Updating accessory:', accessory.displayName);
         this.api.updatePlatformAccessories([accessory]);
         return;
@@ -514,7 +510,7 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
       }
     }
 
-    if (unbridge) {
+    if (this.config.unbridge) {
       this.log.info('Adding new unbridged accessory:', accessory.displayName);
       this.api.publishExternalAccessories(PLUGIN_NAME, [accessory]);
     } else {
@@ -593,11 +589,11 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
             this.log.warn('Found camera ' + cachedAccessory.context['device'].displayName + ' (' + cachedAccessory.context['device'].uniqueId + ') with invalid camera configuration option enableCamera. Attempt to repair. This should only happen once per device...');
             pluginConfig.cameras[i]['enableCamera'] = true;
 
-            if (camera.unbridge) {
-              // eslint-disable-next-line max-len
-              this.log.warn('Camera ' + cachedAccessory.context['device'].displayName + ' (' + cachedAccessory.context['device'].uniqueId + ') had camera configuration option \'unbridge\' set to true. This will be set to false to maintain functionality. See https://github.com/homebridge-eufy-security/plugin/issues/79 for more information.');
-              pluginConfig.cameras[i]['unbridge'] = false;
-            }
+            // if (camera.unbridge) {
+            //   // eslint-disable-next-line max-len
+            //   this.log.warn('Camera ' + cachedAccessory.context['device'].displayName + ' (' + cachedAccessory.context['device'].uniqueId + ') had camera configuration option \'unbridge\' set to true. This will be set to false to maintain functionality. See https://github.com/homebridge-eufy-security/plugin/issues/79 for more information.');
+            //   pluginConfig.cameras[i]['unbridge'] = false;
+            // }
           }
         }
       }

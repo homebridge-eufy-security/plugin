@@ -1,7 +1,5 @@
-import { Component, OnInit, Input } from '@angular/core';
-import { Accessory } from '../../../app/accessory';
+import { Component, OnInit } from '@angular/core';
 import { PluginService } from '../../../app/plugin.service';
-import { DEFAULT_CAMERACONFIG_VALUES } from '../../util/default-config-values';
 import { ConfigOptionsInterpreter } from '../config-options-interpreter';
 
 @Component({
@@ -24,23 +22,17 @@ export class UnbridgeAccessoryComponent extends ConfigOptionsInterpreter impleme
 
   /** updateConfig() takes an optional second parameter to specify the accessoriy for which the setting is changed */
 
-  @Input() accessory?: Accessory;
-  value = DEFAULT_CAMERACONFIG_VALUES.unbridge;
+  model = false;
 
-  async readValue() {
-    const config = await this.getCameraConfig(this.accessory?.uniqueId || '');
-
-    if (config && Object.prototype.hasOwnProperty.call(config, 'unbridge')) {
-      this.value = config['unbridge'];
+  readValue() {
+    if (Object.prototype.hasOwnProperty.call(this.config, 'unbridge')) {
+      this.model = this.config['unbridge'];
     }
   }
 
   update() {
-    this.updateConfig(
-      {
-        unbridge: this.value,
-      },
-      this.accessory,
-    );
+    this.updateConfig({
+      unbridge: this.model,
+    });
   }
 }

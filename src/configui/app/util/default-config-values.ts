@@ -13,10 +13,10 @@ export const DEFAULT_CONFIG_VALUES = {
   ffmpegdebug: false, // deprecated?
   cameras: [],
   cleanCache: true,
+  unbridge: true,
 };
 
 export const DEFAULT_CAMERACONFIG_VALUES = {
-  unbridge: false,
   enableButton: true,
   motionButton: true,
   rtsp: false,
