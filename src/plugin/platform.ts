@@ -497,7 +497,7 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
         this.log.warn('This accessory is not compatible with HomeBridge Eufy Security plugin:', accessory.displayName, 'Type:', type);
         return;
     }
-    
+
     const isCamera = (device as Device).isCamera();
 
     if (exist) {
@@ -600,7 +600,7 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
             pluginConfig.cameras[i]['enableCamera'] = true;
 
             // if (camera.unbridge) {
-            //   // eslint-disable-next-line max-len
+            // eslint-disable-next-line max-len
             //   this.log.warn('Camera ' + cachedAccessory.context['device'].displayName + ' (' + cachedAccessory.context['device'].uniqueId + ') had camera configuration option \'unbridge\' set to true. This will be set to false to maintain functionality. See https://github.com/homebridge-eufy-security/plugin/issues/79 for more information.');
             //   pluginConfig.cameras[i]['unbridge'] = false;
             // }
