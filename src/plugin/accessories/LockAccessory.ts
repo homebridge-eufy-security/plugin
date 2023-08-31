@@ -39,7 +39,7 @@ export class LockAccessory extends DeviceAccessory {
         serviceType: this.platform.Service.LockMechanism,
         characteristicType: this.platform.Characteristic.LockTargetState,
         getValue: (data) => this.getLockStatus(),
-        setValue: (data) => this.device.setPropertyValue(PropertyName.DeviceLocked),
+        setValue: (value) => this.setTargetState(value),
         onValue: (service, characteristic) => {
           this.device.on('locked', () => {
             characteristic.updateValue(this.convertLockStatusCode(this.getLockStatus()));
@@ -55,9 +55,22 @@ export class LockAccessory extends DeviceAccessory {
     }
   }
 
-  getLockStatus() {
+  private getLockStatus() {
     const lockStatus = this.device.getPropertyValue(PropertyName.DeviceLocked);
+    this.platform.log.debug(`${this.accessory.displayName} getLockStatus: ${lockStatus}`);
     return this.convertLockStatusCode(lockStatus);
+  }
+
+  private async setTargetState(state: CharacteristicValue) {
+    this.platform.log.debug(this.accessory.displayName, 'Triggered SET LockTargetState', state);
+
+    try {
+      const stationSerial = this.device.getStationSerial();
+      const station = await this.platform.getStationById(stationSerial);
+      await station.lockDevice(this.device, !!state);
+    } catch (err) {
+      this.platform.log.error(this.accessory.displayName, 'Lock target state could not be set: ' + err);
+    }
   }
 
   // Function to convert lock status codes to corresponding HomeKit lock states
@@ -92,22 +105,11 @@ export class LockAccessory extends DeviceAccessory {
   }
 
   private onSmartLockPropertyChange(service: Service, characteristic: Characteristic, value) {
-      this.platform.log.debug(`${this.accessory.displayName} Handle Lock Status:  -- ', ${value}`);
+    this.platform.log.debug(`${this.accessory.displayName} Handle Lock Status:  -- ', ${value}`);
 
-      this.service
-        .getCharacteristic(this.platform.Characteristic.LockCurrentState)
-        .updateValue(this.convertLockStatusCode(value));
+    this.service
+      .getCharacteristic(this.platform.Characteristic.LockCurrentState)
+      .updateValue(this.convertLockStatusCode(value));
   }
 
-  async handleLockTargetStateSet(value) {
-    this.platform.log.debug(this.accessory.displayName, 'Triggered SET LockTargetState', value);
-
-    try {
-      const stationSerial = this.device.getStationSerial();
-      const station = await this.platform.getStationById(stationSerial);
-      await station.lockDevice(this.device, !!value);
-    } catch (err) {
-      this.platform.log.error(this.accessory.displayName, 'Lock target state could not be set: ' + err);
-    }
-  }
 }

@@ -83,20 +83,12 @@ export abstract class DeviceAccessory extends EventEmitter {
     this.pruneUnusedServices();
   }
 
-  protected handleRawPropertyChange(
-    device: Device,
-    type: number,
-    value: string,
-  ): void {
-    this.platform.log.debug(`${this.accessory.displayName} 'Raw Property Changes:' ${type} ${value}`);
+  protected handleRawPropertyChange(device: Device, type: number, value: string,): void {
+    this.platform.log.debug(`${this.accessory.displayName} Raw Property Changes: ${type} ${value}`);
   }
 
-  protected handlePropertyChange(
-    device: Device,
-    name: string,
-    value: PropertyValue,
-  ): void {
-    this.platform.log.debug(`${this.accessory.displayName} 'Property Changes:' ${name} ${value}`);
+  protected handlePropertyChange(device: Device, name: string, value: PropertyValue,): void {
+    this.platform.log.debug(`${this.accessory.displayName} Property Changes: ${name} ${value}`);
   }
 
   /**
@@ -111,14 +103,6 @@ export abstract class DeviceAccessory extends EventEmitter {
       this.platform.log.debug(`${this.accessory.displayName} Error getting '${characteristic}' ${propertyName}: ${error}`);
       return false;
     }
-  }
-
-  /**
-   * Get the current value of the "propertyName" characteristic
-   */
-  protected setPropertyValue(characteristic: string, propertyName: PropertyName, value: CharacteristicValue) {
-    // eslint-disable-next-line max-len
-    this.platform.log.debug(`${this.accessory.displayName} SET '${typeof characteristic} / ${characteristic}' ${propertyName}: ${value}`);
   }
 
   protected onPushNotification(
@@ -150,7 +134,7 @@ export abstract class DeviceAccessory extends EventEmitter {
     // eslint-disable-next-line
     getValue: (data: any) => any;
     // eslint-disable-next-line
-    setValue?: (data: any) => any;
+    setValue?: (value: any) => any;
     // eslint-disable-next-line
     onValue?: (service: Service, characteristic: Characteristic) => any;
     onSimpleValue?: string;
@@ -161,19 +145,16 @@ export abstract class DeviceAccessory extends EventEmitter {
     // eslint-disable-next-line max-len
     this.platform.log.debug(`${this.accessory.displayName} REGISTER SERVICE '${serviceType.name} / ${characteristic.displayName}': ${characteristic.UUID}`);
 
-    if (getValue) {
-      // Only register for GET if an async request should be made to get an updated value
-      characteristic.onGet(async (data) => {
-        const value = getValue(data);
-        this.platform.log.debug(`${this.accessory.displayName} GET '${serviceType.name} / ${characteristicType.name}': ${value}`);
-        return value;
-      });
-    }
+    characteristic.onGet(async (data) => {
+      const value = getValue(data);
+      this.platform.log.debug(`${this.accessory.displayName} GET '${serviceType.name} / ${characteristicType.name}': ${value}`);
+      return value;
+    });
 
     if (setValue) {
-      characteristic.onSet(async (value) => {
-        setValue.bind(value);
+      characteristic.onSet(async (value: CharacteristicValue) => {
         this.platform.log.debug(`${this.accessory.displayName} SET '${serviceType.name} / ${characteristicType.name}': ${setValue}`);
+        Promise.resolve(setValue(value));
       });
     }
 
@@ -187,6 +168,7 @@ export abstract class DeviceAccessory extends EventEmitter {
     } else if (onValue) {
       onValue(service, characteristic);
     }
+
   }
 
   protected getService(
