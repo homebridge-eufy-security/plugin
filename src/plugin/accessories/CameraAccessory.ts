@@ -33,11 +33,10 @@ export class CameraAccessory extends DeviceAccessory {
   constructor(
     platform: EufySecurityPlatform,
     accessory: PlatformAccessory,
-    eufyDevice: Camera,
+    device: Camera,
   ) {
-    super(platform, accessory, eufyDevice);
+    super(platform, accessory, device);
 
-    this.service = {} as Service;
     this.CameraService = {} as Service;
     this.cameraConfig = {} as CameraConfig;
 
@@ -54,7 +53,7 @@ export class CameraAccessory extends DeviceAccessory {
       try {
         this.CameraService = this.cameraFunction();
         this.CameraService.setPrimaryService(true);
-        const delegate = new StreamingDelegate(this.platform, eufyDevice, this.cameraConfig, this.platform.api, this.platform.api.hap);
+        const delegate = new StreamingDelegate(this.platform, device, this.cameraConfig, this.platform.api, this.platform.api.hap);
         this.streamingDelegate = delegate;
         accessory.configureController(delegate.controller);
       } catch (error) {
@@ -65,7 +64,7 @@ export class CameraAccessory extends DeviceAccessory {
       this.platform.log.debug(this.accessory.displayName, 'has a motion sensor.');
     }
 
-    this.service = this.setupMotionFunction(accessory);
+    this.setupMotionFunction(accessory);
     this.setupEnableButton();
     this.setupMotionButton();
     this.setupLightButton();
@@ -84,7 +83,6 @@ export class CameraAccessory extends DeviceAccessory {
         // eslint-disable-next-line max-len
         this.platform.log.debug(`${this.accessory.displayName} has a ${PropertyName}, so append ${serviceType}${serviceName} characteristic to it.`);
         const newService = this.setupSwitchService(serviceName, serviceType, PropertyName);
-        this.service.addLinkedService(newService);
       } else {
         // eslint-disable-next-line max-len
         this.platform.log.debug(`${this.accessory.displayName} Looks like not compatible with ${PropertyName} or this has been disabled within configuration`);
@@ -159,31 +157,33 @@ export class CameraAccessory extends DeviceAccessory {
       .onSet(this.handleDummyEventSet.bind(this, 'EventSnapshotsActive'));
 
     service.getCharacteristic(this.platform.Characteristic.HomeKitCameraActive)
-      .onGet(this.getPropertyValue.bind(this, 'this.platform.Characteristic.HomeKitCameraActive', PropertyName.DeviceEnabled))
-      .onSet(this.getPropertyValue.bind(this, 'this.platform.Characteristic.HomeKitCameraActive', PropertyName.DeviceEnabled));
+      .onGet(this.getCameraPropertyValue.bind(this, 'this.platform.Characteristic.HomeKitCameraActive', PropertyName.DeviceEnabled))
+      .onSet(this.setCameraPropertyValue.bind(this, 'this.platform.Characteristic.HomeKitCameraActive', PropertyName.DeviceEnabled));
 
 
     if (this.device.hasProperty('enabled')) {
       service.getCharacteristic(this.platform.Characteristic.ManuallyDisabled)
-        .onGet(this.getPropertyValue.bind(this, 'this.platform.Characteristic.ManuallyDisabled', PropertyName.DeviceEnabled));
+        .onGet(this.getCameraPropertyValue.bind(this, 'this.platform.Characteristic.ManuallyDisabled', PropertyName.DeviceEnabled));
     }
 
     if (this.device.hasProperty('statusLed')) {
       service.getCharacteristic(this.platform.Characteristic.CameraOperatingModeIndicator)
-        .onGet(this.getPropertyValue.bind(this, 'this.platform.Characteristic.CameraOperatingModeIndicator', PropertyName.DeviceStatusLed))
-        .onSet(this.setPropertyValue.bind(this, 'this.platform.Characteristic.CameraOperatingModeIndicator', PropertyName.DeviceStatusLed));
+        // eslint-disable-next-line max-len
+        .onGet(this.getCameraPropertyValue.bind(this, 'this.platform.Characteristic.CameraOperatingModeIndicator', PropertyName.DeviceStatusLed))
+        // eslint-disable-next-line max-len
+        .onSet(this.setCameraPropertyValue.bind(this, 'this.platform.Characteristic.CameraOperatingModeIndicator', PropertyName.DeviceStatusLed));
     }
 
     if (this.device.hasProperty('nightvision')) {
       service.getCharacteristic(this.platform.Characteristic.NightVision)
-        .onGet(this.getPropertyValue.bind(this, 'this.platform.Characteristic.NightVision', PropertyName.DeviceNightvision))
-        .onSet(this.setPropertyValue.bind(this, 'this.platform.Characteristic.NightVision', PropertyName.DeviceNightvision));
+        .onGet(this.getCameraPropertyValue.bind(this, 'this.platform.Characteristic.NightVision', PropertyName.DeviceNightvision))
+        .onSet(this.setCameraPropertyValue.bind(this, 'this.platform.Characteristic.NightVision', PropertyName.DeviceNightvision));
     }
 
     if (this.device.hasProperty('autoNightvision')) {
       service.getCharacteristic(this.platform.Characteristic.NightVision)
-        .onGet(this.getPropertyValue.bind(this, 'this.platform.Characteristic.NightVision', PropertyName.DeviceAutoNightvision))
-        .onSet(this.setPropertyValue.bind(this, 'this.platform.Characteristic.NightVision', PropertyName.DeviceAutoNightvision));
+        .onGet(this.getCameraPropertyValue.bind(this, 'this.platform.Characteristic.NightVision', PropertyName.DeviceAutoNightvision))
+        .onSet(this.setCameraPropertyValue.bind(this, 'this.platform.Characteristic.NightVision', PropertyName.DeviceAutoNightvision));
     }
 
     this.device.on('property changed', (device: Device, name: string, value: PropertyValue) =>
@@ -207,7 +207,7 @@ export class CameraAccessory extends DeviceAccessory {
       );
 
       service.getCharacteristic(this.platform.Characteristic.MotionDetected)
-        .onGet(this.getPropertyValue.bind(this, 'this.platform.Characteristic.MotionDetected', PropertyName.DeviceMotionDetected));
+        .onGet(this.getCameraPropertyValue.bind(this, 'this.platform.Characteristic.MotionDetected', PropertyName.DeviceMotionDetected));
 
       // List of event types
       const eventTypesToHandle: (keyof DeviceEvents)[] = [
@@ -244,9 +244,9 @@ export class CameraAccessory extends DeviceAccessory {
     if (motion) {
       this.motionTimeout = setTimeout(() => {
         this.platform.log.debug(this.accessory.displayName, 'Reseting motion through timout.');
-        this.service
-          .getCharacteristic(this.platform.Characteristic.MotionDetected)
-          .updateValue(false);
+        // this.service
+        //   .getCharacteristic(this.platform.Characteristic.MotionDetected)
+        //   .updateValue(false);
       }, 15000);
     } else {
       if (this.motionTimeout) {
@@ -256,9 +256,9 @@ export class CameraAccessory extends DeviceAccessory {
     if (this.cameraConfig.useCachedLocalLivestream && this.streamingDelegate && motion) {
       this.streamingDelegate.prepareCachedStream();
     }
-    this.service
-      .getCharacteristic(this.platform.Characteristic.MotionDetected)
-      .updateValue(motion);
+    // this.service
+    //   .getCharacteristic(this.platform.Characteristic.MotionDetected)
+    //   .updateValue(motion);
   }
 
   private setupSwitchService(
@@ -284,13 +284,13 @@ export class CameraAccessory extends DeviceAccessory {
     );
 
     service.getCharacteristic(this.platform.Characteristic.On)
-      .onGet(this.getPropertyValue.bind(this, 'this.platform.Characteristic.On', propertyName))
-      .onSet(this.setPropertyValue.bind(this, 'this.platform.Characteristic.On', propertyName));
+      .onGet(this.getCameraPropertyValue.bind(this, 'this.platform.Characteristic.On', propertyName))
+      .onSet(this.setCameraPropertyValue.bind(this, 'this.platform.Characteristic.On', propertyName));
 
     return service;
   }
 
-  override getPropertyValue(characteristic: string, propertyName: PropertyName): CharacteristicValue {
+  protected getCameraPropertyValue(characteristic: string, propertyName: PropertyName): CharacteristicValue {
     try {
       let value = this.device.getPropertyValue(propertyName);
       this.platform.log.debug(`${this.accessory.displayName} GET '${characteristic}' ${propertyName}: ${value}`);
@@ -298,7 +298,7 @@ export class CameraAccessory extends DeviceAccessory {
       if (propertyName === PropertyName.DeviceNightvision) {
         return value === 1;
       }
-      
+
       // Override for PropertyName.DeviceEnabled when enabled button is fired and 
       if (
         propertyName === PropertyName.DeviceEnabled &&
@@ -325,7 +325,7 @@ export class CameraAccessory extends DeviceAccessory {
     }
   }
 
-  override async setPropertyValue(characteristic: string, propertyName: PropertyName, value: CharacteristicValue) {
+  protected async setCameraPropertyValue(characteristic: string, propertyName: PropertyName, value: CharacteristicValue) {
     try {
 
       // eslint-disable-next-line max-len
@@ -370,7 +370,7 @@ export class CameraAccessory extends DeviceAccessory {
 
         case PropertyName.DeviceLight: {
           await station.switchLight(this.device, value as boolean);
-          this.service.updateCharacteristic(this.platform.Characteristic.On, value as boolean);
+          // this.service.updateCharacteristic(this.platform.Characteristic.On, value as boolean);
           break;
         }
 

@@ -24,10 +24,11 @@ export class DoorbellCameraAccessory extends CameraAccessory {
   constructor(
     platform: EufySecurityPlatform,
     accessory: PlatformAccessory,
-    eufyDevice: DoorbellCamera,
+    device: DoorbellCamera,
   ) {
-    super(platform, accessory, eufyDevice);
-    this.DoorbellCamera = eufyDevice;
+    super(platform, accessory, device);
+    super(platform, accessory, device);
+    this.DoorbellCamera = device;
 
     this.platform.log.debug(this.accessory.displayName, 'Constructed Doorbell');
 

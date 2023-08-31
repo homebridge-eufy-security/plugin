@@ -28,7 +28,9 @@ export class LockAccessory extends DeviceAccessory {
       this.registerCharacteristic({
         serviceType: this.platform.Service.LockManagement,
         characteristicType: this.platform.Characteristic.Version,
-        getValue: (data) => () => { return 1},
+        getValue: (data) => () => {
+          return 1;
+        },
       });
 
       this.registerCharacteristic({
@@ -69,11 +71,8 @@ export class LockAccessory extends DeviceAccessory {
   }
 
   private async setLockTargetState(state: CharacteristicValue) {
-    this.platform.log.debug(this.accessory.displayName, 'Triggered SET LockTargetState', state);
     try {
-      const stationSerial = this.device.getStationSerial();
-      const station = await this.platform.getStationById(stationSerial);
-      await station.lockDevice(this.device, !!state);
+      await this.setPropertyValue(PropertyName.DeviceLocked, !!state);
     } catch (err) {
       this.platform.log.error(this.accessory.displayName, 'Lock target state could not be set: ' + err);
     }
@@ -95,11 +94,16 @@ export class LockAccessory extends DeviceAccessory {
 
     // Determine the HomeKit lock state based on the provided lock status
     switch (lockStatus) {
-      case true: // If lockStatus is true (locked) or 4 (LOCKED)
+      // If lockStatus is true (locked) or 4 (LOCKED)◊
+      case true:
+      case 4:
         return this.platform.Characteristic.LockCurrentState.SECURED;
-      case false: // If lockStatus is false (unlocked) or 3 (UNLOCKED)
+      // If lockStatus is false (unlocked) or 3 (UNLOCKED)
+      case false:
+      case 3:
         return this.platform.Characteristic.LockCurrentState.UNSECURED;
-      case 5: // If lockStatus is 5 (MECHANICAL_ANOMALY)
+      // If lockStatus is 5 (MECHANICAL_ANOMALY)
+      case 5:
         // Return JAMMED as the lock state if jammed
         return this.platform.Characteristic.LockCurrentState.JAMMED;
       default:
