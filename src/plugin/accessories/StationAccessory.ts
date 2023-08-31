@@ -27,8 +27,6 @@ export class StationAccessory extends BaseAccessory {
   private alarm_delayed: boolean;
   private alarm_delay_timeout?: NodeJS.Timeout;
 
-  protected characteristic;
-
   public readonly stationConfig: StationConfig;
 
   private guardModeChangeTimeout: NodeJS.Timeout | null = null;
@@ -42,9 +40,6 @@ export class StationAccessory extends BaseAccessory {
     super(platform, accessory, device);
 
     this.platform.log.debug(this.accessory.displayName, 'Constructed Station');
-    // set accessory information
-
-    this.characteristic = this.platform.Characteristic;
 
     this.stationConfig = this.getStationConfig();
 
@@ -71,6 +66,9 @@ export class StationAccessory extends BaseAccessory {
         this.device.on('current mode', (station: Station, currentMode: number) => {
           this.onStationCurrentModePushNotification(characteristic, station, currentMode);
         });
+        this.device.on('alarm event', (station: Station, alarmEvent: AlarmEvent) =>
+          this.onStationAlarmEventPushNotification(characteristic, station, alarmEvent),
+        );
       },
     });
 
@@ -84,9 +82,6 @@ export class StationAccessory extends BaseAccessory {
         this.device.on('guard mode', (station: Station, guardMode: number) => {
           this.onStationGuardModePushNotification(characteristic, station, guardMode);
         });
-        this.device.on('alarm event', (station: Station, alarmEvent: AlarmEvent) =>
-          this.onStationAlarmEventPushNotification(characteristic, station, alarmEvent),
-        );
         this.device.on('alarm arm delay event', this.onStationAlarmDelayedEvent.bind(this));
         this.device.on('alarm armed event', this.onStationAlarmArmedEvent.bind(this));
       },
@@ -210,7 +205,7 @@ export class StationAccessory extends BaseAccessory {
       case 9: // Alarm triggered by CAMERA_GSENSOR
         this.platform.log.warn('ON StationAlarmEvent - ALARM TRIGGERED - alarmEvent:', AlarmEvent[alarmEvent]);
         this.alarm_triggered = true;
-        characteristic.updateValue(this.characteristic.SecuritySystemCurrentState.ALARM_TRIGGERED); // Alarm !!!
+        characteristic.updateValue(this.platform.Characteristic.SecuritySystemCurrentState.ALARM_TRIGGERED); // Alarm !!!
         break;
       case 0:  // Alarm off by Hub
       case 15: // Alarm off by Keypad
@@ -224,7 +219,7 @@ export class StationAccessory extends BaseAccessory {
         break;
       default:
         this.platform.log.warn('ON StationAlarmEvent - ALARM UNKNOWN - alarmEvent:', AlarmEvent[alarmEvent]);
-        characteristic.updateValue(this.characteristic.StatusFault.GENERAL_FAULT);
+        characteristic.updateValue(this.platform.Characteristic.StatusFault.GENERAL_FAULT);
         break;
     }
 
@@ -280,7 +275,7 @@ export class StationAccessory extends BaseAccessory {
    */
   protected handleSecuritySystemCurrentStateGet(): CharacteristicValue {
     if (this.alarm_triggered) {
-      return this.characteristic.SecuritySystemCurrentState.ALARM_TRIGGERED;
+      return this.platform.Characteristic.SecuritySystemCurrentState.ALARM_TRIGGERED;
     }
     try {
       const currentValue = this.device.getPropertyValue(PropertyName.StationCurrentMode);
@@ -330,9 +325,7 @@ export class StationAccessory extends BaseAccessory {
       this.device.setGuardMode(mode);
 
       this.guardModeChangeTimeout = setTimeout(() => {
-        this.platform.log.warn(`
-          ${this.accessory.displayName}
-          Changing guard mode to ${NameMode} did not complete. Retry...'`);
+        this.platform.log.warn(`${this.accessory.displayName} Changing guard mode to ${NameMode} did not complete. Retry...'`);
         this.device.setGuardMode(mode);
 
         this.retryGuardModeChangeTimeout = setTimeout(() => {
