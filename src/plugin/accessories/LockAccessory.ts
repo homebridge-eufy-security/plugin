@@ -24,6 +24,13 @@ export class LockAccessory extends DeviceAccessory {
 
     if (this.device.hasProperty('DeviceLocked')) {
 
+      // Append Service.LockManagement looks like mandatory for Apple's HAP but it seems to do nothing
+      this.registerCharacteristic({
+        serviceType: this.platform.Service.LockManagement,
+        characteristicType: this.platform.Characteristic.Version,
+        getValue: (data) => () => { return 1},
+      });
+
       this.registerCharacteristic({
         serviceType: this.platform.Service.LockMechanism,
         characteristicType: this.platform.Characteristic.LockCurrentState,
