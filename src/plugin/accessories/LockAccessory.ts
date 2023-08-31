@@ -39,7 +39,7 @@ export class LockAccessory extends DeviceAccessory {
         serviceType: this.platform.Service.LockMechanism,
         characteristicType: this.platform.Characteristic.LockTargetState,
         getValue: (data) => this.getLockStatus(),
-        setValue: (value) => this.setTargetState(value),
+        setValue: (value) => this.setLockTargetState(value),
         onValue: (service, characteristic) => {
           this.device.on('locked', () => {
             characteristic.updateValue(this.convertLockStatusCode(this.getLockStatus()));
@@ -61,9 +61,8 @@ export class LockAccessory extends DeviceAccessory {
     return this.convertLockStatusCode(lockStatus);
   }
 
-  private async setTargetState(state: CharacteristicValue) {
+  private async setLockTargetState(state: CharacteristicValue) {
     this.platform.log.debug(this.accessory.displayName, 'Triggered SET LockTargetState', state);
-
     try {
       const stationSerial = this.device.getStationSerial();
       const station = await this.platform.getStationById(stationSerial);
@@ -103,13 +102,4 @@ export class LockAccessory extends DeviceAccessory {
         return this.platform.Characteristic.LockCurrentState.UNKNOWN;
     }
   }
-
-  private onSmartLockPropertyChange(service: Service, characteristic: Characteristic, value) {
-    this.platform.log.debug(`${this.accessory.displayName} Handle Lock Status:  -- ', ${value}`);
-
-    this.service
-      .getCharacteristic(this.platform.Characteristic.LockCurrentState)
-      .updateValue(this.convertLockStatusCode(value));
-  }
-
 }
