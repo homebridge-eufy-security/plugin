@@ -415,6 +415,9 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
 
     */
 
+
+    let isCamera = false;
+
     if (station) {
       if (type !== DeviceType.STATION) {
         // Allowing camera but not the lock nor doorbell for now
@@ -433,72 +436,73 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
           return;
         }
       }
-    }
+    } else {
 
-    switch (type) {
-      case DeviceType.STATION:
-      case DeviceType.HB3:
-        new StationAccessory(this, accessory, device as Station);
-        break;
-      case DeviceType.MOTION_SENSOR:
-        new MotionSensorAccessory(this, accessory, device as MotionSensor);
-        break;
-      case DeviceType.CAMERA:
-      case DeviceType.CAMERA2:
-      case DeviceType.CAMERA_E:
-      case DeviceType.CAMERA2C:
-      case DeviceType.INDOOR_CAMERA:
-      case DeviceType.INDOOR_PT_CAMERA:
-      case DeviceType.INDOOR_COST_DOWN_CAMERA:
-      case DeviceType.FLOODLIGHT:
-      case DeviceType.CAMERA2C_PRO:
-      case DeviceType.CAMERA2_PRO:
-      case DeviceType.CAMERA3C:
-      case DeviceType.CAMERA3:
-      case DeviceType.CAMERA_GUN:
-      case DeviceType.CAMERA_FG:
-      case DeviceType.INDOOR_CAMERA_1080:
-      case DeviceType.INDOOR_PT_CAMERA_1080:
-      case DeviceType.SOLO_CAMERA:
-      case DeviceType.SOLO_CAMERA_PRO:
-      case DeviceType.SOLO_CAMERA_SPOTLIGHT_1080:
-      case DeviceType.SOLO_CAMERA_SPOTLIGHT_2K:
-      case DeviceType.SOLO_CAMERA_SPOTLIGHT_SOLAR:
-      case DeviceType.INDOOR_OUTDOOR_CAMERA_1080P:
-      case DeviceType.INDOOR_OUTDOOR_CAMERA_1080P_NO_LIGHT:
-      case DeviceType.INDOOR_OUTDOOR_CAMERA_2K:
-      case DeviceType.FLOODLIGHT_CAMERA_8422:
-      case DeviceType.FLOODLIGHT_CAMERA_8423:
-      case DeviceType.FLOODLIGHT_CAMERA_8424:
-      case DeviceType.WALL_LIGHT_CAM:
-      case DeviceType.WALL_LIGHT_CAM_81A0:
-      case DeviceType.CAMERA_GARAGE_T8453_COMMON:
-      case DeviceType.CAMERA_GARAGE_T8453:
-      case DeviceType.CAMERA_GARAGE_T8452:
-        new CameraAccessory(this, accessory, device as Camera);
-        break;
-      case DeviceType.DOORBELL:
-      case DeviceType.BATTERY_DOORBELL:
-      case DeviceType.BATTERY_DOORBELL_2:
-      case DeviceType.BATTERY_DOORBELL_PLUS:
-      case DeviceType.DOORBELL_SOLO:
-        new DoorbellCameraAccessory(this, accessory, device as DoorbellCamera);
-        break;
-      case DeviceType.SENSOR:
-        new EntrySensorAccessory(this, accessory, device as EntrySensor);
-        break;
-      case DeviceType.LOCK_BLE:
-      case DeviceType.LOCK_WIFI:
-      case DeviceType.LOCK_BLE_NO_FINGER:
-      case DeviceType.LOCK_WIFI_NO_FINGER:
-        new LockAccessory(this, accessory, device as Lock);
-        break;
-      default:
-        this.log.warn('This accessory is not compatible with HomeBridge Eufy Security plugin:', accessory.displayName, 'Type:', type);
-        return;
-    }
+      switch (type) {
+        case DeviceType.STATION:
+        case DeviceType.HB3:
+          new StationAccessory(this, accessory, device as Station);
+          break;
+        case DeviceType.MOTION_SENSOR:
+          new MotionSensorAccessory(this, accessory, device as MotionSensor);
+          break;
+        case DeviceType.CAMERA:
+        case DeviceType.CAMERA2:
+        case DeviceType.CAMERA_E:
+        case DeviceType.CAMERA2C:
+        case DeviceType.INDOOR_CAMERA:
+        case DeviceType.INDOOR_PT_CAMERA:
+        case DeviceType.INDOOR_COST_DOWN_CAMERA:
+        case DeviceType.FLOODLIGHT:
+        case DeviceType.CAMERA2C_PRO:
+        case DeviceType.CAMERA2_PRO:
+        case DeviceType.CAMERA3C:
+        case DeviceType.CAMERA3:
+        case DeviceType.CAMERA_GUN:
+        case DeviceType.CAMERA_FG:
+        case DeviceType.INDOOR_CAMERA_1080:
+        case DeviceType.INDOOR_PT_CAMERA_1080:
+        case DeviceType.SOLO_CAMERA:
+        case DeviceType.SOLO_CAMERA_PRO:
+        case DeviceType.SOLO_CAMERA_SPOTLIGHT_1080:
+        case DeviceType.SOLO_CAMERA_SPOTLIGHT_2K:
+        case DeviceType.SOLO_CAMERA_SPOTLIGHT_SOLAR:
+        case DeviceType.INDOOR_OUTDOOR_CAMERA_1080P:
+        case DeviceType.INDOOR_OUTDOOR_CAMERA_1080P_NO_LIGHT:
+        case DeviceType.INDOOR_OUTDOOR_CAMERA_2K:
+        case DeviceType.FLOODLIGHT_CAMERA_8422:
+        case DeviceType.FLOODLIGHT_CAMERA_8423:
+        case DeviceType.FLOODLIGHT_CAMERA_8424:
+        case DeviceType.WALL_LIGHT_CAM:
+        case DeviceType.WALL_LIGHT_CAM_81A0:
+        case DeviceType.CAMERA_GARAGE_T8453_COMMON:
+        case DeviceType.CAMERA_GARAGE_T8453:
+        case DeviceType.CAMERA_GARAGE_T8452:
+          new CameraAccessory(this, accessory, device as Camera);
+          break;
+        case DeviceType.DOORBELL:
+        case DeviceType.BATTERY_DOORBELL:
+        case DeviceType.BATTERY_DOORBELL_2:
+        case DeviceType.BATTERY_DOORBELL_PLUS:
+        case DeviceType.DOORBELL_SOLO:
+          new DoorbellCameraAccessory(this, accessory, device as DoorbellCamera);
+          break;
+        case DeviceType.SENSOR:
+          new EntrySensorAccessory(this, accessory, device as EntrySensor);
+          break;
+        case DeviceType.LOCK_BLE:
+        case DeviceType.LOCK_WIFI:
+        case DeviceType.LOCK_BLE_NO_FINGER:
+        case DeviceType.LOCK_WIFI_NO_FINGER:
+          new LockAccessory(this, accessory, device as Lock);
+          break;
+        default:
+          this.log.warn('This accessory is not compatible with HomeBridge Eufy Security plugin:', accessory.displayName, 'Type:', type);
+          return;
+      }
 
-    const isCamera = (device as Device).isCamera();
+      isCamera = (device as Device).isCamera();
+    }
 
     if (exist) {
       if (!isCamera) {
