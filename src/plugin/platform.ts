@@ -32,7 +32,6 @@ import {
   MotionSensor,
   Camera,
   DoorbellCamera,
-  PushMessage,
   Lock,
   libVersion,
   // eslint-disable-next-line @typescript-eslint/ban-ts-comment
