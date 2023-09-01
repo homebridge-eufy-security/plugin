@@ -19,9 +19,7 @@ import { StationAccessory } from './accessories/StationAccessory';
 import { EntrySensorAccessory } from './accessories/EntrySensorAccessory';
 import { MotionSensorAccessory } from './accessories/MotionSensorAccessory';
 import { CameraAccessory } from './accessories/CameraAccessory';
-import { DoorbellCameraAccessory } from './accessories/DoorbellCameraAccessory';
-import { KeypadAccessory } from './accessories/KeypadAccessory';
-import { SmartLockAccessory } from './accessories/SmartLockAccessory';
+import { LockAccessory } from './accessories/LockAccessory';
 
 import {
   EufySecurity,
@@ -33,7 +31,6 @@ import {
   MotionSensor,
   Camera,
   DoorbellCamera,
-  Keypad,
   Lock,
   libVersion,
   // eslint-disable-next-line @typescript-eslint/ban-ts-comment
@@ -80,8 +77,10 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
     const plugin = require('../package.json');
 
     const mainLogObj = {
-      // eslint-disable-next-line max-len
-      prettyLogTemplate: `[{{mm}}/{{dd}}/{{yyyy}} {{hh}}:{{MM}}:{{ss}}]\t[EufySecurity-${plugin.version}]\t{{logLevelName}}\t[{{fileNameWithLine}}{{name}}]\t`,
+      prettyLogTemplate: (this.config.enableDetailedLogging)
+        // eslint-disable-next-line max-len
+        ? `[{{mm}}/{{dd}}/{{yyyy}} {{hh}}:{{MM}}:{{ss}}]\t[EufySecurity-${plugin.version}]\t{{logLevelName}}\t[{{fileNameWithLine}}{{name}}]\t`
+        : `[{{mm}}/{{dd}}/{{yyyy}} {{hh}}:{{MM}}:{{ss}}]\t[EufySecurity-${plugin.version}]\t{{logLevelName}}\t`,
       prettyErrorTemplate: '\n{{errorName}} {{errorMessage}}\nerror stack:\n{{errorStack}}',
       prettyErrorStackTemplate: '  • {{fileName}}\t{{method}}\n\t{{fileNameWithLine}}',
       prettyErrorParentNamesSeparator: ':',
@@ -204,12 +203,22 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
 
       this.eufyClient.on('station added', this.stationAdded.bind(this));
       this.eufyClient.on('device added', this.deviceAdded.bind(this));
+      this.eufyClient.on('device removed', this.deviceRemoved.bind(this));
 
       this.eufyClient.on('push connect', () => {
         this.log.debug('Push Connected!');
       });
       this.eufyClient.on('push close', () => {
-        this.log.warn('Push Closed!');
+        this.log.debug('Push Closed!');
+      });
+      this.eufyClient.on('connect', () => {
+        this.log.debug('Connected!');
+      });
+      this.eufyClient.on('close', () => {
+        this.log.debug('Closed!');
+      });
+      this.eufyClient.on('connection error', (error: Error) => {
+        this.log.debug('Error: ', error);
       });
 
     } catch (e) {
@@ -253,12 +262,10 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
       station.getSerial(),
       station.getName(),
       DeviceType[station.getDeviceType()],
-      station.getLANIPAddress(),
     );
 
-    if (station.getRawStation().member.member_type === 1) {
-      this.log.info('You\'re using guest admin account with this plugin! This is recommanded way!');
-    } else {
+    if (station.getRawStation().member.member_type !== 1) {
+      this.pluginShutdown();
       throw Error(`
       You're not using guest admin account with this plugin! This is not recommanded way!
       Please look here for more details: https://github.com/homebridge-eufy-security/plugin/wiki/Installation
@@ -351,6 +358,32 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
     }
   }
 
+  private async deviceRemoved(device: Device) {
+    const serial = device.getSerial();
+
+    this.log.debug(
+      'A device has been removed',
+      serial,
+    );
+
+    if (this.config.ignoreDevices.indexOf(device.getSerial()) !== -1) {
+      this.log.debug('Device ignored');
+      return;
+    }
+
+    const deviceContainer: DeviceContainer = {
+      deviceIdentifier: {
+        uniqueId: device.getSerial(),
+        displayName: device.getName(),
+        type: device.getDeviceType(),
+        station: false,
+      } as DeviceIdentifier,
+      eufyDevice: device,
+    };
+
+    // this.processAccessory(deviceContainer);
+  }
+
   private async pluginShutdown() {
     if (this.cleanCachedAccessoriesTimeout) {
       clearTimeout(this.cleanCachedAccessoriesTimeout);
@@ -416,6 +449,9 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
 
     */
 
+
+    let isCamera = false;
+
     if (station) {
       if (type !== DeviceType.STATION) {
         // Allowing camera but not the lock nor doorbell for now
@@ -476,14 +512,13 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
       case DeviceType.CAMERA_GARAGE_T8453_COMMON:
       case DeviceType.CAMERA_GARAGE_T8453:
       case DeviceType.CAMERA_GARAGE_T8452:
-        new CameraAccessory(this, accessory, device as Camera);
-        break;
       case DeviceType.DOORBELL:
       case DeviceType.BATTERY_DOORBELL:
       case DeviceType.BATTERY_DOORBELL_2:
       case DeviceType.BATTERY_DOORBELL_PLUS:
       case DeviceType.DOORBELL_SOLO:
-        new DoorbellCameraAccessory(this, accessory, device as DoorbellCamera);
+        new CameraAccessory(this, accessory, device as Camera);
+        isCamera = true;
         break;
       case DeviceType.SENSOR:
         new EntrySensorAccessory(this, accessory, device as EntrySensor);
@@ -492,14 +527,12 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
       case DeviceType.LOCK_WIFI:
       case DeviceType.LOCK_BLE_NO_FINGER:
       case DeviceType.LOCK_WIFI_NO_FINGER:
-        new SmartLockAccessory(this, accessory, device as Lock);
+        new LockAccessory(this, accessory, device as Lock);
         break;
       default:
         this.log.warn('This accessory is not compatible with HomeBridge Eufy Security plugin:', accessory.displayName, 'Type:', type);
         return;
     }
-
-    const isCamera = (device as Device).isCamera();
 
     if (exist) {
       if (!isCamera) {

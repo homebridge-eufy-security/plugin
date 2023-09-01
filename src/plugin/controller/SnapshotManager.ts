@@ -1,8 +1,6 @@
-import https from 'https';
-import { readFileSync } from 'fs';
 import { EventEmitter, Readable } from 'stream';
 
-import { Camera, Device, PropertyName, PropertyValue } from 'eufy-security-client';
+import { Camera, Device, Picture, PropertyName, PropertyValue } from 'eufy-security-client';
 import ffmpegPath from 'ffmpeg-for-homebridge';
 
 import { CameraConfig } from '../utils/configTypes';
@@ -13,8 +11,10 @@ import { Logger } from '../utils/logger';
 import { is_rtsp_ready } from '../utils/utils';
 import { SnapshotRequest } from 'homebridge';
 import { FFmpeg, FFmpegParameters } from '../utils/ffmpeg';
+import * as fs from 'fs';
 
 const SnapshotBlackPath = require.resolve('../../media/Snapshot-black.png');
+const SnapshotUnavailable = require.resolve('../../media/Snapshot-Unavailable.png');
 
 let MINUTES_TO_WAIT_FOR_AUTOMATIC_REFRESH_TO_BEGIN = 1; // should be incremented by 1 for every device
 
@@ -22,11 +22,6 @@ type Snapshot = {
   timestamp: number;
   image: Buffer;
   sourceUrl?: string;
-};
-
-type ImageDataResponse = {
-  url: string;
-  image: Buffer;
 };
 
 type StreamSource = {
@@ -63,7 +58,6 @@ export class SnapshotManager extends EventEmitter {
   private log;
   private livestreamManager;
 
-  private lastCloudSnapshot?: Snapshot;
   private currentSnapshot?: Snapshot;
   private blackSnapshot?: Buffer;
 
@@ -83,7 +77,9 @@ export class SnapshotManager extends EventEmitter {
     this.cameraConfig = cameraConfig;
     this.livestreamManager = livestreamManager;
 
-    this.device.on('property changed', this.onPropertyValueChanged.bind(this));
+    this.device.on('property changed', (device: Device, name: string, value: PropertyValue) =>
+      this.onPropertyValueChanged(device, name, value),
+    );
 
     this.device.on('crying detected', (device, state) => this.onEvent(device, state));
     this.device.on('motion detected', (device, state) => this.onEvent(device, state));
@@ -121,17 +117,13 @@ export class SnapshotManager extends EventEmitter {
     }
 
     try {
-      this.blackSnapshot = readFileSync(SnapshotBlackPath);
+      this.blackSnapshot = fs.readFileSync(SnapshotBlackPath);
       if (this.cameraConfig.immediateRingNotificationWithoutSnapshot) {
         this.log.info(this.device.getName(), 'Empty snapshot will be sent on ring events immediately to speed up homekit notifications.');
       }
     } catch (err) {
       this.log.error(this.device.getName(), 'could not cache black snapshot file for further use: ' + err);
     }
-
-    this.getSnapshotFromCloud() // get current cloud snapshot for balanced mode scenarios -> first snapshot can be resolved
-      .catch(err => this.log.warn(this.device.getName(),
-        'snapshot handler is initialized without cloud snapshot. Maybe no snapshot will displayed the first times.'));
   }
 
   private onRingEvent(device: Device, state: boolean) {
@@ -149,7 +141,7 @@ export class SnapshotManager extends EventEmitter {
   }
 
   public async getSnapshotBuffer(request: SnapshotRequest): Promise<Buffer> {
-    // return a new snapshot it it is recent enough (not more than 15 seconds)
+    // return a new snapshot if it is recent enough (not more than 15 seconds)
     if (this.currentSnapshot) {
       const diff = Math.abs((Date.now() - this.currentSnapshot.timestamp) / 1000);
       if (diff <= 15) {
@@ -218,7 +210,7 @@ export class SnapshotManager extends EventEmitter {
         if (this.currentSnapshot) {
           resolve(this.currentSnapshot.image);
         } else {
-          reject('No snapshot in memory');
+          resolve(fs.readFileSync(SnapshotUnavailable));
         }
       }, 1000);
 
@@ -235,7 +227,7 @@ export class SnapshotManager extends EventEmitter {
           if (this.currentSnapshot) {
             resolve(this.currentSnapshot.image);
           } else {
-            reject('No snapshot in memory');
+            resolve(fs.readFileSync(SnapshotUnavailable));
           }
         }, 15000);
       }
@@ -248,7 +240,7 @@ export class SnapshotManager extends EventEmitter {
         if (this.currentSnapshot) {
           resolve(this.currentSnapshot.image);
         } else {
-          reject('No snapshot in memory');
+          resolve(fs.readFileSync(SnapshotUnavailable));
         }
       });
     });
@@ -273,14 +265,14 @@ export class SnapshotManager extends EventEmitter {
           if (this.currentSnapshot) {
             resolve(this.currentSnapshot.image);
           } else {
-            reject('No snapshot in memory');
+            resolve(fs.readFileSync(SnapshotUnavailable));
           }
         });
       } else {
         if (this.currentSnapshot) {
           resolve(this.currentSnapshot.image);
         } else {
-          reject('No snapshot in memory');
+          resolve(fs.readFileSync(SnapshotUnavailable));
         }
       }
     });
@@ -299,115 +291,25 @@ export class SnapshotManager extends EventEmitter {
     }
   }
 
-  private async onPropertyValueChanged(device: Device, name: string, value: PropertyValue): Promise<void> {
-    if (name === 'pictureUrl') {
-      this.handlePictureUrl(value as string);
+  private storeImage(file: string, image: Buffer) {
+    const filePath = `${this.platform.eufyPath}/${file}`;
+    try {
+      fs.writeFileSync(filePath, image);
+      this.platform.log.debug(`${this.device.getName()} Stored Image: ${filePath}`);
+    } catch (error) {
+      this.platform.log.debug(`${this.device.getName()} Error: ${filePath} - ${error}`);
     }
   }
 
-  private async getSnapshotFromCloud(): Promise<void> {
-    try {
-      const url = this.device.getPropertyValue(PropertyName.DevicePictureUrl) as string;
-      this.log.debug(this.device.getName(), 'trying to download latest cloud snapshot for future use from: ' + url);
-      const snapshot = await this.downloadImageData(url, 0);
-      if (!this.lastCloudSnapshot && !this.currentSnapshot) {
-        this.lastCloudSnapshot = {
-          // eslint-disable-next-line max-len
-          timestamp: Date.now() - 60*60*1000, // set snapshot an hour old so future requests try to get a more recent one since we don't know how old it really is
-          image: snapshot.image,
-          sourceUrl: url,
-        };
-        this.currentSnapshot = this.lastCloudSnapshot;
-        this.log.debug(this.device.getName(), 'Stored cloud snapshot for future use.');
+  private async onPropertyValueChanged(device: Device, name: string, value: PropertyValue): Promise<void> {
+    if (name === 'picture') {
+      const picture = device.getPropertyValue(PropertyName.DevicePicture) as Picture;
+      if (picture && picture.type) {
+        this.storeImage(`${device.getSerial()}.${picture.type.ext}`, picture.data);
+        this.currentSnapshot = { timestamp: Date.now(), image: picture.data };
         this.emit('new snapshot');
       }
-      return Promise.resolve();
-    } catch (err) {
-      this.log.warn(this.device.getName(), 'Couldt not get cloud snapshot: ' + err);
-      return Promise.reject(err);
     }
-  }
-
-  private async handlePictureUrl(url: string): Promise<void> {
-    this.log.debug(this.device.getName(), 'Got picture Url from eufy cloud: ' + url);
-    if (!this.lastCloudSnapshot ||
-        (this.lastCloudSnapshot && this.lastCloudSnapshot.sourceUrl && !this.urlsAreEqual(this.lastCloudSnapshot.sourceUrl, url))) {
-      try {
-        const timestamp = Date.now();
-        const response = await this.downloadImageData(url);
-        if (!(response.image.length < 20000 && this.refreshProcessRunning)) {
-          if (!this.lastCloudSnapshot ||
-              (this.lastCloudSnapshot && this.lastCloudSnapshot.timestamp < timestamp)) {
-            this.log.debug(this.device.getName(), 'stored new snapshot from cloud in memory.');
-            this.lastCloudSnapshot = {
-              timestamp: timestamp,
-              sourceUrl: response.url,
-              image: response.image,
-            };
-            if (!this.currentSnapshot ||
-                (this.currentSnapshot && this.currentSnapshot.timestamp < timestamp)) {
-              this.log.debug(this.device.getName(), 'cloud snapshot is most recent one. Storing this for future use.');
-              this.currentSnapshot = this.lastCloudSnapshot;
-            }
-            this.emit('new snapshot');
-          }
-        } else {
-          this.log.debug(this.device.getName(), 'cloud snapshot had to low resolution. Waiting for snapshot from camera.');
-        }
-      } catch (err) {
-        this.log.debug(this.device.getName(), 'image data could not be retireved: ' + err);
-      }
-    } else {
-      this.log.debug(this.device.getName(), 'picture Url was already known. Ignore it.');
-      this.lastCloudSnapshot.sourceUrl = url;
-    }
-  }
-
-  private downloadImageData(url: string, retries = 40): Promise<ImageDataResponse> {
-    return new Promise((resolve, reject) => {
-      https.get(url, response => {
-        if (response.headers.location) { // url forwarding; use new url
-          this.downloadImageData(response.headers.location, retries)
-            .then((imageResponse) => resolve(imageResponse))
-            .catch((err) => reject(err));
-        } else { // get image buffer
-          let imageBuffer = Buffer.alloc(0);
-          response.on('data', (chunk: Buffer) => {
-            imageBuffer = Buffer.concat([imageBuffer, chunk]);
-          });
-          response.on('end', () => {
-            if (!this.isXMLNotImage(imageBuffer) && response.statusCode && response.statusCode < 400) {
-              resolve({
-                url: url,
-                image: imageBuffer,
-              });
-            } else if (retries <= 0) {
-              this.log.warn(this.device.getName(), 'Did not retrieve cloud snapshot in time. Reached max. retries.');
-              reject('Could not get image data');
-            } else {
-              setTimeout(() => {
-                this.downloadImageData(url, retries-1)
-                  .then((imageResponse) => resolve(imageResponse))
-                  .catch((err) => reject(err));
-              }, 500);
-            }
-          });
-          response.on('error', (err) => {
-            reject(err);
-          });
-        }
-      }).on('error', (err) => {
-        reject(err);
-      });
-    });
-  }
-
-  private isXMLNotImage(dataBuffer: Buffer): boolean {
-    const possibleXML = dataBuffer.toString('utf8');
-    return (possibleXML.indexOf('<?xml') !== -1 ||
-            possibleXML.indexOf('<xml') !== -1 ||
-            possibleXML.indexOf('<?html') !== -1 ||
-            possibleXML.indexOf('<html') !== -1);
   }
 
   private async fetchCurrentCameraSnapshot(): Promise<void> {
@@ -506,23 +408,11 @@ export class SnapshotManager extends EventEmitter {
     }
   }
 
-  private urlsAreEqual(url1: string, url2: string) {
-    return (this.getUrlWithoutParameters(url1) === this.getUrlWithoutParameters(url2));
-  }
-
-  private getUrlWithoutParameters(url: string): string {
-    const endIndex = url.indexOf('.jpg');
-    if (endIndex === -1) {
-      return '';
-    }
-    return url.substring(0, endIndex);
-  }
-
   private async resizeSnapshot(snapshot: Buffer, request: SnapshotRequest): Promise<Buffer> {
 
     const parameters = await FFmpegParameters.forSnapshot(this.cameraConfig.videoConfig?.debug);
     parameters.setup(this.cameraConfig, request);
-    
+
     const ffmpeg = new FFmpeg(
       `[${this.device.getName()}] [Snapshot Resize Process]`,
       parameters,
