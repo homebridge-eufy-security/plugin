@@ -77,8 +77,10 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
     const plugin = require('../package.json');
 
     const mainLogObj = {
-      // eslint-disable-next-line max-len
-      prettyLogTemplate: `[{{mm}}/{{dd}}/{{yyyy}} {{hh}}:{{MM}}:{{ss}}]\t[EufySecurity-${plugin.version}]\t{{logLevelName}}\t[{{fileNameWithLine}}{{name}}]\t`,
+      prettyLogTemplate: (this.config.enableDetailedLogging)
+        // eslint-disable-next-line max-len
+        ? `[{{mm}}/{{dd}}/{{yyyy}} {{hh}}:{{MM}}:{{ss}}]\t[EufySecurity-${plugin.version}]\t{{logLevelName}}\t[{{fileNameWithLine}}{{name}}]\t`
+        : `[{{mm}}/{{dd}}/{{yyyy}} {{hh}}:{{MM}}:{{ss}}]\t[EufySecurity-${plugin.version}]\t{{logLevelName}}\t`,
       prettyErrorTemplate: '\n{{errorName}} {{errorMessage}}\nerror stack:\n{{errorStack}}',
       prettyErrorStackTemplate: '  • {{fileName}}\t{{method}}\n\t{{fileNameWithLine}}',
       prettyErrorParentNamesSeparator: ':',
@@ -207,13 +209,13 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
         this.log.debug('Push Connected!');
       });
       this.eufyClient.on('push close', () => {
-        this.log.warn('Push Closed!');
+        this.log.debug('Push Closed!');
       });
       this.eufyClient.on('connect', () => {
         this.log.debug('Connected!');
       });
       this.eufyClient.on('close', () => {
-        this.log.warn('Closed!');
+        this.log.debug('Closed!');
       });
       this.eufyClient.on('connection error', (error: Error) => {
         this.log.debug('Error: ', error);
