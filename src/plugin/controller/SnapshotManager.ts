@@ -141,7 +141,7 @@ export class SnapshotManager extends EventEmitter {
   }
 
   public async getSnapshotBuffer(request: SnapshotRequest): Promise<Buffer> {
-    // return a new snapshot it it is recent enough (not more than 15 seconds)
+    // return a new snapshot if it is recent enough (not more than 15 seconds)
     if (this.currentSnapshot) {
       const diff = Math.abs((Date.now() - this.currentSnapshot.timestamp) / 1000);
       if (diff <= 15) {
@@ -308,8 +308,6 @@ export class SnapshotManager extends EventEmitter {
         this.storeImage(`${device.getSerial()}.${picture.type.ext}`, picture.data);
         this.currentSnapshot = { timestamp: Date.now(), image: picture.data };
         this.emit('new snapshot');
-      } else {
-        this.platform.log.error(`${this.device.getName()} Error: ${picture}`);
       }
     }
   }
