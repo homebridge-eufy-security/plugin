@@ -32,6 +32,7 @@
   "main": "dist/index.js",
   "scripts": {
     "lint": "eslint src/** --max-warnings=0",
+    "lint-fix": "eslint src/** --max-warnings=0 --fix",
     "watch": "npm run build && npm link && nodemon",
     "build": "npm run build-plugin && npm run build-configui",
     "build-plugin": "rimraf ./dist && tsc --project tsconfig.plugin.json",
@@ -48,6 +49,7 @@
     "security-system"
   ],
   "dependencies": {
+    "@homebridge/camera-utils": "^2.2.0",
     "@homebridge/plugin-ui-utils": "^0.1.0",
     "eufy-security-client": "2.8.0",
     "ffmpeg-for-homebridge": "0.1.4",

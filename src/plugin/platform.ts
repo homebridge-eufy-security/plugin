@@ -19,7 +19,6 @@ import { StationAccessory } from './accessories/StationAccessory';
 import { EntrySensorAccessory } from './accessories/EntrySensorAccessory';
 import { MotionSensorAccessory } from './accessories/MotionSensorAccessory';
 import { CameraAccessory } from './accessories/CameraAccessory';
-import { DoorbellCameraAccessory } from './accessories/DoorbellCameraAccessory';
 import { LockAccessory } from './accessories/LockAccessory';
 
 import {
@@ -511,15 +510,12 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
       case DeviceType.CAMERA_GARAGE_T8453_COMMON:
       case DeviceType.CAMERA_GARAGE_T8453:
       case DeviceType.CAMERA_GARAGE_T8452:
-        new CameraAccessory(this, accessory, device as Camera);
-        isCamera = true;
-        break;
       case DeviceType.DOORBELL:
       case DeviceType.BATTERY_DOORBELL:
       case DeviceType.BATTERY_DOORBELL_2:
       case DeviceType.BATTERY_DOORBELL_PLUS:
       case DeviceType.DOORBELL_SOLO:
-        new DoorbellCameraAccessory(this, accessory, device as DoorbellCamera);
+        new CameraAccessory(this, accessory, device as Camera);
         isCamera = true;
         break;
       case DeviceType.SENSOR:
