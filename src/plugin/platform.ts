@@ -110,6 +110,7 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
     };
 
     this.log = new TsLogger(mainLogObj);
+    this.tsLogger = new TsLogger(mainLogObj);
 
     const omitLogFiles = this.config.omitLogFiles ?? false;
 
@@ -135,7 +136,7 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
         maxSize: '200M',
       });
 
-      this.tsLogger = new TsLogger().attachTransport((logObj) => {
+      this.tsLogger.attachTransport((logObj) => {
         eufyLogStream.write(JSON.stringify(logObj) + '\n');
       });
     }
