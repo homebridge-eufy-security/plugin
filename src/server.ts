@@ -88,12 +88,14 @@ class UiServer extends HomebridgePluginUiServer {
       username: '',
       password: '',
       language: 'en',
+      country: 'US',
+      trustedDeviceName: 'My Phone',
       persistentDir: this.storagePath,
       p2pConnectionSetup: 0,
       pollingIntervalMinutes: 10,
       eventDurationSeconds: 10,
       acceptInvitations: true,
-    };
+    } as EufySecurityConfig;
 
     this.onRequest('/login', this.login.bind(this));
     this.onRequest('/storedAccessories', this.loadStoredAccessories.bind(this));
