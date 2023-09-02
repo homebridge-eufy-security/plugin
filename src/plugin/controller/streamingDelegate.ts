@@ -26,7 +26,7 @@ import { CameraConfig, VideoConfig } from '../utils/configTypes';
 import { FFmpeg, FFmpegParameters } from '../utils/ffmpeg';
 import { Logger } from '../utils/logger';
 
-import { Station, Device, Camera, PropertyName } from 'eufy-security-client';
+import { Camera, PropertyName } from 'eufy-security-client';
 import { EufySecurityPlatform } from '../platform';
 
 import { LocalLivestreamManager } from './LocalLivestreamManager';
