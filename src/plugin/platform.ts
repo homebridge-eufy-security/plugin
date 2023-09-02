@@ -110,7 +110,7 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
     };
 
     this.log = new TsLogger(mainLogObj);
-    this.tsLogger = new TsLogger(mainLogObj);
+    this.tsLogger = new TsLogger({ type: 'hidden' });
 
     const omitLogFiles = this.config.omitLogFiles ?? false;
 
