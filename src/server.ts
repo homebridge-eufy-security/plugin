@@ -20,6 +20,7 @@ class UiServer extends HomebridgePluginUiServer {
   eufyClient: EufySecurity | null;
 
   private log;
+  private tsLog;
 
   private logZipFilePath: string;
 
@@ -42,7 +43,7 @@ class UiServer extends HomebridgePluginUiServer {
       prettyErrorParentNamesSeparator: ':',
       prettyErrorLoggerNameDelimiter: '\t',
       stylePrettyLogs: true,
-      minLevel: 3,
+      minLevel: 2,
       // prettyLogTimeZone: 'UTC',
       prettyLogStyles: {
         logLevelName: {
@@ -66,8 +67,20 @@ class UiServer extends HomebridgePluginUiServer {
     };
 
     this.log = new TsLogger(mainLogObj);
+    this.tsLog = new TsLogger({ type: 'hidden', minLevel: 2 });
+
+    if (!fs.existsSync(this.storagePath)) {
+      fs.mkdirSync(this.storagePath);
+    }
 
     const pluginLogStream = createStream('configui-server.log', {
+      path: this.storagePath,
+      interval: '1d',
+      rotate: 3,
+      maxSize: '200M',
+    });
+
+    const pluginLogLibStream = createStream('configui-lib.log', {
       path: this.storagePath,
       interval: '1d',
       rotate: 3,
@@ -78,11 +91,11 @@ class UiServer extends HomebridgePluginUiServer {
       pluginLogStream.write(JSON.stringify(logObj) + '\n');
     });
 
-    this.log.debug('Using bropats eufy-security-client library in version ' + libVersion);
+    this.tsLog.attachTransport((logObj) => {
+      pluginLogLibStream.write(JSON.stringify(logObj) + '\n');
+    });
 
-    if (!fs.existsSync(this.storagePath)) {
-      fs.mkdirSync(this.storagePath);
-    }
+    this.log.debug('Using bropats eufy-security-client library in version ' + libVersion);
 
     this.config = {
       username: '',
@@ -133,7 +146,7 @@ class UiServer extends HomebridgePluginUiServer {
       this.config.country = options.country;
       this.config.trustedDeviceName = options.deviceName;
       try {
-        this.eufyClient = await EufySecurity.initialize(this.config, this.log);
+        this.eufyClient = await EufySecurity.initialize(this.config, this.tsLog);
       } catch (err) {
         this.log.error(err);
       }

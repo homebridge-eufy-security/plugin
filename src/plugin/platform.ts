@@ -55,6 +55,7 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
 
   public log;
   private tsLogger;
+  private already_shutdown: boolean = false;
 
   public readonly eufyPath: string;
 
@@ -110,7 +111,7 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
     };
 
     this.log = new TsLogger(mainLogObj);
-    this.tsLogger = new TsLogger({ type: 'hidden' });
+    this.tsLogger = new TsLogger({ type: 'hidden', minLevel: (this.config.enableDetailedLogging) ? 2 : 3 });
 
     const omitLogFiles = this.config.omitLogFiles ?? false;
 
@@ -422,6 +423,15 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
   }
 
   private async pluginShutdown() {
+
+    // Ensure a single shutdown to prevent corruption of the persistent file.
+    // This also enables captcha through the GUI and prevents repeated captcha or 2FA prompts upon plugin restart.
+    if (this.already_shutdown) {
+      return;
+    }
+
+    this.already_shutdown = true;
+
     if (this.cleanCachedAccessoriesTimeout) {
       clearTimeout(this.cleanCachedAccessoriesTimeout);
     }
