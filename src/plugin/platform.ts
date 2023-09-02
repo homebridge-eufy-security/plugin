@@ -218,8 +218,39 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
       this.eufyClient.on('close', () => {
         this.log.debug('Closed!');
       });
-      this.eufyClient.on('connection error', (error: Error) => {
+      this.eufyClient.on('connection error', async (error: Error) => {
         this.log.debug('Error: ', error);
+        await this.pluginShutdown();
+      });
+      this.eufyClient.once('captcha request', async (id, captcha) => {
+        this.log.error(`
+        ***************************
+        ***** WARNING MESSAGE *****
+        ***************************
+        Important Notice: CAPTCHA Required
+        Your account seems to have triggered a security measure that requires CAPTCHA verification for the next 24 hours...
+        Please abstain from any activities until this period elapses...
+        Should your issue persist beyond this timeframe, you may need to consider setting up a new account.
+        For more detailed instructions, please consult:
+        https://github.com/homebridge-eufy-security/plugin/wiki/Create-a-dedicated-admin-account-for-Homebridge-Eufy-Security-Plugin
+        ***************************
+        `);
+        await this.pluginShutdown();
+      });
+      this.eufyClient.on('tfa request', async () => {
+        this.log.error(`
+        ***************************
+        ***** WARNING MESSAGE *****
+        ***************************
+        Attention: Two-Factor Authentication (2FA) Requested
+        It appears that your account is currently under a temporary 24-hour flag for security reasons...
+        Kindly refrain from making any further attempts during this period...
+        If your concern remains unresolved after 24 hours, you may need to consider creating a new account.
+        For additional information, refer to:
+        https://github.com/homebridge-eufy-security/plugin/wiki/Create-a-dedicated-admin-account-for-Homebridge-Eufy-Security-Plugin
+        ***************************
+        `);
+        await this.pluginShutdown();
       });
 
     } catch (e) {
@@ -266,11 +297,16 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
     );
 
     if (station.getRawStation().member.member_type !== 1) {
-      this.pluginShutdown();
-      throw Error(`
-      You're not using guest admin account with this plugin! This is not recommanded way!
-      Please look here for more details: https://github.com/homebridge-eufy-security/plugin/wiki/Installation
-      ${station.getSerial()} type: ${station.getRawStation().member.member_type}
+      await this.pluginShutdown();
+      // eslint-disable-next-line max-len
+      this.log.error(`
+      #########################
+      ######### ERROR #########
+      #########################
+      You're not using a guest admin account with this plugin! You must use a guest admin account!
+      Please look here for more details: 
+      https://github.com/homebridge-eufy-security/plugin/wiki/Create-a-dedicated-admin-account-for-Homebridge-Eufy-Security-Plugin
+      #########################
       `);
     }
 
