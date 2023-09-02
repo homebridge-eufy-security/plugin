@@ -55,7 +55,7 @@ export class StationAccessory extends BaseAccessory {
     ];
 
     // if (this.stationConfig.hkNight) {
-    //   validValues.push(this.platform.Characteristic.SecuritySystemTargetState.NIGHT_ARM);
+    validValues.push(this.platform.Characteristic.SecuritySystemTargetState.NIGHT_ARM);
     // }
 
     this.registerCharacteristic({

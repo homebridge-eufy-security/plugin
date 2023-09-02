@@ -3,15 +3,12 @@ import { Service, PlatformAccessory, Characteristic, CharacteristicValue } from 
 import { EufySecurityPlatform } from '../platform';
 import { DeviceAccessory } from './Device';
 
-import { filter, map, mapTo, switchMap, throttleTime } from 'rxjs/operators';
-
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore  
 import { Camera, Device, DeviceEvents, PropertyName, CommandName, PropertyValue } from 'eufy-security-client';
 import { StreamingDelegate } from '../controller/streamingDelegate';
 
 import { CameraConfig, VideoConfig } from '../utils/configTypes';
-import * as fs from 'fs';
 
 /**
  * Platform Accessory
