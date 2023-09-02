@@ -267,11 +267,17 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
 
     if (station.getRawStation().member.member_type !== 1) {
       this.pluginShutdown();
-      throw Error(`
-      You're not using guest admin account with this plugin! This is not recommanded way!
-      Please look here for more details: https://github.com/homebridge-eufy-security/plugin/wiki/Installation
-      ${station.getSerial()} type: ${station.getRawStation().member.member_type}
+      // eslint-disable-next-line max-len
+      this.log.error(`
+      #########################
+      ######### ERROR #########
+      #########################
+      You're not using a guest admin account with this plugin! You must use a guest admin account!
+      Please look here for more details: 
+      https://github.com/homebridge-eufy-security/plugin/wiki/Create-a-dedicated-admin-account-for-Homebridge-Eufy-Security-Plugin
+      #########################
       `);
+      await this.pluginShutdown();
     }
 
     if (this.config.ignoreStations.indexOf(station.getSerial()) !== -1) {
