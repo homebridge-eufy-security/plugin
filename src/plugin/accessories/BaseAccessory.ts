@@ -113,7 +113,8 @@ export abstract class BaseAccessory extends EventEmitter {
     setValue?: (value: any) => any;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     onValue?: (service: Service, characteristic: Characteristic) => any;
-    onSimpleValue?: DeviceEvents | StationEvents;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    onSimpleValue?: any;
     onMultipleValue?: (keyof DeviceEvents | StationEvents)[];
   }) {
     const service = this.getService(serviceType, name, serviceSubType);
