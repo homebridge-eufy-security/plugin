@@ -60,6 +60,8 @@ export class CameraAccessory extends DeviceAccessory {
     this.setupMotionButton();
     this.setupLightButton();
 
+    this.initSensorService(this.platform.Service.ContactSensor);
+
   }
 
   private setupButtonService(
