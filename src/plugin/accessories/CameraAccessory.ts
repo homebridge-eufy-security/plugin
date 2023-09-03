@@ -25,6 +25,18 @@ export class CameraAccessory extends DeviceAccessory {
 
   protected streamingDelegate: StreamingDelegate | null = null;
 
+  // List of event types
+  private eventTypesToHandle: (keyof DeviceEvents)[] = [
+    'motion detected',
+    'person detected',
+    'pet detected',
+    'vehicle detected',
+    'sound detected',
+    'crying detected',
+    'dog detected',
+    'stranger person detected',
+  ];
+
   constructor(
     platform: EufySecurityPlatform,
     accessory: PlatformAccessory,
@@ -153,6 +165,23 @@ export class CameraAccessory extends DeviceAccessory {
       setValue: (value) => this.setCameraPropertyValue('this.platform.Characteristic.HomeKitCameraActive', PropertyName.DeviceEnabled, value),
     });
 
+    // Fire snapshot when motion detected
+    this.registerCharacteristic({
+      serviceType: this.platform.Service.MotionSensor,
+      characteristicType: this.platform.Characteristic.MotionDetected,
+      getValue: (data) => this.device.getPropertyValue(PropertyName.DeviceMotionDetected),
+      onValue: (service, characteristic) => {
+        this.eventTypesToHandle.forEach(eventType => {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          this.device.on(eventType as keyof any, (device: any, state: any) => {
+            // eslint-disable-next-line max-len
+            this.platform.log.info(`${this.accessory.displayName} MOTION DETECTED (${eventType})': ${state}`);
+            characteristic.updateValue(state);
+          });
+        });
+      },
+    });
+
     if (this.device.hasProperty('enabled')) {
       this.setupEnableButton();
       this.registerCharacteristic({
@@ -215,26 +244,12 @@ export class CameraAccessory extends DeviceAccessory {
 
   private setupMotionFunction() {
     try {
-
-      // List of event types
-      const eventTypesToHandle: (keyof DeviceEvents)[] = [
-        'motion detected',
-        'person detected',
-        'pet detected',
-        'vehicle detected',
-        'sound detected',
-        'crying detected',
-        'dog detected',
-        'stranger person detected',
-      ];
-
       this.registerCharacteristic({
         serviceType: this.platform.Service.MotionSensor,
         characteristicType: this.platform.Characteristic.MotionDetected,
         getValue: (data) => this.device.getPropertyValue(PropertyName.DeviceMotionDetected),
-        onMultipleValue: eventTypesToHandle,
+        onMultipleValue: this.eventTypesToHandle,
       });
-
     } catch (error) {
       this.platform.log.error(this.accessory.displayName, 'raise error to check and attach motion function.', error);
       throw Error;
