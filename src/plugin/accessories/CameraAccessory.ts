@@ -5,7 +5,7 @@ import { DeviceAccessory } from './Device';
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore  
-import { Camera, Device, DeviceEvents, PropertyName, CommandName, PropertyValue } from 'eufy-security-client';
+import { Camera, Device, DeviceEvents, PropertyName, CommandName } from 'eufy-security-client';
 import { StreamingDelegate } from '../controller/streamingDelegate';
 
 import { CameraConfig, VideoConfig } from '../utils/configTypes';
@@ -25,7 +25,17 @@ export class CameraAccessory extends DeviceAccessory {
 
   protected streamingDelegate: StreamingDelegate | null = null;
 
-  private motionTimeout?: NodeJS.Timeout;
+  // List of event types
+  private eventTypesToHandle: (keyof DeviceEvents)[] = [
+    'motion detected',
+    'person detected',
+    'pet detected',
+    'vehicle detected',
+    'sound detected',
+    'crying detected',
+    'dog detected',
+    'stranger person detected',
+  ];
 
   constructor(
     platform: EufySecurityPlatform,
@@ -44,24 +54,26 @@ export class CameraAccessory extends DeviceAccessory {
 
     if (this.cameraConfig.enableCamera || (typeof this.device.isDoorbell === 'function' && this.device.isDoorbell())) {
       this.platform.log.debug(this.accessory.displayName, 'has a camera');
-
-      try {
-        this.cameraFunction();
-        const delegate = new StreamingDelegate(this.platform, device, this.cameraConfig, this.platform.api, this.platform.api.hap);
-        this.streamingDelegate = delegate;
-        accessory.configureController(delegate.controller);
-      } catch (error) {
-        this.platform.log.error(this.accessory.displayName, 'raise error to check and attach livestream function.', error);
-      }
-
+      this.setupCamera();
+      this.setupMotionButton();
+      this.setupLightButton();
+      this.initSensorService(this.platform.Service.Battery);
     } else {
       this.platform.log.debug(this.accessory.displayName, 'has a motion sensor.');
+      this.setupMotionFunction();
+      this.initSensorService(this.platform.Service.MotionSensor);
     }
+  }
 
-    this.setupMotionFunction(accessory);
-    this.setupMotionButton();
-    this.setupLightButton();
-
+  private setupCamera() {
+    try {
+      this.cameraFunction();
+      const delegate = new StreamingDelegate(this.platform, this.device, this.cameraConfig, this.platform.api, this.platform.api.hap);
+      this.streamingDelegate = delegate;
+      this.accessory.configureController(delegate.controller);
+    } catch (error) {
+      this.platform.log.error(this.accessory.displayName, 'raise error to check and attach livestream function.', error);
+    }
   }
 
   private setupButtonService(
@@ -153,6 +165,23 @@ export class CameraAccessory extends DeviceAccessory {
       setValue: (value) => this.setCameraPropertyValue('this.platform.Characteristic.HomeKitCameraActive', PropertyName.DeviceEnabled, value),
     });
 
+    // Fire snapshot when motion detected
+    this.registerCharacteristic({
+      serviceType: this.platform.Service.MotionSensor,
+      characteristicType: this.platform.Characteristic.MotionDetected,
+      getValue: (data) => this.device.getPropertyValue(PropertyName.DeviceMotionDetected),
+      onValue: (service, characteristic) => {
+        this.eventTypesToHandle.forEach(eventType => {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          this.device.on(eventType as keyof any, (device: any, state: any) => {
+            // eslint-disable-next-line max-len
+            this.platform.log.info(`${this.accessory.displayName} MOTION DETECTED (${eventType})': ${state}`);
+            characteristic.updateValue(state);
+          });
+        });
+      },
+    });
+
     if (this.device.hasProperty('enabled')) {
       this.setupEnableButton();
       this.registerCharacteristic({
@@ -213,72 +242,18 @@ export class CameraAccessory extends DeviceAccessory {
 
   }
 
-  private setupMotionFunction(
-    accessory: PlatformAccessory,
-  ): Service {
+  private setupMotionFunction() {
     try {
-      const service =
-        this.accessory.getService(this.platform.Service.MotionSensor) ||
-        this.accessory.addService(this.platform.Service.MotionSensor);
-
-      service.setCharacteristic(
-        this.platform.Characteristic.Name,
-        this.accessory.displayName,
-      );
-
-      service.getCharacteristic(this.platform.Characteristic.MotionDetected)
-        .onGet(this.getCameraPropertyValue.bind(this, 'this.platform.Characteristic.MotionDetected', PropertyName.DeviceMotionDetected));
-
-      // List of event types
-      const eventTypesToHandle: (keyof DeviceEvents)[] = [
-        'motion detected',
-        'person detected',
-        'pet detected',
-        'vehicle detected',
-        'sound detected',
-        'crying detected',
-        'dog detected',
-        'stranger person detected',
-      ];
-
-      // Attach the common event handler to each event type
-      eventTypesToHandle.forEach(eventType => {
-        this.platform.log.debug(this.accessory.displayName, 'SETON Firing on:', eventType);
-        this.device.on(eventType, (device: Device, motion: boolean) =>
-          this.onDeviceEventDetectedPushNotification(device, motion, eventType));
+      this.registerCharacteristic({
+        serviceType: this.platform.Service.MotionSensor,
+        characteristicType: this.platform.Characteristic.MotionDetected,
+        getValue: (data) => this.device.getPropertyValue(PropertyName.DeviceMotionDetected),
+        onMultipleValue: this.eventTypesToHandle,
       });
-
-      return service as Service;
     } catch (error) {
       this.platform.log.error(this.accessory.displayName, 'raise error to check and attach motion function.', error);
       throw Error;
     }
-  }
-
-  private onDeviceEventDetectedPushNotification(
-    device: Device,
-    motion: boolean,
-    eventType: string,
-  ): void {
-    this.platform.log.info(`${this.accessory.displayName} ON Event Detected (${eventType}): ${motion}`);
-    if (motion) {
-      this.motionTimeout = setTimeout(() => {
-        this.platform.log.debug(this.accessory.displayName, 'Reseting motion through timout.');
-        // this.service
-        //   .getCharacteristic(this.platform.Characteristic.MotionDetected)
-        //   .updateValue(false);
-      }, 15000);
-    } else {
-      if (this.motionTimeout) {
-        clearTimeout(this.motionTimeout);
-      }
-    }
-    if (this.cameraConfig.useCachedLocalLivestream && this.streamingDelegate && motion) {
-      this.streamingDelegate.prepareCachedStream();
-    }
-    // this.service
-    //   .getCharacteristic(this.platform.Characteristic.MotionDetected)
-    //   .updateValue(motion);
   }
 
   private setupSwitchService(
@@ -292,10 +267,8 @@ export class CameraAccessory extends DeviceAccessory {
       outlet: this.platform.Service.Outlet,
     };
 
-    const platformService = platformServiceMapping[serviceType] || this.platform.Service.Switch;
-
     this.registerCharacteristic({
-      serviceType: platformService,
+      serviceType: platformServiceMapping[serviceType] || this.platform.Service.Switch,
       characteristicType: this.platform.Characteristic.On,
       name: this.accessory.displayName + '_' + serviceName,
       serviceSubType: serviceName,
@@ -381,12 +354,6 @@ export class CameraAccessory extends DeviceAccessory {
         case PropertyName.DeviceAutoNightvision: {
           await station.setAutoNightVision(this.device, value as boolean);
           cameraService.updateCharacteristic(this.platform.Characteristic.NightVision, value as boolean);
-          break;
-        }
-
-        case PropertyName.DeviceLight: {
-          await station.switchLight(this.device, value as boolean);
-          // this.service.updateCharacteristic(this.platform.Characteristic.On, value as boolean);
           break;
         }
 
