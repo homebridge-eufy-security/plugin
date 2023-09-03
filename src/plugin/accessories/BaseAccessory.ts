@@ -6,7 +6,7 @@ import {
   WithUUID,
 } from 'homebridge';
 import { EufySecurityPlatform } from '../platform';
-import { DeviceType, PropertyValue, Device, Station } from 'eufy-security-client';
+import { DeviceType, DeviceEvents, PropertyValue, Device, Station } from 'eufy-security-client';
 import { EventEmitter } from 'events';
 
 function isServiceInstance(
@@ -99,6 +99,7 @@ export abstract class BaseAccessory extends EventEmitter {
     setValue,
     onValue,
     onSimpleValue,
+    onMultipleValue,
     name,
     serviceSubType,
   }: {
@@ -113,6 +114,7 @@ export abstract class BaseAccessory extends EventEmitter {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     onValue?: (service: Service, characteristic: Characteristic) => any;
     onSimpleValue?: string;
+    onMultipleValue?: (keyof DeviceEvents)[];
   }) {
     const service = this.getService(serviceType, name, serviceSubType);
     const characteristic = service.getCharacteristic(characteristicType);
@@ -140,8 +142,21 @@ export abstract class BaseAccessory extends EventEmitter {
         this.platform.log.info(`${this.accessory.displayName} ON '${serviceType.name} / ${characteristicType.name} / ${onSimpleValue}': ${state}`);
         characteristic.updateValue(state);
       });
-    } else if (onValue) {
+    }
+  
+    if (onValue) {
       onValue(service, characteristic);
+    } 
+    
+    if (onMultipleValue) {
+      // Attach the common event handler to each event type
+      onMultipleValue.forEach(eventType => {
+        this.device.on(onSimpleValue as keyof any, (device: any, state: any) => {
+          // eslint-disable-next-line max-len
+          this.platform.log.info(`${this.accessory.displayName} ON '${serviceType.name} / ${characteristicType.name} / ${eventType}': ${state}`);
+          characteristic.updateValue(state);
+        });
+      });
     }
 
   }
