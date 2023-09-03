@@ -42,26 +42,26 @@ export class CameraAccessory extends DeviceAccessory {
 
     if (this.cameraConfig.enableCamera || (typeof this.device.isDoorbell === 'function' && this.device.isDoorbell())) {
       this.platform.log.debug(this.accessory.displayName, 'has a camera');
-
-      try {
-        this.cameraFunction();
-        const delegate = new StreamingDelegate(this.platform, device, this.cameraConfig, this.platform.api, this.platform.api.hap);
-        this.streamingDelegate = delegate;
-        accessory.configureController(delegate.controller);
-      } catch (error) {
-        this.platform.log.error(this.accessory.displayName, 'raise error to check and attach livestream function.', error);
-      }
-
+      this.setupCamera();
+      this.setupMotionButton();
+      this.setupLightButton();
+      this.initSensorService(this.platform.Service.Battery);
     } else {
       this.platform.log.debug(this.accessory.displayName, 'has a motion sensor.');
+      this.setupMotionFunction();
+      this.initSensorService(this.platform.Service.MotionSensor);
     }
+  }
 
-    this.setupMotionFunction();
-    this.setupMotionButton();
-    this.setupLightButton();
-
-    this.initSensorService(this.platform.Service.ContactSensor);
-
+  private setupCamera() {
+    try {
+      this.cameraFunction();
+      const delegate = new StreamingDelegate(this.platform, this.device, this.cameraConfig, this.platform.api, this.platform.api.hap);
+      this.streamingDelegate = delegate;
+      this.accessory.configureController(delegate.controller);
+    } catch (error) {
+      this.platform.log.error(this.accessory.displayName, 'raise error to check and attach livestream function.', error);
+    }
   }
 
   private setupButtonService(
@@ -339,12 +339,6 @@ export class CameraAccessory extends DeviceAccessory {
         case PropertyName.DeviceAutoNightvision: {
           await station.setAutoNightVision(this.device, value as boolean);
           cameraService.updateCharacteristic(this.platform.Characteristic.NightVision, value as boolean);
-          break;
-        }
-
-        case PropertyName.DeviceLight: {
-          await station.switchLight(this.device, value as boolean);
-          // this.service.updateCharacteristic(this.platform.Characteristic.On, value as boolean);
           break;
         }
 
