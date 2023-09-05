@@ -13,7 +13,6 @@ export interface EufySecurityPlatformConfig extends PlatformConfig {
   deviceName: string;
   enableDetailedLogging: number;
   omitLogFiles: boolean;
-  enableCamera: boolean;
   CameraMaxLivestreamDuration: number;
   pollingIntervalMinutes: number;
   hkHome: number;
@@ -23,7 +22,6 @@ export interface EufySecurityPlatformConfig extends PlatformConfig {
   ignoreStations: string[];
   ignoreDevices: string[];
   country: string;
-  ffmpegdebug: boolean;
   cameras: CameraConfig[];
   stations: StationConfig[];
   cleanCache: boolean;

@@ -26,12 +26,12 @@ export class EnableCameraComponent extends ConfigOptionsInterpreter implements O
   /** updateConfig() takes an optional second parameter to specify the accessoriy for which the setting is changed */
 
   @Input() accessory?: Accessory;
-  value = false;
+  value = 'true';
   disabled = false;
 
   async readValue() {
     if (this.accessory && Device.isDoorbell(this.accessory.type)) {
-      this.value = true;
+      this.value = 'true';
       this.disabled = true;
       this.update();
     }
@@ -46,7 +46,7 @@ export class EnableCameraComponent extends ConfigOptionsInterpreter implements O
   update() {
     this.updateConfig(
       {
-        enableCamera: this.value,
+        enableCamera: JSON.parse(this.value),
       },
       this.accessory,
     );
