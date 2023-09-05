@@ -50,19 +50,21 @@ export class CameraAccessory extends DeviceAccessory {
     this.platform.log.debug(this.accessory.displayName, 'Constructed Camera');
 
     this.cameraConfig = this.getCameraConfig();
-    // this.platform.log.debug(this.accessory.displayName, 'config is:', this.cameraConfig);
+    this.platform.log.debug(`${this.accessory.displayName} config is: ${this.cameraConfig}`);
 
     if (this.cameraConfig.enableCamera || (typeof this.device.isDoorbell === 'function' && this.device.isDoorbell())) {
       this.platform.log.debug(this.accessory.displayName, 'has a camera');
       this.setupCamera();
-      this.setupMotionButton();
-      this.setupLightButton();
       this.initSensorService(this.platform.Service.Battery);
     } else {
       this.platform.log.debug(this.accessory.displayName, 'has a motion sensor.');
       this.setupMotionFunction();
       this.initSensorService(this.platform.Service.MotionSensor);
     }
+
+    this.setupEnableButton();
+    this.setupMotionButton();
+    this.setupLightButton();
   }
 
   private setupCamera() {
@@ -183,7 +185,6 @@ export class CameraAccessory extends DeviceAccessory {
     });
 
     if (this.device.hasProperty('enabled')) {
-      this.setupEnableButton();
       this.registerCharacteristic({
         serviceType: this.platform.Service.CameraOperatingMode,
         characteristicType: this.platform.Characteristic.ManuallyDisabled,
