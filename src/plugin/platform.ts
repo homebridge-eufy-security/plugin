@@ -37,7 +37,7 @@ import {
   // @ts-ignore 
 } from 'eufy-security-client';
 
-import { Logger as TsLogger } from 'tslog';
+import { Logger as TsLogger, ILogObj } from 'tslog';
 import { createStream } from 'rotating-file-stream';
 
 import fs from 'fs';
@@ -53,8 +53,9 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
   public config: EufySecurityPlatformConfig;
   private eufyConfig: EufySecurityConfig;
 
-  public log;
-  private tsLogger;
+  public log: TsLogger<ILogObj>;
+  private tsLogger: TsLogger<ILogObj>;
+  public ffmpegLogger: TsLogger<ILogObj>;
   private already_shutdown: boolean = false;
 
   public readonly eufyPath: string;
@@ -112,6 +113,7 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
 
     this.log = new TsLogger(mainLogObj);
     this.tsLogger = new TsLogger({ type: 'hidden', minLevel: (this.config.enableDetailedLogging) ? 2 : 3 });
+    this.ffmpegLogger = new TsLogger({ type: 'hidden', minLevel: (this.config.enableDetailedLogging) ? 2 : 3 });
 
     const omitLogFiles = this.config.omitLogFiles ?? false;
 
@@ -139,6 +141,18 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
 
       this.tsLogger.attachTransport((logObj) => {
         eufyLogStream.write(JSON.stringify(logObj) + '\n');
+      });
+      // use tslog for ffmpeg
+
+      const ffmpegLogStream = createStream('ffmpeg-log.log', {
+        path: this.eufyPath,
+        interval: '1d',
+        rotate: 3,
+        maxSize: '200M',
+      });
+
+      this.ffmpegLogger.attachTransport((logObj) => {
+        ffmpegLogStream.write(JSON.stringify(logObj) + '\n');
       });
     }
 

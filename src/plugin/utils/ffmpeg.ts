@@ -6,7 +6,7 @@ import { Readable, Writable } from 'stream';
 import ffmpegPath from 'ffmpeg-for-homebridge';
 import pickPort from 'pick-port';
 
-import { Logger } from './logger';
+import { Logger as TsLogger, ILogObj } from 'tslog';
 import EventEmitter from 'events';
 import { CameraConfig } from './configTypes';
 import { AudioStreamingCodecType, ReconfigureStreamRequest, SnapshotRequest, StartStreamRequest } from 'homebridge';
@@ -554,7 +554,7 @@ export class FFmpeg extends EventEmitter {
   private process?: ChildProcessWithoutNullStreams;
 
   private name: string;
-  private log: Logger;
+  private log: TsLogger<ILogObj>;
   private progress?: FFmpegProgress;
   private parameters: FFmpegParameters[];
 
@@ -566,7 +566,7 @@ export class FFmpeg extends EventEmitter {
   private starttime?: number;
   private killTimeout?: NodeJS.Timeout;
   
-  constructor(name: string, parameters: FFmpegParameters | FFmpegParameters[], log: Logger) {
+  constructor(name: string, parameters: FFmpegParameters | FFmpegParameters[], log: TsLogger<ILogObj>) {
     super();
     this.name = name;
     this.log = log;

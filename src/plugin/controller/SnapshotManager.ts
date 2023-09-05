@@ -6,7 +6,7 @@ import ffmpegPath from 'ffmpeg-for-homebridge';
 import { CameraConfig } from '../utils/configTypes';
 import { EufySecurityPlatform } from '../platform';
 import { LocalLivestreamManager } from './LocalLivestreamManager';
-import { Logger } from '../utils/logger';
+import { Logger as TsLogger, ILogObj } from 'tslog';
 
 import { is_rtsp_ready } from '../utils/utils';
 import { SnapshotRequest } from 'homebridge';
@@ -55,7 +55,7 @@ export class SnapshotManager extends EventEmitter {
 
   private readonly videoProcessor = ffmpegPath || 'ffmpeg';
 
-  private log;
+  private log: TsLogger<ILogObj>;
   private livestreamManager;
 
   private currentSnapshot?: Snapshot;
@@ -68,7 +68,7 @@ export class SnapshotManager extends EventEmitter {
   private snapshotRefreshTimer?: NodeJS.Timeout;
 
   // eslint-disable-next-line max-len
-  constructor(platform: EufySecurityPlatform, device: Camera, cameraConfig: CameraConfig, livestreamManager: LocalLivestreamManager, log: Logger) {
+  constructor(platform: EufySecurityPlatform, device: Camera, cameraConfig: CameraConfig, livestreamManager: LocalLivestreamManager, log: TsLogger<ILogObj>) {
     super();
 
     this.log = log;
@@ -365,7 +365,7 @@ export class SnapshotManager extends EventEmitter {
       const ffmpeg = new FFmpeg(
         `[${this.device.getName()}] [Snapshot Process]`,
         parameters,
-        this.log,
+        this.platform.ffmpegLogger,
       );
       const buffer = await ffmpeg.getResult();
 
@@ -416,7 +416,7 @@ export class SnapshotManager extends EventEmitter {
     const ffmpeg = new FFmpeg(
       `[${this.device.getName()}] [Snapshot Resize Process]`,
       parameters,
-      this.log,
+      this.platform.ffmpegLogger,
     );
     return ffmpeg.getResult(snapshot);
   }

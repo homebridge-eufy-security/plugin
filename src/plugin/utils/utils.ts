@@ -1,9 +1,9 @@
 import { Camera, PropertyName } from 'eufy-security-client';
 
 import { CameraConfig } from './configTypes';
-import { Logger } from './logger';
+import { Logger as TsLogger, ILogObj } from 'tslog';
 
-export const is_rtsp_ready = function(device: Camera, cameraConfig: CameraConfig, log: Logger): boolean {
+export const is_rtsp_ready = function(device: Camera, cameraConfig: CameraConfig, log: TsLogger<ILogObj>): boolean {
 
   log.debug(device.getName(), 'RTSP rtspStream:' + JSON.stringify(device.hasProperty('rtspStream')));
   if (!device.hasProperty('rtspStream')) {
