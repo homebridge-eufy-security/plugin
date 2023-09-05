@@ -1,6 +1,5 @@
 export const DEFAULT_CONFIG_VALUES = {
   enableDetailedLogging: false,
-  enableCamera: false, //deprecated
   CameraMaxLivestreamDuration: 30,
   pollingIntervalMinutes: 10,
   hkHome: 1,
@@ -10,7 +9,6 @@ export const DEFAULT_CONFIG_VALUES = {
   ignoreStations: [],
   ignoreDevices: [],
   country: 'US',
-  ffmpegdebug: false, // deprecated?
   cameras: [],
   cleanCache: true,
   unbridge: true,
