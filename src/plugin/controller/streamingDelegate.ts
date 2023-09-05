@@ -24,7 +24,7 @@ import { createSocket, Socket } from 'dgram';
 import pickPort, { pickPortOptions } from 'pick-port';
 import { CameraConfig, VideoConfig } from '../utils/configTypes';
 import { FFmpeg, FFmpegParameters } from '../utils/ffmpeg';
-import { Logger } from '../utils/logger';
+import { Logger as TsLogger, ILogObj } from 'tslog';
 
 import { Camera, PropertyName } from 'eufy-security-client';
 import { EufySecurityPlatform } from '../platform';
@@ -64,7 +64,7 @@ type ActiveSession = {
 export class StreamingDelegate implements CameraStreamingDelegate {
   private readonly hap: HAP;
   private readonly api: API;
-  private readonly log: Logger;
+  private readonly log: TsLogger<ILogObj>;
   private readonly cameraName: string;
   private cameraConfig: CameraConfig;
   private videoConfig: VideoConfig;
@@ -314,7 +314,7 @@ export class StreamingDelegate implements CameraStreamingDelegate {
       const videoProcess = new FFmpeg(
         `[${this.cameraName}] [Video Process]`,
         !useSeparateProcesses && audioParams ? [videoParams, audioParams] : videoParams,
-        this.log,
+        this.platform.ffmpegLogger,
       );
       videoProcess.on('started', () => {
         callback();
@@ -330,7 +330,7 @@ export class StreamingDelegate implements CameraStreamingDelegate {
         const audioProcess = new FFmpeg(
           `[${this.cameraName}] [Audio Process]`,
           audioParams,
-          this.log,
+          this.platform.ffmpegLogger,
         );
         audioProcess.on('error', (err) => { // TODO: better reestablish connection
           this.log.error(this.cameraName, 'Audio process ended with error: ' + err);
@@ -347,7 +347,7 @@ export class StreamingDelegate implements CameraStreamingDelegate {
         activeSession.returnProcess = new FFmpeg(
           `[${this.cameraName}] [Talkback Process]`,
           talkbackParameters,
-          this.log,
+          this.platform.ffmpegLogger,
         );
         activeSession.returnProcess.on('error', (err) => {
           this.log.error(this.cameraName, 'Talkback process ended with error: ' + err);

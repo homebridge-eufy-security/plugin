@@ -3,7 +3,7 @@ import { EventEmitter, Readable } from 'stream';
 import { Station, Device, StreamMetadata, Camera } from 'eufy-security-client';
 
 import { EufySecurityPlatform } from '../platform';
-import { Logger } from '../utils/logger';
+import { Logger as TsLogger, ILogObj } from 'tslog';
 
 type StationStream = {
   station: Station;
@@ -16,14 +16,14 @@ type StationStream = {
 
 class AudiostreamProxy extends Readable {
 
-  private log: Logger;
+  private log: TsLogger<ILogObj>;
 
   private cacheData: Array<Buffer> = [];
   private pushNewDataImmediately = false;
 
   private dataFramesCount = 0;
 
-  constructor(log: Logger) {
+  constructor(log: TsLogger<ILogObj>) {
     super();
 
     this.log = log;
@@ -67,14 +67,14 @@ class VideostreamProxy extends Readable {
   private livestreamId: number;
 
   private cacheData: Array<Buffer> = [];
-  private log: Logger;
+  private log: TsLogger<ILogObj>;
 
   private killTimeout: NodeJS.Timeout | null = null;
 
   private pushNewDataImmediately = false;
   private dataFramesCount = 0;
 
-  constructor(id: number, cacheData: Array<Buffer>, manager: LocalLivestreamManager, log: Logger) {
+  constructor(id: number, cacheData: Array<Buffer>, manager: LocalLivestreamManager, log: TsLogger<ILogObj>) {
     super();
 
     this.livestreamId = id;
@@ -150,7 +150,7 @@ export class LocalLivestreamManager extends EventEmitter {
   private readonly CONNECTION_ESTABLISHED_TIMEOUT = 5;
 
   private stationStream: StationStream | null;
-  private log: Logger;
+  private log: TsLogger<ILogObj>;
 
   private livestreamCount = 1;
   private iFrameCache: Array<Buffer> = [];
@@ -168,7 +168,7 @@ export class LocalLivestreamManager extends EventEmitter {
   private readonly platform: EufySecurityPlatform;
   private readonly device: Camera;
   
-  constructor(platform: EufySecurityPlatform, device: Camera, cacheEnabled: boolean, log: Logger) {    
+  constructor(platform: EufySecurityPlatform, device: Camera, cacheEnabled: boolean, log: TsLogger<ILogObj>) {    
     super();
 
     this.log = log;
