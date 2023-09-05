@@ -50,9 +50,12 @@ export class CameraAccessory extends DeviceAccessory {
     this.platform.log.debug(this.accessory.displayName, 'Constructed Camera');
 
     this.cameraConfig = this.getCameraConfig();
-    this.platform.log.debug(`${this.accessory.displayName} config is: ${this.cameraConfig}`);
 
-    if (this.cameraConfig.enableCamera || (typeof this.device.isDoorbell === 'function' && this.device.isDoorbell())) {
+    this.platform.log.debug(`${this.accessory.displayName} config is: ${JSON.stringify(this.cameraConfig)}`);
+    this.platform.log.debug(`${this.accessory.displayName} enabled?: ${this.cameraConfig.enableCamera}`);
+    this.platform.log.debug(`${this.accessory.displayName} doorbell?: ${this.device.isDoorbell()}`);
+
+    if (this.cameraConfig.enableCamera || this.device.isDoorbell()) {
       this.platform.log.debug(this.accessory.displayName, 'has a camera');
       this.setupCamera();
       this.initSensorService(this.platform.Service.Battery);
@@ -243,18 +246,29 @@ export class CameraAccessory extends DeviceAccessory {
 
   }
 
+  // This private function sets up the motion sensor characteristics for the accessory.
   private setupMotionFunction() {
-    try {
-      this.registerCharacteristic({
-        serviceType: this.platform.Service.MotionSensor,
-        characteristicType: this.platform.Characteristic.MotionDetected,
-        getValue: (data) => this.device.getPropertyValue(PropertyName.DeviceMotionDetected),
-        onMultipleValue: this.eventTypesToHandle,
-      });
-    } catch (error) {
-      this.platform.log.error(this.accessory.displayName, 'raise error to check and attach motion function.', error);
-      throw Error;
-    }
+    // Register the motion sensor characteristic for detecting motion.
+    this.registerCharacteristic({
+      serviceType: this.platform.Service.MotionSensor,
+      characteristicType: this.platform.Characteristic.MotionDetected,
+      getValue: (data) => this.device.getPropertyValue(PropertyName.DeviceMotionDetected),
+      onMultipleValue: this.eventTypesToHandle,
+    });
+
+    // If the camera is disabled, flag the motion sensor as tampered.
+    // This is done because the motion sensor won't work until the camera is enabled again.
+    this.registerCharacteristic({
+      serviceType: this.platform.Service.MotionSensor,
+      characteristicType: this.platform.Characteristic.StatusTampered,
+      getValue: (data) => {
+        const tampered = this.device.getPropertyValue(PropertyName.DeviceEnabled);
+        this.platform.log.debug(`${this.accessory.displayName} TAMPERED? ${!tampered}`);
+        return tampered
+          ? this.platform.Characteristic.StatusTampered.NOT_TAMPERED
+          : this.platform.Characteristic.StatusTampered.TAMPERED;
+      },
+    });
   }
 
   private setupSwitchService(
