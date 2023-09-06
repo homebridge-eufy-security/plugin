@@ -11,15 +11,7 @@
   "funding": [
     {
       "type": "github",
-      "url": "https://github.com/sponsors/lenoxys"
-    },
-    {
-      "type": "ko-fi",
-      "url": "https://ko-fi.com/thieren"
-    },
-    {
-      "type": "ko-fi",
-      "url": "https://ko-fi.com/samemory"
+      "url": "https://github.com/sponsors/homebridge-eufy-security"
     }
   ],
   "bugs": {
