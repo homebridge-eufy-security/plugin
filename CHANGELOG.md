@@ -2,6 +2,33 @@
 
 You can find the complete detailled changelog for every beta release [here](https://github.com/homebridge-eufy-security/plugin/releases).
 
+### Changelog 2.2.14
+
+#### Updates
+
+- **Update libs**
+  - Commit: 711a966
+  - Author: Lenoxys
+  - Date: Fri Sep 8 21:28:15 2023 +0200
+  - Description: Libraries updated for improved performance and stability.
+
+#### Fixes
+
+- **Issue #407: Lock Property Error**
+  - Commit: 16dbb9f
+  - Author: Lenoxys
+  - Date: Fri Sep 8 21:25:48 2023 +0200
+  - Description: Fixed incorrect property set in the lock function.
+  - Credits: @InquisitorBR, @zhodd
+
+#### Removals
+
+- **Removed Reboot Loop**
+  - Commit: 7d58590
+  - Author: Lenoxys
+  - Date: Fri Sep 8 21:21:22 2023 +0200
+  - Description: Removed 'throw' causing a reboot loop, replaced with error message.
+
 ## 2.2.13 
 ### Changed
 - Refactored comments to better explain the purpose of the initial delay in device setup.
