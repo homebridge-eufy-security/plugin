@@ -1,10 +1,10 @@
-import { Characteristic, CharacteristicValue, PlatformAccessory, Service } from 'homebridge';
+import { CharacteristicValue, PlatformAccessory } from 'homebridge';
 import { EufySecurityPlatform } from '../platform';
 import { DeviceAccessory } from './Device';
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore  
-import { Lock, PropertyName, Device, PropertyValue } from 'eufy-security-client';
+import { Lock, PropertyName } from 'eufy-security-client';
 
 /**
  * Platform Accessory
