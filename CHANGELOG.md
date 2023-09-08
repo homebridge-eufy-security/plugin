@@ -2,6 +2,10 @@
 
 You can find the complete detailled changelog for every beta release [here](https://github.com/homebridge-eufy-security/plugin/releases).
 
+## 2.2.13 
+### Changed
+- Refactored comments to better explain the purpose of the initial delay in device setup.
+
 ## 2.1.4 (2022-12-24)
 
 ### Changed

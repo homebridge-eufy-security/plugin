@@ -34,8 +34,7 @@ export class MotionSensorAccessory extends DeviceAccessory {
       this.initSensorService(this.platform.Service.MotionSensor);
 
     } else {
-      this.platform.log.warn(`${this.accessory.displayName} has no motionDetected`);
-      throw Error(`${this.accessory.displayName} raise error to check and attach a motionDetected: ${Error}`);
+      this.platform.log.error(`${this.accessory.displayName} has no motionDetected`);
     }
   }
 }

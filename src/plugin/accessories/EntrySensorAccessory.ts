@@ -34,8 +34,7 @@ export class EntrySensorAccessory extends DeviceAccessory {
       this.initSensorService(this.platform.Service.ContactSensor);
 
     } else {
-      this.platform.log.warn(`${this.accessory.displayName} has no sensorOpen`);
-      throw Error(`${this.accessory.displayName} raise error to check and attach a sensorOpen: ${Error}`);
+      this.platform.log.error(`${this.accessory.displayName} has no sensorOpen`);
     }
   }
 }
