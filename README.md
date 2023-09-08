@@ -25,9 +25,9 @@ Homebridge plugin to control certain Eufy Security devices
 
 ### Prerequisites
 
-- To use this plugin, you will need to already have [Homebridge](https://homebridge.io) (at least v1.4.1)  installed. Refer to the links for more information and installation instructions.
+- To use this plugin, you will need to already have [Homebridge](https://homebridge.io) (at least v1.6.1)  installed. Refer to the links for more information and installation instructions.
 - For configuration Homebridge UI is recommenend. If you have 2FA enabled it is mandatory.
-- It is recommended to use the current LTS version of Node, currently v16.
+- It is recommended to use the current LTS version of Node, currently v18.
 
 #### Setup
 * [Installation](https://github.com/homebridge-eufy-security/plugin/wiki/Installation-and-Configuration#installation)
