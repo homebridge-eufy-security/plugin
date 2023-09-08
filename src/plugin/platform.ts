@@ -340,7 +340,12 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
       eufyDevice: station,
     };
 
-    this.processAccessory(deviceContainer);
+    // Delay execution to allow for property initialization
+    // Required for lock setup, among other things
+    setTimeout(() => {
+      this.log.info(`${deviceContainer.deviceIdentifier.displayName} pre-caching: done`);
+      this.processAccessory(deviceContainer);
+    }, 5 * 1000); // 5 seconds
   }
 
   private async deviceAdded(device: Device) {
@@ -366,7 +371,12 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
       eufyDevice: device,
     };
 
-    this.processAccessory(deviceContainer);
+    // Delay execution to allow for property initialization
+    // Required for lock setup, among other things
+    setTimeout(() => {
+      this.log.info(`${deviceContainer.deviceIdentifier.displayName} pre-caching complete`);
+      this.processAccessory(deviceContainer);
+    }, 6 * 1000); // 6 seconds
   }
 
   private processAccessory(deviceContainer: DeviceContainer) {
