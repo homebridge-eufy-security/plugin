@@ -22,7 +22,7 @@ export class LockAccessory extends DeviceAccessory {
 
     this.platform.log.debug(`${this.accessory.displayName} Constructed Lock`);
 
-    if (this.device.hasProperty('DeviceLocked')) {
+    if (this.device.hasProperty('locked')) {
 
       // Append Service.LockManagement looks like mandatory for Apple's HAP but it seems to do nothing
       this.registerCharacteristic({
@@ -59,8 +59,7 @@ export class LockAccessory extends DeviceAccessory {
       this.initSensorService(this.platform.Service.LockMechanism);
 
     } else {
-      this.platform.log.warn(`${this.accessory.displayName} has no lock`);
-      throw Error(`${this.accessory.displayName} raise error to check and attach a lock: ${Error}`);
+      this.platform.log.error(`${this.accessory.displayName} has no lock`);
     }
   }
 
