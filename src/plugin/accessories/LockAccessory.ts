@@ -77,7 +77,7 @@ export class LockAccessory extends DeviceAccessory {
         getValue: (data) => this.getLockStatus(),
         onValue: (service, characteristic) => {
           this.device.on('locked', () => {
-            characteristic.updateValue(this.convertLockStatusCode(this.getLockStatus()));
+            characteristic.updateValue(this.getLockStatus());
           });
         },
       });
@@ -89,7 +89,7 @@ export class LockAccessory extends DeviceAccessory {
         setValue: (value) => this.setLockTargetState(value),
         onValue: (service, characteristic) => {
           this.device.on('locked', () => {
-            characteristic.updateValue(this.convertLockStatusCode(this.getLockStatus()));
+            characteristic.updateValue(this.getLockStatus());
           });
         },
       });
