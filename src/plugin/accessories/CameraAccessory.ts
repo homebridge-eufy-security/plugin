@@ -371,6 +371,11 @@ export class CameraAccessory extends DeviceAccessory {
           cameraService.updateCharacteristic(this.platform.Characteristic.NightVision, value as boolean);
           break;
         }
+		
+		case PropertyName.DeviceLight: {
+		  await station.switchLight(this.device, value as boolean);
+		  break;
+		}
 
         default: {
           // eslint-disable-next-line max-len
