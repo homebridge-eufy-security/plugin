@@ -21,8 +21,6 @@ You can find the complete detailled changelog for every beta release [here](http
   - Enhanced error message to include more details on lock state and errors.
   - Minor comment update for clarity on lock status.
 
-That wraps up the key points for 2.2.15. Anything else you'd like to include?
-
 ### Changelog 2.2.14
 
 #### Updates

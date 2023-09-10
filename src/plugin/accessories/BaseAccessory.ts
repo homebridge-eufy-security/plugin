@@ -154,7 +154,7 @@ export abstract class BaseAccessory extends EventEmitter {
     }
 
     if (onValue) {
-      this.platform.log.info(`${this.accessory.displayName} ON '${serviceType.name} / ${characteristicType.name}': ${onValue}`);
+      this.platform.log.info(`${this.accessory.displayName} ON '${serviceType.name} / ${characteristicType.name}'`);
       onValue(service, characteristic);
     }
 
