@@ -1,7 +1,7 @@
 {
   "displayName": "Homebridge Eufy Security",
   "name": "homebridge-eufy-security",
-  "version": "2.2.14",
+  "version": "2.2.15",
   "description": "Control Eufy Security from homebridge.",
   "license": "Apache-2.0",
   "repository": {
