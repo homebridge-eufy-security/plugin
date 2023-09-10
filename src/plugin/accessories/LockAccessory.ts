@@ -72,8 +72,10 @@ export class LockAccessory extends DeviceAccessory {
   private async setLockTargetState(state: CharacteristicValue) {
     try {
       await this.setPropertyValue(PropertyName.DeviceLocked, !!state);
-    } catch (err) {
-      this.platform.log.error(this.accessory.displayName, 'Lock target state could not be set: ' + err);
+    } catch (error) {
+      this.platform.log.error(`${this.accessory.displayName} Lock target state
+      (${JSON.stringify(typeof state)} / ${JSON.stringify(state)}) 
+      could not be set: ${error}`);
     }
   }
 
@@ -93,7 +95,7 @@ export class LockAccessory extends DeviceAccessory {
 
     // Determine the HomeKit lock state based on the provided lock status
     switch (lockStatus) {
-      // If lockStatus is true (locked) or 4 (LOCKED)◊
+      // If lockStatus is true (locked) or 4 (LOCKED)
       case true:
       case 4:
         return this.platform.Characteristic.LockCurrentState.SECURED;
