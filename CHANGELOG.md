@@ -2,6 +2,27 @@
 
 You can find the complete detailled changelog for every beta release [here](https://github.com/homebridge-eufy-security/plugin/releases).
 
+### Changelog 2.2.15
+
+#### New Features
+
+- **Added Debug Logs for Lock Status**
+  - Commit: 7d5d9e5
+  - Author: Lenoxys
+  - Date: Sun Sep 10 12:35:18 2023 +0200
+  - Description: Added extra debug information to understand lock status callbacks.
+
+#### Code Changes
+
+- **BaseAccessory.ts**
+  - Additional logging for `ON` state of characteristics.
+
+- **LockAccessory.ts**
+  - Enhanced error message to include more details on lock state and errors.
+  - Minor comment update for clarity on lock status.
+
+That wraps up the key points for 2.2.15. Anything else you'd like to include?
+
 ### Changelog 2.2.14
 
 #### Updates
