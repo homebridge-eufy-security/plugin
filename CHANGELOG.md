@@ -2,6 +2,31 @@
 
 You can find the complete detailled changelog for every beta release [here](https://github.com/homebridge-eufy-security/plugin/releases).
 
+### Changelog 2.2.16
+
+#### Bug Fixes
+
+- **Found Issue #407 Conversion Error**
+  - Commit: bac87bb
+  - Author: Lenoxys
+  - Date: Sun Sep 10 20:37:01 2023 +0200
+  - Description: Fixed double conversion which led to an error.
+
+#### New Features
+
+- **Enhanced Lock Management Characteristics**
+  - Commit: 913ed54
+  - Author: Lenoxys
+  - Date: Sun Sep 10 14:17:50 2023 +0200
+  - Description: Added missing characteristics to Lock Management service.
+
+#### Code Changes
+
+- **LockAccessory.ts**
+  - Refactored Lock Management characteristics to adhere to Apple guidelines.
+  - Introduced new characteristics like `Version`, `LockManagementAutoSecurityTimeout`, `AdministratorOnlyAccess`, and `LockControlPoint`.
+  - Optimized code related to lock status updates.
+
 ### Changelog 2.2.15
 
 #### New Features

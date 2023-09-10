@@ -24,12 +24,50 @@ export class LockAccessory extends DeviceAccessory {
 
     if (this.device.hasProperty('locked')) {
 
-      // Append Service.LockManagement looks like mandatory for Apple's HAP but it seems to do nothing
+      // Lock Management is required by Apple guidelines, though not functional for our use case.
+      // Implementing as a no-op to meet requirements.
       this.registerCharacteristic({
         serviceType: this.platform.Service.LockManagement,
         characteristicType: this.platform.Characteristic.Version,
+        getValue: (data) => {
+          return '1.0';
+        },
+      });
+
+      // Sets the Auto Security Timeout for the Lock Management Service.
+      // The value represents the time in seconds that the accessory waits after becoming unsecured,
+      // before trying to enter the secured state again.
+      // A value of 0 disables this feature.
+      // Currently set to 3 seconds.
+      this.registerCharacteristic({
+        serviceType: this.platform.Service.LockManagement,
+        characteristicType: this.platform.Characteristic.LockManagementAutoSecurityTimeout,
+        getValue: (data) => {
+          return 3;
+        },
+      });
+
+      this.registerCharacteristic({
+        serviceType: this.platform.Service.LockManagement,
+        characteristicType: this.platform.Characteristic.AdministratorOnlyAccess,
         getValue: (data) => () => {
-          return 1;
+          this.platform.log.debug(`${this.accessory.displayName} GET AdministratorOnlyAccess: ${data}`);
+          return true;
+        },
+        setValue: (value) => () => {
+          this.platform.log.debug(`${this.accessory.displayName} SET AdministratorOnlyAccess: ${value}`);
+        },
+      });
+
+      this.registerCharacteristic({
+        serviceType: this.platform.Service.LockManagement,
+        characteristicType: this.platform.Characteristic.LockControlPoint,
+        getValue: (data) => () => {
+          this.platform.log.debug(`${this.accessory.displayName} GET LockControlPoint: ${data}`);
+          return '';
+        },
+        setValue: (value) => () => {
+          this.platform.log.debug(`${this.accessory.displayName} SET LockControlPoint: ${value}`);
         },
       });
 
@@ -39,7 +77,7 @@ export class LockAccessory extends DeviceAccessory {
         getValue: (data) => this.getLockStatus(),
         onValue: (service, characteristic) => {
           this.device.on('locked', () => {
-            characteristic.updateValue(this.convertLockStatusCode(this.getLockStatus()));
+            characteristic.updateValue(this.getLockStatus());
           });
         },
       });
@@ -51,7 +89,7 @@ export class LockAccessory extends DeviceAccessory {
         setValue: (value) => this.setLockTargetState(value),
         onValue: (service, characteristic) => {
           this.device.on('locked', () => {
-            characteristic.updateValue(this.convertLockStatusCode(this.getLockStatus()));
+            characteristic.updateValue(this.getLockStatus());
           });
         },
       });
