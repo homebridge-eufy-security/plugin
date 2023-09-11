@@ -337,48 +337,15 @@ export class CameraAccessory extends DeviceAccessory {
 
       const cameraService = this.getService(this.platform.Service.CameraOperatingMode);
 
-      switch (propertyName) {
-        case PropertyName.DeviceEnabled: {
-          if (characteristic === 'this.platform.Characteristic.On') {
-            this.cameraStatus = { isEnabled: value as boolean, timestamp: Date.now() };
-            await station.enableDevice(this.device, value as boolean);
-            cameraService.updateCharacteristic(this.platform.Characteristic.ManuallyDisabled, !value as boolean);
-          }
-          break;
-        }
+      await this.setPropertyValue(propertyName, value);
 
-        case PropertyName.DeviceMotionDetection: {
-          await station.setMotionDetection(this.device, value as boolean);
-          cameraService.updateCharacteristic(this.platform.Characteristic.CameraOperatingModeIndicator, value as boolean);
-          break;
-        }
-
-        case PropertyName.DeviceStatusLed: {
-          await station.setStatusLed(this.device, value as boolean);
-          cameraService.updateCharacteristic(this.platform.Characteristic.CameraOperatingModeIndicator, value as boolean);
-          break;
-        }
-
-        case PropertyName.DeviceNightvision: {
-          // Convert true to 1 (B&W Night Vision) and false to 0 (off)
-          await station.setNightVision(this.device, Number(value) as number);
-          cameraService.updateCharacteristic(this.platform.Characteristic.NightVision, value as boolean);
-          break;
-        }
-
-        case PropertyName.DeviceAutoNightvision: {
-          await station.setAutoNightVision(this.device, value as boolean);
-          cameraService.updateCharacteristic(this.platform.Characteristic.NightVision, value as boolean);
-          break;
-        }
-
-        default: {
-          // eslint-disable-next-line max-len
-          this.platform.log.error(`${this.accessory.displayName} Shouldn't Match '${characteristic}' ${propertyName}: ${value}`);
-          throw Error;
-          break;
-        }
+      if (characteristic === 'this.platform.Characteristic.On') {
+        this.cameraStatus = { isEnabled: value as boolean, timestamp: Date.now() };
+        characteristic = 'this.platform.Characteristic.ManuallyDisabled';
+        value = !value as boolean;
       }
+
+      cameraService.updateCharacteristic(characteristic, !value as boolean);
 
     } catch (error) {
       this.platform.log.debug(`${this.accessory.displayName} Error setting '${characteristic}' ${propertyName}: ${error}`);
