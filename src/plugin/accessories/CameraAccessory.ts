@@ -165,9 +165,9 @@ export class CameraAccessory extends DeviceAccessory {
       serviceType: this.platform.Service.CameraOperatingMode,
       characteristicType: this.platform.Characteristic.HomeKitCameraActive,
       // eslint-disable-next-line max-len
-      getValue: (data) => this.getCameraPropertyValue('this.platform.Characteristic.HomeKitCameraActive', PropertyName.DeviceEnabled),
+      getValue: (data, characteristic) => this.getCameraPropertyValue(characteristic, PropertyName.DeviceEnabled),
       // eslint-disable-next-line max-len
-      setValue: (value) => this.setCameraPropertyValue('this.platform.Characteristic.HomeKitCameraActive', PropertyName.DeviceEnabled, value),
+      setValue: (value, characteristic) => this.setCameraPropertyValue(characteristic, PropertyName.DeviceEnabled, value),
     });
 
     // Fire snapshot when motion detected
@@ -192,7 +192,7 @@ export class CameraAccessory extends DeviceAccessory {
         serviceType: this.platform.Service.CameraOperatingMode,
         characteristicType: this.platform.Characteristic.ManuallyDisabled,
         // eslint-disable-next-line max-len
-        getValue: (data) => this.getCameraPropertyValue('this.platform.Characteristic.ManuallyDisabled', PropertyName.DeviceEnabled),
+        getValue: (data, characteristic) => this.getCameraPropertyValue(characteristic, PropertyName.DeviceEnabled),
       });
     }
 
@@ -201,9 +201,9 @@ export class CameraAccessory extends DeviceAccessory {
         serviceType: this.platform.Service.CameraOperatingMode,
         characteristicType: this.platform.Characteristic.CameraOperatingModeIndicator,
         // eslint-disable-next-line max-len
-        getValue: (data) => this.getCameraPropertyValue('this.platform.Characteristic.CameraOperatingModeIndicator', PropertyName.DeviceStatusLed),
+        getValue: (data, characteristic) => this.getCameraPropertyValue(characteristic, PropertyName.DeviceStatusLed),
         // eslint-disable-next-line max-len
-        setValue: (value) => this.setCameraPropertyValue('this.platform.Characteristic.CameraOperatingModeIndicator', PropertyName.DeviceStatusLed, value),
+        setValue: (value, characteristic) => this.setCameraPropertyValue(characteristic, PropertyName.DeviceStatusLed, value),
       });
     }
 
@@ -212,9 +212,9 @@ export class CameraAccessory extends DeviceAccessory {
         serviceType: this.platform.Service.CameraOperatingMode,
         characteristicType: this.platform.Characteristic.NightVision,
         // eslint-disable-next-line max-len
-        getValue: (data) => this.getCameraPropertyValue('this.platform.Characteristic.NightVision', PropertyName.DeviceNightvision),
+        getValue: (data, characteristic) => this.getCameraPropertyValue(characteristic, PropertyName.DeviceNightvision),
         // eslint-disable-next-line max-len
-        setValue: (value) => this.setCameraPropertyValue('this.platform.Characteristic.NightVision', PropertyName.DeviceNightvision, value),
+        setValue: (value, characteristic) => this.setCameraPropertyValue(characteristic, PropertyName.DeviceNightvision, value),
       });
     }
 
@@ -223,9 +223,9 @@ export class CameraAccessory extends DeviceAccessory {
         serviceType: this.platform.Service.CameraOperatingMode,
         characteristicType: this.platform.Characteristic.NightVision,
         // eslint-disable-next-line max-len
-        getValue: (data) => this.getCameraPropertyValue('this.platform.Characteristic.NightVision', PropertyName.DeviceAutoNightvision),
+        getValue: (data, characteristic) => this.getCameraPropertyValue(characteristic, PropertyName.DeviceAutoNightvision),
         // eslint-disable-next-line max-len
-        setValue: (value) => this.setCameraPropertyValue('this.platform.Characteristic.NightVision', PropertyName.DeviceAutoNightvision, value),
+        setValue: (value, characteristic) => this.setCameraPropertyValue(characteristic, PropertyName.DeviceAutoNightvision, value),
       });
     }
 
@@ -287,15 +287,21 @@ export class CameraAccessory extends DeviceAccessory {
       characteristicType: this.platform.Characteristic.On,
       name: this.accessory.displayName + '_' + serviceName,
       serviceSubType: serviceName,
-      getValue: (data) => this.getCameraPropertyValue('this.platform.Characteristic.On', propertyName),
-      setValue: (value) => this.setCameraPropertyValue('this.platform.Characteristic.On', propertyName, value),
+      getValue: (data, characteristic) => this.getCameraPropertyValue(characteristic, propertyName),
+      setValue: (value, characteristic) => this.setCameraPropertyValue(characteristic, propertyName, value),
     });
   }
 
-  protected getCameraPropertyValue(characteristic: string, propertyName: PropertyName): CharacteristicValue {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  protected getCameraPropertyValue(characteristic: any, propertyName: PropertyName): CharacteristicValue {
     try {
       let value = this.device.getPropertyValue(propertyName);
-      this.platform.log.debug(`${this.accessory.displayName} GET '${characteristic}' ${propertyName}: ${value}`);
+
+      if (characteristic.displayName === 'Manually Disabled') {
+        value = !value;
+      }
+
+      this.platform.log.debug(`${this.accessory.displayName} GET '${characteristic.displayName}' ${propertyName}: ${value}`);
 
       if (propertyName === PropertyName.DeviceNightvision) {
         return value === 1;
@@ -307,13 +313,8 @@ export class CameraAccessory extends DeviceAccessory {
         Date.now() - this.cameraStatus.timestamp <= 60000
       ) {
         // eslint-disable-next-line max-len
-        this.platform.log.debug(`${this.accessory.displayName} CACHED for (1 min) '${characteristic}' ${propertyName}: ${this.cameraStatus.isEnabled}`);
+        this.platform.log.debug(`${this.accessory.displayName} CACHED for (1 min) '${characteristic.displayName}' ${propertyName}: ${this.cameraStatus.isEnabled}`);
         value = this.cameraStatus.isEnabled;
-      }
-
-      if (characteristic === 'this.platform.Characteristic.ManuallyDisabled') {
-        this.platform.log.debug(`${this.accessory.displayName} INVERSED '${characteristic}' ${propertyName}: ${!value}`);
-        value = !value;
       }
 
       if (value === undefined) {
@@ -322,33 +323,32 @@ export class CameraAccessory extends DeviceAccessory {
 
       return value as CharacteristicValue;
     } catch (error) {
-      this.platform.log.debug(`${this.accessory.displayName} Error getting '${characteristic}' ${propertyName}: ${error}`);
+      this.platform.log.debug(`${this.accessory.displayName} Error getting '${characteristic.displayName}' ${propertyName}: ${error}`);
       return false;
     }
   }
 
-  protected async setCameraPropertyValue(characteristic: string, propertyName: PropertyName, value: CharacteristicValue) {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  protected async setCameraPropertyValue(characteristic: any, propertyName: PropertyName, value: CharacteristicValue) {
     try {
-
-      // eslint-disable-next-line max-len
-      this.platform.log.debug(`${this.accessory.displayName} SET '${typeof characteristic} / ${characteristic}' ${propertyName}: ${value}`);
-
-      const station = await this.platform.getStationById(this.device.getStationSerial());
-
-      const cameraService = this.getService(this.platform.Service.CameraOperatingMode);
-
+      this.platform.log.debug(`${this.accessory.displayName} SET '${characteristic.displayName}' ${propertyName}: ${value}`);
       await this.setPropertyValue(propertyName, value);
 
-      if (characteristic === 'this.platform.Characteristic.On') {
+      if (characteristic.displayName === 'On') {
+        characteristic.updateValue(value);
+
         this.cameraStatus = { isEnabled: value as boolean, timestamp: Date.now() };
-        characteristic = 'this.platform.Characteristic.ManuallyDisabled';
+        characteristic = this.getService(
+          this.platform.Service.CameraOperatingMode,
+        ).getCharacteristic(this.platform.Characteristic.ManuallyDisabled);
+
+        this.platform.log.debug(`${this.accessory.displayName} INVERSED '${characteristic.displayName}' ${propertyName}: ${!value}`);
         value = !value as boolean;
       }
 
-      cameraService.updateCharacteristic(characteristic, !value as boolean);
-
+      characteristic.updateValue(value);
     } catch (error) {
-      this.platform.log.debug(`${this.accessory.displayName} Error setting '${characteristic}' ${propertyName}: ${error}`);
+      this.platform.log.debug(`${this.accessory.displayName} Error setting '${characteristic.displayName}' ${propertyName}: ${error}`);
     }
   }
 

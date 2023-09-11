@@ -2,6 +2,16 @@
 
 You can find the complete detailled changelog for every beta release [here](https://github.com/homebridge-eufy-security/plugin/releases).
 
+### Changelog 2.2.18
+
+#### Updated
+- `BaseAccessory.ts`: 
+  - Extended `getValue` and `setValue` to also accept `characteristic` and `service` as arguments.
+  - Removed some unnecessary lines of code.
+- `CameraAccessory.ts`:
+  - Changed the method signatures for `getCameraPropertyValue` and `setCameraPropertyValue` to accommodate new characteristic arguments.
+  - Simplified and optimized logging and value updating processes.
+
 ### Changelog 2.2.17
 
 #### Added

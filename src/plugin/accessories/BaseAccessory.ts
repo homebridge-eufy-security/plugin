@@ -116,9 +116,9 @@ export abstract class BaseAccessory extends EventEmitter {
     serviceSubType?: string;
     name?: string;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    getValue?: (data: any) => any;
+    getValue?: (data: any, characteristic?: Characteristic, service?: Service) => any;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    setValue?: (value: any) => any;
+    setValue?: (value: any, characteristic?: Characteristic, service?: Service) => any;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     onValue?: (service: Service, characteristic: Characteristic) => any;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -131,10 +131,9 @@ export abstract class BaseAccessory extends EventEmitter {
     // eslint-disable-next-line max-len
     this.platform.log.debug(`${this.accessory.displayName} REGISTER SERVICE '${serviceType.name} / ${characteristic.displayName}': ${characteristic.UUID}`);
 
-
     if (getValue) {
       characteristic.onGet(async (data) => {
-        const value = getValue(data);
+        const value = getValue(data, characteristic, service);
         this.platform.log.debug(`${this.accessory.displayName} GET '${serviceType.name} / ${characteristicType.name}': ${value}`);
         return value;
       });
@@ -142,8 +141,7 @@ export abstract class BaseAccessory extends EventEmitter {
 
     if (setValue) {
       characteristic.onSet(async (value: CharacteristicValue) => {
-        this.platform.log.debug(`${this.accessory.displayName} SET '${serviceType.name} / ${characteristicType.name}': ${value}`);
-        Promise.resolve(setValue(value));
+        Promise.resolve(setValue(value, characteristic, service));
       });
     }
 
