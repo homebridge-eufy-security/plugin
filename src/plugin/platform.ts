@@ -79,17 +79,18 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
     const plugin = require('../package.json');
 
     const mainLogObj = {
+      name: (this.config.enableDetailedLogging) ? `[EufySecurity-${plugin.version}]` : '[EufySecurity]',
       prettyLogTemplate: (this.config.enableDetailedLogging)
         // eslint-disable-next-line max-len
-        ? `[{{mm}}/{{dd}}/{{yyyy}} {{hh}}:{{MM}}:{{ss}}]\t[EufySecurity-${plugin.version}]\t{{logLevelName}}\t[{{fileNameWithLine}}{{name}}]\t`
-        : `[{{mm}}/{{dd}}/{{yyyy}} {{hh}}:{{MM}}:{{ss}}]\t[EufySecurity-${plugin.version}]\t{{logLevelName}}\t`,
+        ? '[{{mm}}/{{dd}}/{{yyyy}} {{hh}}:{{MM}}:{{ss}}]\t{{name}}\t{{logLevelName}}\t[{{fileNameWithLine}}{{name}}]\t'
+        : '[{{mm}}/{{dd}}/{{yyyy}}, {{hh}}:{{MM}}:{{ss}}]\t{{name}}\t{{logLevelName}}\t',
       prettyErrorTemplate: '\n{{errorName}} {{errorMessage}}\nerror stack:\n{{errorStack}}',
       prettyErrorStackTemplate: '  • {{fileName}}\t{{method}}\n\t{{fileNameWithLine}}',
       prettyErrorParentNamesSeparator: ':',
       prettyErrorLoggerNameDelimiter: '\t',
       stylePrettyLogs: true,
       minLevel: (this.config.enableDetailedLogging) ? 2 : 3,
-      // prettyLogTimeZone: 'UTC',
+      prettyLogTimeZone: 'local' as 'local' | 'local',
       prettyLogStyles: {
         logLevelName: {
           '*': ['bold', 'black', 'bgWhiteBright', 'dim'],
@@ -101,9 +102,9 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
           ERROR: ['bold', 'red'],
           FATAL: ['bold', 'redBright'],
         },
-        dateIsoStr: 'white',
+        dateIsoStr: 'gray',
         filePathWithLine: 'white',
-        name: ['white', 'bold'],
+        name: 'green',
         nameWithDelimiterPrefix: ['white', 'bold'],
         nameWithDelimiterSuffix: ['white', 'bold'],
         errorName: ['bold', 'bgRedBright', 'whiteBright'],
@@ -341,9 +342,9 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
     };
 
     // Delay execution to allow for property initialization
-    // Required for lock setup, among other things
+    // Station device must be initialized before device
     setTimeout(() => {
-      this.log.info(`${deviceContainer.deviceIdentifier.displayName} pre-caching: done`);
+      this.log.debug(`${deviceContainer.deviceIdentifier.displayName} pre-caching complete`);
       this.processAccessory(deviceContainer);
     }, 5 * 1000); // 5 seconds
   }
@@ -374,9 +375,9 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
     // Delay execution to allow for property initialization
     // Required for lock setup, among other things
     setTimeout(() => {
-      this.log.info(`${deviceContainer.deviceIdentifier.displayName} pre-caching complete`);
+      this.log.debug(`${deviceContainer.deviceIdentifier.displayName} pre-caching complete`);
       this.processAccessory(deviceContainer);
-    }, 6 * 1000); // 6 seconds
+    }, 7 * 1000); // 7 seconds
   }
 
   private processAccessory(deviceContainer: DeviceContainer) {
