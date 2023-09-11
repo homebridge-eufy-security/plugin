@@ -2,6 +2,32 @@
 
 You can find the complete detailled changelog for every beta release [here](https://github.com/homebridge-eufy-security/plugin/releases).
 
+### Changelog 2.2.17
+
+#### Commits
+
+1. **Commit**: 72759f2c
+   - **Author**: Lenoxys
+   - **Date**: Mon Sep 11 13:51:36 2023 +0200
+   - **Description**: Refactored `CameraAccessory.ts` to fix the switch-light issue and enable easier property addition without manual switching logic.
+   - **Credits**: @cixio
+
+2. **Commit**: 9df437d2
+   - **Author**: Lenoxys
+   - **Date**: Mon Sep 11 13:55:40 2023 +0200
+   - **Description**: Refactored accessory handling for flexibility and improved logging; removed `LockControlPoint` getter.
+
+#### Merged Code Changes
+
+- **CameraAccessory.ts & BaseAccessory.ts**
+  - Streamlined `propertyName` handling and enhanced flexibility.
+  - Simplified the characteristic update logic.
+  - `getValue` is now optional, providing more flexibility.
+  - Enhanced logging for accessory handling.
+  
+- **LockAccessory.ts**
+  - Removed the `LockControlPoint` getter because it is not requested by Apple HomeKit Framework.
+
 ### Changelog 2.2.16
 
 #### Bug Fixes
