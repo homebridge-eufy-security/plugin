@@ -62,10 +62,6 @@ export class LockAccessory extends DeviceAccessory {
       this.registerCharacteristic({
         serviceType: this.platform.Service.LockManagement,
         characteristicType: this.platform.Characteristic.LockControlPoint,
-        getValue: (data) => () => {
-          this.platform.log.debug(`${this.accessory.displayName} GET LockControlPoint: ${data}`);
-          return '';
-        },
         setValue: (value) => () => {
           this.platform.log.debug(`${this.accessory.displayName} SET LockControlPoint: ${value}`);
         },
