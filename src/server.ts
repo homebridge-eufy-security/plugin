@@ -36,15 +36,16 @@ class UiServer extends HomebridgePluginUiServer {
     const plugin = require('../package.json');
 
     const mainLogObj = {
+      name: `[EufySecurity-${plugin.version}]`,
       // eslint-disable-next-line max-len
-      prettyLogTemplate: `[{{mm}}/{{dd}}/{{yyyy}} {{hh}}:{{MM}}:{{ss}}]\t[EufySecurity-${plugin.version}]\t{{logLevelName}}\t[{{fileNameWithLine}}{{name}}]\t`,
+      prettyLogTemplate: '[{{mm}}/{{dd}}/{{yyyy}} {{hh}}:{{MM}}:{{ss}}]\t{{name}}\t{{logLevelName}}\t[{{fileNameWithLine}}{{name}}]\t',
       prettyErrorTemplate: '\n{{errorName}} {{errorMessage}}\nerror stack:\n{{errorStack}}',
       prettyErrorStackTemplate: '  • {{fileName}}\t{{method}}\n\t{{fileNameWithLine}}',
       prettyErrorParentNamesSeparator: ':',
       prettyErrorLoggerNameDelimiter: '\t',
       stylePrettyLogs: true,
       minLevel: 2,
-      // prettyLogTimeZone: 'UTC',
+      prettyLogTimeZone: 'local' as 'local' | 'local',
       prettyLogStyles: {
         logLevelName: {
           '*': ['bold', 'black', 'bgWhiteBright', 'dim'],
@@ -56,9 +57,9 @@ class UiServer extends HomebridgePluginUiServer {
           ERROR: ['bold', 'red'],
           FATAL: ['bold', 'redBright'],
         },
-        dateIsoStr: 'white',
+        dateIsoStr: 'gray',
         filePathWithLine: 'white',
-        name: ['white', 'bold'],
+        name: 'green',
         nameWithDelimiterPrefix: ['white', 'bold'],
         nameWithDelimiterSuffix: ['white', 'bold'],
         errorName: ['bold', 'bgRedBright', 'whiteBright'],

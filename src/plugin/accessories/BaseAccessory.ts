@@ -116,7 +116,7 @@ export abstract class BaseAccessory extends EventEmitter {
     serviceSubType?: string;
     name?: string;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    getValue: (data: any) => any;
+    getValue?: (data: any) => any;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     setValue?: (value: any) => any;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -131,11 +131,14 @@ export abstract class BaseAccessory extends EventEmitter {
     // eslint-disable-next-line max-len
     this.platform.log.debug(`${this.accessory.displayName} REGISTER SERVICE '${serviceType.name} / ${characteristic.displayName}': ${characteristic.UUID}`);
 
-    characteristic.onGet(async (data) => {
-      const value = getValue(data);
-      this.platform.log.debug(`${this.accessory.displayName} GET '${serviceType.name} / ${characteristicType.name}': ${value}`);
-      return value;
-    });
+
+    if (getValue) {
+      characteristic.onGet(async (data) => {
+        const value = getValue(data);
+        this.platform.log.debug(`${this.accessory.displayName} GET '${serviceType.name} / ${characteristicType.name}': ${value}`);
+        return value;
+      });
+    }
 
     if (setValue) {
       characteristic.onSet(async (value: CharacteristicValue) => {
@@ -146,15 +149,15 @@ export abstract class BaseAccessory extends EventEmitter {
 
     if (onSimpleValue) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      this.device.on(onSimpleValue, (device: any, state: any) => {
+      this.device.on(onSimpleValue, (device: any, value: any) => {
         // eslint-disable-next-line max-len
-        this.platform.log.info(`${this.accessory.displayName} ON '${serviceType.name} / ${characteristicType.name} / ${onSimpleValue}': ${state}`);
-        characteristic.updateValue(state);
+        this.platform.log.info(`${this.accessory.displayName} ON '${serviceType.name} / ${characteristicType.name} / ${onSimpleValue}': ${value}`);
+        characteristic.updateValue(value);
       });
     }
 
     if (onValue) {
-      this.platform.log.info(`${this.accessory.displayName} ON '${serviceType.name} / ${characteristicType.name}'`);
+      this.platform.log.debug(`${this.accessory.displayName} ON '${serviceType.name} / ${characteristicType.name}'`);
       onValue(service, characteristic);
     }
 
@@ -162,10 +165,10 @@ export abstract class BaseAccessory extends EventEmitter {
       // Attach the common event handler to each event type
       onMultipleValue.forEach(eventType => {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        this.device.on(eventType as keyof any, (device: any, state: any) => {
+        this.device.on(eventType as keyof any, (device: any, value: any) => {
           // eslint-disable-next-line max-len
-          this.platform.log.info(`${this.accessory.displayName} ON '${serviceType.name} / ${characteristicType.name} / ${eventType}': ${state}`);
-          characteristic.updateValue(state);
+          this.platform.log.info(`${this.accessory.displayName} ON '${serviceType.name} / ${characteristicType.name} / ${eventType}': ${value}`);
+          characteristic.updateValue(value);
         });
       });
     }
