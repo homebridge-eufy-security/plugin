@@ -297,10 +297,6 @@ export class CameraAccessory extends DeviceAccessory {
     try {
       let value = this.device.getPropertyValue(propertyName);
 
-      if (characteristic.displayName === 'Manually Disabled') {
-        value = !value;
-      }
-
       this.platform.log.debug(`${this.accessory.displayName} GET '${characteristic.displayName}' ${propertyName}: ${value}`);
 
       if (propertyName === PropertyName.DeviceNightvision) {
@@ -315,6 +311,11 @@ export class CameraAccessory extends DeviceAccessory {
         // eslint-disable-next-line max-len
         this.platform.log.debug(`${this.accessory.displayName} CACHED for (1 min) '${characteristic.displayName}' ${propertyName}: ${this.cameraStatus.isEnabled}`);
         value = this.cameraStatus.isEnabled;
+      }
+
+      if (characteristic.displayName === 'Manually Disabled') {
+        value = !value;
+        this.platform.log.debug(`${this.accessory.displayName} INVERSED '${characteristic.displayName}' ${propertyName}: ${value}`);
       }
 
       if (value === undefined) {
@@ -334,13 +335,15 @@ export class CameraAccessory extends DeviceAccessory {
       this.platform.log.debug(`${this.accessory.displayName} SET '${characteristic.displayName}' ${propertyName}: ${value}`);
       await this.setPropertyValue(propertyName, value);
 
-      if (characteristic.displayName === 'On') {
+      if (
+        propertyName === PropertyName.DeviceEnabled &&
+        characteristic.displayName === 'On'
+      ) {
         characteristic.updateValue(value);
 
         this.cameraStatus = { isEnabled: value as boolean, timestamp: Date.now() };
-        characteristic = this.getService(
-          this.platform.Service.CameraOperatingMode,
-        ).getCharacteristic(this.platform.Characteristic.ManuallyDisabled);
+        characteristic = this.getService(this.platform.Service.CameraOperatingMode)
+          .getCharacteristic(this.platform.Characteristic.ManuallyDisabled);
 
         this.platform.log.debug(`${this.accessory.displayName} INVERSED '${characteristic.displayName}' ${propertyName}: ${!value}`);
         value = !value as boolean;
