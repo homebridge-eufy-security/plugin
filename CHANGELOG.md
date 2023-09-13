@@ -2,6 +2,16 @@
 
 You can find the complete detailled changelog for every beta release [here](https://github.com/homebridge-eufy-security/plugin/releases).
 
+### Changelog 2.2.19
+
+#### Bug Fixes
+
+- Fixing getter and setter for camera properties
+
+#### Credits
+
+- @cixio, @julien94800 and @zhodd on issue #420 and #365
+
 ### Changelog 2.2.18
 
 #### Updated
