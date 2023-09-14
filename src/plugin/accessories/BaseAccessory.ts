@@ -110,6 +110,7 @@ export abstract class BaseAccessory extends EventEmitter {
     onMultipleValue,
     name,
     serviceSubType,
+    setValueDebounceTime = 0,
   }: {
     characteristicType: CharacteristicType;
     serviceType: ServiceType;
@@ -124,6 +125,7 @@ export abstract class BaseAccessory extends EventEmitter {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     onSimpleValue?: any;
     onMultipleValue?: (keyof DeviceEvents | StationEvents)[];
+    setValueDebounceTime?: number;
   }) {
     const service = this.getService(serviceType, name, serviceSubType);
     const characteristic = service.getCharacteristic(characteristicType);
@@ -139,7 +141,22 @@ export abstract class BaseAccessory extends EventEmitter {
       });
     }
 
-    if (setValue) {
+    if (setValue && setValueDebounceTime) {
+
+      let timeoutId: NodeJS.Timeout | null = null;
+      
+      characteristic.onSet(async (value: CharacteristicValue) => {
+        if (timeoutId) {
+          clearTimeout(timeoutId);
+        }
+      
+        timeoutId = setTimeout(() => {
+          timeoutId = null;
+          setValue(value, characteristic, service);
+        }, setValueDebounceTime);
+      });
+
+    } else if (setValue) {
       characteristic.onSet(async (value: CharacteristicValue) => {
         Promise.resolve(setValue(value, characteristic, service));
       });
