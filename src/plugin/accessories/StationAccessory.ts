@@ -60,10 +60,7 @@ export class StationAccessory extends BaseAccessory {
     const SecuritySettings = [
       PropertyName.StationHomeSecuritySettings,
       PropertyName.StationAwaySecuritySettings,
-<<<<<<< HEAD
       PropertyName.StationOffSecuritySettings,
-=======
->>>>>>> 896385609b3f1f57b96c7dde4e446074a34cd884
       PropertyName.StationCustom1SecuritySettings,
       PropertyName.StationCustom2SecuritySettings,
       PropertyName.StationCustom3SecuritySettings,
