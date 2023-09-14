@@ -23,6 +23,7 @@ export class StationAccessory extends BaseAccessory {
 
   private alarm_triggered: boolean;
   private modes;
+  public hasKeyPad: boolean = false;
 
   private alarm_delayed: boolean;
   private alarm_delay_timeout?: NodeJS.Timeout;
@@ -43,6 +44,8 @@ export class StationAccessory extends BaseAccessory {
 
     this.stationConfig = this.getStationConfig();
 
+    this.hasKeyPad = this.device.hasDeviceWithType(DeviceType.KEYPAD);
+
     this.mappingHKEufy();
 
     this.alarm_triggered = false;
@@ -53,6 +56,24 @@ export class StationAccessory extends BaseAccessory {
       this.platform.Characteristic.SecuritySystemTargetState.STAY_ARM,
       this.platform.Characteristic.SecuritySystemTargetState.DISARM,
     ];
+
+    const SecuritySettings = [
+      PropertyName.StationHomeSecuritySettings,
+      PropertyName.StationAwaySecuritySettings,
+<<<<<<< HEAD
+      PropertyName.StationOffSecuritySettings,
+=======
+>>>>>>> 896385609b3f1f57b96c7dde4e446074a34cd884
+      PropertyName.StationCustom1SecuritySettings,
+      PropertyName.StationCustom2SecuritySettings,
+      PropertyName.StationCustom3SecuritySettings,
+    ];
+
+    SecuritySettings.forEach(item => {
+      if (this.device.hasPropertyValue(item) && this.getPropertyValue(item) !== '') {
+        this.platform.log.debug(`${this.accessory.displayName} - ${item} : ${JSON.stringify(this.getPropertyValue(item))}`);
+      }
+    });
 
     // if (this.stationConfig.hkNight) {
     validValues.push(this.platform.Characteristic.SecuritySystemTargetState.NIGHT_ARM);
@@ -234,7 +255,7 @@ export class StationAccessory extends BaseAccessory {
     ];
 
     // If a keypad attached to the station
-    if (this.device.hasDeviceWithType(DeviceType.KEYPAD)) {
+    if (this.hasKeyPad) {
       this.modes.push({ hk: 3, eufy: this.stationConfig.hkOff ?? 63 });
       this.modes.push({
         hk: 3, eufy: ((this.modes.filter((m) => {
