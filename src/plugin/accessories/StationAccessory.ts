@@ -23,15 +23,17 @@ export class StationAccessory extends BaseAccessory {
 
   private alarm_triggered: boolean;
   private modes;
-  public hasKeyPad: boolean = false;
+  public readonly hasKeyPad: boolean = false;
 
   private alarm_delayed: boolean;
   private alarm_delay_timeout?: NodeJS.Timeout;
 
   public readonly stationConfig: StationConfig;
 
-  private guardModeChangeTimeout: NodeJS.Timeout | null = null;
-  private retryGuardModeChangeTimeout: NodeJS.Timeout | null = null;
+  private guardModeChangeTimeout: {
+    timeout: NodeJS.Timeout | null;
+    delay: number;
+  } = { timeout: null, delay: 5000 };
 
   constructor(
     platform: EufySecurityPlatform,
@@ -131,46 +133,31 @@ export class StationAccessory extends BaseAccessory {
     await this.platform.eufyClient.setStationProperty(this.SN, propertyName, value);
   }
 
-
-  private async setLockTargetState(state: CharacteristicValue) {
-    try {
-      await this.setPropertyValue(PropertyName.StationGuardMode, !!state);
-    } catch (err) {
-      this.platform.log.error(this.accessory.displayName, 'Lock target state could not be set: ' + err);
-    }
-  }
-
   private getStationConfig() {
+    // Find the station configuration based on the serial number, if it exists
+    const stationConfig = this.platform.config.stations?.find((station) => station.serialNumber === this.SN);
 
-    let config = {} as StationConfig;
+    // Initialize the config object with defaults and fallbacks
+    const config: StationConfig = {
+      hkHome: stationConfig?.hkHome ?? this.platform.config.hkHome ?? 0,
+      hkAway: stationConfig?.hkAway ?? this.platform.config.hkAway ?? 1,
+      hkNight: stationConfig?.hkNight ?? this.platform.config.hkNight ?? 2,
+      hkOff: stationConfig?.hkOff ?? this.platform.config.hkOff ?? 3,
 
-    if (typeof this.platform.config.stations !== 'undefined') {
-      // eslint-disable-next-line prefer-arrow-callback, brace-style
-      const pos = this.platform.config.stations.map(function (e) { return e.serialNumber; }).indexOf(this.device.getSerial());
-      config = { ...this.platform.config.stations[pos] };
-    }
+      // Use optional chaining to safely access manualTriggerModes
+      manualTriggerModes: stationConfig?.manualTriggerModes ?? [],
 
-    if (config.hkHome || this.platform.config.hkHome) {
-      config.hkHome = config.hkHome ??= this.platform.config.hkHome;
-    }
-    if (config.hkAway || this.platform.config.hkAway) {
-      config.hkAway = config.hkAway ??= this.platform.config.hkAway;
-    }
-    if (config.hkNight || this.platform.config.hkNight) {
-      config.hkNight = config.hkNight ??= this.platform.config.hkNight;
-    }
-    if (config.hkOff || this.platform.config.hkOff) {
-      config.hkOff = config.hkOff ??= this.platform.config.hkOff;
-    }
+      // Set a default value for manualAlarmSeconds
+      manualAlarmSeconds: stationConfig?.manualAlarmSeconds ?? 30,
+    };
 
-    if (!Array.isArray(config.manualTriggerModes)) {
-      config.manualTriggerModes = [];
-    }
+    // Log the manual trigger modes for debugging
     this.platform.log.debug(
-      this.accessory.displayName, 'manual alarm will be triggered only in these hk modes: ' + config.manualTriggerModes);
+      this.accessory.displayName,
+      'manual alarm will be triggered only in these hk modes: ' + config.manualTriggerModes,
+    );
 
-    config.manualAlarmSeconds = config.manualAlarmSeconds ??= 30;
-
+    // Return the final configuration
     return config;
   }
 
@@ -189,11 +176,9 @@ export class StationAccessory extends BaseAccessory {
     station: Station,
     currentMode: number,
   ): void {
-    if (this.guardModeChangeTimeout) {
-      clearTimeout(this.guardModeChangeTimeout);
-    }
-    if (this.retryGuardModeChangeTimeout) {
-      clearTimeout(this.retryGuardModeChangeTimeout);
+    if (this.guardModeChangeTimeout.timeout) {
+      // If there's an existing timeout, clear it
+      clearTimeout(this.guardModeChangeTimeout.timeout);
     }
     this.platform.log.debug(this.accessory.displayName, 'ON SecuritySystemCurrentState:', currentMode);
     const homekitCurrentMode = this.convertEufytoHK(currentMode);
@@ -245,47 +230,38 @@ export class StationAccessory extends BaseAccessory {
   }
 
   private mappingHKEufy(): void {
+    // Define default values for HomeKit modes based on conditions
+    const defaultValues = {
+      hkHome: 0,          // Default HomeKit Home mode if not specified
+      hkAway: 1,          // Default HomeKit Away mode if not specified
+      hkNight: 2,         // Default HomeKit Night mode if not specified
+
+      // Default HomeKit mode for 'Off':
+      // - If a keypad is present, set to 63 (Special value)
+      // - Otherwise, set to 6 (Default value)
+      hkOff: this.hasKeyPad ? (this.stationConfig.hkOff === 6 ? 63 : 6) : 63,
+    };
+
+    // Initialize the modes array with HomeKit and Eufy mode mappings
     this.modes = [
-      { hk: 0, eufy: this.stationConfig.hkHome ?? 1 }, // Home
-      { hk: 1, eufy: this.stationConfig.hkAway ?? 0 }, // Away
-      { hk: 2, eufy: this.stationConfig.hkNight ?? 3 }, // Night
+      { hk: 0, eufy: this.stationConfig.hkHome ?? defaultValues.hkHome },
+      { hk: 1, eufy: this.stationConfig.hkAway ?? defaultValues.hkAway },
+      { hk: 2, eufy: this.stationConfig.hkNight ?? defaultValues.hkNight },
+      { hk: 3, eufy: this.stationConfig.hkOff ?? defaultValues.hkOff },
     ];
 
-    // If a keypad attached to the station
-    if (this.hasKeyPad) {
-      this.modes.push({ hk: 3, eufy: this.stationConfig.hkOff ?? 63 });
-      this.modes.push({
-        hk: 3, eufy: ((this.modes.filter((m) => {
-          return m.eufy === 6;
-        })[0]) ? 63 : 6),
-      });
-    } else if (this.stationConfig.hkOff !== undefined && this.stationConfig.hkOff !== null) {
-      this.modes.push({
-        hk: 3,
-        eufy: (this.stationConfig.hkOff === 6) ? 63 : this.stationConfig.hkOff,
-      }); // Enforce 63 if keypad has been selected but not attached to the station
-    } else {
-      this.modes.push({
-        hk: 3,
-        eufy: 63,
-      }); // Enforce 63 if hkOff is not set
-    }
-
-    this.platform.log.debug(this.accessory.displayName, 'Mapping for station modes: ' + JSON.stringify(this.modes));
+    // Log the mapping for station modes for debugging purposes
+    this.platform.log.debug(`${this.accessory.displayName} Mapping for station modes: ${JSON.stringify(this.modes)}`);
   }
 
   convertHKtoEufy(hkMode): number {
-    const modeObj = this.modes.filter((m) => {
-      return m.hk === hkMode;
-    });
-    return parseInt(modeObj[0] ? modeObj[0].eufy : hkMode);
+    const modeObj = this.modes.find((m) => m.hk === hkMode);
+    return parseInt(modeObj ? modeObj.eufy : hkMode, 10);
   }
 
   convertEufytoHK(eufyMode): number {
-    const modeObj = this.modes.filter((m) => {
-      return m.eufy === eufyMode;
-    });
-    return parseInt(modeObj[0] ? modeObj[0].hk : eufyMode);
+    const modeObj = this.modes.find((m) => m.eufy === eufyMode);
+    return parseInt(modeObj ? modeObj.hk : eufyMode, 10);
   }
 
   /**
@@ -295,32 +271,22 @@ export class StationAccessory extends BaseAccessory {
     if (this.alarm_triggered) {
       return this.platform.Characteristic.SecuritySystemCurrentState.ALARM_TRIGGERED;
     }
-    try {
-      const currentValue = this.device.getPropertyValue(PropertyName.StationCurrentMode);
-      if (currentValue === -1) {
-        throw 'Something wrong with this device';
-      }
-      this.platform.log.debug(this.accessory.displayName, 'GET StationCurrentMode:', currentValue);
-      return this.convertEufytoHK(currentValue);
-    } catch {
-      this.platform.log.error(this.accessory.displayName, 'handleSecuritySystemCurrentStateGet', 'Wrong return value');
-      return false;
-    }
+    return this.handleSecuritySystemTargetStateGet('handleSecuritySystemCurrentStateGets');
   }
 
   /**
    * Handle requests to get the current value of the 'Security System Target State' characteristic
    */
-  private handleSecuritySystemTargetStateGet(): CharacteristicValue {
+  private handleSecuritySystemTargetStateGet(stateCharacteristic: string = 'handleSecuritySystemTargetStateGet'): CharacteristicValue {
     try {
       const currentValue = this.device.getPropertyValue(PropertyName.StationCurrentMode);
       if (currentValue === -1) {
         throw 'Something wrong with this device';
       }
-      this.platform.log.debug(this.accessory.displayName, 'GET StationCurrentMode:', currentValue);
+      this.platform.log.debug(`${this.accessory.displayName} GET StationCurrentMode: ${currentValue}`);
       return this.convertEufytoHK(currentValue);
     } catch {
-      this.platform.log.error(this.accessory.displayName, 'handleSecuritySystemTargetStateGet', 'Wrong return value');
+      this.platform.log.error(`${this.accessory.displayName} ${stateCharacteristic}: Wrong return value`);
       return false;
     }
   }
@@ -334,22 +300,36 @@ export class StationAccessory extends BaseAccessory {
       const NameMode = this.getGuardModeName(value);
       this.platform.log.debug(`${this.accessory.displayName} SET StationGuardMode: ${NameMode}`);
       const mode = this.convertHKtoEufy(value);
+
       if (isNaN(mode)) {
         throw new Error(`${this.accessory.displayName}: 
         Could not convert guard mode value to valid number. Aborting guard mode change...'`);
       }
+
       this.platform.log.debug(`${this.accessory.displayName} SET StationGuardMode: ${GuardMode[mode]}(${mode})`);
       this.platform.log.info(`${this.accessory.displayName} Request to change station guard mode to: ${NameMode}`);
+
+      // Call the device's setGuardMode method to initiate the action
       this.device.setGuardMode(mode);
 
-      this.guardModeChangeTimeout = setTimeout(() => {
+      // Set a new timeout
+      this.guardModeChangeTimeout.timeout = setTimeout(() => {
+        // This code is executed when the timeout elapses, indicating that the action may not have completed yet.
+        // You can include a message indicating that the action is being retried.
         this.platform.log.warn(`${this.accessory.displayName} Changing guard mode to ${NameMode} did not complete. Retry...'`);
+
+        // Call the device's setGuardMode method to initiate the action
         this.device.setGuardMode(mode);
 
-        this.retryGuardModeChangeTimeout = setTimeout(() => {
+        // Set a secondary timeout for retry, if needed
+        const retryTimeout = setTimeout(() => {
+          // This code is executed if the retry also times out, indicating a failure.
           this.platform.log.error(`${this.accessory.displayName} Changing guard mode to ${NameMode} timed out!`);
-        }, 5000);
-      }, 5000);
+        }, this.guardModeChangeTimeout.delay);
+
+        // Store the retry timeout as part of guardModeChangeTimeout
+        this.guardModeChangeTimeout.timeout = retryTimeout;
+      }, this.guardModeChangeTimeout.delay);
 
       this.updateManuelTriggerButton(false);
 
