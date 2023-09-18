@@ -19,7 +19,7 @@ export class CameraAccessory extends DeviceAccessory {
 
   // Define the object variable to hold the boolean and timestamp
   protected cameraStatus: { isEnabled: boolean; timestamp: number };
-  private ring_triggered: boolean = false;
+  private notificationTimeout: NodeJS.Timeout | null = null;
 
   public readonly cameraConfig: CameraConfig;
 
@@ -47,7 +47,7 @@ export class CameraAccessory extends DeviceAccessory {
 
     this.cameraStatus = { isEnabled: false, timestamp: 0 }; // Initialize the cameraStatus object
 
-    this.platform.log.debug(this.accessory.displayName, 'Constructed Camera');
+    this.platform.log.debug(`${this.accessory.displayName} Constructed Camera`);
 
     this.cameraConfig = this.getCameraConfig();
 
@@ -56,11 +56,11 @@ export class CameraAccessory extends DeviceAccessory {
     this.platform.log.debug(`${this.accessory.displayName} doorbell?: ${this.device.isDoorbell()}`);
 
     if (this.cameraConfig.enableCamera || this.device.isDoorbell()) {
-      this.platform.log.debug(this.accessory.displayName, 'has a camera');
+      this.platform.log.debug(`${this.accessory.displayName} has a camera`);
       this.setupCamera();
       this.initSensorService(this.platform.Service.Battery);
     } else {
-      this.platform.log.debug(this.accessory.displayName, 'has a motion sensor.');
+      this.platform.log.debug(`${this.accessory.displayName} has a motion sensor`);
       this.setupMotionFunction();
       this.initSensorService(this.platform.Service.MotionSensor);
     }
@@ -355,38 +355,23 @@ export class CameraAccessory extends DeviceAccessory {
     }
   }
 
-  handleDummyEventGet(serviceName: string): Promise<CharacteristicValue> {
-    const characteristicValues: Record<string, CharacteristicValue> = {
-      'EventSnapshotsActive': this.platform.Characteristic.EventSnapshotsActive.DISABLE,
-      'HomeKitCameraActive': this.platform.Characteristic.HomeKitCameraActive.OFF,
-    };
-
-    const currentValue = characteristicValues[serviceName];
-
-    if (currentValue === undefined) {
-      throw new Error(`Invalid serviceName: ${serviceName}`);
-    }
-
-    this.platform.log.debug(`${this.accessory.displayName} GET ${serviceName}: ${currentValue}`);
-    return Promise.resolve(currentValue);
-  }
-
-  handleDummyEventSet(serviceName: string, value: CharacteristicValue) {
-    this.platform.log.debug(`${this.accessory.displayName} SET ${serviceName}: ${value}`);
-  }
-
-  // We receive 2 push when Doorbell ring, mute the second by checking if we already send
-  // the event to HK then reset the marker when 2nd times occurs
+  /**
+   * Handle push notifications for a doorbell device.
+   * Mute subsequent notifications within a timeout period.
+   * @param characteristic - The Characteristic to update for HomeKit.
+   */
   private onDeviceRingsPushNotification(characteristic: Characteristic): void {
-    if (!this.ring_triggered) {
-      this.ring_triggered = true;
-      this.platform.log.debug(this.accessory.displayName, 'DoorBell ringing');
+    if (!this.notificationTimeout) {
+      this.platform.log.debug(`${this.accessory.displayName} DoorBell ringing`);
+
       if (this.cameraConfig.useCachedLocalLivestream && this.streamingDelegate) {
         this.streamingDelegate.prepareCachedStream();
       }
+
       characteristic.updateValue(this.platform.Characteristic.ProgrammableSwitchEvent.SINGLE_PRESS);
-    } else {
-      this.ring_triggered = false;
+
+      // Set a new timeout for muting subsequent notifications
+      this.notificationTimeout = setTimeout(() => { }, 3000);
     }
   }
 
