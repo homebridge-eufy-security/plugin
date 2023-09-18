@@ -229,6 +229,40 @@ export class CameraAccessory extends DeviceAccessory {
       });
     }
 
+    if (this.device.hasProperty('speaker')) {
+      this.registerCharacteristic({
+        serviceType: this.platform.Service.Speaker,
+        characteristicType: this.platform.Characteristic.Mute,
+        getValue: (data, characteristic) =>
+          this.getCameraPropertyValue(characteristic, PropertyName.DeviceSpeaker),
+        setValue: (value, characteristic) =>
+          this.setCameraPropertyValue(characteristic, PropertyName.DeviceSpeaker, value),
+      });
+    }
+
+    if (this.device.hasProperty('speakerVolume')) {
+
+      this.registerCharacteristic({
+        serviceType: this.platform.Service.Speaker,
+        characteristicType: this.platform.Characteristic.Volume,
+        getValue: (data, characteristic) =>
+          this.getCameraPropertyValue(characteristic, PropertyName.DeviceSpeakerVolume),
+        setValue: (value, characteristic) =>
+          this.setCameraPropertyValue(characteristic, PropertyName.DeviceSpeakerVolume, value),
+      });
+    }
+
+    if (this.device.hasProperty('microphone')) {
+      this.registerCharacteristic({
+        serviceType: this.platform.Service.Microphone,
+        characteristicType: this.platform.Characteristic.Mute,
+        getValue: (data, characteristic) =>
+          this.getCameraPropertyValue(characteristic, PropertyName.DeviceMicrophone),
+        setValue: (value, characteristic) =>
+          this.setCameraPropertyValue(characteristic, PropertyName.DeviceMicrophone, value),
+      });
+    }
+
     if (this.device.isDoorbell()) {
       this.registerCharacteristic({
         serviceType: this.platform.Service.Doorbell,
