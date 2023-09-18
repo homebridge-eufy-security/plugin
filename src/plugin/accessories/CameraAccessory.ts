@@ -241,7 +241,6 @@ export class CameraAccessory extends DeviceAccessory {
     }
 
     if (this.device.hasProperty('speakerVolume')) {
-
       this.registerCharacteristic({
         serviceType: this.platform.Service.Speaker,
         characteristicType: this.platform.Characteristic.Volume,
