@@ -240,6 +240,13 @@ export class CameraAccessory extends DeviceAccessory {
           );
         },
       });
+
+      // Hide long and double press events by setting max value
+      this.getService(this.platform.Service.Doorbell)
+        .getCharacteristic(this.platform.Characteristic.ProgrammableSwitchEvent)
+        .setProps({
+          maxValue: this.platform.Characteristic.ProgrammableSwitchEvent.SINGLE_PRESS,
+        });
     }
 
     this.getService(this.platform.Service.CameraOperatingMode).setPrimaryService(true);
