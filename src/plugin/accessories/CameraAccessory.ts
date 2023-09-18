@@ -164,10 +164,10 @@ export class CameraAccessory extends DeviceAccessory {
     this.registerCharacteristic({
       serviceType: this.platform.Service.CameraOperatingMode,
       characteristicType: this.platform.Characteristic.HomeKitCameraActive,
-      // eslint-disable-next-line max-len
-      getValue: (data, characteristic) => this.getCameraPropertyValue(characteristic, PropertyName.DeviceEnabled),
-      // eslint-disable-next-line max-len
-      setValue: (value, characteristic) => this.setCameraPropertyValue(characteristic, PropertyName.DeviceEnabled, value),
+      getValue: (data, characteristic) =>
+        this.getCameraPropertyValue(characteristic, PropertyName.DeviceEnabled),
+      setValue: (value, characteristic) =>
+        this.setCameraPropertyValue(characteristic, PropertyName.DeviceEnabled, value),
     });
 
     // Fire snapshot when motion detected
@@ -191,8 +191,8 @@ export class CameraAccessory extends DeviceAccessory {
       this.registerCharacteristic({
         serviceType: this.platform.Service.CameraOperatingMode,
         characteristicType: this.platform.Characteristic.ManuallyDisabled,
-        // eslint-disable-next-line max-len
-        getValue: (data, characteristic) => this.getCameraPropertyValue(characteristic, PropertyName.DeviceEnabled),
+        getValue: (data, characteristic) =>
+          this.getCameraPropertyValue(characteristic, PropertyName.DeviceEnabled),
       });
     }
 
@@ -200,10 +200,10 @@ export class CameraAccessory extends DeviceAccessory {
       this.registerCharacteristic({
         serviceType: this.platform.Service.CameraOperatingMode,
         characteristicType: this.platform.Characteristic.CameraOperatingModeIndicator,
-        // eslint-disable-next-line max-len
-        getValue: (data, characteristic) => this.getCameraPropertyValue(characteristic, PropertyName.DeviceStatusLed),
-        // eslint-disable-next-line max-len
-        setValue: (value, characteristic) => this.setCameraPropertyValue(characteristic, PropertyName.DeviceStatusLed, value),
+        getValue: (data, characteristic) =>
+          this.getCameraPropertyValue(characteristic, PropertyName.DeviceStatusLed),
+        setValue: (value, characteristic) =>
+          this.setCameraPropertyValue(characteristic, PropertyName.DeviceStatusLed, value),
       });
     }
 
@@ -211,10 +211,10 @@ export class CameraAccessory extends DeviceAccessory {
       this.registerCharacteristic({
         serviceType: this.platform.Service.CameraOperatingMode,
         characteristicType: this.platform.Characteristic.NightVision,
-        // eslint-disable-next-line max-len
-        getValue: (data, characteristic) => this.getCameraPropertyValue(characteristic, PropertyName.DeviceNightvision),
-        // eslint-disable-next-line max-len
-        setValue: (value, characteristic) => this.setCameraPropertyValue(characteristic, PropertyName.DeviceNightvision, value),
+        getValue: (data, characteristic) =>
+          this.getCameraPropertyValue(characteristic, PropertyName.DeviceNightvision),
+        setValue: (value, characteristic) =>
+          this.setCameraPropertyValue(characteristic, PropertyName.DeviceNightvision, value),
       });
     }
 
@@ -222,10 +222,10 @@ export class CameraAccessory extends DeviceAccessory {
       this.registerCharacteristic({
         serviceType: this.platform.Service.CameraOperatingMode,
         characteristicType: this.platform.Characteristic.NightVision,
-        // eslint-disable-next-line max-len
-        getValue: (data, characteristic) => this.getCameraPropertyValue(characteristic, PropertyName.DeviceAutoNightvision),
-        // eslint-disable-next-line max-len
-        setValue: (value, characteristic) => this.setCameraPropertyValue(characteristic, PropertyName.DeviceAutoNightvision, value),
+        getValue: (data, characteristic) =>
+          this.getCameraPropertyValue(characteristic, PropertyName.DeviceAutoNightvision),
+        setValue: (value, characteristic) =>
+          this.setCameraPropertyValue(characteristic, PropertyName.DeviceAutoNightvision, value),
       });
     }
 
@@ -233,20 +233,13 @@ export class CameraAccessory extends DeviceAccessory {
       this.registerCharacteristic({
         serviceType: this.platform.Service.Doorbell,
         characteristicType: this.platform.Characteristic.ProgrammableSwitchEvent,
-        getValue: (data) => this.handleDummyEventGet('EventSnapshotsActive'),
+        getValue: () => this.handleDummyEventGet('EventSnapshotsActive'),
         onValue: (service, characteristic) => {
           this.device.on('rings', (device: Device, state: boolean) =>
             this.onDeviceRingsPushNotification(characteristic),
           );
         },
       });
-
-      // Hide long and double press events by setting max value
-      this.getService(this.platform.Service.Doorbell)
-        .getCharacteristic(this.platform.Characteristic.ProgrammableSwitchEvent)
-        .setProps({
-          maxValue: this.platform.Characteristic.ProgrammableSwitchEvent.SINGLE_PRESS,
-        });
     }
 
     this.getService(this.platform.Service.CameraOperatingMode).setPrimaryService(true);
@@ -370,13 +363,10 @@ export class CameraAccessory extends DeviceAccessory {
   private onDeviceRingsPushNotification(characteristic: Characteristic): void {
     if (!this.notificationTimeout) {
       this.platform.log.debug(`${this.accessory.displayName} DoorBell ringing`);
-
       if (this.cameraConfig.useCachedLocalLivestream && this.streamingDelegate) {
         this.streamingDelegate.prepareCachedStream();
       }
-
       characteristic.updateValue(this.platform.Characteristic.ProgrammableSwitchEvent.SINGLE_PRESS);
-
       // Set a new timeout for muting subsequent notifications
       this.notificationTimeout = setTimeout(() => { }, 3000);
     }
