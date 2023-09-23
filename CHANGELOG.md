@@ -2,6 +2,13 @@
 
 You can find the complete detailled changelog for every beta release [here](https://github.com/homebridge-eufy-security/plugin/releases).
 
+### Changelog 2.2.21
+
+#### Added
+- Unlocked the app-guard-modes-mapping component in the UI for station configuration options.
+- Added helper functions for better configuration value selection in StationAccessory.ts.
+- Modified and improved the convertHKtoEufy and convertEufytoHK methods to throw errors on invalid mode conversion.
+
 ### Changelog 2.2.20
 
 #### Added
