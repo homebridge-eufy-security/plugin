@@ -1,4 +1,17 @@
-import { Service, PlatformAccessory, Characteristic, CharacteristicValue } from 'homebridge';
+import {
+  Service,
+  PlatformAccessory,
+  Characteristic,
+  CharacteristicValue,
+  CameraControllerOptions,
+  CameraRecordingOptions,
+  AudioStreamingSamplerate,
+  AudioStreamingCodecType,
+  AudioRecordingSamplerate,
+  AudioRecordingCodecType,
+  Resolution,
+  HAP,
+} from 'homebridge';
 
 import { EufySecurityPlatform } from '../platform';
 import { DeviceAccessory } from './Device';
@@ -7,6 +20,7 @@ import { DeviceAccessory } from './Device';
 // @ts-ignore  
 import { Camera, Device, DeviceEvents, PropertyName, CommandName } from 'eufy-security-client';
 import { StreamingDelegate } from '../controller/streamingDelegate';
+import { RecordingDelegate } from '../controller/recordingDelegate';
 
 import { CameraConfig, VideoConfig } from '../utils/configTypes';
 
@@ -24,6 +38,7 @@ export class CameraAccessory extends DeviceAccessory {
   public readonly cameraConfig: CameraConfig;
 
   protected streamingDelegate: StreamingDelegate | null = null;
+  protected recordingDelegate?: RecordingDelegate | null = null;
 
   // List of event types
   private eventTypesToHandle: (keyof DeviceEvents)[] = [
@@ -37,12 +52,27 @@ export class CameraAccessory extends DeviceAccessory {
     'stranger person detected',
   ];
 
+  private resolutions: Resolution[] = [
+    [320, 180, 30],
+    [320, 240, 15], // Apple Watch requires this configuration
+    [320, 240, 30],
+    [480, 270, 30],
+    [480, 360, 30],
+    [640, 360, 30],
+    [640, 480, 30],
+    [1280, 720, 30],
+    [1280, 960, 30],
+    [1600, 1200, 30],
+    [1920, 1080, 30],
+  ];
+
   constructor(
     platform: EufySecurityPlatform,
     accessory: PlatformAccessory,
     device: Camera,
   ) {
     super(platform, accessory, device);
+
     this.cameraConfig = {} as CameraConfig;
 
     this.cameraStatus = { isEnabled: false, timestamp: 0 }; // Initialize the cameraStatus object
@@ -74,12 +104,131 @@ export class CameraAccessory extends DeviceAccessory {
   private setupCamera() {
     try {
       this.cameraFunction();
-      const delegate = new StreamingDelegate(this.platform, this.device, this.cameraConfig, this.platform.api, this.platform.api.hap);
-      this.streamingDelegate = delegate;
-      this.accessory.configureController(delegate.controller);
     } catch (error) {
-      this.platform.log.error(this.accessory.displayName, 'raise error to check and attach livestream function.', error);
+      this.platform.log.error(`${this.accessory.displayName} while happending CameraFunction ${error}`);
     }
+
+    try {
+      this.platform.log.debug(`${this.accessory.displayName} StreamingDelegate`);
+      this.streamingDelegate = new StreamingDelegate(
+        this.platform,
+        this.device,
+        this.cameraConfig,
+        this.platform.api,
+        this.platform.api.hap,
+      );
+
+      this.platform.log.debug(`${this.accessory.displayName} RecordingDelegate`);
+      this.recordingDelegate = new RecordingDelegate(
+        this.platform,
+        this.accessory,
+        this.device,
+        this.cameraConfig,
+        this.streamingDelegate.getLivestreamManager(),
+      );
+
+      this.platform.log.debug(`${this.accessory.displayName} Controller`);
+      const controller = new this.platform.api.hap.CameraController(this.getCameraControllerOptions());
+
+      this.platform.log.debug(`${this.accessory.displayName} streamingDelegate.setController`);
+      this.streamingDelegate.setController(controller);
+
+      if (this.cameraConfig.hsv) {
+        this.platform.log.debug(`${this.accessory.displayName} recordingDelegate.setController`);
+        this.recordingDelegate.setController(controller);
+      }
+
+      this.platform.log.debug(`${this.accessory.displayName} configureController`);
+      this.accessory.configureController(controller);
+
+    } catch (error) {
+      this.platform.log.error(`${this.accessory.displayName} while happending Delegate ${error}`);
+    }
+  }
+
+  private getCameraControllerOptions(): CameraControllerOptions {
+    let samplerate = AudioStreamingSamplerate.KHZ_16;
+    if (this.cameraConfig.videoConfig?.audioSampleRate === 8) {
+      samplerate = AudioStreamingSamplerate.KHZ_8;
+    } else if (this.cameraConfig.videoConfig?.audioSampleRate === 24) {
+      samplerate = AudioStreamingSamplerate.KHZ_24;
+    }
+
+    let audioCodecType = AudioStreamingCodecType.AAC_ELD;
+    if (this.cameraConfig.videoConfig?.acodecHK) {
+      audioCodecType = this.cameraConfig.videoConfig.acodecHK as AudioStreamingCodecType;
+    }
+
+    this.platform.log.debug(this.accessory.displayName, `Audio sample rate set to ${samplerate} kHz.`);
+    this.platform.log.debug(this.accessory.displayName, `Audio Codec for HK: ${audioCodecType}`);
+
+    const hap = this.platform.api.hap;
+
+    const option: CameraControllerOptions = {
+      cameraStreamCount: this.cameraConfig.videoConfig?.maxStreams || 2, // HomeKit requires at least 2 streams, but 1 is also just fine
+      delegate: this.streamingDelegate as StreamingDelegate,
+      streamingOptions: {
+        supportedCryptoSuites: [hap.SRTPCryptoSuites.AES_CM_128_HMAC_SHA1_80],
+        video: {
+          resolutions: this.resolutions,
+          codec: {
+            profiles: [hap.H264Profile.BASELINE, hap.H264Profile.MAIN, hap.H264Profile.HIGH],
+            levels: [hap.H264Level.LEVEL3_1, hap.H264Level.LEVEL3_2, hap.H264Level.LEVEL4_0],
+          },
+        },
+        audio: {
+          twoWayAudio: this.cameraConfig.talkback,
+          codecs: [
+            {
+              type: audioCodecType,
+              samplerate: samplerate,
+            },
+          ],
+        },
+      },
+      recording: this.cameraConfig.hsv
+        ? {
+          options: {
+            overrideEventTriggerOptions: [
+              hap.EventTriggerOption.MOTION,
+              hap.EventTriggerOption.DOORBELL,
+            ],
+            prebufferLength: 0, // prebufferLength always remains 4s ?
+            mediaContainerConfiguration: [
+              {
+                type: hap.MediaContainerType.FRAGMENTED_MP4,
+                fragmentLength: 4000,
+              },
+            ],
+            video: {
+              type: this.platform.api.hap.VideoCodecType.H264,
+              parameters: {
+                profiles: [hap.H264Profile.BASELINE, hap.H264Profile.MAIN, hap.H264Profile.HIGH],
+                levels: [hap.H264Level.LEVEL3_1, hap.H264Level.LEVEL3_2, hap.H264Level.LEVEL4_0],
+              },
+              resolutions: this.resolutions,
+            },
+            audio: {
+              codecs: {
+                type: AudioRecordingCodecType.AAC_ELD,
+                samplerate: AudioRecordingSamplerate.KHZ_24,
+                bitrateMode: 0,
+                audioChannels: 1,
+              },
+            },
+          },
+          delegate: this.recordingDelegate as RecordingDelegate,
+        }
+        : undefined,
+      sensors: this.cameraConfig.hsv
+        ? {
+          motion: this.getService(this.platform.Service.MotionSensor),
+          occupancy: undefined,
+        }
+        : undefined,
+    };
+
+    return option;
   }
 
   private setupButtonService(
@@ -157,7 +306,6 @@ export class CameraAccessory extends DeviceAccessory {
     config.rtsp = config.rtsp ??= false;
     config.forcerefreshsnap = config.forcerefreshsnap ??= false;
     config.videoConfig = config.videoConfig ??= {};
-    config.useCachedLocalLivestream = config.useCachedLocalLivestream ??= false;
     config.immediateRingNotificationWithoutSnapshot = config.immediateRingNotificationWithoutSnapshot ??= false;
     config.delayCameraSnapshot = config.delayCameraSnapshot ??= false;
 
@@ -180,21 +328,67 @@ export class CameraAccessory extends DeviceAccessory {
 
   private cameraFunction() {
 
-    this.registerCharacteristic({
-      serviceType: this.platform.Service.CameraOperatingMode,
-      characteristicType: this.platform.Characteristic.EventSnapshotsActive,
-      getValue: (data) => this.handleDummyEventGet('EventSnapshotsActive'),
-      setValue: (value) => this.handleDummyEventSet('EventSnapshotsActive', value),
-    });
+    if (!this.cameraConfig.hsv) {
+      this.registerCharacteristic({
+        serviceType: this.platform.Service.CameraOperatingMode,
+        characteristicType: this.platform.Characteristic.EventSnapshotsActive,
+        getValue: (data) => this.handleDummyEventGet('EventSnapshotsActive'),
+        setValue: (value) => this.handleDummyEventSet('EventSnapshotsActive', value),
+      });
 
-    this.registerCharacteristic({
-      serviceType: this.platform.Service.CameraOperatingMode,
-      characteristicType: this.platform.Characteristic.HomeKitCameraActive,
-      getValue: (data, characteristic) =>
-        this.getCameraPropertyValue(characteristic, PropertyName.DeviceEnabled),
-      setValue: (value, characteristic) =>
-        this.setCameraPropertyValue(characteristic, PropertyName.DeviceEnabled, value),
-    });
+      this.registerCharacteristic({
+        serviceType: this.platform.Service.CameraOperatingMode,
+        characteristicType: this.platform.Characteristic.HomeKitCameraActive,
+        getValue: (data, characteristic) =>
+          this.getCameraPropertyValue(characteristic, PropertyName.DeviceEnabled),
+        setValue: (value, characteristic) =>
+          this.setCameraPropertyValue(characteristic, PropertyName.DeviceEnabled, value),
+      });
+
+      if (this.device.hasProperty('enabled')) {
+        this.registerCharacteristic({
+          serviceType: this.platform.Service.CameraOperatingMode,
+          characteristicType: this.platform.Characteristic.ManuallyDisabled,
+          getValue: (data, characteristic) =>
+            this.getCameraPropertyValue(characteristic, PropertyName.DeviceEnabled),
+        });
+      }
+
+      if (this.device.hasProperty('statusLed')) {
+        this.registerCharacteristic({
+          serviceType: this.platform.Service.CameraOperatingMode,
+          characteristicType: this.platform.Characteristic.CameraOperatingModeIndicator,
+          getValue: (data, characteristic) =>
+            this.getCameraPropertyValue(characteristic, PropertyName.DeviceStatusLed),
+          setValue: (value, characteristic) =>
+            this.setCameraPropertyValue(characteristic, PropertyName.DeviceStatusLed, value),
+        });
+      }
+
+      if (this.device.hasProperty('nightvision')) {
+        this.registerCharacteristic({
+          serviceType: this.platform.Service.CameraOperatingMode,
+          characteristicType: this.platform.Characteristic.NightVision,
+          getValue: (data, characteristic) =>
+            this.getCameraPropertyValue(characteristic, PropertyName.DeviceNightvision),
+          setValue: (value, characteristic) =>
+            this.setCameraPropertyValue(characteristic, PropertyName.DeviceNightvision, value),
+        });
+      }
+
+      if (this.device.hasProperty('autoNightvision')) {
+        this.registerCharacteristic({
+          serviceType: this.platform.Service.CameraOperatingMode,
+          characteristicType: this.platform.Characteristic.NightVision,
+          getValue: (data, characteristic) =>
+            this.getCameraPropertyValue(characteristic, PropertyName.DeviceAutoNightvision),
+          setValue: (value, characteristic) =>
+            this.setCameraPropertyValue(characteristic, PropertyName.DeviceAutoNightvision, value),
+        });
+      }
+
+      this.getService(this.platform.Service.CameraOperatingMode).setPrimaryService(true);
+    }
 
     // Fire snapshot when motion detected
     this.registerCharacteristic({
@@ -212,48 +406,6 @@ export class CameraAccessory extends DeviceAccessory {
         });
       },
     });
-
-    if (this.device.hasProperty('enabled')) {
-      this.registerCharacteristic({
-        serviceType: this.platform.Service.CameraOperatingMode,
-        characteristicType: this.platform.Characteristic.ManuallyDisabled,
-        getValue: (data, characteristic) =>
-          this.getCameraPropertyValue(characteristic, PropertyName.DeviceEnabled),
-      });
-    }
-
-    if (this.device.hasProperty('statusLed')) {
-      this.registerCharacteristic({
-        serviceType: this.platform.Service.CameraOperatingMode,
-        characteristicType: this.platform.Characteristic.CameraOperatingModeIndicator,
-        getValue: (data, characteristic) =>
-          this.getCameraPropertyValue(characteristic, PropertyName.DeviceStatusLed),
-        setValue: (value, characteristic) =>
-          this.setCameraPropertyValue(characteristic, PropertyName.DeviceStatusLed, value),
-      });
-    }
-
-    if (this.device.hasProperty('nightvision')) {
-      this.registerCharacteristic({
-        serviceType: this.platform.Service.CameraOperatingMode,
-        characteristicType: this.platform.Characteristic.NightVision,
-        getValue: (data, characteristic) =>
-          this.getCameraPropertyValue(characteristic, PropertyName.DeviceNightvision),
-        setValue: (value, characteristic) =>
-          this.setCameraPropertyValue(characteristic, PropertyName.DeviceNightvision, value),
-      });
-    }
-
-    if (this.device.hasProperty('autoNightvision')) {
-      this.registerCharacteristic({
-        serviceType: this.platform.Service.CameraOperatingMode,
-        characteristicType: this.platform.Characteristic.NightVision,
-        getValue: (data, characteristic) =>
-          this.getCameraPropertyValue(characteristic, PropertyName.DeviceAutoNightvision),
-        setValue: (value, characteristic) =>
-          this.setCameraPropertyValue(characteristic, PropertyName.DeviceAutoNightvision, value),
-      });
-    }
 
     // if (this.device.hasProperty('speaker')) {
     //   this.registerCharacteristic({
@@ -303,8 +455,6 @@ export class CameraAccessory extends DeviceAccessory {
         },
       });
     }
-
-    this.getService(this.platform.Service.CameraOperatingMode).setPrimaryService(true);
 
   }
 
@@ -404,9 +554,6 @@ export class CameraAccessory extends DeviceAccessory {
   private onDeviceRingsPushNotification(characteristic: Characteristic): void {
     if (!this.notificationTimeout) {
       this.platform.log.debug(`${this.accessory.displayName} DoorBell ringing`);
-      if (this.cameraConfig.useCachedLocalLivestream && this.streamingDelegate) {
-        this.streamingDelegate.prepareCachedStream();
-      }
       characteristic.updateValue(this.platform.Characteristic.ProgrammableSwitchEvent.SINGLE_PRESS);
       // Set a new timeout for muting subsequent notifications
       this.notificationTimeout = setTimeout(() => { }, 3000);

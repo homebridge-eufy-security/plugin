@@ -16,13 +16,16 @@ export type CameraConfig = {
   videoConfigEna: boolean;
   enableCamera: boolean;
   forcerefreshsnap: boolean;
-  useCachedLocalLivestream: boolean;
   refreshSnapshotIntervalMinutes?: number;
   snapshotHandlingMethod?: number;
   immediateRingNotificationWithoutSnapshot?: boolean;
   delayCameraSnapshot?:boolean;
-  talkback: boolean;
-  indoorChimeButton: boolean;
+  talkback?: boolean;
+  talkbackChannels?: number;
+  hsv?: boolean;
+  hsvRecordingDuration?: number;
+  hsvConfig?: VideoConfig;
+  indoorChimeButton?: boolean;
 };
 
 export type VideoConfig = {
@@ -45,9 +48,14 @@ export type VideoConfig = {
   encoderOptions?: string;
   audio?: boolean;
   audioSampleRate?: number;
+  audioBitrate?: number;
+  acodecHK?: string;
+  acodecOptions?: string;
   debug?: boolean;
   debugReturn?: boolean;
   useSeparateProcesses?: boolean;
+  crop?: boolean;
+  videoProcessor?: string;
 };
 
 export type StationConfig = {

@@ -49,7 +49,7 @@ class AudiostreamProxy extends Readable {
     this.destroy();
   }
 
-  _read(size: number): void {
+  override _read(size: number): void {
     let pushReturn = true;
     while (this.cacheData.length > 0 && pushReturn) {
       const data = this.cacheData.shift();
@@ -74,12 +74,11 @@ class VideostreamProxy extends Readable {
   private pushNewDataImmediately = false;
   private dataFramesCount = 0;
 
-  constructor(id: number, cacheData: Array<Buffer>, manager: LocalLivestreamManager, log: TsLogger<ILogObj>) {
+  constructor(id: number, manager: LocalLivestreamManager, log: TsLogger<ILogObj>) {
     super();
 
     this.livestreamId = id;
     this.manager = manager;
-    this.cacheData = cacheData;
     this.log = log;
     this.resetKillTimeout();
   }
@@ -94,7 +93,7 @@ class VideostreamProxy extends Readable {
     if (this.pushNewDataImmediately) {
       this.pushNewDataImmediately = false;
       try {
-        if(this.transmitData(data)) {
+        if (this.transmitData(data)) {
           this.resetKillTimeout();
         }
       } catch (err) {
@@ -124,7 +123,7 @@ class VideostreamProxy extends Readable {
     }, 15000);
   }
 
-  _read(size: number): void {
+  override _read(size: number): void {
     this.resetKillTimeout();
     let pushReturn = true;
     while (this.cacheData.length > 0 && pushReturn) {
@@ -145,7 +144,7 @@ type ProxyStream = {
 };
 
 export class LocalLivestreamManager extends EventEmitter {
-  
+
   private readonly SECONDS_UNTIL_TERMINATION_AFTER_LAST_USED = 45;
   private readonly CONNECTION_ESTABLISHED_TIMEOUT = 5;
 
@@ -153,32 +152,24 @@ export class LocalLivestreamManager extends EventEmitter {
   private log: TsLogger<ILogObj>;
 
   private livestreamCount = 1;
-  private iFrameCache: Array<Buffer> = [];
 
   private proxyStreams: Set<ProxyStream> = new Set<ProxyStream>();
-
-  private cacheEnabled: boolean;
 
   private connectionTimeout?: NodeJS.Timeout;
   private terminationTimeout?: NodeJS.Timeout;
 
   private livestreamStartedAt: number | null;
   private livestreamIsStarting = false;
-  
+
   private readonly platform: EufySecurityPlatform;
   private readonly device: Camera;
-  
-  constructor(platform: EufySecurityPlatform, device: Camera, cacheEnabled: boolean, log: TsLogger<ILogObj>) {    
+
+  constructor(platform: EufySecurityPlatform, device: Camera, log: TsLogger<ILogObj>) {
     super();
 
     this.log = log;
     this.platform = platform;
     this.device = device;
-
-    this.cacheEnabled = cacheEnabled;
-    if (this.cacheEnabled) {
-      this.log.debug('Livestream caching for ' + this.device.getName() + ' is enabled.');
-    }
 
     this.stationStream = null;
     this.livestreamStartedAt = null;
@@ -202,7 +193,6 @@ export class LocalLivestreamManager extends EventEmitter {
       this.stationStream.videostream.destroy();
     }
     this.stationStream = null;
-    this.iFrameCache = [];
     this.livestreamStartedAt = null;
 
     if (this.connectionTimeout) {
@@ -212,7 +202,7 @@ export class LocalLivestreamManager extends EventEmitter {
 
   public async getLocalLivestream(): Promise<ProxyStream> {
     this.log.debug(this.device.getName(), 'New instance requests livestream. There were ' +
-                    this.proxyStreams.size + ' instance(s) using the livestream until now.');
+      this.proxyStreams.size + ' instance(s) using the livestream until now.');
     if (this.terminationTimeout) {
       clearTimeout(this.terminationTimeout);
     }
@@ -227,7 +217,7 @@ export class LocalLivestreamManager extends EventEmitter {
       return await this.startAndGetLocalLiveStream();
     }
   }
-  
+
   private async startAndGetLocalLiveStream(): Promise<ProxyStream> {
     return new Promise((resolve, reject) => {
       this.log.debug(this.device.getName(), 'Start new station livestream (P2P Session)...');
@@ -314,12 +304,6 @@ export class LocalLivestreamManager extends EventEmitter {
       }
       this.initialize(); // important to prevent unwanted behaviour when the eufy station emits the 'livestream start' event multiple times
       videostream.on('data', (data) => {
-        if(this.isIFrame(data)) { // cache iFrames to speed up livestream encoding
-          this.iFrameCache = [data];
-        } else if (this.iFrameCache.length > 0) {
-          this.iFrameCache.push(data);
-        }
-
         this.proxyStreams.forEach((proxyStream) => {
           proxyStream.videostream.newVideoData(data);
         });
@@ -335,7 +319,7 @@ export class LocalLivestreamManager extends EventEmitter {
         this.stopLocalLiveStream();
       });
 
-      audiostream.on('data', (data) => {       
+      audiostream.on('data', (data) => {
         this.proxyStreams.forEach((proxyStream) => {
           proxyStream.audiostream.newAudioData(data);
         });
@@ -354,9 +338,9 @@ export class LocalLivestreamManager extends EventEmitter {
       this.log.info(station.getName() + ' station livestream (P2P session) for ' + device.getName() + ' has started.');
       this.livestreamStartedAt = Date.now();
       const createdAt = Date.now();
-      this.stationStream = {station, device, metadata, videostream, audiostream, createdAt};
+      this.stationStream = { station, device, metadata, videostream, audiostream, createdAt };
       this.log.debug(this.device.getName(), 'Stream metadata: ' + JSON.stringify(this.stationStream.metadata));
-      
+
       this.emit('livestream start');
     }
   }
@@ -368,7 +352,7 @@ export class LocalLivestreamManager extends EventEmitter {
       if (this.livestreamCount > 1024) {
         this.livestreamCount = 1;
       }
-      const videostream = new VideostreamProxy(id, this.iFrameCache, this, this.log);
+      const videostream = new VideostreamProxy(id, this, this.log);
       const audiostream = new AudiostreamProxy(this.log);
       const proxyStream = { id, videostream, audiostream };
       this.proxyStreams.add(proxyStream);
@@ -405,43 +389,13 @@ export class LocalLivestreamManager extends EventEmitter {
       this.proxyStreams.delete(proxyStream);
 
       this.log.debug(this.device.getName(), 'One stream instance (id: ' + id + ') released livestream. There are now ' +
-                    this.proxyStreams.size + ' instance(s) using the livestream.');
-      if(this.proxyStreams.size === 0) {
+        this.proxyStreams.size + ' instance(s) using the livestream.');
+      if (this.proxyStreams.size === 0) {
         this.log.debug(this.device.getName(), 'All proxy instances to the livestream have terminated.');
-        // check if minimum remaining livestream duration is more than 20 percent
-        // of maximum streaming duration or at least 20 seconds
-        // if so the termination of the livestream is scheduled
-        // if a new livestream is initiated in that time (e.g. fetching a snapshot)
-        // the cached livestream can be used
-        // caching must also be enabled of course
-        const maxStreamingDuration = this.platform.eufyClient.getCameraMaxLivestreamDuration();
-        const runtime = (Date.now() - ((this.livestreamStartedAt !== null) ? this.livestreamStartedAt! : Date.now())) / 1000;
-        if (((maxStreamingDuration - runtime) > maxStreamingDuration*0.2) && (maxStreamingDuration - runtime) > 20 && this.cacheEnabled) {
-          this.log.debug(
-            this.device.getName(),
-            'Sufficient remaining livestream duration available. (' + (maxStreamingDuration - runtime) + ' seconds left)');
-          this.scheduleLivestreamCacheTermination(Math.floor(maxStreamingDuration - runtime));
-        } else {
-          // stop livestream immediately
-          if (this.cacheEnabled) {
-            this.log.debug(this.device.getName(), 'Not enough remaining livestream duration. Emptying livestream cache.');
-          }
-          this.stopLocalLiveStream();
-        }
+        this.stopLocalLiveStream();
+        this.stopLocalLiveStream();
+        this.stopLocalLiveStream();
       }
     }
-  }
-
-  private isIFrame(data: Buffer): boolean {
-    const validValues = [64, 66, 68, 78, 101, 103];
-    if (data !== undefined && data.length > 0) {
-      if (data.length >= 5) {
-        const startcode = [...data.slice(0, 5)];
-        if (validValues.includes(startcode[3]) || validValues.includes(startcode[4])) {
-          return true;
-        }
-      }
-    }
-    return false;
   }
 }
