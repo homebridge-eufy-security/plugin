@@ -8,15 +8,15 @@ on:
         required: true
         default: 'patch'
       tag:
-        description: 'latest/rc/beta'
+        description: 'tag: latest/rc/beta'
         required: true
         default: 'latest'
       preid:
-        description: 'rc/beta'
+        description: 'preid: rc/beta'
         required: false
         default: ''
       branch:
-        description: 'master/next/beta'
+        description: 'branch: master/next/beta'
         required: true
         default: 'master'
         
