@@ -104,6 +104,27 @@ export class CameraAccessory extends DeviceAccessory {
     }
   }
 
+  protected setupSwitchService(
+    serviceName: string,
+    serviceType: 'switch' | 'lightbulb' | 'outlet',
+    propertyName: PropertyName,
+  ) {
+    const platformServiceMapping = {
+      switch: this.platform.Service.Switch,
+      lightbulb: this.platform.Service.Lightbulb,
+      outlet: this.platform.Service.Outlet,
+    };
+
+    this.registerCharacteristic({
+      serviceType: platformServiceMapping[serviceType] || this.platform.Service.Switch,
+      characteristicType: this.platform.Characteristic.On,
+      name: this.accessory.displayName + '_' + serviceName,
+      serviceSubType: serviceName,
+      getValue: (data, characteristic) => this.getCameraPropertyValue(characteristic, propertyName),
+      setValue: (value, characteristic) => this.setCameraPropertyValue(characteristic, propertyName, value),
+    });
+  }
+
   private async setupEnableButton() {
     this.setupButtonService('Enabled', this.cameraConfig.enableButton, PropertyName.DeviceEnabled, 'switch');
   }
@@ -273,27 +294,6 @@ export class CameraAccessory extends DeviceAccessory {
           ? this.platform.Characteristic.StatusTampered.NOT_TAMPERED
           : this.platform.Characteristic.StatusTampered.TAMPERED;
       },
-    });
-  }
-
-  private setupSwitchService(
-    serviceName: string,
-    serviceType: 'switch' | 'lightbulb' | 'outlet',
-    propertyName: PropertyName,
-  ) {
-    const platformServiceMapping = {
-      switch: this.platform.Service.Switch,
-      lightbulb: this.platform.Service.Lightbulb,
-      outlet: this.platform.Service.Outlet,
-    };
-
-    this.registerCharacteristic({
-      serviceType: platformServiceMapping[serviceType] || this.platform.Service.Switch,
-      characteristicType: this.platform.Characteristic.On,
-      name: this.accessory.displayName + '_' + serviceName,
-      serviceSubType: serviceName,
-      getValue: (data, characteristic) => this.getCameraPropertyValue(characteristic, propertyName),
-      setValue: (value, characteristic) => this.setCameraPropertyValue(characteristic, propertyName, value),
     });
   }
 

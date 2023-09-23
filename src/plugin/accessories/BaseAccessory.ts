@@ -6,7 +6,7 @@ import {
   WithUUID,
 } from 'homebridge';
 import { EufySecurityPlatform } from '../platform';
-import { DeviceType, DeviceEvents, PropertyValue, Device, Station, StationEvents } from 'eufy-security-client';
+import { DeviceType, DeviceEvents, PropertyValue, Device, Station, StationEvents, PropertyName } from 'eufy-security-client';
 import { EventEmitter } from 'events';
 
 function isServiceInstance(
@@ -203,6 +203,27 @@ export abstract class BaseAccessory extends EventEmitter {
     }
 
     return service;
+  }
+
+  protected setupSwitchService(
+    serviceName: string,
+    serviceType: 'switch' | 'lightbulb' | 'outlet',
+    propertyName: PropertyName,
+  ) {
+    const platformServiceMapping = {
+      switch: this.platform.Service.Switch,
+      lightbulb: this.platform.Service.Lightbulb,
+      outlet: this.platform.Service.Outlet,
+    };
+
+    this.registerCharacteristic({
+      serviceType: platformServiceMapping[serviceType] || this.platform.Service.Switch,
+      characteristicType: this.platform.Characteristic.On,
+      name: this.accessory.displayName + '_' + serviceName,
+      serviceSubType: serviceName,
+      getValue: (data, characteristic) => this.getCameraPropertyValue(characteristic, propertyName),
+      setValue: (value, characteristic) => this.setCameraPropertyValue(characteristic, propertyName, value),
+    });
   }
 
   pruneUnusedServices() {
