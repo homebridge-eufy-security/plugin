@@ -133,33 +133,56 @@ export class StationAccessory extends BaseAccessory {
     await this.platform.eufyClient.setStationProperty(this.SN, propertyName, value);
   }
 
+  /**
+   * Helper function to get a configuration value by checking custom, global, and default settings.
+   * @param {number} customValue - Value from the custom configuration
+   * @param {number} globalValue - Value from the global configuration
+   * @param {number} defaultValue - The default value to use if both custom and global values are undefined
+   * @returns {number} The chosen value based on priority
+   */
+  private getConfigValue(customValue: number | undefined, globalValue: number | undefined, defaultValue: number) {
+    return customValue !== undefined ? customValue : (globalValue !== undefined ? globalValue : defaultValue);
+  }
+
+  /**
+   * Gets the station configuration based on several possible sources.
+   * Priority is given to custom configurations (if available), then falls back to global configs,
+   * and lastly uses default values if neither custom nor global configs are set.
+   * 
+   * @returns {StationConfig} The final configuration settings for the station
+   */
   private getStationConfig() {
     // Find the station configuration based on the serial number, if it exists
     const stationConfig = this.platform.config.stations?.find((station) => station.serialNumber === this.SN);
 
-    // Initialize the config object with defaults and fallbacks
+    // Debug log to show the retrieved station configuration
+    this.platform.log.debug(this.accessory.displayName, 'Config: ' + JSON.stringify(stationConfig));
+
+    // Initialize the config object with prioritized values
     const config: StationConfig = {
-      hkHome: stationConfig?.hkHome ?? this.platform.config.hkHome ?? 0,
-      hkAway: stationConfig?.hkAway ?? this.platform.config.hkAway ?? 1,
-      hkNight: stationConfig?.hkNight ?? this.platform.config.hkNight ?? 2,
-      hkOff: stationConfig?.hkOff ?? this.platform.config.hkOff ?? 3,
+      // For each setting (e.g., hkHome), check if it is defined in the custom config,
+      // if not, check the global config, and as a last resort, use the default value
+      hkHome: this.getConfigValue(stationConfig?.hkHome, this.platform.config.hkHome, 0),
+      hkAway: this.getConfigValue(stationConfig?.hkAway, this.platform.config.hkAway, 1),
+      hkNight: this.getConfigValue(stationConfig?.hkNight, this.platform.config.hkNight, 2),
+      // Default HomeKit mode for 'Off':
+      // - If a keypad is present, set to 63 (Special value)
+      // - Otherwise, set to 6 (Default value)
+      hkOff: this.getConfigValue(stationConfig?.hkOff, this.platform.config.hkOff, this.hasKeyPad ? 63 : 6),
 
-      // Use optional chaining to safely access manualTriggerModes
+      // Use optional chaining to safely access manualTriggerModes and manualAlarmSeconds
       manualTriggerModes: stationConfig?.manualTriggerModes ?? [],
-
-      // Set a default value for manualAlarmSeconds
       manualAlarmSeconds: stationConfig?.manualAlarmSeconds ?? 30,
     };
 
-    // Log the manual trigger modes for debugging
-    this.platform.log.debug(
-      this.accessory.displayName,
-      'manual alarm will be triggered only in these hk modes: ' + config.manualTriggerModes,
-    );
+    // Log the manual trigger modes for debugging purposes
+    this.platform.log.debug(this.accessory.displayName,
+      'manual alarm will be triggered only in these hk modes: ' + config.manualTriggerModes);
 
-    // Return the final configuration
+    // Return the final configuration object
     return config;
   }
+
 
   private onStationGuardModePushNotification(
     characteristic: Characteristic,
@@ -230,39 +253,52 @@ export class StationAccessory extends BaseAccessory {
   }
 
   private mappingHKEufy(): void {
-    // Define default values for HomeKit modes based on conditions
-    const defaultValues = {
-      hkHome: 0,          // Default HomeKit Home mode if not specified
-      hkAway: 1,          // Default HomeKit Away mode if not specified
-      hkNight: 2,         // Default HomeKit Night mode if not specified
-
-      // Default HomeKit mode for 'Off':
-      // - If a keypad is present, set to 63 (Special value)
-      // - Otherwise, set to 6 (Default value)
-      hkOff: this.hasKeyPad ? (this.stationConfig.hkOff === 6 ? 63 : 6) : 63,
-    };
-
     // Initialize the modes array with HomeKit and Eufy mode mappings
     this.modes = [
-      { hk: 0, eufy: this.stationConfig.hkHome ?? defaultValues.hkHome },
-      { hk: 1, eufy: this.stationConfig.hkAway ?? defaultValues.hkAway },
-      { hk: 2, eufy: this.stationConfig.hkNight ?? defaultValues.hkNight },
-      { hk: 3, eufy: this.stationConfig.hkOff ?? defaultValues.hkOff },
+      { hk: 0, eufy: this.stationConfig.hkHome },
+      { hk: 1, eufy: this.stationConfig.hkAway },
+      { hk: 2, eufy: this.stationConfig.hkNight },
+      { hk: 3, eufy: this.stationConfig.hkOff },
     ];
 
     // Log the mapping for station modes for debugging purposes
     this.platform.log.debug(`${this.accessory.displayName} Mapping for station modes: ${JSON.stringify(this.modes)}`);
   }
 
-  convertHKtoEufy(hkMode): number {
+  /**
+   * Convert a HomeKit mode number to its corresponding Eufy mode number.
+   * Searches the `this.modes` array to find a matching HomeKit mode.
+   * Throws an error if a matching mode is not found.
+   * 
+   * @param {number} hkMode - The HomeKit mode to convert
+   * @returns {number} The corresponding Eufy mode
+   * @throws {Error} If a matching mode is not found
+   */
+  convertHKtoEufy(hkMode: number): number {
     const modeObj = this.modes.find((m) => m.hk === hkMode);
-    return parseInt(modeObj ? modeObj.eufy : hkMode, 10);
+    if (!modeObj) {
+      throw new Error(`${this.accessory.displayName} No matching Eufy mode found for HomeKit mode ${hkMode}`);
+    }
+    return modeObj.eufy;
   }
 
-  convertEufytoHK(eufyMode): number {
+  /**
+   * Convert a Eufy mode number to its corresponding HomeKit mode number.
+   * Searches the `this.modes` array to find a matching Eufy mode.
+   * Throws an error if a matching mode is not found.
+   * 
+   * @param {number} eufyMode - The Eufy mode to convert
+   * @returns {number} The corresponding HomeKit mode
+   * @throws {Error} If a matching mode is not found
+   */
+  convertEufytoHK(eufyMode: number): number {
     const modeObj = this.modes.find((m) => m.eufy === eufyMode);
-    return parseInt(modeObj ? modeObj.hk : eufyMode, 10);
+    if (!modeObj) {
+      throw new Error(`${this.accessory.displayName} No matching HomeKit mode found for Eufy mode ${eufyMode}`);
+    }
+    return modeObj.hk;
   }
+
 
   /**
    * Handle requests to get the current value of the 'Security System Current State' characteristic
@@ -298,15 +334,15 @@ export class StationAccessory extends BaseAccessory {
     try {
       this.alarm_triggered = false;
       const NameMode = this.getGuardModeName(value);
-      this.platform.log.debug(`${this.accessory.displayName} SET StationGuardMode: ${NameMode}`);
-      const mode = this.convertHKtoEufy(value);
+      this.platform.log.debug(`${this.accessory.displayName} SET StationGuardMode HomeKit: ${NameMode}`);
+      const mode = this.convertHKtoEufy(value as number);
 
       if (isNaN(mode)) {
         throw new Error(`${this.accessory.displayName}: 
         Could not convert guard mode value to valid number. Aborting guard mode change...'`);
       }
 
-      this.platform.log.debug(`${this.accessory.displayName} SET StationGuardMode: ${GuardMode[mode]}(${mode})`);
+      this.platform.log.debug(`${this.accessory.displayName} SET StationGuardMode Eufy: ${GuardMode[mode]}(${mode})`);
       this.platform.log.info(`${this.accessory.displayName} Request to change station guard mode to: ${NameMode}`);
 
       // Call the device's setGuardMode method to initiate the action
