@@ -58,6 +58,7 @@ export class CameraAccessory extends DeviceAccessory {
     if (this.cameraConfig.enableCamera || this.device.isDoorbell()) {
       this.platform.log.debug(this.accessory.displayName, 'has a camera');
       this.setupCamera();
+      this.setupChimeButton();
       this.initSensorService(this.platform.Service.Battery);
     } else {
       this.platform.log.debug(this.accessory.displayName, 'has a motion sensor.');
@@ -113,6 +114,10 @@ export class CameraAccessory extends DeviceAccessory {
 
   private async setupLightButton() {
     this.setupButtonService('Light', true, PropertyName.DeviceLight, 'lightbulb');
+  }
+
+  private async setupChimeButton() {
+    this.setupButtonService('IndoorChime', this.cameraConfig.indoorChimeButton, PropertyName.DeviceChimeIndoor, 'switch');
   }
 
   private getCameraConfig() {

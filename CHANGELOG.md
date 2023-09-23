@@ -2,6 +2,14 @@
 
 You can find the complete detailled changelog for every beta release [here](https://github.com/homebridge-eufy-security/plugin/releases).
 
+### Changelog 2.2.20
+
+#### Added
+- New feature to display HomeKit switch for indoor chime on/off
+
+#### Fixed
+- Updated systeminformation from 5.21.4 to 5.21.8 to address vulnerabilities
+
 ### Changelog 2.2.19
 
 #### Bug Fixes

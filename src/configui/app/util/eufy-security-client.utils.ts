@@ -121,6 +121,23 @@ export class Device {
     return false;
   }
 
+  static isBatteryDoorbell(type: number): boolean {
+    if (type === DeviceType.BATTERY_DOORBELL ||
+      type === DeviceType.BATTERY_DOORBELL_2 ||
+      type === DeviceType.BATTERY_DOORBELL_PLUS
+    ) {
+      return true;
+    }
+    return false;
+  }
+
+  static isWiredDoorbell(type: number): boolean {
+    if (type === DeviceType.DOORBELL) {
+      return true;
+    }
+    return false;
+  }
+
   static supportsRTSP(type: number): boolean {
     return (
       type === DeviceType.CAMERA ||

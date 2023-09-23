@@ -22,6 +22,7 @@ export type CameraConfig = {
   immediateRingNotificationWithoutSnapshot?: boolean;
   delayCameraSnapshot?:boolean;
   talkback: boolean;
+  indoorChimeButton: boolean;
 };
 
 export type VideoConfig = {

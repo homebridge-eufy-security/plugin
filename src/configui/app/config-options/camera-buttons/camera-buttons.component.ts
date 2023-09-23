@@ -2,12 +2,21 @@ import { Component, Input, OnInit } from '@angular/core';
 import { Accessory } from '../../../app/accessory';
 import { PluginService } from '../../../app/plugin.service';
 import { ConfigOptionsInterpreter } from '../config-options-interpreter';
+import { Device } from '../../util/eufy-security-client.utils';
+import { DEFAULT_CAMERACONFIG_VALUES } from '../../util/default-config-values';
+
+interface UpdatedConfig {
+  enableButton: boolean;
+  motionButton: boolean;
+  indoorChimeButton?: boolean;
+}
 
 @Component({
   selector: 'app-camera-buttons',
   templateUrl: './camera-buttons.component.html',
 })
 export class CameraButtonsComponent extends ConfigOptionsInterpreter implements OnInit {
+
   constructor(pluginService: PluginService) {
     super(pluginService);
   }
@@ -16,36 +25,43 @@ export class CameraButtonsComponent extends ConfigOptionsInterpreter implements 
     this.readValue();
   }
 
-  /** Customize from here */
-  /** updateConfig() will overwrite any settings that you'll provide */
-  /** Don't try and 'append'/'push' to arrays this way - add a custom method instead */
-  /** see config option to ignore devices as example */
-
-  /** updateConfig() takes an optional second parameter to specify the accessoriy for which the setting is changed */
-
   @Input() accessory?: Accessory;
 
   enableCameraButton = true;
   enableMotionButton = true;
+  showIndoorChimeButtonSetting = false;
+  indoorChimeButton = DEFAULT_CAMERACONFIG_VALUES.indoorChimeButton;
 
-  async readValue() {
-    const config = await this.getCameraConfig(this.accessory?.uniqueId || '');
+  async readValue(): Promise<void> {
+    const config = await this.getCameraConfig(this.accessory?.uniqueId ?? '');
 
-    if (config && Object.prototype.hasOwnProperty.call(config, 'enableButton')) {
-      this.enableCameraButton = config['enableButton'];
+    if (this.accessory && this.accessory.type !== undefined) {
+      this.showIndoorChimeButtonSetting = Device.isBatteryDoorbell(this.accessory.type) || Device.isWiredDoorbell(this.accessory.type);
     }
-    if (config && Object.prototype.hasOwnProperty.call(config, 'motionButton')) {
-      this.enableMotionButton = config['motionButton'];
+
+    if ('enableButton' in config) {
+      this.enableCameraButton = config.enableButton;
+    }
+
+    if ('motionButton' in config) {
+      this.enableMotionButton = config.motionButton;
+    }
+
+    if ('indoorChimeButton' in config) {
+      this.indoorChimeButton = config.indoorChimeButton;
     }
   }
 
-  update() {
-    this.updateConfig(
-      {
-        enableButton: this.enableCameraButton,
-        motionButton: this.enableMotionButton,
-      },
-      this.accessory,
-    );
+  update(): void {
+    const updated: UpdatedConfig = {
+      enableButton: this.enableCameraButton,
+      motionButton: this.enableMotionButton,
+    };
+
+    if (this.showIndoorChimeButtonSetting) {
+      updated.indoorChimeButton = this.indoorChimeButton;
+    }
+
+    this.updateConfig(updated, this.accessory);
   }
 }
