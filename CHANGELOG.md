@@ -9,6 +9,14 @@ You can find the complete detailled changelog for every beta release [here](http
 - Added helper functions for better configuration value selection in StationAccessory.ts.
 - Modified and improved the convertHKtoEufy and convertEufytoHK methods to throw errors on invalid mode conversion.
 
+#### Updated
+- Update libs and dep
+- Better handling push notification for Doorbell ring events
+- Refactoring the code
+
+#### Fixed
+- Pruning characteristics wasn't correctly handled
+
 ### Changelog 2.2.20
 
 #### Added
