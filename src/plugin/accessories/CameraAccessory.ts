@@ -117,7 +117,7 @@ export class CameraAccessory extends DeviceAccessory {
   }
 
   private async setupChimeButton() {
-    this.setupButtonService('IndoorChime', true, PropertyName.DeviceChimeIndoor, 'switch');
+    this.setupButtonService('IndoorChime', this.cameraConfig.indoorChimeButton, PropertyName.DeviceChimeIndoor, 'switch');
   }
 
   private getCameraConfig() {
