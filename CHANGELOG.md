@@ -6,17 +6,9 @@ You can find the complete detailled changelog for every beta release [here](http
 
 #### Added
 - New feature to display HomeKit switch for indoor chime on/off
-- Support for battery and wired doorbell types to decide visibility of the indoor chime switch
-- New property `indoorChimeButton` in default camera configuration values
-
-#### Changed
-- Modified HTML and Typescript components for camera button settings
-  - Changed wording for existing camera and motion buttons
-  - Included HTML and Typescript changes for the new indoor chime feature
-- Updated `CameraAccessory.ts` to setup indoor chime button
 
 #### Fixed
-- Resolved TypeScript errors related to `undefined` type for `this.accessory?.type`
+- Updated systeminformation from 5.21.4 to 5.21.8 to address vulnerabilities
 
 ### Changelog 2.2.19
 
