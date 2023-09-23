@@ -52,8 +52,6 @@ export class CameraAccessory extends DeviceAccessory {
     this.cameraConfig = this.getCameraConfig();
 
     this.platform.log.debug(`${this.accessory.displayName} config is: ${JSON.stringify(this.cameraConfig)}`);
-    this.platform.log.debug(`${this.accessory.displayName} enabled?: ${this.cameraConfig.enableCamera}`);
-    this.platform.log.debug(`${this.accessory.displayName} doorbell?: ${this.device.isDoorbell()}`);
 
     if (this.cameraConfig.enableCamera || this.device.isDoorbell()) {
       this.platform.log.debug(`${this.accessory.displayName} has a camera`);
@@ -69,6 +67,8 @@ export class CameraAccessory extends DeviceAccessory {
     this.setupEnableButton();
     this.setupMotionButton();
     this.setupLightButton();
+
+    this.pruneUnusedServices();
   }
 
   private setupCamera() {
@@ -255,38 +255,41 @@ export class CameraAccessory extends DeviceAccessory {
       });
     }
 
-    if (this.device.hasProperty('speaker')) {
-      this.registerCharacteristic({
-        serviceType: this.platform.Service.Speaker,
-        characteristicType: this.platform.Characteristic.Mute,
-        getValue: (data, characteristic) =>
-          this.getCameraPropertyValue(characteristic, PropertyName.DeviceSpeaker),
-        setValue: (value, characteristic) =>
-          this.setCameraPropertyValue(characteristic, PropertyName.DeviceSpeaker, value),
-      });
-    }
+    // if (this.device.hasProperty('speaker')) {
+    //   this.registerCharacteristic({
+    //     serviceType: this.platform.Service.Speaker,
+    //     characteristicType: this.platform.Characteristic.Mute,
+    //     serviceSubType: 'speaker_mute',
+    //     getValue: (data, characteristic) =>
+    //       this.getCameraPropertyValue(characteristic, PropertyName.DeviceSpeaker),
+    //     setValue: (value, characteristic) =>
+    //       this.setCameraPropertyValue(characteristic, PropertyName.DeviceSpeaker, value),
+    //   });
+    // }
 
-    if (this.device.hasProperty('speakerVolume')) {
-      this.registerCharacteristic({
-        serviceType: this.platform.Service.Speaker,
-        characteristicType: this.platform.Characteristic.Volume,
-        getValue: (data, characteristic) =>
-          this.getCameraPropertyValue(characteristic, PropertyName.DeviceSpeakerVolume),
-        setValue: (value, characteristic) =>
-          this.setCameraPropertyValue(characteristic, PropertyName.DeviceSpeakerVolume, value),
-      });
-    }
+    // if (this.device.hasProperty('speakerVolume')) {
+    //   this.registerCharacteristic({
+    //     serviceType: this.platform.Service.Speaker,
+    //     characteristicType: this.platform.Characteristic.Volume,
+    //     serviceSubType: 'speaker_volume',
+    //     getValue: (data, characteristic) =>
+    //       this.getCameraPropertyValue(characteristic, PropertyName.DeviceSpeakerVolume),
+    //     setValue: (value, characteristic) =>
+    //       this.setCameraPropertyValue(characteristic, PropertyName.DeviceSpeakerVolume, value),
+    //   });
+    // }
 
-    if (this.device.hasProperty('microphone')) {
-      this.registerCharacteristic({
-        serviceType: this.platform.Service.Microphone,
-        characteristicType: this.platform.Characteristic.Mute,
-        getValue: (data, characteristic) =>
-          this.getCameraPropertyValue(characteristic, PropertyName.DeviceMicrophone),
-        setValue: (value, characteristic) =>
-          this.setCameraPropertyValue(characteristic, PropertyName.DeviceMicrophone, value),
-      });
-    }
+    // if (this.device.hasProperty('microphone')) {
+    //   this.registerCharacteristic({
+    //     serviceType: this.platform.Service.Microphone,
+    //     characteristicType: this.platform.Characteristic.Mute,
+    //     serviceSubType: 'mic_mute',
+    //     getValue: (data, characteristic) =>
+    //       this.getCameraPropertyValue(characteristic, PropertyName.DeviceMicrophone),
+    //     setValue: (value, characteristic) =>
+    //       this.setCameraPropertyValue(characteristic, PropertyName.DeviceMicrophone, value),
+    //   });
+    // }
 
     if (this.device.isDoorbell()) {
       this.registerCharacteristic({
