@@ -2,6 +2,22 @@
 
 You can find the complete detailled changelog for every beta release [here](https://github.com/homebridge-eufy-security/plugin/releases).
 
+### Changelog 2.2.20
+
+#### Added
+- New feature to display HomeKit switch for indoor chime on/off
+- Support for battery and wired doorbell types to decide visibility of the indoor chime switch
+- New property `indoorChimeButton` in default camera configuration values
+
+#### Changed
+- Modified HTML and Typescript components for camera button settings
+  - Changed wording for existing camera and motion buttons
+  - Included HTML and Typescript changes for the new indoor chime feature
+- Updated `CameraAccessory.ts` to setup indoor chime button
+
+#### Fixed
+- Resolved TypeScript errors related to `undefined` type for `this.accessory?.type`
+
 ### Changelog 2.2.19
 
 #### Bug Fixes
