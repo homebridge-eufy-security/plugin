@@ -36,5 +36,7 @@ export class MotionSensorAccessory extends DeviceAccessory {
     } else {
       this.platform.log.error(`${this.accessory.displayName} has no motionDetected`);
     }
+
+    this.pruneUnusedServices();
   }
 }
