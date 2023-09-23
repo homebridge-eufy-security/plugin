@@ -100,7 +100,7 @@ export abstract class BaseAccessory extends EventEmitter {
     this.platform.log.debug(`${this.accessory.displayName} Property Changes: ${name} ${value}`);
   }
 
-  registerCharacteristic({
+  protected registerCharacteristic({
     characteristicType,
     serviceType,
     getValue,
@@ -222,7 +222,7 @@ export abstract class BaseAccessory extends EventEmitter {
     return service;
   }
 
-  pruneUnusedServices() {
+  protected pruneUnusedServices() {
     const safeServiceUUIDs = [
       this.platform.Service.CameraRTPStreamManagement.UUID,
     ];
@@ -237,5 +237,25 @@ export abstract class BaseAccessory extends EventEmitter {
         this.accessory.removeService(service);
       }
     });
+  }
+
+  protected handleDummyEventGet(serviceName: string): Promise<CharacteristicValue> {
+    const characteristicValues: Record<string, CharacteristicValue> = {
+      'EventSnapshotsActive': this.platform.Characteristic.EventSnapshotsActive.DISABLE,
+      'HomeKitCameraActive': this.platform.Characteristic.HomeKitCameraActive.OFF,
+    };
+
+    const currentValue = characteristicValues[serviceName];
+
+    if (currentValue === undefined) {
+      throw new Error(`Invalid serviceName: ${serviceName}`);
+    }
+
+    this.platform.log.debug(`${this.accessory.displayName} IGNORE GET ${serviceName}: ${currentValue}`);
+    return Promise.resolve(currentValue);
+  }
+
+  protected handleDummyEventSet(serviceName: string, value: CharacteristicValue) {
+    this.platform.log.debug(`${this.accessory.displayName} IGNORE SET ${serviceName}: ${value}`);
   }
 }

@@ -62,22 +62,36 @@ export abstract class DeviceAccessory extends BaseAccessory {
   }
 
   initSensorService(serviceType: ServiceType) {
-
-    if (this.device.hasProperty('battery')) {
-      this.registerCharacteristic({
-        serviceType: serviceType,
+    const propertiesToRegister = [
+      {
+        property: 'battery',
         characteristicType: this.platform.Characteristic.BatteryLevel,
-        getValue: (data) => this.device.getPropertyValue(PropertyName.DeviceBattery),
-      });
-    } else if (this.device.hasProperty('batteryLow')) {
-      this.registerCharacteristic({
-        serviceType: serviceType,
+        propertyName: PropertyName.DeviceBattery,
+        onSimpleValue: null,
+      },
+      {
+        property: 'batteryLow',
         characteristicType: this.platform.Characteristic.StatusLowBattery,
-        getValue: (data) => this.device.getPropertyValue(PropertyName.DeviceBatteryLow),
+        propertyName: PropertyName.DeviceBatteryLow,
         onSimpleValue: 'low battery',
-      });
-    } else {
-      this.platform.log.debug(`${this.accessory.displayName} has no battery`);
-    }
+      },
+      {
+        property: 'batteryIsCharging',
+        characteristicType: this.platform.Characteristic.ChargingState,
+        propertyName: PropertyName.DeviceBatteryIsCharging,
+        onSimpleValue: null,
+      },
+    ];
+
+    propertiesToRegister.forEach((propertyConfig) => {
+      if (this.device.hasProperty(propertyConfig.property)) {
+        this.registerCharacteristic({
+          serviceType: serviceType,
+          characteristicType: propertyConfig.characteristicType,
+          getValue: (data) => this.device.getPropertyValue(propertyConfig.propertyName),
+          onSimpleValue: propertyConfig.onSimpleValue,
+        });
+      }
+    });
   }
 }
