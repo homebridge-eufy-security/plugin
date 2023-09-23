@@ -27,8 +27,6 @@ export abstract class DeviceAccessory extends BaseAccessory {
     device: Device,
   ) {
     super(platform, accessory, device);
-
-    this.pruneUnusedServices();
   }
 
   /**

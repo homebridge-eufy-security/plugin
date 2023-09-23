@@ -95,6 +95,8 @@ export class LockAccessory extends DeviceAccessory {
     } else {
       this.platform.log.error(`${this.accessory.displayName} has no lock`);
     }
+
+    this.pruneUnusedServices();
   }
 
   private getLockStatus() {

@@ -36,5 +36,7 @@ export class EntrySensorAccessory extends DeviceAccessory {
     } else {
       this.platform.log.error(`${this.accessory.displayName} has no sensorOpen`);
     }
+
+    this.pruneUnusedServices();
   }
 }
