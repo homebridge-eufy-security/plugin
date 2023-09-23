@@ -10,6 +10,7 @@ import { Zip } from 'zip-lib';
 
 import { Accessory } from './configui/app/accessory';
 import { LoginResult, LoginFailReason } from './configui/app/util/types';
+import { EufyClientInteractor } from './plugin/utils/EufyClientInteractor';
 
 class UiServer extends HomebridgePluginUiServer {
   storagePath: string;
@@ -23,6 +24,8 @@ class UiServer extends HomebridgePluginUiServer {
   private tsLog;
 
   private logZipFilePath: string;
+
+  private pluginConfigInteractor: EufyClientInteractor;
 
   constructor() {
     super();
@@ -115,6 +118,27 @@ class UiServer extends HomebridgePluginUiServer {
     this.onRequest('/storedAccessories', this.loadStoredAccessories.bind(this));
     this.onRequest('/reset', this.resetPlugin.bind(this));
     this.onRequest('/downloadLogs', this.downloadLogs.bind(this));
+
+    this.pluginConfigInteractor = new EufyClientInteractor(this.storagePath, this.log);
+
+    this.onRequest('/getChargingStatus', (sn: string) => {
+      return this.pluginConfigInteractor.DeviceIsCharging(sn);
+    });
+
+    this.onRequest('/setExperimentalRTSP',
+      (options: {
+        sn: string;
+        value: boolean;
+      }) => {
+        return this.pluginConfigInteractor.DeviceSetExperimentalRTSP(options.sn, options.value);
+      });
+      
+    this.onRequest('/getExperimentalRTSPStatus', (sn: string) => {
+      return this.pluginConfigInteractor.DeviceGetExperimentalRTSPStatus(sn);
+    });
+    this.onRequest('/getStationDeviceMapping', () => {
+      return this.pluginConfigInteractor.GetStationCamerasMapping();
+    });
 
     this.ready();
   }

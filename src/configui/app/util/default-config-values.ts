@@ -12,11 +12,17 @@ export const DEFAULT_CONFIG_VALUES = {
   cameras: [],
   cleanCache: true,
   unbridge: true,
+  ignoreMultipleDevicesWarning: false,
+  syncStationModes: false,
 };
 
 export const DEFAULT_CAMERACONFIG_VALUES = {
   enableButton: true,
   motionButton: true,
+  talkback: false,
+  talkbackChannels: 1,
+  hsv: false,
+  hsvRecordingDuration: 90,
   rtsp: false,
   enableCamera: false,
   forcerefreshsnap: false,

@@ -42,6 +42,7 @@ import { ManualAlarmModesComponent } from './config-options/manual-alarm-modes/m
 import { OmitLogFilesComponent } from './config-options/omit-log-files/omit-log-files.component';
 import { TalkbackComponent } from './config-options/talkback/talkback.component';
 import { DownloadLogsComponent } from './config-options/download-logs/download-logs.component';
+import { EnableHsvComponent } from './config-options/enable-hsv/enable-hsv.component';
 
 @NgModule({
   declarations: [
@@ -77,6 +78,7 @@ import { DownloadLogsComponent } from './config-options/download-logs/download-l
     OmitLogFilesComponent,
     TalkbackComponent,
     DownloadLogsComponent,
+    EnableHsvComponent,
   ],
   imports: [BrowserModule, FormsModule, NgbModule, AppRoutingModule, FontAwesomeModule],
   providers: [{ provide: LocationStrategy, useClass: HashLocationStrategy }],

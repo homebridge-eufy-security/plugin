@@ -42,6 +42,9 @@ import { createStream } from 'rotating-file-stream';
 
 import fs from 'fs';
 
+import { EufyClientInteractor } from './utils/EufyClientInteractor';
+import { initializeExperimentalMode } from './utils/experimental';
+
 export class EufySecurityPlatform implements DynamicPlatformPlugin {
   public readonly Service: typeof Service = this.api.hap.Service;
   public readonly Characteristic: typeof Characteristic = this.api.hap.Characteristic;
@@ -62,6 +65,8 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
 
   private activeAccessoryIds: string[] = [];
   private cleanCachedAccessoriesTimeout?: NodeJS.Timeout;
+
+  private pluginConfigInteractor?: EufyClientInteractor;
 
   constructor(
     public readonly hblog: Logger,
@@ -302,6 +307,13 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
 
     this.eufyClient.setCameraMaxLivestreamDuration(cameraMaxLivestreamDuration);
     this.log.debug('CameraMaxLivestreamDuration:', this.eufyClient.getCameraMaxLivestreamDuration());
+
+    try {
+      this.pluginConfigInteractor = new EufyClientInteractor(this.eufyPath, this.log, this.eufyClient);
+      await this.pluginConfigInteractor.setupServer();
+    } catch (err) {
+      this.log.warn(err);
+    }
   }
 
   private async stationAdded(station: Station) {
@@ -459,6 +471,10 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
 
     if (this.cleanCachedAccessoriesTimeout) {
       clearTimeout(this.cleanCachedAccessoriesTimeout);
+    }
+
+    if (this.pluginConfigInteractor) {
+      this.pluginConfigInteractor.stopServer();
     }
 
     try {

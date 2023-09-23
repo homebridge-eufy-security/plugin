@@ -202,3 +202,10 @@ export class Device {
     );
   }
 }
+
+export enum ChargingStatus {
+  CHARGING = 1,
+  UNPLUGGED = 2,
+  PLUGGED = 3,
+  SOLAR_CHARGING = 4,
+}
