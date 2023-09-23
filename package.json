@@ -38,7 +38,8 @@
     "Eufy Security",
     "doorbell",
     "eufy doorbell",
-    "security-system"
+    "security-system",
+    "camera"
   ],
   "dependencies": {
     "@homebridge/plugin-ui-utils": "^0.1.1",
