@@ -1,3 +1,4 @@
+/* eslint-disable max-len */
 import { EventEmitter, Readable } from 'stream';
 import { Station, Device, StreamMetadata, Camera } from 'eufy-security-client';
 import { EufySecurityPlatform } from '../platform';
