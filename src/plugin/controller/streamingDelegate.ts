@@ -124,7 +124,7 @@ export class StreamingDelegate implements CameraStreamingDelegate {
     this.log.debug('handleSnapshotRequest');
 
     try {
-      this.log.debug('Snapshot requested: ' + request.width + ' x ' + request.height, this.cameraName, this.videoConfig.debug);
+      this.log.debug('Snapshot requested: ' + request.width + ' x ' + request.height, this.cameraName, this.videoConfig.debug!);
 
       const snapshot = await this.snapshotManager.getSnapshotBuffer(request);
 
@@ -225,9 +225,9 @@ export class StreamingDelegate implements CameraStreamingDelegate {
       videoParams.setRTPTarget(sessionInfo!, request);
 
       const useAudio = (request.audio.codec === AudioStreamingCodecType.OPUS
-                      || request.audio.codec === AudioStreamingCodecType.AAC_ELD)
-                      && this.videoConfig.audio;
-      
+        || request.audio.codec === AudioStreamingCodecType.AAC_ELD)
+        && this.videoConfig.audio;
+
       if (!useAudio && this.videoConfig.audio) {
         this.log.warn(this.cameraName, `An unsupported audio codec (type: ${request.audio.codec}) was requested. Audio streaming will be omitted.`);
       }
@@ -311,7 +311,7 @@ export class StreamingDelegate implements CameraStreamingDelegate {
         activeSession.returnProcess.start();
         activeSession.returnProcess.stdout?.pipe(activeSession.talkbackStream);
       }
-    
+
       // Check if the pendingSession has been stopped before it was successfully started.
       const pendingSession = this.pendingSessions.get(request.sessionID);
       // pendingSession has not been deleted. Transfer it to ongoingSessions.
@@ -342,14 +342,14 @@ export class StreamingDelegate implements CameraStreamingDelegate {
         this.log.debug(
           this.cameraName,
           'Received request to reconfigure: ' +
-            request.video.width +
-            ' x ' +
-            request.video.height +
-            ', ' +
-            request.video.fps +
-            ' fps, ' +
-            request.video.max_bit_rate +
-            ' kbps (Ignored)',
+          request.video.width +
+          ' x ' +
+          request.video.height +
+          ', ' +
+          request.video.fps +
+          ' fps, ' +
+          request.video.max_bit_rate +
+          ' kbps (Ignored)',
           this.videoConfig.debug,
         );
         callback();
@@ -380,7 +380,7 @@ export class StreamingDelegate implements CameraStreamingDelegate {
         session.returnProcess?.stdout?.unpipe();
         session.returnProcess?.stop();
       } catch (err) {
-          this.log.error(this.cameraName, 'Error occurred terminating returnAudio FFmpeg process: ' + err);
+        this.log.error(this.cameraName, 'Error occurred terminating returnAudio FFmpeg process: ' + err);
       }
       try {
         session.videoProcess?.stop();

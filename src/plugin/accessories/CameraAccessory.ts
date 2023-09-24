@@ -147,20 +147,6 @@ export class CameraAccessory extends DeviceAccessory {
   }
 
   private getCameraControllerOptions(): CameraControllerOptions {
-    let samplerate = AudioStreamingSamplerate.KHZ_16;
-    if (this.cameraConfig.videoConfig?.audioSampleRate === 8) {
-      samplerate = AudioStreamingSamplerate.KHZ_8;
-    } else if (this.cameraConfig.videoConfig?.audioSampleRate === 24) {
-      samplerate = AudioStreamingSamplerate.KHZ_24;
-    }
-
-    let audioCodecType = AudioStreamingCodecType.AAC_ELD;
-    if (this.cameraConfig.videoConfig?.acodecHK) {
-      audioCodecType = this.cameraConfig.videoConfig.acodecHK as AudioStreamingCodecType;
-    }
-
-    this.platform.log.debug(this.accessory.displayName, `Audio sample rate set to ${samplerate} kHz.`);
-    this.platform.log.debug(this.accessory.displayName, `Audio Codec for HK: ${audioCodecType}`);
 
     const option: CameraControllerOptions = {
       cameraStreamCount: this.cameraConfig.videoConfig?.maxStreams || 2, // HomeKit requires at least 2 streams, but 1 is also just fine
@@ -178,8 +164,8 @@ export class CameraAccessory extends DeviceAccessory {
           twoWayAudio: this.cameraConfig.talkback,
           codecs: [
             {
-              type: audioCodecType,
-              samplerate: samplerate,
+              type: AudioStreamingCodecType.AAC_ELD,
+              samplerate: AudioStreamingSamplerate.KHZ_16,
             },
           ],
         },
@@ -311,6 +297,13 @@ export class CameraAccessory extends DeviceAccessory {
 
     // Set snapshot handling method based on `forcerefreshsnap` value
     config.snapshotHandlingMethod = config.snapshotHandlingMethod ?? (config.forcerefreshsnap ? 1 : 3);
+
+    // Initialize videoConfig if it's undefined
+    if (!config.videoConfig) {
+      config.videoConfig = {};
+    }
+
+    config.videoConfig!.debug = config.videoConfig?.debug ?? false;
 
     // Validate talkback setting
     if (config.talkback && !this.device.hasCommand(CommandName.DeviceStartTalkback)) {

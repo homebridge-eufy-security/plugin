@@ -14,7 +14,7 @@ type StationStream = {
   createdAt: number;
 };
 
-// Define a class for the audio stream proxy.
+// This class extends Readable to serve as an audio stream proxy
 class AudiostreamProxy extends Readable {
   private log: TsLogger<ILogObj>;
   private cacheData: Buffer[] = [];
@@ -26,32 +26,33 @@ class AudiostreamProxy extends Readable {
     this.log = log;
   }
 
-  // Transmit data to the readable stream.
+  // Method to transmit data to the readable stream
   private transmitData(data: Buffer | undefined): boolean {
     this.dataFramesCount++;
     return this.push(data);
   }
 
-  // Add new audio data to the cache.
+  // Method to add new audio data to the cache
   public newAudioData(data: Buffer): void {
     if (this.pushNewDataImmediately) {
-      this.pushNewDataImmediately = false;
       this.transmitData(data);
+      this.pushNewDataImmediately = false;
     } else {
       this.cacheData.push(data);
     }
   }
 
-  // Stop the proxy stream.
+  // Method to stop the proxy stream
   public stopProxyStream(): void {
     this.log.debug(`Audiostream was stopped after transmission of ${this.dataFramesCount} data chunks.`);
     this.unpipe();
     this.destroy();
   }
 
+  // _read method to handle the reading operation
   override _read(size: number): void {
     let pushReturn = true;
-    while (this.cacheData.length > 0 && pushReturn) {
+    while (this.cacheData.length && pushReturn) {
       const data = this.cacheData.shift();
       pushReturn = this.transmitData(data);
     }
@@ -61,7 +62,7 @@ class AudiostreamProxy extends Readable {
   }
 }
 
-// Define a class for the video stream proxy.
+// This class extends Readable to serve as a video stream proxy
 class VideostreamProxy extends Readable {
   private manager: LocalLivestreamManager;
   private livestreamId: number;
@@ -79,59 +80,57 @@ class VideostreamProxy extends Readable {
     this.resetKillTimeout();
   }
 
-  // Transmit data to the readable stream.
+  // Method to transmit data to the readable stream
   private transmitData(data: Buffer | undefined): boolean {
     this.dataFramesCount++;
     return this.push(data);
   }
 
-  // Add new video data to the cache.
+  // Method to add new video data to the cache
   public newVideoData(data: Buffer): void {
-    if (this.pushNewDataImmediately) {
-      this.pushNewDataImmediately = false;
-      try {
-        if (this.transmitData(data)) {
-          this.resetKillTimeout();
-        }
-      } catch (err) {
-        this.log.debug(`Push of new data was not successful. Most likely the target process (ffmpeg) was already terminated. Error: ${err}`);
-      }
-    } else {
-      this.cacheData.push(data);
-    }
+    this.pushNewDataImmediately && this.resetPushFlagAndTransmit(data);
+    this.cacheData.push(data);
   }
 
-  // Stop the proxy stream.
+  // Method to stop the proxy stream
   public stopProxyStream(): void {
     this.log.debug(`Videostream was stopped after transmission of ${this.dataFramesCount} data chunks.`);
     this.unpipe();
     this.destroy();
-    if (this.killTimeout) {
-      clearTimeout(this.killTimeout);
-    }
+    this.killTimeout && clearTimeout(this.killTimeout);
   }
 
-  // Reset the kill timeout.
+  // Reset the kill timeout
   private resetKillTimeout(): void {
-    if (this.killTimeout) {
-      clearTimeout(this.killTimeout);
-    }
-    this.killTimeout = setTimeout(() => {
-      this.log.warn(`Proxy Stream (id: ${this.livestreamId}) was terminated due to inactivity. (no data transmitted in 15 seconds)`);
-      this.manager.stopProxyStream(this.livestreamId);
-    }, 15000);
+    this.killTimeout && clearTimeout(this.killTimeout);
+    this.killTimeout = setTimeout(this.terminateStream, 15000);
   }
 
+  // Terminate the stream due to inactivity
+  private terminateStream = () => {
+    this.log.warn(`Proxy Stream (id: ${this.livestreamId}) was terminated due to inactivity.`);
+    this.manager.stopProxyStream(this.livestreamId);
+  };
+
+  // _read method to handle the reading operation
   override _read(size: number): void {
     this.resetKillTimeout();
     let pushReturn = true;
-    while (this.cacheData.length > 0 && pushReturn) {
+    while (this.cacheData.length && pushReturn) {
       const data = this.cacheData.shift();
       pushReturn = this.transmitData(data);
     }
-    if (pushReturn) {
-      this.pushNewDataImmediately = true;
+    pushReturn && (this.pushNewDataImmediately = true);
+  }
+
+  // Reset push flag and transmit data, handling exceptions
+  private resetPushFlagAndTransmit(data: Buffer): void {
+    try {
+      this.transmitData(data) && this.resetKillTimeout();
+    } catch (err) {
+      this.log.debug(`Push unsuccessful. Likely target process was terminated. Error: ${err}`);
     }
+    this.pushNewDataImmediately = false;
   }
 }
 
