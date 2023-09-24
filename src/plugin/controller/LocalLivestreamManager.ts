@@ -389,8 +389,6 @@ export class LocalLivestreamManager extends EventEmitter {
       if (this.proxyStreams.size === 0) {
         this.log.debug(this.device.getName(), 'All proxy instances to the livestream have terminated.');
         this.stopLocalLiveStream();
-        this.stopLocalLiveStream();
-        this.stopLocalLiveStream();
       }
     }
   }
