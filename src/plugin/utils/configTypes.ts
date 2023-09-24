@@ -28,6 +28,25 @@ export type CameraConfig = {
   indoorChimeButton?: boolean;
 };
 
+export const DEFAULT_CAMERACONFIG_VALUES = {
+  enableButton: true,
+  motionButton: true,
+  talkback: false,
+  talkbackChannels: 1,
+  hsv: true,
+  hsvRecordingDuration: 90,
+  rtsp: false,
+  enableCamera: false,
+  forcerefreshsnap: false,
+  useCachedLocalLivestream: false,
+  useEnhancedSnapshotBehaviour: true,
+  refreshSnapshotIntervalMinutes: 0,
+  snapshotHandlingMethod: 3,
+  immediateRingNotificationWithoutSnapshot: false,
+  delayCameraSnapshot: false,
+  indoorChimeButton: false,
+};
+
 export type VideoConfig = {
   source?: string;
   stillImageSource?: string;

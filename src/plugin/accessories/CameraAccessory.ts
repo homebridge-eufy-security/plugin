@@ -1,16 +1,18 @@
 import {
-  Service,
   PlatformAccessory,
   Characteristic,
   CharacteristicValue,
   CameraControllerOptions,
-  CameraRecordingOptions,
+  SRTPCryptoSuites,
+  H264Profile,
+  H264Level,
+  EventTriggerOption,
+  MediaContainerType,
   AudioStreamingSamplerate,
   AudioStreamingCodecType,
   AudioRecordingSamplerate,
   AudioRecordingCodecType,
   Resolution,
-  HAP,
 } from 'homebridge';
 
 import { EufySecurityPlatform } from '../platform';
@@ -22,7 +24,7 @@ import { Camera, Device, DeviceEvents, PropertyName, CommandName } from 'eufy-se
 import { StreamingDelegate } from '../controller/streamingDelegate';
 import { RecordingDelegate } from '../controller/recordingDelegate';
 
-import { CameraConfig, VideoConfig } from '../utils/configTypes';
+import { CameraConfig, DEFAULT_CAMERACONFIG_VALUES } from '../utils/configTypes';
 
 /**
  * Platform Accessory
@@ -80,8 +82,6 @@ export class CameraAccessory extends DeviceAccessory {
     this.platform.log.debug(`${this.accessory.displayName} Constructed Camera`);
 
     this.cameraConfig = this.getCameraConfig();
-
-    this.platform.log.debug(`${this.accessory.displayName} config is: ${JSON.stringify(this.cameraConfig)}`);
 
     if (this.cameraConfig.enableCamera || this.device.isDoorbell()) {
       this.platform.log.debug(`${this.accessory.displayName} has a camera`);
@@ -162,18 +162,16 @@ export class CameraAccessory extends DeviceAccessory {
     this.platform.log.debug(this.accessory.displayName, `Audio sample rate set to ${samplerate} kHz.`);
     this.platform.log.debug(this.accessory.displayName, `Audio Codec for HK: ${audioCodecType}`);
 
-    const hap = this.platform.api.hap;
-
     const option: CameraControllerOptions = {
       cameraStreamCount: this.cameraConfig.videoConfig?.maxStreams || 2, // HomeKit requires at least 2 streams, but 1 is also just fine
       delegate: this.streamingDelegate as StreamingDelegate,
       streamingOptions: {
-        supportedCryptoSuites: [hap.SRTPCryptoSuites.AES_CM_128_HMAC_SHA1_80],
+        supportedCryptoSuites: [SRTPCryptoSuites.AES_CM_128_HMAC_SHA1_80],
         video: {
           resolutions: this.resolutions,
           codec: {
-            profiles: [hap.H264Profile.BASELINE, hap.H264Profile.MAIN, hap.H264Profile.HIGH],
-            levels: [hap.H264Level.LEVEL3_1, hap.H264Level.LEVEL3_2, hap.H264Level.LEVEL4_0],
+            profiles: [H264Profile.BASELINE, H264Profile.MAIN, H264Profile.HIGH],
+            levels: [H264Level.LEVEL3_1, H264Level.LEVEL3_2, H264Level.LEVEL4_0],
           },
         },
         audio: {
@@ -190,21 +188,21 @@ export class CameraAccessory extends DeviceAccessory {
         ? {
           options: {
             overrideEventTriggerOptions: [
-              hap.EventTriggerOption.MOTION,
-              hap.EventTriggerOption.DOORBELL,
+              EventTriggerOption.MOTION,
+              EventTriggerOption.DOORBELL,
             ],
             prebufferLength: 0, // prebufferLength always remains 4s ?
             mediaContainerConfiguration: [
               {
-                type: hap.MediaContainerType.FRAGMENTED_MP4,
+                type: MediaContainerType.FRAGMENTED_MP4,
                 fragmentLength: 4000,
               },
             ],
             video: {
               type: this.platform.api.hap.VideoCodecType.H264,
               parameters: {
-                profiles: [hap.H264Profile.BASELINE, hap.H264Profile.MAIN, hap.H264Profile.HIGH],
-                levels: [hap.H264Level.LEVEL3_1, hap.H264Level.LEVEL3_2, hap.H264Level.LEVEL4_0],
+                profiles: [H264Profile.BASELINE, H264Profile.MAIN, H264Profile.HIGH],
+                levels: [H264Level.LEVEL3_1, H264Level.LEVEL3_2, H264Level.LEVEL4_0],
               },
               resolutions: this.resolutions,
             },
@@ -290,40 +288,45 @@ export class CameraAccessory extends DeviceAccessory {
     this.setupButtonService('IndoorChime', this.cameraConfig.indoorChimeButton, PropertyName.DeviceChimeIndoor, 'switch');
   }
 
-  private getCameraConfig() {
+  /**
+   * Get the configuration for a camera device.
+   * 
+   * - Combines default settings with those from the platform config.
+   * - Validates certain settings like talkback capability.
+   * 
+   * @returns {CameraConfig} The finalized camera configuration.
+   */
+  private getCameraConfig(): CameraConfig {
+    // Find the specific camera config from the platform based on its serial number
+    const foundConfig = this.platform.config.cameras?.find(
+      e => e.serialNumber === this.device.getSerial(),
+    ) ?? {};
 
-    let config = {} as CameraConfig;
+    // Combine default and specific configurations
+    const config: Partial<CameraConfig> = {
+      ...DEFAULT_CAMERACONFIG_VALUES,
+      ...foundConfig,
+      name: this.accessory.displayName,
+    };
 
-    if (typeof this.platform.config.cameras !== 'undefined') {
-      // eslint-disable-next-line prefer-arrow-callback, brace-style
-      const pos = this.platform.config.cameras.map(function (e) { return e.serialNumber; }).indexOf(this.device.getSerial());
-      config = { ...this.platform.config.cameras[pos] };
-    }
+    // Set snapshot handling method based on `forcerefreshsnap` value
+    config.snapshotHandlingMethod = config.snapshotHandlingMethod ?? (config.forcerefreshsnap ? 1 : 3);
 
-    config.name = this.accessory.displayName;
-    config.enableButton = config.enableButton ??= true;
-    config.motionButton = config.motionButton ??= true;
-    config.rtsp = config.rtsp ??= false;
-    config.forcerefreshsnap = config.forcerefreshsnap ??= false;
-    config.videoConfig = config.videoConfig ??= {};
-    config.immediateRingNotificationWithoutSnapshot = config.immediateRingNotificationWithoutSnapshot ??= false;
-    config.delayCameraSnapshot = config.delayCameraSnapshot ??= false;
-
-    if (!config.snapshotHandlingMethod) {
-      config.snapshotHandlingMethod = (config.forcerefreshsnap) ? 1 : 3;
-    }
-
-    config.talkback = config.talkback ??= false;
+    // Validate talkback setting
     if (config.talkback && !this.device.hasCommand(CommandName.DeviceStartTalkback)) {
       this.platform.log.warn(this.accessory.displayName, 'Talkback for this device is not supported!');
       config.talkback = false;
     }
+
+    // Validate talkback with rtsp setting
     if (config.talkback && config.rtsp) {
       this.platform.log.warn(this.accessory.displayName, 'Talkback cannot be used with rtsp option. Ignoring talkback setting.');
       config.talkback = false;
     }
 
-    return config;
+    this.platform.log.debug(`${this.accessory.displayName} config is: ${JSON.stringify(config)}`);
+
+    return config as CameraConfig;
   }
 
   private cameraFunction() {

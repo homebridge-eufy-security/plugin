@@ -21,7 +21,7 @@ export const DEFAULT_CAMERACONFIG_VALUES = {
   motionButton: true,
   talkback: false,
   talkbackChannels: 1,
-  hsv: false,
+  hsv: true,
   hsvRecordingDuration: 90,
   rtsp: false,
   enableCamera: false,

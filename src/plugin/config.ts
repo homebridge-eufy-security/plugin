@@ -27,3 +27,21 @@ export interface EufySecurityPlatformConfig extends PlatformConfig {
   cleanCache: boolean;
   unbridge: boolean;
 }
+
+export const DEFAULT_CONFIG_VALUES = {
+  enableDetailedLogging: false,
+  CameraMaxLivestreamDuration: 30,
+  pollingIntervalMinutes: 10,
+  hkHome: 1,
+  hkAway: 0,
+  hkNight: 3,
+  hkOff: 63,
+  ignoreStations: [],
+  ignoreDevices: [],
+  country: 'US',
+  cameras: [],
+  cleanCache: true,
+  unbridge: true,
+  ignoreMultipleDevicesWarning: false,
+  syncStationModes: false,
+};
