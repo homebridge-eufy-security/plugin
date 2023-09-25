@@ -9,6 +9,12 @@ import { EufySecurityPlatform } from '../platform';
 import { DeviceType, DeviceEvents, PropertyValue, Device, Station, StationEvents, PropertyName } from 'eufy-security-client';
 import { EventEmitter } from 'events';
 
+/**
+ * Determine if the serviceType is an instance of Service.
+ *
+ * @param {WithUUID<typeof Service> | Service} serviceType - The service type to be checked.
+ * @returns {boolean} Returns true if the serviceType is an instance of Service, otherwise false.
+ */
 function isServiceInstance(
   serviceType: WithUUID<typeof Service> | Service,
 ): serviceType is Service {
@@ -100,6 +106,14 @@ export abstract class BaseAccessory extends EventEmitter {
     this.platform.log.debug(`${this.accessory.displayName} Property Changes: ${name} ${value}`);
   }
 
+  /**
+   * Register characteristics for a given Homebridge service.
+   *
+   * This method handles the registration of Homebridge characteristics.
+   * It includes optional features like value debouncing and event triggers.
+   *
+   * @param {Object} params - Parameters needed for registering characteristics.
+   */
   protected registerCharacteristic({
     characteristicType,
     serviceType,
@@ -194,6 +208,15 @@ export abstract class BaseAccessory extends EventEmitter {
 
   }
 
+  /**
+   * Retrieve an existing service or create a new one if it doesn't exist.
+   *
+   * @param {ServiceType} serviceType - The type of service to retrieve or create.
+   * @param {string} [name] - The name of the service (optional).
+   * @param {string} [subType] - The subtype of the service (optional).
+   * @returns {Service} Returns the existing or newly created service.
+   * @throws Will throw an error if there are overlapping services.
+   */
   protected getService(
     serviceType: ServiceType,
     name = this.accessory.displayName,
