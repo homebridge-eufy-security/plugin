@@ -9,11 +9,14 @@ export class ConfigOptionsInterpreter {
   config: PluginConfig;
 
   constructor(protected pluginService: PluginService) {
+    // Initialize config with default values
     this.config = DEFAULT_CONFIG_VALUES;
+
+    // Fetch the configuration asynchronously and update config
     this.pluginService
       .getConfig()
       .then((config) => {
-        this.config = {...this.config, config};
+        this.config = { ...this.config, ...config }; // Update config with fetched data
       })
       .catch((err) => console.log('Could not get config in config interpreter: ' + err));
   }
@@ -22,9 +25,9 @@ export class ConfigOptionsInterpreter {
     const config = await this.pluginService.getConfig();
 
     if (Array.isArray(config['cameras'])) {
-      return Promise.resolve(config['cameras'].find((cc) => cc['serialNumber'] === uniqueId));
+      return config['cameras'].find((cc: any) => cc.serialNumber === uniqueId) || undefined;
     } else {
-      return Promise.resolve(undefined);
+      return undefined;
     }
   }
 
@@ -32,18 +35,18 @@ export class ConfigOptionsInterpreter {
     const config = await this.pluginService.getConfig();
 
     if (Array.isArray(config['stations'])) {
-      return Promise.resolve(config['stations'].find((sc) => sc['serialNumber'] === uniqueId));
+      return config['stations'].find((sc: any) => sc.serialNumber === uniqueId) || undefined;
     } else {
-      return Promise.resolve(undefined);
+      return undefined;
     }
   }
 
   protected async updateConfig(options: any, accessory?: Accessory) {
-    // TODO: test extensively
-    // TODO: remove config since it initializes too late if member was inputed to child --> stack overflow
+    // Fetch the current configuration
     let config = await this.pluginService.getConfig();
 
     if (!accessory) {
+      // Merge default values, current config, and options
       config = {
         ...DEFAULT_CONFIG_VALUES,
         ...config,
@@ -56,21 +59,17 @@ export class ConfigOptionsInterpreter {
         config['cameras'] = [];
       }
 
-      let cameraConfigIndex = -1;
-      config['cameras'].forEach((cc: { serialNumber: string }, i: number) => {
-        if (cc.serialNumber === accessory.uniqueId) {
-          cameraConfigIndex = i;
-        }
-      });
+      // Find the index of the camera config by serialNumber
+      const cameraConfigIndex = config['cameras'].findIndex((cc: any) => cc.serialNumber === accessory.uniqueId);
 
       if (cameraConfigIndex >= 0) {
-        // update cameraConfig for this device
+        // Update cameraConfig for this device
         config['cameras'][cameraConfigIndex] = {
           ...config['cameras'][cameraConfigIndex],
           ...options,
         };
       } else {
-        // cameraConfig for this device didn't exist yet
+        // CameraConfig for this device didn't exist yet, so add it
         config['cameras'].push({
           serialNumber: accessory.uniqueId,
           ...options,
@@ -81,21 +80,17 @@ export class ConfigOptionsInterpreter {
         config['stations'] = [];
       }
 
-      let stationConfigIndex = -1;
-      config['stations'].forEach((sc: { serialNumber: string }, i: number) => {
-        if (sc.serialNumber === accessory.uniqueId) {
-          stationConfigIndex = i;
-        }
-      });
+      // Find the index of the station config by serialNumber
+      const stationConfigIndex = config['stations'].findIndex((sc: any) => sc.serialNumber === accessory.uniqueId);
 
       if (stationConfigIndex >= 0) {
-        // update stationConfig for this device
+        // Update stationConfig for this device
         config['stations'][stationConfigIndex] = {
           ...config['stations'][stationConfigIndex],
           ...options,
         };
       } else {
-        // stationConfig for this device didn't exist yet
+        // StationConfig for this device didn't exist yet, so add it
         config['stations'].push({
           serialNumber: accessory.uniqueId,
           ...options,
@@ -103,6 +98,7 @@ export class ConfigOptionsInterpreter {
       }
     }
 
+    // Update the configuration
     this.pluginService.updateConfig(config);
   }
 }
