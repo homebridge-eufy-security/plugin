@@ -166,9 +166,9 @@ export class StationAccessory extends BaseAccessory {
       hkAway: this.getConfigValue(stationConfig?.hkAway, this.platform.config.hkAway, 0),
       hkNight: this.getConfigValue(stationConfig?.hkNight, this.platform.config.hkNight, 2),
       // Default HomeKit mode for 'Off':
-      // - If a keypad is present, set to 63 (Special value)
-      // - Otherwise, set to 6 (Default value)
-      hkOff: this.getConfigValue(stationConfig?.hkOff, this.platform.config.hkOff, this.hasKeyPad ? 63 : 6),
+      // - If a keypad is present, set to 6 (Special value)
+      // - Otherwise, set to 63 (Default value)
+      hkOff: this.getConfigValue(stationConfig?.hkOff, this.platform.config.hkOff, this.hasKeyPad ? 6 : 63),
 
       // Use optional chaining to safely access manualTriggerModes and manualAlarmSeconds
       manualTriggerModes: stationConfig?.manualTriggerModes ?? [],
