@@ -162,8 +162,8 @@ export class StationAccessory extends BaseAccessory {
     const config: StationConfig = {
       // For each setting (e.g., hkHome), check if it is defined in the custom config,
       // if not, check the global config, and as a last resort, use the default value
-      hkHome: this.getConfigValue(stationConfig?.hkHome, this.platform.config.hkHome, 0),
-      hkAway: this.getConfigValue(stationConfig?.hkAway, this.platform.config.hkAway, 1),
+      hkHome: this.getConfigValue(stationConfig?.hkHome, this.platform.config.hkHome, 1),
+      hkAway: this.getConfigValue(stationConfig?.hkAway, this.platform.config.hkAway, 0),
       hkNight: this.getConfigValue(stationConfig?.hkNight, this.platform.config.hkNight, 2),
       // Default HomeKit mode for 'Off':
       // - If a keypad is present, set to 63 (Special value)

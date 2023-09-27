@@ -2,6 +2,13 @@
 
 You can find the complete detailled changelog for every beta release [here](https://github.com/homebridge-eufy-security/plugin/releases).
 
+### HKSV
+#### Added
+- backporting HKSV @thierien code
+
+#### Fixed
+- Reverted the default values for hkHome and hkAway in StationAccessory.ts to their original values to fix a regression introduced during refactoring. hkHome is now set to 1, and hkAway is set to 0 in the default configuration.
+
 ### Changelog 2.2.21
 
 #### Added
