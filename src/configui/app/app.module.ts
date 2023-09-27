@@ -43,6 +43,8 @@ import { OmitLogFilesComponent } from './config-options/omit-log-files/omit-log-
 import { TalkbackComponent } from './config-options/talkback/talkback.component';
 import { DownloadLogsComponent } from './config-options/download-logs/download-logs.component';
 import { EnableHsvComponent } from './config-options/enable-hsv/enable-hsv.component';
+import { IgnoreMultipleDevicesWarningComponent }
+  from './config-options/ignore-multiple-devices-warning/ignore-multiple-devices-warning.component';
 
 @NgModule({
   declarations: [
@@ -78,6 +80,7 @@ import { EnableHsvComponent } from './config-options/enable-hsv/enable-hsv.compo
     OmitLogFilesComponent,
     TalkbackComponent,
     DownloadLogsComponent,
+    IgnoreMultipleDevicesWarningComponent,
     EnableHsvComponent,
   ],
   imports: [BrowserModule, FormsModule, NgbModule, AppRoutingModule, FontAwesomeModule],
