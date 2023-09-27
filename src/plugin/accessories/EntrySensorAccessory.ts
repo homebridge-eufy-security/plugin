@@ -7,23 +7,39 @@ import { DeviceAccessory } from './Device';
 import { EntrySensor, PropertyName } from 'eufy-security-client';
 
 /**
- * Platform Accessory
- * An instance of this class is created for each accessory your platform registers
- * Each accessory may expose multiple services of different service types.
+ * EntrySensorAccessory Class
+ *
+ * This class represents an entry sensor accessory within a home automation system. It is designed
+ * to integrate entry sensors into the system, register appropriate characteristics, and provide
+ * necessary functionality for monitoring the open or closed state of doors or windows.
+ *
+ * @class EntrySensorAccessory
+ * @extends DeviceAccessory
  */
 export class EntrySensorAccessory extends DeviceAccessory {
 
+  /**
+   * Constructor for EntrySensorAccessory.
+   *
+   * @param {EufySecurityPlatform} platform - The platform instance managing accessories.
+   * @param {PlatformAccessory} accessory - The platform-specific accessory.
+   * @param {EntrySensor} device - The entry sensor device being represented.
+   */
   constructor(
     platform: EufySecurityPlatform,
     accessory: PlatformAccessory,
     device: EntrySensor,
   ) {
+    // Call the constructor of the parent class DeviceAccessory.
     super(platform, accessory, device);
 
+    // Log a debug message indicating the construction of the Entry Sensor.
     this.platform.log.debug(`${this.accessory.displayName} Constructed Entry Sensor`);
 
+    // Check if the device has the 'sensorOpen' property.
     if (this.device.hasProperty('sensorOpen')) {
 
+      // Register the Contact Sensor characteristic.
       this.registerCharacteristic({
         serviceType: this.platform.Service.ContactSensor,
         characteristicType: this.platform.Characteristic.ContactSensorState,
@@ -31,12 +47,15 @@ export class EntrySensorAccessory extends DeviceAccessory {
         onSimpleValue: 'open',
       });
 
+      // Initialize the sensor service.
       this.initSensorService(this.platform.Service.ContactSensor);
 
     } else {
+      // Log an error if the 'sensorOpen' property is not available for this device.
       this.platform.log.error(`${this.accessory.displayName} has no sensorOpen`);
     }
 
+    // Remove any unused services.
     this.pruneUnusedServices();
   }
 }

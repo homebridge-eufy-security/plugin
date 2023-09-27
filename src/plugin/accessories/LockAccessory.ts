@@ -6,19 +6,36 @@ import { DeviceAccessory } from './Device';
 import { Lock, PropertyName } from 'eufy-security-client';
 
 /**
- * Represents a LockAccessory in the Homebridge platform.
+ * LockAccessory Class
+ *
+ * This class represents a lock accessory within a home automation system. It is designed to
+ * integrate smart locks into the system, register appropriate HomeKit characteristics, and provide
+ * functionality for controlling and monitoring the lock's status.
+ *
+ * @class LockAccessory
+ * @extends DeviceAccessory
  */
 export class LockAccessory extends DeviceAccessory {
+
+  /**
+   * Constructor for LockAccessory.
+   *
+   * @param {EufySecurityPlatform} platform - The platform instance managing accessories.
+   * @param {PlatformAccessory} accessory - The platform-specific accessory.
+   * @param {Lock} device - The lock device being represented.
+   */
   constructor(
     platform: EufySecurityPlatform,
     accessory: PlatformAccessory,
     device: Lock,
   ) {
+    // Call the constructor of the parent class DeviceAccessory.
     super(platform, accessory, device);
 
     // Log that the LockAccessory is constructed.
     this.platform.log.debug(`${this.accessory.displayName} Constructed Lock`);
 
+    // Check if the device has the 'locked' property.
     if (this.device.hasProperty('locked')) {
       // Initialize Lock Management Service characteristics.
       this.initLockManagementService();
