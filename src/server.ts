@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
-import { EufySecurity, EufySecurityConfig, libVersion, Device, Station } from 'eufy-security-client';
+import { EufySecurity, EufySecurityConfig, libVersion, Device, Station, PropertyName } from 'eufy-security-client';
 import { HomebridgePluginUiServer } from '@homebridge/plugin-ui-utils';
 
 import fs from 'fs';
@@ -39,9 +39,9 @@ class UiServer extends HomebridgePluginUiServer {
     const plugin = require('../package.json');
 
     const mainLogObj = {
-      name: `[EufySecurity-${plugin.version}]`,
+      name: `[${plugin.version}]`,
       // eslint-disable-next-line max-len
-      prettyLogTemplate: '[{{mm}}/{{dd}}/{{yyyy}} {{hh}}:{{MM}}:{{ss}}]\t{{name}}\t{{logLevelName}}\t[{{fileNameWithLine}}{{name}}]\t',
+      prettyLogTemplate: '{{name}}\t{{logLevelName}}\t[{{fileNameWithLine}}]\t',
       prettyErrorTemplate: '\n{{errorName}} {{errorMessage}}\nerror stack:\n{{errorStack}}',
       prettyErrorStackTemplate: '  • {{fileName}}\t{{method}}\n\t{{fileNameWithLine}}',
       prettyErrorParentNamesSeparator: ':',
@@ -125,6 +125,14 @@ class UiServer extends HomebridgePluginUiServer {
       return this.pluginConfigInteractor.DeviceIsCharging(sn);
     });
 
+    this.onRequest('/hasProperty',
+      (options: {
+        sn: string;
+        propertyName: string;
+      }) => {
+        return this.pluginConfigInteractor.DeviceHasProperty(options.sn, PropertyName[options.propertyName]);
+      });
+
     this.onRequest('/setExperimentalRTSP',
       (options: {
         sn: string;
@@ -132,7 +140,7 @@ class UiServer extends HomebridgePluginUiServer {
       }) => {
         return this.pluginConfigInteractor.DeviceSetExperimentalRTSP(options.sn, options.value);
       });
-      
+
     this.onRequest('/getExperimentalRTSPStatus', (sn: string) => {
       return this.pluginConfigInteractor.DeviceGetExperimentalRTSPStatus(sn);
     });
@@ -401,7 +409,7 @@ class UiServer extends HomebridgePluginUiServer {
         this.log.error('Error while generating log files: ' + err);
         reject(err);
       }).finally(() => this.removeCompressedLogs());
-      
+
     });
   }
 

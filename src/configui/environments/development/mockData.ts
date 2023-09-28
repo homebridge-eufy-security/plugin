@@ -524,6 +524,7 @@ export const DEFAULT_PLUGIN_CONFIG: PluginConfig = {
       enableCamera: true,
       enableButton: true,
       motionButton: true,
+      lightButton: true,
       rtsp: false,
       forcerefreshsnap: false,
       useCachedLocalLivestream: true,

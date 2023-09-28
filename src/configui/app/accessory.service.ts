@@ -10,6 +10,10 @@ export class AccessoryService {
     return window.homebridge.request('/getChargingStatus', sn);
   }
 
+  public async hasProperty(sn: string, propertyName: string): Promise<boolean> {
+    return window.homebridge.request('/hasProperty', {sn: sn, propertyName: propertyName});
+  }
+
   public async setExperimentalRTSPStatus(sn: string, value: boolean): Promise<string> {
     return window.homebridge.request('/setExperimentalRTSP', { sn: sn, value: value});
   }

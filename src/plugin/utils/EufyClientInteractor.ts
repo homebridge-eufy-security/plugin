@@ -11,6 +11,7 @@ import { initializeExperimentalMode } from './experimental';
 
 enum InteractorRequestType {
   DeviceChargingStatus = 'deviceChargingStatus',
+  DeviceHasProperty = 'deviceHasProperty',
   DeviceChangeExperimentalRTSPStatus = 'deviceExperimentalRtspStatusChange',
   DeviceGetExperimentalRTSPStatus = 'deviceExperimentalRtspStatusGet',
   GetStationDevicesMapping = 'stationDevicesMapping',
@@ -20,6 +21,7 @@ type InteractorRequest = {
   serialNumber: string;
   type: InteractorRequestType;
   value?: boolean;
+  propertyName?: PropertyName;
 };
 
 type InteractorResponse = {
@@ -30,7 +32,7 @@ type InteractorResponse = {
 };
 
 export class EufyClientInteractor extends EventEmitter implements PluginConfigInteractor {
-  
+
   private client?: EufySecurity;
   private storagePath: string;
   private log: TsLogger<ILogObj>;
@@ -60,7 +62,7 @@ export class EufyClientInteractor extends EventEmitter implements PluginConfigIn
       this.server = net.createServer((socket) => {
         socket.on('data', (data) => {
           const request = JSON.parse(data.toString('utf-8')) as InteractorRequest;
-          this.log.debug(`incoming Interaction Request: for ${request.serialNumber}, type: ${request.type}`);
+          this.log.debug(`incoming Interaction Request: for ${request.serialNumber}, ${JSON.stringify(request)}`);
           this.processIPCRequest(socket, request);
         });
         socket.on('error', this.onSocketError.bind(this));
@@ -160,7 +162,7 @@ export class EufyClientInteractor extends EventEmitter implements PluginConfigIn
     };
     try {
       response = await this.processDirectRequest(request);
-    } catch(err) {
+    } catch (err) {
       response.error = err as Error;
     }
     // eslint-disable-next-line max-len
@@ -184,6 +186,9 @@ export class EufyClientInteractor extends EventEmitter implements PluginConfigIn
         case InteractorRequestType.DeviceChargingStatus:
           response.result = await this.getChargingStatus(request);
           break;
+        case InteractorRequestType.DeviceHasProperty:
+          response.result = await this.hasProperty(request);
+          break;
         case InteractorRequestType.DeviceChangeExperimentalRTSPStatus:
           response.result = await this.getExperimentalRTSPStatusChangeResult(request);
           break;
@@ -203,7 +208,7 @@ export class EufyClientInteractor extends EventEmitter implements PluginConfigIn
     }
 
     // eslint-disable-next-line max-len
-    this.log.debug(`Interaction Response: for ${response.serialNumber}, type: ${response.type}, result: ${response.result}, error: ${response.error}`);
+    this.log.debug(`Interaction Response: for ${response.serialNumber}, type: ${JSON.stringify(response)}, error: ${response.error}`);
     return Promise.resolve(response);
   }
 
@@ -221,6 +226,20 @@ export class EufyClientInteractor extends EventEmitter implements PluginConfigIn
     });
   }
 
+  private async hasProperty(request: InteractorRequest): Promise<boolean> {
+    const device = await this.client!.getDevice(request.serialNumber);
+    return new Promise((resolve, reject) => {
+      if (
+        request.propertyName !== undefined
+        && device.hasProperty(request.propertyName)
+      ) {
+        resolve(true);
+      } else {
+        resolve(false);
+      }
+    });
+  }
+
   private async getExperimentalRTSPStatusChangeResult(request): Promise<string> {
     initializeExperimentalMode();
 
@@ -230,9 +249,9 @@ export class EufyClientInteractor extends EventEmitter implements PluginConfigIn
     return new Promise((resolve, reject) => {
       if (request.value === undefined) {
         reject(new Error('no value was given'));
-      } else if(!device.hasProperty(PropertyName.DeviceRTSPStream) &&
+      } else if (!device.hasProperty(PropertyName.DeviceRTSPStream) &&
         !device.hasProperty(PropertyName['ExperimentalModification'])) {
-  
+
         reject(new Error('device has no experimental rtsp setting'));
       } else {
         let to: NodeJS.Timeout | undefined = undefined;
@@ -318,7 +337,7 @@ export class EufyClientInteractor extends EventEmitter implements PluginConfigIn
   private onServerError(err: Error) {
     this.log.error(`There was an error on the PluginConfigInteractor server: ${err}`);
   }
-  
+
   async DeviceIsCharging(sn: string): Promise<number> {
     const request: InteractorRequest = {
       serialNumber: sn,
@@ -326,15 +345,37 @@ export class EufyClientInteractor extends EventEmitter implements PluginConfigIn
     };
     try {
       const response = await this.processDirectRequest(request);
-      
+
       if (response.error) {
         return Promise.reject(response.error.message);
       }
       if (response.result === undefined) {
         return Promise.reject('there was no result');
       }
-  
+
       return Promise.resolve(response.result as number);
+    } catch (err) {
+      return Promise.reject(err);
+    }
+  }
+
+  async DeviceHasProperty(sn: string, propertyName: PropertyName): Promise<boolean> {
+    const request: InteractorRequest = {
+      serialNumber: sn,
+      propertyName: propertyName,
+      type: InteractorRequestType.DeviceHasProperty,
+    };
+    try {
+      const response = await this.processDirectRequest(request);
+
+      if (response.error) {
+        return Promise.reject(response.error.message);
+      }
+      if (response.result === undefined) {
+        return Promise.reject('there was no result');
+      }
+
+      return Promise.resolve(response.result as boolean);
     } catch (err) {
       return Promise.reject(err);
     }
@@ -348,14 +389,14 @@ export class EufyClientInteractor extends EventEmitter implements PluginConfigIn
     };
     try {
       const response = await this.processDirectRequest(request);
-      
+
       if (response.error) {
         return Promise.reject(response.error.message);
       }
       if (response.result === undefined) {
         return Promise.reject('there was no result');
       }
-  
+
       return Promise.resolve(response.result as string);
     } catch (err) {
       return Promise.reject(err);
@@ -369,14 +410,14 @@ export class EufyClientInteractor extends EventEmitter implements PluginConfigIn
     };
     try {
       const response = await this.processDirectRequest(request);
-      
+
       if (response.error) {
         return Promise.reject(response.error.message);
       }
       if (response.result === undefined) {
         return Promise.reject('there was no result');
       }
-  
+
       return Promise.resolve(response.result as { state: boolean; url?: string });
     } catch (err) {
       return Promise.reject(err);
@@ -390,14 +431,14 @@ export class EufyClientInteractor extends EventEmitter implements PluginConfigIn
     };
     try {
       const response = await this.processDirectRequest(request);
-      
+
       if (response.error) {
         return Promise.reject(response.error.message);
       }
       if (response.result === undefined) {
         return Promise.reject('there was no result');
       }
-  
+
       return Promise.resolve(response.result as unknown);
     } catch (err) {
       return Promise.reject(err);

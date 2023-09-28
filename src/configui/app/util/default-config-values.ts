@@ -19,6 +19,7 @@ export const DEFAULT_CONFIG_VALUES = {
 export const DEFAULT_CAMERACONFIG_VALUES = {
   enableButton: true,
   motionButton: true,
+  lightButton: true,
   talkback: false,
   talkbackChannels: 1,
   hsv: true,

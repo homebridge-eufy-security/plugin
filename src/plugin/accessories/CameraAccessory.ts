@@ -267,7 +267,7 @@ export class CameraAccessory extends DeviceAccessory {
   }
 
   private async setupLightButton() {
-    this.setupButtonService('Light', true, PropertyName.DeviceLight, 'lightbulb');
+    this.setupButtonService('Light', this.cameraConfig.lightButton, PropertyName.DeviceLight, 'lightbulb');
   }
 
   private async setupChimeButton() {

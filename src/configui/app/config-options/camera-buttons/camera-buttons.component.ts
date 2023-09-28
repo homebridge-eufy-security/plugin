@@ -1,14 +1,17 @@
+/* eslint-disable max-len */
+
 import { Component, Input, OnInit } from '@angular/core';
 import { Accessory } from '../../../app/accessory';
 import { PluginService } from '../../../app/plugin.service';
 import { ConfigOptionsInterpreter } from '../config-options-interpreter';
-import { Device } from '../../util/eufy-security-client.utils';
 import { DEFAULT_CAMERACONFIG_VALUES } from '../../util/default-config-values';
+import { AccessoryService } from '../../accessory.service';
 
-interface UpdatedConfig {
-  enableButton: boolean;
-  motionButton: boolean;
-  indoorChimeButton?: boolean;
+interface ButtonConfig {
+  name: string;
+  description: string;
+  value: boolean;
+  propertyName: string;
 }
 
 @Component({
@@ -16,51 +19,59 @@ interface UpdatedConfig {
   templateUrl: './camera-buttons.component.html',
 })
 export class CameraButtonsComponent extends ConfigOptionsInterpreter implements OnInit {
+  @Input() accessory?: Accessory;
 
-  constructor(pluginService: PluginService) {
+  buttonConfigs: ButtonConfig[] = [
+    { name: 'Enable', description: 'camera', value: DEFAULT_CAMERACONFIG_VALUES.enableButton, propertyName: 'DeviceEnabled' },
+    { name: 'Motion', description: 'detection', value: DEFAULT_CAMERACONFIG_VALUES.motionButton, propertyName: 'DeviceMotionDetection' },
+    { name: 'Light', description: 'light', value: DEFAULT_CAMERACONFIG_VALUES.lightButton, propertyName: 'DeviceLight' },
+    { name: 'IndoorChime', description: 'indoor chime', value: DEFAULT_CAMERACONFIG_VALUES.indoorChimeButton, propertyName: 'DeviceChimeIndoor' },
+  ];
+
+  constructor(
+    pluginService: PluginService,
+    private accessoryService: AccessoryService,
+  ) {
     super(pluginService);
   }
 
-  ngOnInit(): void {
-    this.readValue();
+  async ngOnInit(): Promise<void> {
+    await this.readValue();
   }
 
-  @Input() accessory?: Accessory;
-
-  enableCameraButton = true;
-  enableMotionButton = true;
-  showIndoorChimeButtonSetting = false;
-  indoorChimeButton = DEFAULT_CAMERACONFIG_VALUES.indoorChimeButton;
-
   async readValue(): Promise<void> {
-    const config = await this.getCameraConfig(this.accessory?.uniqueId ?? '');
+    const uniqueId = this.accessory?.uniqueId ?? '';
+    const config = await this.getCameraConfig(uniqueId);
 
-    if (this.accessory && this.accessory.type !== undefined) {
-      this.showIndoorChimeButtonSetting = Device.isBatteryDoorbell(this.accessory.type) || Device.isWiredDoorbell(this.accessory.type);
-    }
+    // Create a new array without the buttonConfig if catch is fired
+    const updatedButtonConfigs: ButtonConfig[] = [];
 
-    if ('enableButton' in config) {
-      this.enableCameraButton = config.enableButton;
-    }
+    await Promise.all(this.buttonConfigs.map(async (buttonConfig) => {
+      if (this.accessory) {
+        try {
+          if (await this.accessoryService.hasProperty(this.accessory.uniqueId, buttonConfig.propertyName)) {
 
-    if ('motionButton' in config) {
-      this.enableMotionButton = config.motionButton;
-    }
+            if (buttonConfig.name in config) {
+              buttonConfig.value = config[buttonConfig.name] ?? buttonConfig.value;
+            }
 
-    if ('indoorChimeButton' in config) {
-      this.indoorChimeButton = config.indoorChimeButton;
-    }
+            updatedButtonConfigs.push(buttonConfig);
+          }
+        } catch (error) {
+          // The catch block is executed when the property does not exist,
+          // so the buttonConfig is not added to the updatedButtonConfigs array
+        }
+      }
+    }));
+
+    this.buttonConfigs = updatedButtonConfigs; // Update the buttonConfigs array
   }
 
   update(): void {
-    const updated: UpdatedConfig = {
-      enableButton: this.enableCameraButton,
-      motionButton: this.enableMotionButton,
-    };
-
-    if (this.showIndoorChimeButtonSetting) {
-      updated.indoorChimeButton = this.indoorChimeButton;
-    }
+    const updated: Record<string, boolean | undefined> = {};
+    this.buttonConfigs.forEach((buttonConfig) => {
+      updated[buttonConfig.name.toLowerCase()] = buttonConfig.value;
+    });
 
     this.updateConfig(updated, this.accessory);
   }

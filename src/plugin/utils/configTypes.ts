@@ -12,6 +12,7 @@ export type CameraConfig = {
   videoConfig?: VideoConfig;
   enableButton: boolean;
   motionButton: boolean;
+  lightButton: boolean;
   rtsp: boolean;
   videoConfigEna: boolean;
   enableCamera: boolean;
@@ -31,6 +32,7 @@ export type CameraConfig = {
 export const DEFAULT_CAMERACONFIG_VALUES = {
   enableButton: true,
   motionButton: true,
+  lightButton: true,
   talkback: false,
   talkbackChannels: 1,
   hsv: true,
