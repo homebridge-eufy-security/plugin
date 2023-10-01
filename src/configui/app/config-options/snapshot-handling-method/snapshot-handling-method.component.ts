@@ -41,13 +41,9 @@ export class SnapshotHandlingMethodComponent extends ConfigOptionsInterpreter im
   async readValue() {
     const config = await this.getCameraConfig(this.accessory?.uniqueId || '');
 
-    // Check for snapshotHandlingMethod or forcerefreshsnap in config using 'in' operator
-    if (config) {
-      if ('snapshotHandlingMethod' in config) {
-        this.value = config['snapshotHandlingMethod'];
-      } else if ('forcerefreshsnap' in config) {
-        this.value = config['forcerefreshsnap'] ? 1 : 3;
-      }
+    // Check for ignoreMultipleDevicesWarning in config using hasOwnProperty
+    if (config && config.hasOwnProperty('ignoreMultipleDevicesWarning')) {
+      this.ignoreMultipleDevicesWarning = config['ignoreMultipleDevicesWarning'];
     }
 
     if (this.accessory) {
@@ -55,13 +51,15 @@ export class SnapshotHandlingMethodComponent extends ConfigOptionsInterpreter im
       this.accessoryService.getChargingStatus(this.accessory.uniqueId)
         .then((chargingStatus) => this.chargingStatus = chargingStatus);
       
-      // Check for ignoreMultipleDevicesWarning in config using 'in' operator
-      if (config && 'ignoreMultipleDevicesWarning' in config) {
-        this.ignoreMultipleDevicesWarning = config['ignoreMultipleDevicesWarning'];
+      // Check for snapshotHandlingMethod in config using hasOwnProperty
+      if (config && config.hasOwnProperty('snapshotHandlingMethod')) {
+        this.value = config['snapshotHandlingMethod'];
+      } else if (config && config.hasOwnProperty('forcerefreshsnap')) {
+        this.value = config['forcerefreshsnap'] ? 1 : 3;
       }
-      
+
       // Get cameras on the same station and handle multiple devices
-      const ignoredDevices = (config && 'ignoreDevices' in config) ? config['ignoreDevices'] : [];
+      const ignoredDevices = (config && config.hasOwnProperty('ignoreDevices')) ? config['ignoreDevices'] : [];
       this.accessoryService.getCamerasOnSameStation(this.accessory.uniqueId, ignoredDevices)
         .then(devices => {
           this.camerasOnSameStation = devices;
