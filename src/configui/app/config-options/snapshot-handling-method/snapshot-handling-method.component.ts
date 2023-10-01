@@ -14,6 +14,8 @@ import { ChargingStatus } from '../../util/eufy-security-client.utils';
   styles: [],
 })
 export class SnapshotHandlingMethodComponent extends ConfigOptionsInterpreter implements OnInit {
+  @Input() accessory?: Accessory;
+
   constructor(
     pluginService: PluginService,
     private accessoryService: AccessoryService,
@@ -30,7 +32,6 @@ export class SnapshotHandlingMethodComponent extends ConfigOptionsInterpreter im
   minusIcon = faMinusCircle;
   mediumIcon = faCircle;
 
-  @Input() accessory?: Accessory;
   value = DEFAULT_CAMERACONFIG_VALUES.snapshotHandlingMethod;
 
   chargingStatus = ChargingStatus.PLUGGED;
@@ -39,10 +40,11 @@ export class SnapshotHandlingMethodComponent extends ConfigOptionsInterpreter im
   ignoreMultipleDevicesWarning = DEFAULT_CONFIG_VALUES.ignoreMultipleDevicesWarning;
 
   async readValue() {
-    const config = await this.getCameraConfig(this.accessory?.uniqueId || '');
+    const uniqueId = this.accessory?.uniqueId || '';
+    const config = await this.getCameraConfig(uniqueId);
 
     // Check for ignoreMultipleDevicesWarning in config using hasOwnProperty
-    if (config && config.hasOwnProperty('ignoreMultipleDevicesWarning')) {
+    if (config && Object.prototype.hasOwnProperty.call(config, 'ignoreMultipleDevicesWarning')) {
       this.ignoreMultipleDevicesWarning = config['ignoreMultipleDevicesWarning'];
     }
 
@@ -51,15 +53,17 @@ export class SnapshotHandlingMethodComponent extends ConfigOptionsInterpreter im
       this.accessoryService.getChargingStatus(this.accessory.uniqueId)
         .then((chargingStatus) => this.chargingStatus = chargingStatus);
       
-      // Check for snapshotHandlingMethod in config using hasOwnProperty
-      if (config && config.hasOwnProperty('snapshotHandlingMethod')) {
-        this.value = config['snapshotHandlingMethod'];
-      } else if (config && config.hasOwnProperty('forcerefreshsnap')) {
-        this.value = config['forcerefreshsnap'] ? 1 : 3;
+      // Check for snapshotHandlingMethod or forcerefreshsnap in config using hasOwnProperty
+      if (config) {
+        if (Object.prototype.hasOwnProperty.call(config, 'snapshotHandlingMethod')) {
+          this.value = config['snapshotHandlingMethod'];
+        } else if (Object.prototype.hasOwnProperty.call(config, 'forcerefreshsnap')) {
+          this.value = config['forcerefreshsnap'] ? 1 : 3;
+        }
       }
 
       // Get cameras on the same station and handle multiple devices
-      const ignoredDevices = (config && config.hasOwnProperty('ignoreDevices')) ? config['ignoreDevices'] : [];
+      const ignoredDevices = (config && Object.prototype.hasOwnProperty.call(config, 'ignoreDevices')) ? config['ignoreDevices'] : [];
       this.accessoryService.getCamerasOnSameStation(this.accessory.uniqueId, ignoredDevices)
         .then(devices => {
           this.camerasOnSameStation = devices;

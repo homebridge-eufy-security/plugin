@@ -51,7 +51,7 @@ export class CameraButtonsComponent extends ConfigOptionsInterpreter implements 
         try {
           if (await this.accessoryService.hasProperty(this.accessory.uniqueId, buttonConfig.propertyName)) {
 
-            if (config.hasOwnProperty(buttonConfig.name)) {
+            if (Object.prototype.hasOwnProperty.call(config, buttonConfig.name)) {
               buttonConfig.value = config[buttonConfig.name] ?? buttonConfig.value;
             }
 
