@@ -42,12 +42,14 @@
     "camera"
   ],
   "dependencies": {
+    "@homebridge/camera-utils": "^2.2.0",
     "@homebridge/plugin-ui-utils": "^0.1.1",
     "eufy-security-client": "2.8.1",
     "ffmpeg-for-homebridge": "2.1.0",
     "pick-port": "^1.0.1",
     "rotating-file-stream": "^3.1.1",
     "tslog": "^4.9.2",
+    "werift": "^0.18.7",
     "zip-lib": "^0.7.3"
   },
   "devDependencies": {
