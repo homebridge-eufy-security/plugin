@@ -28,11 +28,12 @@ export type ServiceType = WithUUID<typeof Service> | Service;
 export abstract class BaseAccessory extends EventEmitter {
 
   protected servicesInUse: Service[] = [];
-  protected SN: string;
+  protected readonly SN: string;
+  protected readonly name: string;
 
   constructor(
-    protected platform: EufySecurityPlatform,
-    protected accessory: PlatformAccessory,
+    public readonly platform: EufySecurityPlatform,
+    public readonly accessory: PlatformAccessory,
     // eslint-disable-next-line
     protected device: any,
   ) {
@@ -43,6 +44,7 @@ export abstract class BaseAccessory extends EventEmitter {
     this.device = device as Device | Station;
 
     this.SN = this.device.getSerial();
+    this.name = this.device.getName();
 
     this.registerCharacteristic({
       serviceType: this.platform.Service.AccessoryInformation,
@@ -52,7 +54,7 @@ export abstract class BaseAccessory extends EventEmitter {
     this.registerCharacteristic({
       serviceType: this.platform.Service.AccessoryInformation,
       characteristicType: this.platform.Characteristic.Name,
-      getValue: (data) => this.accessory.displayName || 'Unknowm',
+      getValue: (data) => this.name || 'Unknowm',
     });
     this.registerCharacteristic({
       serviceType: this.platform.Service.AccessoryInformation,
@@ -93,17 +95,17 @@ export abstract class BaseAccessory extends EventEmitter {
   private logPropertyKeys() {
     const properties = this.device.getProperties();
     const keys = Object.keys(properties).join(', ');
-    this.platform.log.debug(`${this.accessory.displayName} Property Keys: ${keys}`);
+    this.platform.log.debug(`${this.name} Property Keys: ${keys}`);
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   protected handleRawPropertyChange(device: any, type: number, value: string): void {
-    this.platform.log.debug(`${this.accessory.displayName} Raw Property Changes: ${type} ${value}`);
+    this.platform.log.debug(`${this.name} Raw Property Changes: ${type} ${value}`);
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   protected handlePropertyChange(device: any, name: string, value: PropertyValue): void {
-    this.platform.log.debug(`${this.accessory.displayName} Property Changes: ${name} ${value}`);
+    this.platform.log.debug(`${this.name} Property Changes: ${name} ${value}`);
   }
 
   /**
@@ -143,18 +145,18 @@ export abstract class BaseAccessory extends EventEmitter {
   }) {
 
     // eslint-disable-next-line max-len
-    this.platform.log.debug(`${this.accessory.displayName} REGISTER CHARACTERISTIC '${serviceType.name} / ${characteristicType.name}`);
+    this.platform.log.debug(`${this.name} REGISTER CHARACTERISTIC '${serviceType.name} / ${characteristicType.name}`);
 
     const service = this.getService(serviceType, name, serviceSubType);
     const characteristic = service.getCharacteristic(characteristicType);
 
     // eslint-disable-next-line max-len
-    this.platform.log.debug(`${this.accessory.displayName} REGISTER CHARACTERISTIC '(${service.UUID}) / (${characteristic.UUID})`);
+    this.platform.log.debug(`${this.name} REGISTER CHARACTERISTIC '(${service.UUID}) / (${characteristic.UUID})`);
 
     if (getValue) {
       characteristic.onGet(async (data) => {
         const value = getValue(data, characteristic, service);
-        this.platform.log.debug(`${this.accessory.displayName} GET '${serviceType.name} / ${characteristicType.name}': ${value}`);
+        this.platform.log.debug(`${this.name} GET '${serviceType.name} / ${characteristicType.name}': ${value}`);
         return value;
       });
     }
@@ -184,13 +186,13 @@ export abstract class BaseAccessory extends EventEmitter {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       this.device.on(onSimpleValue, (device: any, value: any) => {
         // eslint-disable-next-line max-len
-        this.platform.log.info(`${this.accessory.displayName} ON '${serviceType.name} / ${characteristicType.name} / ${onSimpleValue}': ${value}`);
+        this.platform.log.info(`${this.name} ON '${serviceType.name} / ${characteristicType.name} / ${onSimpleValue}': ${value}`);
         characteristic.updateValue(value);
       });
     }
 
     if (onValue) {
-      this.platform.log.debug(`${this.accessory.displayName} ON '${serviceType.name} / ${characteristicType.name}'`);
+      this.platform.log.debug(`${this.name} ON '${serviceType.name} / ${characteristicType.name}'`);
       onValue(service, characteristic);
     }
 
@@ -200,7 +202,7 @@ export abstract class BaseAccessory extends EventEmitter {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         this.device.on(eventType as keyof any, (device: any, value: any) => {
           // eslint-disable-next-line max-len
-          this.platform.log.info(`${this.accessory.displayName} ON '${serviceType.name} / ${characteristicType.name} / ${eventType}': ${value}`);
+          this.platform.log.info(`${this.name} ON '${serviceType.name} / ${characteristicType.name} / ${eventType}': ${value}`);
           characteristic.updateValue(value);
         });
       });
@@ -219,7 +221,7 @@ export abstract class BaseAccessory extends EventEmitter {
    */
   protected getService(
     serviceType: ServiceType,
-    name = this.accessory.displayName,
+    name = this.name,
     subType?: string,
   ): Service {
 
@@ -238,7 +240,7 @@ export abstract class BaseAccessory extends EventEmitter {
       name !== existingService.displayName
     ) {
       throw new Error(
-        `Overlapping services for device ${this.accessory.displayName} - ${name} != ${existingService.displayName} - ${serviceType}`,
+        `Overlapping services for device ${this.name} - ${name} != ${existingService.displayName} - ${serviceType}`,
       );
     }
 
@@ -260,7 +262,7 @@ export abstract class BaseAccessory extends EventEmitter {
         !safeServiceUUIDs.includes(service.UUID)
       ) {
         // eslint-disable-next-line max-len
-        this.platform.log.debug(`${this.accessory.displayName} Pruning unused service ${service.UUID} ${service.displayName || service.name}`);
+        this.platform.log.debug(`${this.name} Pruning unused service ${service.UUID} ${service.displayName || service.name}`);
         this.accessory.removeService(service);
       }
     });
@@ -278,11 +280,11 @@ export abstract class BaseAccessory extends EventEmitter {
       throw new Error(`Invalid serviceName: ${serviceName}`);
     }
 
-    this.platform.log.debug(`${this.accessory.displayName} IGNORE GET ${serviceName}: ${currentValue}`);
+    this.platform.log.debug(`${this.name} IGNORE GET ${serviceName}: ${currentValue}`);
     return Promise.resolve(currentValue);
   }
 
   protected handleDummyEventSet(serviceName: string, value: CharacteristicValue) {
-    this.platform.log.debug(`${this.accessory.displayName} IGNORE SET ${serviceName}: ${value}`);
+    this.platform.log.debug(`${this.name} IGNORE SET ${serviceName}: ${value}`);
   }
 }
