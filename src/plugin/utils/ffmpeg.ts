@@ -622,7 +622,7 @@ export class FFmpegParameters {
       params.push(this.codecOptions ? this.codecOptions : '');
       params.push(this.bitrate ? `-b:a ${this.bitrate}k` : '');
       params.push(this.sampleRate ? `-ar ${this.sampleRate}k` : '');
-      params.push(this.bitrate ? `-ac ${this.channels}` : '');
+      params.push(this.channels ? `-ac ${this.channels}` : '');
     }
 
     if (this.isSnapshot) {
