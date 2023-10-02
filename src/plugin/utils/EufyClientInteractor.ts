@@ -7,13 +7,10 @@ import pickPort from 'pick-port';
 
 import { EufyClientNotRunningError, PluginConfigInteractor } from './interfaces';
 import { Logger as TsLogger, ILogObj } from 'tslog';
-import { initializeExperimentalMode } from './experimental';
 
 enum InteractorRequestType {
   DeviceChargingStatus = 'deviceChargingStatus',
   DeviceHasProperty = 'deviceHasProperty',
-  DeviceChangeExperimentalRTSPStatus = 'deviceExperimentalRtspStatusChange',
-  DeviceGetExperimentalRTSPStatus = 'deviceExperimentalRtspStatusGet',
   GetStationDevicesMapping = 'stationDevicesMapping',
 }
 
@@ -189,12 +186,6 @@ export class EufyClientInteractor extends EventEmitter implements PluginConfigIn
         case InteractorRequestType.DeviceHasProperty:
           response.result = await this.hasProperty(request);
           break;
-        case InteractorRequestType.DeviceChangeExperimentalRTSPStatus:
-          response.result = await this.getExperimentalRTSPStatusChangeResult(request);
-          break;
-        case InteractorRequestType.DeviceGetExperimentalRTSPStatus:
-          response.result = await this.getExperimentalRTSPState(request);
-          break;
         case InteractorRequestType.GetStationDevicesMapping:
           response.result = await this.getStationCamerasMap(request);
           break;
@@ -238,73 +229,6 @@ export class EufyClientInteractor extends EventEmitter implements PluginConfigIn
         resolve(false);
       }
     });
-  }
-
-  private async getExperimentalRTSPStatusChangeResult(request): Promise<string> {
-    initializeExperimentalMode();
-
-    const device = await this.client!.getDevice(request.serialNumber);
-    const station = await this.client!.getStation(device.getStationSerial());
-
-    return new Promise((resolve, reject) => {
-      if (request.value === undefined) {
-        reject(new Error('no value was given'));
-      } else if (!device.hasProperty(PropertyName.DeviceRTSPStream) &&
-        !device.hasProperty(PropertyName['ExperimentalModification'])) {
-
-        reject(new Error('device has no experimental rtsp setting'));
-      } else {
-        let to: NodeJS.Timeout | undefined = undefined;
-
-        const propertyListener = (d: Device, name: string, value: PropertyValue) => {
-          if (request.value) {
-            if (device.getSerial() === d.getSerial() && name === PropertyName.DeviceRTSPStreamUrl && value) {
-              if (to) {
-                clearTimeout(to);
-              }
-              device.removeListener('property changed', propertyListener);
-              resolve(value as string);
-            }
-          } else {
-            if (device.getSerial() === d.getSerial() && name === PropertyName.DeviceRTSPStream && value === false) {
-              if (to) {
-                clearTimeout(to);
-              }
-              device.removeListener('property changed', propertyListener);
-              resolve('');
-            }
-          }
-        };
-
-        to = setTimeout(() => {
-          device.removeListener('property changed', propertyListener);
-          reject(new Error('setting rtsp feature timed out'));
-        }, 15000);
-
-        device.on('property changed', propertyListener);
-
-        station.setRTSPStream(device, request.value);
-      }
-    });
-  }
-
-  private async getExperimentalRTSPState(request: InteractorRequest): Promise<{ state: boolean; url?: string }> {
-    initializeExperimentalMode();
-
-    try {
-      const device = await this.client!.getDevice(request.serialNumber);
-      let state = device.getPropertyValue(PropertyName.DeviceRTSPStream) as boolean;
-      const url = device.getPropertyValue(PropertyName.DeviceRTSPStreamUrl) as string;
-      if (url && url !== '') {
-        state = true;
-      }
-      return Promise.resolve({
-        state: state,
-        url: url,
-      });
-    } catch (err) {
-      return Promise.reject(err);
-    }
   }
 
   private async getStationCamerasMap(request: InteractorRequest): Promise<unknown> {
@@ -376,49 +300,6 @@ export class EufyClientInteractor extends EventEmitter implements PluginConfigIn
       }
 
       return Promise.resolve(response.result as boolean);
-    } catch (err) {
-      return Promise.reject(err);
-    }
-  }
-
-  async DeviceSetExperimentalRTSP(sn: string, value: boolean): Promise<string> {
-    const request: InteractorRequest = {
-      serialNumber: sn,
-      type: InteractorRequestType.DeviceChangeExperimentalRTSPStatus,
-      value: value,
-    };
-    try {
-      const response = await this.processDirectRequest(request);
-
-      if (response.error) {
-        return Promise.reject(response.error.message);
-      }
-      if (response.result === undefined) {
-        return Promise.reject('there was no result');
-      }
-
-      return Promise.resolve(response.result as string);
-    } catch (err) {
-      return Promise.reject(err);
-    }
-  }
-
-  async DeviceGetExperimentalRTSPStatus(sn: string): Promise<{ state: boolean; url?: string }> {
-    const request: InteractorRequest = {
-      serialNumber: sn,
-      type: InteractorRequestType.DeviceGetExperimentalRTSPStatus,
-    };
-    try {
-      const response = await this.processDirectRequest(request);
-
-      if (response.error) {
-        return Promise.reject(response.error.message);
-      }
-      if (response.result === undefined) {
-        return Promise.reject('there was no result');
-      }
-
-      return Promise.resolve(response.result as { state: boolean; url?: string });
     } catch (err) {
       return Promise.reject(err);
     }

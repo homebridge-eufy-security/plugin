@@ -133,17 +133,6 @@ class UiServer extends HomebridgePluginUiServer {
         return this.pluginConfigInteractor.DeviceHasProperty(options.sn, PropertyName[options.propertyName]);
       });
 
-    this.onRequest('/setExperimentalRTSP',
-      (options: {
-        sn: string;
-        value: boolean;
-      }) => {
-        return this.pluginConfigInteractor.DeviceSetExperimentalRTSP(options.sn, options.value);
-      });
-
-    this.onRequest('/getExperimentalRTSPStatus', (sn: string) => {
-      return this.pluginConfigInteractor.DeviceGetExperimentalRTSPStatus(sn);
-    });
     this.onRequest('/getStationDeviceMapping', () => {
       return this.pluginConfigInteractor.GetStationCamerasMapping();
     });

@@ -43,7 +43,6 @@ import { createStream } from 'rotating-file-stream';
 import fs from 'fs';
 
 import { EufyClientInteractor } from './utils/EufyClientInteractor';
-import { initializeExperimentalMode } from './utils/experimental';
 
 import os from 'node:os';
 import { platform } from 'node:process';

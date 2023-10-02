@@ -14,14 +14,6 @@ export class AccessoryService {
     return window.homebridge.request('/hasProperty', {sn: sn, propertyName: propertyName});
   }
 
-  public async setExperimentalRTSPStatus(sn: string, value: boolean): Promise<string> {
-    return window.homebridge.request('/setExperimentalRTSP', { sn: sn, value: value});
-  }
-
-  public async getExperimentalRTSPStatus(sn: string): Promise<{ state: boolean; url?: string }> {
-    return window.homebridge.request('/getExperimentalRTSPStatus', sn);
-  }
-
   public async getStationsCamerasMapping(): Promise<unknown> {
     return window.homebridge.request('/getStationDeviceMapping');
   }
