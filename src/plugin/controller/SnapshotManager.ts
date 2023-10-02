@@ -15,6 +15,7 @@ import * as fs from 'fs';
 
 const SnapshotBlackPath = require.resolve('../../media/Snapshot-black.png');
 const SnapshotUnavailable = require.resolve('../../media/Snapshot-Unavailable.png');
+const CameraOffline = require.resolve('../../media/camera-offline.png');
 
 let MINUTES_TO_WAIT_FOR_AUTOMATIC_REFRESH_TO_BEGIN = 1; // should be incremented by 1 for every device
 
