@@ -45,6 +45,12 @@ import fs from 'fs';
 import { EufyClientInteractor } from './utils/EufyClientInteractor';
 import { initializeExperimentalMode } from './utils/experimental';
 
+import os from 'node:os';
+import { platform } from 'node:process';
+import { readFileSync } from 'node:fs';
+import { FfmpegCodecs } from './utils/ffmpeg-codec';
+import { RtpPortAllocator } from './utils/rtp.js';
+
 export class EufySecurityPlatform implements DynamicPlatformPlugin {
   public readonly Service: typeof Service = this.api.hap.Service;
   public readonly Characteristic: typeof Characteristic = this.api.hap.Characteristic;
@@ -71,6 +77,11 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
   private readonly STATION_INIT_DELAY = 5 * 1000; // 5 seconds
   private readonly DEVICE_INIT_DELAY = 7 * 1000; // 7 seconds;
 
+  private _hostSystem: string = '';
+  public readonly codecSupport: FfmpegCodecs = new FfmpegCodecs(this);
+  public readonly rtpPorts: RtpPortAllocator = new RtpPortAllocator();
+  public verboseFfmpeg: boolean = false;
+
   constructor(
     public readonly hblog: Logger,
     config: PlatformConfig,
@@ -83,6 +94,8 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
     if (!fs.existsSync(this.eufyPath)) {
       fs.mkdirSync(this.eufyPath);
     }
+    // Identify what we're running on so we can take advantage of hardware-specific features.
+    this.probeHwOs();
 
     this.configureLogger();
     this.initSetup();
@@ -157,6 +170,56 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
 
       }
     }
+  }
+
+  // Identify what hardware and operating system environment we're actually running on.
+  private probeHwOs(): void {
+
+    // Start off with a generic identifier.
+    this._hostSystem = 'generic';
+
+    // Take a look at the platform we're on for an initial hint of what we are.
+    switch (platform) {
+
+      // The beloved macOS.
+      case 'darwin':
+
+        this._hostSystem = 'macOS.' + (os.cpus()[0].model.includes('Apple') ? 'Apple' : 'Intel');
+
+        break;
+
+      // The indomitable Linux.
+      case 'linux':
+
+        // Let's further see if we're a small, but scrappy, Raspberry Pi.
+        try {
+
+          // As of the 4.9 kernel, Raspberry Pi prefers to be identified using this method and has deprecated cpuinfo.
+          const systemId = readFileSync('/sys/firmware/devicetree/base/model', { encoding: 'utf8' });
+
+          // Is it a Pi 4?
+          if (/Raspberry Pi (Compute Module )?4/.test(systemId)) {
+
+            this._hostSystem = 'raspbian';
+          }
+        } catch (error) {
+
+          // We aren't especially concerned with errors here, given we're just trying to ascertain the system information through hints.
+        }
+
+        break;
+
+      default:
+
+        // We aren't trying to solve for every system type.
+        break;
+    }
+  }
+
+  // Utility to return the hardware environment we're on.
+  public get hostSystem(): string {
+
+    return this._hostSystem;
   }
 
   private initSetup() {
