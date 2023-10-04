@@ -3,6 +3,7 @@ import { EventEmitter, Readable } from 'stream';
 import { Station, Device, StreamMetadata, Camera } from 'eufy-security-client';
 import { EufySecurityPlatform } from '../platform';
 import { Logger as TsLogger, ILogObj } from 'tslog';
+import * as fs from 'fs';
 
 // Define a type for the station stream data.
 type StationStream = {
@@ -156,6 +157,11 @@ export class LocalLivestreamManager extends EventEmitter {
   private readonly platform: EufySecurityPlatform;
   private readonly device: Camera;
 
+  private snapshot: {
+    timeout: NodeJS.Timeout | null;
+    delay: number;
+  } = { timeout: null, delay: 5000 };
+
   constructor(platform: EufySecurityPlatform, device: Camera, log: TsLogger<ILogObj>) {
     super();
     this.log = log;
@@ -278,6 +284,16 @@ export class LocalLivestreamManager extends EventEmitter {
     }
   }
 
+  private storeImage(image: Buffer) {
+    const filePath = `${this.platform.eufyPath}/${this.device.getSerial()}.png`;
+    try {
+      fs.writeFileSync(filePath, image);
+      this.platform.log.debug(`${this.device.getName()} Stored Image: ${filePath}`);
+    } catch (error) {
+      this.platform.log.debug(`${this.device.getName()} Error: ${filePath} - ${error}`);
+    }
+  }
+
   // Handle the station livestream start event.
   private async onStationLivestreamStart(
     station: Station,
@@ -298,6 +314,12 @@ export class LocalLivestreamManager extends EventEmitter {
       videostream.on('data', (data) => {
         this.proxyStreams.forEach((proxyStream) => {
           proxyStream.videostream.newVideoData(data);
+          // if (!this.snapshot.timeout) {
+          //   this.log.debug(`${this.device.getName()} pick up snapshot from stream and store it.`);
+          //   this.snapshot.timeout = setTimeout(() => {
+          //     this.storeImage(data);
+          //   }, this.snapshot.delay);
+          // }
         });
       });
       videostream.on('error', (error) => {

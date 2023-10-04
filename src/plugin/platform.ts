@@ -48,8 +48,10 @@ import { initializeExperimentalMode } from './utils/experimental';
 import os from 'node:os';
 import { platform } from 'node:process';
 import { readFileSync } from 'node:fs';
-// import { FfmpegCodecs } from './utils/ffmpeg-codec';
-// import { RtpPortAllocator } from './utils/rtp.js';
+import { FfmpegCodecs } from './utils/ffmpeg-codec';
+import { RtpPortAllocator } from './utils/rtp.js';
+
+import ffmpegPath from 'ffmpeg-for-homebridge';
 
 export class EufySecurityPlatform implements DynamicPlatformPlugin {
   public readonly Service: typeof Service = this.api.hap.Service;
@@ -78,9 +80,9 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
   private readonly DEVICE_INIT_DELAY = 7 * 1000; // 7 seconds;
 
   private _hostSystem: string = '';
-  // public readonly codecSupport: FfmpegCodecs = new FfmpegCodecs(this);
-  // public readonly rtpPorts: RtpPortAllocator = new RtpPortAllocator();
-  public verboseFfmpeg: boolean = false;
+  public codecSupport!: FfmpegCodecs;
+  public readonly rtpPorts: RtpPortAllocator = new RtpPortAllocator();
+  public verboseFfmpeg: boolean = true;
 
   constructor(
     public readonly hblog: Logger,
@@ -247,6 +249,11 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
     this.config.ignoreDevices = this.config.ignoreDevices ??= [];
     this.config.cleanCache = this.config.cleanCache ??= true;
     this.config.unbridge = this.config.unbridge ??= true;
+
+    this.config.videoProcessor = ffmpegPath ?? 'ffmpeg';
+    this.log.info('ffmpegPath?:', ffmpegPath);
+    this.log.info('ffmpegPath set:', this.config.videoProcessor);
+    this.codecSupport = new FfmpegCodecs(this);
 
     this.log.info('Country set:', this.config.country ?? 'US');
 

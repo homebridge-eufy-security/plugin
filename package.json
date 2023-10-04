@@ -44,8 +44,9 @@
   "dependencies": {
     "@homebridge/camera-utils": "^2.2.0",
     "@homebridge/plugin-ui-utils": "^0.1.1",
-    "eufy-security-client": "2.8.1",
+    "eufy-security-client": "file:eufy-security-client",
     "ffmpeg-for-homebridge": "2.1.0",
+    "fluent-ffmpeg": "^2.1.2",
     "pick-port": "^1.0.1",
     "rotating-file-stream": "^3.1.1",
     "tslog": "^4.9.2",

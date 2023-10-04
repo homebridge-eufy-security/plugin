@@ -6,7 +6,7 @@ import {
   WithUUID,
 } from 'homebridge';
 import { EufySecurityPlatform } from '../platform';
-import { DeviceType, DeviceEvents, PropertyValue, Device, Station, StationEvents, PropertyName } from 'eufy-security-client';
+import { DeviceType, DeviceEvents, PropertyValue, Device, Station, StationEvents } from 'eufy-security-client';
 import { EventEmitter } from 'events';
 
 /**
@@ -28,14 +28,14 @@ export type ServiceType = WithUUID<typeof Service> | Service;
 export abstract class BaseAccessory extends EventEmitter {
 
   protected servicesInUse: Service[] = [];
-  protected readonly SN: string;
-  protected readonly name: string;
+  public readonly SN: string;
+  public readonly name: string;
 
   constructor(
     public readonly platform: EufySecurityPlatform,
     public readonly accessory: PlatformAccessory,
     // eslint-disable-next-line
-    protected device: any,
+    public device: any,
   ) {
     super();
 

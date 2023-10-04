@@ -1,17 +1,8 @@
+/* eslint-disable max-len */
 import {
   PlatformAccessory,
   Characteristic,
   CharacteristicValue,
-  CameraControllerOptions,
-  SRTPCryptoSuites,
-  H264Profile,
-  H264Level,
-  EventTriggerOption,
-  MediaContainerType,
-  AudioStreamingSamplerate,
-  AudioStreamingCodecType,
-  AudioRecordingSamplerate,
-  AudioRecordingCodecType,
   Resolution,
 } from 'homebridge';
 
@@ -21,8 +12,8 @@ import { DeviceAccessory } from './Device';
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore  
 import { Camera, Device, DeviceEvents, PropertyName, CommandName } from 'eufy-security-client';
-import { StreamingDelegate } from '../controller/streamingDelegate';
-import { RecordingDelegate } from '../controller/recordingDelegate';
+
+import { StreamingDelegate } from '../utils/stream2';
 
 import { CameraConfig, DEFAULT_CAMERACONFIG_VALUES } from '../utils/configTypes';
 
@@ -39,8 +30,15 @@ export class CameraAccessory extends DeviceAccessory {
 
   public readonly cameraConfig: CameraConfig;
 
-  protected streamingDelegate: StreamingDelegate | null = null;
-  protected recordingDelegate?: RecordingDelegate | null = null;
+  public stream?: StreamingDelegate;
+
+  public hardwareTranscoding: boolean = true;
+  public hardwareDecoding: boolean = true;
+  public timeshift: boolean = false;
+  public hksvRecording: boolean = true;
+  public HksvErrors: number = 0;
+
+  public isOnline: boolean = true;
 
   // List of event types
   private eventTypesToHandle: (keyof DeviceEvents)[] = [
@@ -52,20 +50,6 @@ export class CameraAccessory extends DeviceAccessory {
     'crying detected',
     'dog detected',
     'stranger person detected',
-  ];
-
-  private resolutions: Resolution[] = [
-    [320, 180, 30],
-    [320, 240, 15], // Apple Watch requires this configuration
-    [320, 240, 30],
-    [480, 270, 30],
-    [480, 360, 30],
-    [640, 360, 30],
-    [640, 480, 30],
-    [1280, 720, 30],
-    [1280, 960, 30],
-    [1600, 1200, 30],
-    [1920, 1080, 30],
   ];
 
   constructor(
@@ -109,110 +93,47 @@ export class CameraAccessory extends DeviceAccessory {
     }
 
     try {
+      this.setupRTSP()
+        .then(() => {
+          this.platform.log.info(`${this.accessory.displayName} RTSP url: ${this.device.getPropertyValue(PropertyName.DeviceRTSPStreamUrl)}`);
+        })
+        .catch((error) => {
+          // Handle any errors that occur during the promise chain
+          this.platform.log.error('Error in setupRTSP:', error);
+        });
+
       this.platform.log.debug(`${this.accessory.displayName} StreamingDelegate`);
-      this.streamingDelegate = new StreamingDelegate(
-        this.platform,
-        this.device,
-        this.cameraConfig,
-        this.platform.api,
-        this.platform.api.hap,
-      );
+      this.stream = new StreamingDelegate(this);
 
-      this.platform.log.debug(`${this.accessory.displayName} RecordingDelegate`);
-      this.recordingDelegate = new RecordingDelegate(
-        this.platform,
-        this.accessory,
-        this.device,
-        this.cameraConfig,
-        this.streamingDelegate.getLivestreamManager(),
-      );
-
-      this.platform.log.debug(`${this.accessory.displayName} Controller`);
-      const controller = new this.platform.api.hap.CameraController(this.getCameraControllerOptions());
-
-      this.platform.log.debug(`${this.accessory.displayName} streamingDelegate.setController`);
-      this.streamingDelegate.setController(controller);
-
-      if (this.cameraConfig.hsv) {
-        this.platform.log.debug(`${this.accessory.displayName} recordingDelegate.setController`);
-        this.recordingDelegate.setController(controller);
-      }
-
-      this.platform.log.debug(`${this.accessory.displayName} configureController`);
-      this.accessory.configureController(controller);
+      this.accessory.configureController(this.stream.getController());
 
     } catch (error) {
       this.platform.log.error(`${this.accessory.displayName} while happending Delegate ${error}`);
     }
   }
 
-  private getCameraControllerOptions(): CameraControllerOptions {
-
-    const option: CameraControllerOptions = {
-      cameraStreamCount: this.cameraConfig.videoConfig?.maxStreams || 2, // HomeKit requires at least 2 streams, but 1 is also just fine
-      delegate: this.streamingDelegate as StreamingDelegate,
-      streamingOptions: {
-        supportedCryptoSuites: [SRTPCryptoSuites.AES_CM_128_HMAC_SHA1_80],
-        video: {
-          resolutions: this.resolutions,
-          codec: {
-            profiles: [H264Profile.BASELINE, H264Profile.MAIN, H264Profile.HIGH],
-            levels: [H264Level.LEVEL3_1, H264Level.LEVEL3_2, H264Level.LEVEL4_0],
-          },
-        },
-        audio: {
-          twoWayAudio: this.cameraConfig.talkback,
-          codecs: [
-            {
-              type: AudioStreamingCodecType.AAC_ELD,
-              samplerate: AudioStreamingSamplerate.KHZ_16,
-            },
-          ],
-        },
-      },
-      recording: this.cameraConfig.hsv
-        ? {
-          options: {
-            overrideEventTriggerOptions: [
-              EventTriggerOption.MOTION,
-              EventTriggerOption.DOORBELL,
-            ],
-            prebufferLength: 0, // prebufferLength always remains 4s ?
-            mediaContainerConfiguration: [
-              {
-                type: MediaContainerType.FRAGMENTED_MP4,
-                fragmentLength: 4000,
-              },
-            ],
-            video: {
-              type: this.platform.api.hap.VideoCodecType.H264,
-              parameters: {
-                profiles: [H264Profile.BASELINE, H264Profile.MAIN, H264Profile.HIGH],
-                levels: [H264Level.LEVEL3_1, H264Level.LEVEL3_2, H264Level.LEVEL4_0],
-              },
-              resolutions: this.resolutions,
-            },
-            audio: {
-              codecs: {
-                type: AudioRecordingCodecType.AAC_ELD,
-                samplerate: AudioRecordingSamplerate.KHZ_24,
-                bitrateMode: 0,
-                audioChannels: 1,
-              },
-            },
-          },
-          delegate: this.recordingDelegate as RecordingDelegate,
+  private setupRTSP() {
+    return new Promise<void>((resolve) => {
+      if (this.device.hasProperty(PropertyName.DeviceRTSPStream)) {
+        if (!this.device.getPropertyValue(PropertyName.DeviceRTSPStream)) {
+          this.setPropertyValue(PropertyName.DeviceRTSPStream, true)
+            .then(() => {
+              this.platform.log.info(`${this.accessory.displayName} enabling RTSP`);
+              resolve(); // Resolve the promise after setting the RTSP property
+            })
+            .catch((error) => {
+              // Handle any errors that occur during setting the property
+              this.platform.log.error('Error setting RTSP property:', error);
+              resolve(); // Resolve the promise even if there's an error
+            });
+        } else {
+          this.platform.log.info(`${this.accessory.displayName} RTSP enabled`);
+          resolve(); // Resolve the promise if RTSP is already enabled
         }
-        : undefined,
-      sensors: this.cameraConfig.hsv
-        ? {
-          motion: this.getService(this.platform.Service.MotionSensor),
-          occupancy: undefined,
-        }
-        : undefined,
-    };
-
-    return option;
+      } else {
+        resolve(); // Resolve the promise if the property doesn't exist
+      }
+    });
   }
 
   private setupButtonService(
@@ -555,5 +476,4 @@ export class CameraAccessory extends DeviceAccessory {
       this.notificationTimeout = setTimeout(() => { }, 3000);
     }
   }
-
 }
