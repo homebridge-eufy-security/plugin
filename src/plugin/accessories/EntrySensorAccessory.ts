@@ -34,7 +34,7 @@ export class EntrySensorAccessory extends DeviceAccessory {
     super(platform, accessory, device);
 
     // Log a debug message indicating the construction of the Entry Sensor.
-    this.platform.log.debug(`${this.accessory.displayName} Constructed Entry Sensor`);
+    this.log.debug(`${this.accessory.displayName} Constructed Entry Sensor`);
 
     // Check if the device has the 'sensorOpen' property.
     if (this.device.hasProperty('sensorOpen')) {
@@ -52,7 +52,7 @@ export class EntrySensorAccessory extends DeviceAccessory {
 
     } else {
       // Log an error if the 'sensorOpen' property is not available for this device.
-      this.platform.log.error(`${this.accessory.displayName} has no sensorOpen`);
+      this.log.error(`${this.accessory.displayName} has no sensorOpen`);
     }
 
     // Remove any unused services.

@@ -35,10 +35,10 @@ export abstract class DeviceAccessory extends BaseAccessory {
   protected getPropertyValue(characteristic: string, propertyName: PropertyName): CharacteristicValue {
     try {
       const value = this.device.getPropertyValue(propertyName);
-      this.platform.log.debug(`${this.accessory.displayName} GET '${characteristic}' ${propertyName}: ${value}`);
+      this.log.debug(`${this.accessory.displayName} GET '${characteristic}' ${propertyName}: ${value}`);
       return value as CharacteristicValue;
     } catch (error) {
-      this.platform.log.debug(`${this.accessory.displayName} Error getting '${characteristic}' ${propertyName}: ${error}`);
+      this.log.debug(`${this.accessory.displayName} Error getting '${characteristic}' ${propertyName}: ${error}`);
       return false;
     }
   }
@@ -53,7 +53,7 @@ export abstract class DeviceAccessory extends BaseAccessory {
     value: CharacteristicValue,
     subType?: string,
   ): void {
-    this.platform.log.debug(`${this.accessory.displayName} ON '${serviceType.name}': ${value}`);
+    this.log.debug(`${this.accessory.displayName} ON '${serviceType.name}': ${value}`);
     this.getService(serviceType)
       .getCharacteristic(characteristicType)
       .updateValue(value);
