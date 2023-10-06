@@ -102,41 +102,30 @@ export class StreamingDelegate implements CameraStreamingDelegate {
 
       // Our recording capabilities for HomeKit Secure Video.
       recording: !this.camera.cameraConfig.hsv ? undefined : {
-
         delegate: this.hksv as RecordingDelegate,
-
         options: {
-
           audio: {
-
             codecs: [
               {
-
                 // Protect supports a 48 KHz sampling rate, and the low complexity AAC profile.
                 samplerate: AudioRecordingSamplerate.KHZ_48,
                 type: AudioRecordingCodecType.AAC_LC,
               },
             ],
           },
-
           mediaContainerConfiguration: [
             {
-
               // The default HKSV segment length is 4000ms. It turns out that any setting less than that will disable
               // HomeKit Secure Video.
               fragmentLength: PROTECT_HKSV_SEGMENT_LENGTH,
               type: MediaContainerType.FRAGMENTED_MP4,
             },
           ],
-
           // Maximum prebuffer length supported. In Protect, this is effectively unlimited, but HomeKit only seems to
           // request a maximum of a 4000ms prebuffer.
           prebufferLength: PROTECT_HKSV_TIMESHIFT_BUFFER_MAXLENGTH,
-
           video: {
-
             parameters: {
-
               // Through admittedly anecdotal testing on various G3 and G4 models, UniFi Protect seems to support
               // only the H.264 Main profile, though it does support various H.264 levels, ranging from Level 3
               // through Level 5.1 (G4 Pro at maximum resolution). However, HomeKit only supports Level 3.1, 3.2,
@@ -144,9 +133,7 @@ export class StreamingDelegate implements CameraStreamingDelegate {
               levels: [H264Level.LEVEL3_1, H264Level.LEVEL3_2, H264Level.LEVEL4_0],
               profiles: [H264Profile.MAIN],
             },
-
             resolutions: resolutions,
-
             type: this.api.hap.VideoCodecType.H264,
           },
         },
@@ -154,16 +141,12 @@ export class StreamingDelegate implements CameraStreamingDelegate {
 
       // Our motion sensor.
       sensors: !this.camera.cameraConfig.hsv ? undefined : {
-
         motion: this.camera.accessory.getService(this.hap.Service.MotionSensor),
       },
 
       streamingOptions: {
-
         audio: {
-
           codecs: [
-
             {
               audioChannels: 1,
               bitrate: 0,
@@ -171,14 +154,10 @@ export class StreamingDelegate implements CameraStreamingDelegate {
               type: AudioStreamingCodecType.AAC_ELD,
             },
           ],
-
           twoWayAudio: this.camera.cameraConfig.talkback,
         },
-
         supportedCryptoSuites: [this.hap.SRTPCryptoSuites.AES_CM_128_HMAC_SHA1_80],
-
         video: {
-
           codec: {
             // Through admittedly anecdotal testing on various G3 and G4 models, UniFi Protect seems to support
             // only the H.264 Main profile, though it does support various H.264 levels, ranging from Level 3
@@ -187,7 +166,6 @@ export class StreamingDelegate implements CameraStreamingDelegate {
             levels: [H264Level.LEVEL3_1, H264Level.LEVEL3_2, H264Level.LEVEL4_0],
             profiles: [H264Profile.MAIN],
           },
-
           // Retrieve the list of supported resolutions from the camera and apply our best guesses for how to
           // map specific resolutions to the available RTSP streams on a camera. Unfortunately, this creates
           // challenges in doing on-the-fly RTSP changes in UniFi Protect. Once the list of supported
@@ -276,7 +254,6 @@ export class StreamingDelegate implements CameraStreamingDelegate {
     const audioSSRC = this.hap.CameraController.generateSynchronisationSource();
 
     if (!hasAudioSupport) {
-
       this.log.info('Audio support disabled.%s', isAudioEnabled ? ' A version of FFmpeg that is compiled with fdk_aac support is required to support audio.' : '');
     }
 
