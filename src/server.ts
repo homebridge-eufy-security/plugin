@@ -1,5 +1,12 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
-import { EufySecurity, EufySecurityConfig, libVersion, Device, Station, PropertyName } from 'eufy-security-client';
+import {
+  EufySecurity,
+  EufySecurityConfig,
+  libVersion,
+  Device,
+  Station,
+  PropertyName,
+} from '@homebridge-eufy-security/eufy-security-client';
 import { HomebridgePluginUiServer } from '@homebridge/plugin-ui-utils';
 
 import fs from 'fs';

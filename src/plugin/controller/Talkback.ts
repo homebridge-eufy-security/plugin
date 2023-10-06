@@ -1,6 +1,6 @@
 import { Duplex, Writable } from 'stream';
 import { EufySecurityPlatform } from '../platform';
-import { Device, Station } from 'eufy-security-client';
+import { Device, Station } from '@homebridge-eufy-security/eufy-security-client';
 
 /**
  * TalkbackStream handles two-way audio streams for a security camera.

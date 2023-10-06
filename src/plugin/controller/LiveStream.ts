@@ -3,7 +3,7 @@ import events, { EventEmitter } from 'node:events';
 import { Logger as TsLogger, ILogObj } from 'tslog';
 import { EufySecurityPlatform } from '../platform';
 import { CameraAccessory } from '../accessories/CameraAccessory';
-import { Device, EufySecurity, Station, StreamMetadata } from 'eufy-security-client';
+import { Device, EufySecurity, Station, StreamMetadata } from '@homebridge-eufy-security/eufy-security-client';
 import { Readable } from 'node:stream';
 
 export class EufyLivestream extends EventEmitter {

@@ -4,7 +4,7 @@ import { DeviceAccessory } from './Device';
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore  
-import { EntrySensor, PropertyName } from 'eufy-security-client';
+import { EntrySensor, PropertyName } from '@homebridge-eufy-security/eufy-security-client';
 
 /**
  * EntrySensorAccessory Class

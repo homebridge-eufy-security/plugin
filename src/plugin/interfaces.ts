@@ -1,4 +1,4 @@
-import { Station, Device } from 'eufy-security-client';
+import { Station, Device } from '@homebridge-eufy-security/eufy-security-client';
 
 export interface DeviceIdentifier {
     uniqueId: string;

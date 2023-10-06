@@ -7,7 +7,7 @@ import {
   HAP,
 } from 'homebridge';
 import { EufySecurityPlatform } from '../platform';
-import { DeviceType, DeviceEvents, PropertyValue, Device, Station, StationEvents } from 'eufy-security-client';
+import { DeviceType, DeviceEvents, PropertyValue, Device, Station, StationEvents } from '@homebridge-eufy-security/eufy-security-client';
 import { EventEmitter } from 'events';
 import { Logger as TsLogger, ILogObj } from 'tslog';
 

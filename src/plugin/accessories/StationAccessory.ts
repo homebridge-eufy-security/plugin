@@ -4,7 +4,7 @@ import { EufySecurityPlatform } from '../platform';
 import { BaseAccessory } from './BaseAccessory';
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore  
-import { Station, DeviceType, PropertyName, PropertyValue, AlarmEvent, GuardMode } from 'eufy-security-client';
+import { Station, DeviceType, PropertyName, PropertyValue, AlarmEvent, GuardMode } from '@homebridge-eufy-security/eufy-security-client';
 import { StationConfig } from '../utils/configTypes';
 
 export enum HKGuardMode {
@@ -217,9 +217,9 @@ export class StationAccessory extends BaseAccessory {
     let currentValue = this.device.getPropertyValue(PropertyName.StationCurrentMode);
     if (alarmEvent === 0) {
       // do not resset alarm if alarm was triggered manually
-      // since the alarm can only be triggered for 30 seconds for now (limitation of eufy-security-client)
+      // since the alarm can only be triggered for 30 seconds for now (limitation of @homebridge-eufy-security/eufy-security-client)
       // this would mean that the alarm is always reset after 30 seconds
-      // see here: https://github.com/bropat/eufy-security-client/issues/178
+      // see here: https://github.com/bropat/@homebridge-eufy-security/eufy-security-client/issues/178
       currentValue = -1;
     }
     switch (alarmEvent) {

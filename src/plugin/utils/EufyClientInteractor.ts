@@ -2,7 +2,7 @@ import EventEmitter from 'events';
 import fs from 'fs';
 import net from 'net';
 
-import { Device, EufySecurity, Station, PropertyName, PropertyValue } from 'eufy-security-client';
+import { Device, EufySecurity, Station, PropertyName, PropertyValue } from '@homebridge-eufy-security/eufy-security-client';
 import pickPort from 'pick-port';
 
 import { EufyClientNotRunningError, PluginConfigInteractor } from './interfaces';

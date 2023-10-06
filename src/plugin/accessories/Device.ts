@@ -7,7 +7,7 @@ import {
 } from 'homebridge';
 import { EufySecurityPlatform } from '../platform';
 import { BaseAccessory } from './BaseAccessory';
-import { Device, PropertyName } from 'eufy-security-client';
+import { Device, PropertyName } from '@homebridge-eufy-security/eufy-security-client';
 
 function isServiceInstance(
   serviceType: WithUUID<typeof Service> | Service,

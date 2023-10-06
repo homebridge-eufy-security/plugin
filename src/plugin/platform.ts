@@ -35,7 +35,7 @@ import {
   libVersion,
   // eslint-disable-next-line @typescript-eslint/ban-ts-comment
   // @ts-ignore 
-} from 'eufy-security-client';
+} from '@homebridge-eufy-security/eufy-security-client';
 
 import { Logger as TsLogger, ILogObj } from 'tslog';
 import { createStream } from 'rotating-file-stream';
@@ -228,7 +228,7 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
     this.log.warn('warning: planned changes, see https://github.com/homebridge-eufy-security/plugin/issues/1');
 
     this.log.debug('plugin data store: ' + this.eufyPath);
-    this.log.debug('Using bropats eufy-security-client library in version ' + libVersion);
+    this.log.debug('Using bropats @homebridge-eufy-security/eufy-security-client library in version ' + libVersion);
 
     this.clean_config();
 
