@@ -38,7 +38,7 @@ export const DEFAULT_CAMERACONFIG_VALUES = {
   hsv: true,
   hsvRecordingDuration: 90,
   rtsp: false,
-  enableCamera: false,
+  enableCamera: true,
   forcerefreshsnap: false,
   useCachedLocalLivestream: false,
   useEnhancedSnapshotBehaviour: true,
