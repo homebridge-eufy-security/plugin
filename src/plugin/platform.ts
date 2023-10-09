@@ -614,7 +614,7 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
         || type === DeviceType.BATTERY_DOORBELL_2
         || type === DeviceType.BATTERY_DOORBELL_PLUS
         || type === DeviceType.DOORBELL_SOLO)) {
-        // this.log.warn(accessory.displayName, 'looks station but it\'s not could imply some errors', 'Type:', type);
+        this.log.warn(accessory.displayName, 'looks station but it\'s not could imply some errors', 'Type:', type);
         return;
       }
     }
