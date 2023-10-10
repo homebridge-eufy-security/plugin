@@ -32,7 +32,7 @@ export abstract class DeviceAccessory extends BaseAccessory {
   /**
    * Get the current value of the "propertyName" characteristic
    */
-  protected getPropertyValue(characteristic: string, propertyName: PropertyName): CharacteristicValue {
+  public getPropertyValue(characteristic: string, propertyName: PropertyName): CharacteristicValue {
     try {
       const value = this.device.getPropertyValue(propertyName);
       this.log.debug(`${this.accessory.displayName} GET '${characteristic}' ${propertyName}: ${value}`);
@@ -43,7 +43,7 @@ export abstract class DeviceAccessory extends BaseAccessory {
     }
   }
 
-  protected async setPropertyValue(propertyName: PropertyName, value: unknown) {
+  public async setPropertyValue(propertyName: PropertyName, value: unknown) {
     await this.platform.eufyClient.setDeviceProperty(this.SN, propertyName, value);
   }
 

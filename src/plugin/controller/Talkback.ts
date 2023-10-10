@@ -22,8 +22,8 @@ export class TalkbackStream extends Duplex {
     private readonly camera: Device,
   ) {
     super();
-    this.platform.eufyClient.once('station talkback start', this.onTalkbackStarted);
-    this.platform.eufyClient.once('station talkback stop', this.onTalkbackStopped);
+    this.platform.eufyClient.on('station talkback start', this.onTalkbackStarted);
+    this.platform.eufyClient.on('station talkback stop', this.onTalkbackStopped);
   }
 
   /**

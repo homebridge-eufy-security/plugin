@@ -4,6 +4,19 @@ import {
   Characteristic,
   CharacteristicValue,
   Resolution,
+  CameraController,
+  CameraControllerOptions,
+  SRTPCryptoSuites,
+  H264Profile,
+  H264Level,
+  AudioStreamingCodecType,
+  AudioStreamingSamplerate,
+  EventTriggerOption,
+  MediaContainerType,
+  AudioRecordingCodecType,
+  AudioRecordingSamplerate,
+  CameraStreamingOptions,
+  CameraRecordingOptions,
 } from 'homebridge';
 
 import { EufySecurityPlatform } from '../platform';
@@ -13,10 +26,10 @@ import { DeviceAccessory } from './Device';
 // @ts-ignore  
 import { Camera, Device, DeviceEvents, PropertyName, CommandName, PropertyValue } from '@homebridge-eufy-security/eufy-security-client';
 
-import { StreamingDelegate } from '../utils/stream';
+import { StreamingDelegate } from '../controller/streamingDelegate';
+import { RecordingDelegate } from '../controller/recordingDelegate';
 
 import { CameraConfig, DEFAULT_CAMERACONFIG_VALUES } from '../utils/configTypes';
-import { PROTECT_HOMEKIT_IDR_INTERVAL } from '../settings';
 
 // A semi-complete description of the UniFi Protect camera channel JSON.
 export interface ProtectCameraChannelConfig {
@@ -54,8 +67,6 @@ export class CameraAccessory extends DeviceAccessory {
 
   public readonly cameraConfig: CameraConfig;
 
-  public stream!: StreamingDelegate;
-
   public hardwareTranscoding: boolean = true;
   public hardwareDecoding: boolean = true;
   public timeshift: boolean = false;
@@ -80,6 +91,23 @@ export class CameraAccessory extends DeviceAccessory {
     'crying detected',
     'dog detected',
     'stranger person detected',
+  ];
+
+  public streamingDelegate: StreamingDelegate | null = null;
+  public recordingDelegate?: RecordingDelegate | null = null;
+
+  private resolutions: Resolution[] = [
+    [320, 180, 30],
+    [320, 240, 15], // Apple Watch requires this configuration
+    [320, 240, 30],
+    [480, 270, 30],
+    [480, 360, 30],
+    [640, 360, 30],
+    [640, 480, 30],
+    [1280, 720, 30],
+    [1280, 960, 30],
+    [1600, 1200, 30],
+    [1920, 1080, 30],
   ];
 
   constructor(
@@ -123,22 +151,100 @@ export class CameraAccessory extends DeviceAccessory {
     }
 
     try {
-      this.setupRTSP()
-        .then((rtspUrl) => {
-          this.rtsp_url = rtspUrl as string;
-          this.log.info(`${this.accessory.displayName} RTSP url: ${rtspUrl}`);
+      // this.setupRTSP()
+      //   .then((rtspUrl) => {
+      //     this.rtsp_url = rtspUrl as string;
+      //     this.log.info(`${this.accessory.displayName} RTSP url: ${rtspUrl}`);
 
-          // Configure HomeKit Secure Video suport.
-          this.configureHksv();
-          this.configureVideoStream();
-        })
-        .catch((error) => {
-          // Handle any errors that occur during the promise chain
-          this.log.error('Error in setupRTSP:', error);
-        });
+      //   })
+      //   .catch((error) => {
+      //     // Handle any errors that occur during the promise chain
+      //     this.log.error('Error in setupRTSP:', error);
+      //   });
+      // Configure HomeKit Secure Video suport.
+      this.configureHksv();
+      this.configureVideoStream();
+      
     } catch (error) {
       this.log.error(`${this.accessory.displayName} while happending Delegate ${error}`);
     }
+  }
+
+  private getCameraStreamingOptions(): CameraStreamingOptions {
+    return {
+      supportedCryptoSuites: [SRTPCryptoSuites.AES_CM_128_HMAC_SHA1_80],
+      video: {
+        resolutions: this.resolutions,
+        codec: {
+          profiles: [H264Profile.BASELINE, H264Profile.MAIN, H264Profile.HIGH],
+          levels: [H264Level.LEVEL3_1, H264Level.LEVEL3_2, H264Level.LEVEL4_0],
+        },
+      },
+      audio: {
+        twoWayAudio: this.cameraConfig.talkback,
+        codecs: [
+          {
+            type: AudioStreamingCodecType.AAC_ELD,
+            samplerate: AudioStreamingSamplerate.KHZ_16,
+          },
+        ],
+      },
+    };
+  }
+
+  private getCameraRecordingOptions(): CameraRecordingOptions {
+    return {
+      overrideEventTriggerOptions: [
+        EventTriggerOption.MOTION,
+        EventTriggerOption.DOORBELL,
+      ],
+      prebufferLength: 0, // prebufferLength always remains 4s ?
+      mediaContainerConfiguration: [
+        {
+          type: MediaContainerType.FRAGMENTED_MP4,
+          fragmentLength: 4000,
+        },
+      ],
+      video: {
+        type: this.hap.VideoCodecType.H264,
+        parameters: {
+          profiles: [H264Profile.BASELINE, H264Profile.MAIN, H264Profile.HIGH],
+          levels: [H264Level.LEVEL3_1, H264Level.LEVEL3_2, H264Level.LEVEL4_0],
+        },
+        resolutions: this.resolutions,
+      },
+      audio: {
+        codecs: {
+          type: AudioRecordingCodecType.AAC_ELD,
+          samplerate: AudioRecordingSamplerate.KHZ_24,
+          bitrateMode: 0,
+          audioChannels: 1,
+        },
+      },
+    };
+  }
+
+  private getCameraControllerOptions(): CameraControllerOptions {
+
+    const option: CameraControllerOptions = {
+      cameraStreamCount: this.cameraConfig.videoConfig?.maxStreams || 2, // HomeKit requires at least 2 streams, but 1 is also just fine
+      delegate: this.streamingDelegate as StreamingDelegate,
+      streamingOptions: this.getCameraStreamingOptions(),
+      recording: this.cameraConfig.hsv
+        ? {
+          options: this.getCameraRecordingOptions(),
+          delegate: this.recordingDelegate as RecordingDelegate,
+        }
+        : undefined,
+      sensors: this.cameraConfig.hsv
+        ? {
+          motion: this.getService(this.platform.Service.MotionSensor),
+          occupancy: undefined,
+        }
+        : undefined,
+    };
+
+    return option;
   }
 
   /**
@@ -605,227 +711,31 @@ export class CameraAccessory extends DeviceAccessory {
     return true;
   }
 
-  // Find a recording RTSP configuration for a given target resolution.
-  public findRecordingRtsp(width: number, height: number, rtspEntries = this.rtspEntries): RtspEntry | null {
-    return this.findRtspEntry(width, height, rtspEntries, this.rtspQuality['RecordingDefault'] ?? this.stream.ffmpegOptions.recordingDefaultChannel);
-  }
-
   // Configure a camera accessory for HomeKit.
   private configureVideoStream(): boolean {
+    this.platform.log.debug(`${this.accessory.displayName} StreamingDelegate`);
+    this.streamingDelegate = new StreamingDelegate(this);
 
-    const rtspEntries: RtspEntry[] = [];
+    this.platform.log.debug(`${this.accessory.displayName} RecordingDelegate`);
+    this.recordingDelegate = new RecordingDelegate(this);
 
-    const channels = [{
-      bitrate: 0,
-      enabled: true,
-      fps: 15,
-      height: 1080,
-      id: 0,
-      idrInterval: 2,
-      isRtspEnabled: true,
-      name: 'HIGH',
-      width: 1920,
-    }];
+    this.platform.log.debug(`${this.accessory.displayName} Controller`);
+    const controller = new this.hap.CameraController(this.getCameraControllerOptions());
 
-    // Figure out which camera channels are RTSP-enabled, and user-enabled.
-    let cameraChannels = channels.filter(x => x.isRtspEnabled);
+    this.platform.log.debug(`${this.accessory.displayName} streamingDelegate.setController`);
+    this.streamingDelegate.setController(controller);
 
-    // Set the camera and shapshot URLs.
-    const cameraUrl = this.rtsp_url;
-
-    // Filter out any package camera entries.
-    cameraChannels = cameraChannels.filter(x => x.name !== 'Package Camera');
-
-    // No RTSP streams are available that meet our criteria - we're done.
-    if (!cameraChannels.length) {
-
-      this.log.info('No RTSP stream profiles have been configured for this camera. ' +
-        'Enable at least one RTSP stream profile in the UniFi Protect webUI to resolve this issue or ' +
-        'assign the Administrator role to the user configured for this plugin to allow it to automatically configure itself.',
-      );
-
-      return false;
+    if (this.cameraConfig.hsv) {
+      this.platform.log.debug(`${this.accessory.displayName} recordingDelegate.setController`);
+      this.recordingDelegate.setController(controller);
     }
 
-    // Now that we have our RTSP streams, create a list of supported resolutions for HomeKit.
-    for (const channel of cameraChannels) {
-      // Sanity check in case Protect reports nonsensical resolutions.
-      if (!channel.name || (channel.width <= 0) || (channel.width > 65535) || (channel.height <= 0) || (channel.height > 65535)) {
-        continue;
-      }
+    this.platform.log.debug(`${this.accessory.displayName} configureController`);
+    this.accessory.configureController(controller);
 
-      rtspEntries.push({
-        channel: channel,
-        name: this.getResolution([channel.width, channel.height, channel.fps]) + ' (' + channel.name + ')',
-        resolution: [channel.width, channel.height, channel.fps],
-        url: cameraUrl,
-      });
-    }
-
-    // Sort the list of resolutions, from high to low.
-    rtspEntries.sort(this.sortByResolutions.bind(this));
-
-    let validResolutions: Resolution[] = [];
-
-    // Next, ensure we have mandatory resolutions required by HomeKit, as well as special support for Apple TV and Apple Watch, while respecting aspect ratios.
-    // We use the frame rate of the first entry, which should be our highest resolution option that's native to the camera as the upper bound for frame rate.
-    //
-    // Our supported resolutions range from 4K through 320p.
-    if ((rtspEntries[0].resolution[0] / rtspEntries[0].resolution[1]) === (4 / 3)) {
-      validResolutions = [
-        [3840, 2880, 30],
-        [2560, 1920, 30],
-        [1920, 1440, 30],
-        [1280, 960, 30],
-        [640, 480, 30],
-        [480, 360, 30],
-        [320, 240, 30],
-      ];
-    } else {
-      validResolutions = [
-        [3840, 2160, 30],
-        [2560, 1440, 30],
-        [1920, 1080, 30],
-        [1280, 720, 30],
-        [640, 360, 30],
-        [480, 270, 30],
-        [320, 180, 30],
-      ];
-    }
-
-    // Validate and add our entries to the list of what we make available to HomeKit. We map these resolutions to the channels we have available to us on the camera.
-    for (const entry of validResolutions) {
-      // This resolution is larger than the highest resolution on the camera, natively. We make an exception for 1080p and 720p resolutions since HomeKit explicitly
-      // requires them.
-      if ((entry[0] >= rtspEntries[0].resolution[0]) && ![1920, 1280].includes(entry[0])) {
-        continue;
-      }
-
-      // Find the closest RTSP match for this resolution.
-      const foundRtsp = this.findRtsp(entry[0], entry[1], rtspEntries);
-
-      if (!foundRtsp) {
-        continue;
-      }
-
-      // We already have this resolution in our list.
-      if (rtspEntries.some(x => (x.resolution[0] === entry[0]) && (x.resolution[1] === entry[1]) && (x.resolution[2] === foundRtsp.channel.fps))) {
-        continue;
-      }
-
-      // Add the resolution to the list of supported resolutions, but use the selected camera channel's native frame rate.
-      rtspEntries.push({ channel: foundRtsp.channel, name: foundRtsp.name, resolution: [entry[0], entry[1], foundRtsp.channel.fps], url: foundRtsp.url });
-
-      // Since we added resolutions to the list, resort resolutions, from high to low.
-      rtspEntries.sort(this.sortByResolutions.bind(this));
-    }
-
-    // Ensure we've got at least one entry that can be used for HomeKit Secure Video. Some Protect cameras (e.g. G3 Flex) don't have a native frame rate that
-    // maps to HomeKit's specific requirements for event recording, so we ensure there's at least one. This doesn't directly affect which stream is used to
-    // actually record something, but it does determine whether HomeKit even attempts to use the camera for HomeKit Secure Video.
-    if (![15, 24, 30].includes(rtspEntries[0].resolution[2])) {
-
-      // Iterate through the list of RTSP entries we're providing to HomeKit and ensure we have at least one that will meet HomeKit's requirements for frame rate.
-      for (let i = 0; i < rtspEntries.length; i++) {
-
-        // We're only interested in the first 1080p or 1440p entry.
-        if ((rtspEntries[i].resolution[0] !== 1920) || ![1080, 1440].includes(rtspEntries[i].resolution[1])) {
-          continue;
-        }
-
-        // Determine the best frame rate to use that's closest to what HomeKit wants to see.
-        if (rtspEntries[i].resolution[2] > 24) {
-          rtspEntries[i].resolution[2] = 30;
-        } else if (rtspEntries[i].resolution[2] > 15) {
-          rtspEntries[i].resolution[2] = 24;
-        } else {
-          rtspEntries[i].resolution[2] = 15;
-        }
-
-        break;
-      }
-    }
-
-    // Publish our updated list of supported resolutions and their URLs.
-    this.rtspEntries = rtspEntries;
-
-    // If we're already configured, we're done here.
-    if (this.isVideoConfigured) {
-      return true;
-    }
-
-    for (const entry of this.rtspEntries) {
-      this.log.debug('Mapping resolution: %s.', this.getResolution(entry.resolution) + ' => ' + entry.name);
-    }
-
-    // Check for explicit RTSP profile preferences globally.
-    for (const rtspProfile of ['LOW', 'MEDIUM', 'HIGH']) {
-      // Check to see if the user has requested a specific streaming profile for this camera.
-      this.rtspQuality['StreamingDefault'] = rtspProfile;
-
-      // Check to see if the user has requested a specific recording profile for this camera.
-      this.rtspQuality['RecordingDefault'] = rtspProfile;
-    }
-
-    // Inform the user if we've set a streaming default.
-    if (this.rtspQuality['StreamingDefault']) {
-
-      this.log.info('Video streaming configured to use only: %s.',
-        this.rtspQuality['StreamingDefault'].charAt(0) + this.rtspQuality['StreamingDefault'].slice(1).toLowerCase());
-    }
-
-    // Inform the user if we've set a recording default.
-    if (this.rtspQuality['RecordingDefault']) {
-
-      this.log.info('HomeKit Secure Video event recording configured to use only: %s.',
-        this.rtspQuality['RecordingDefault'].charAt(0) + this.rtspQuality['RecordingDefault'].slice(1).toLowerCase());
-    }
-
-    // Configure the video stream with our resolutions.
-    this.stream = new StreamingDelegate(this, this.rtspEntries.map(x => x.resolution));
-
-    // Fire up the controller and inform HomeKit about it.
-    this.accessory.configureController(this.stream.controller);
     this.isVideoConfigured = true;
 
     return true;
   }
 
-  // Utility function for sorting by resolution.
-  private sortByResolutions(a: RtspEntry, b: RtspEntry): number {
-
-    // Check width.
-    if (a.resolution[0] < b.resolution[0]) {
-      return 1;
-    }
-
-    if (a.resolution[0] > b.resolution[0]) {
-      return -1;
-    }
-
-    // Check height.
-    if (a.resolution[1] < b.resolution[1]) {
-      return 1;
-    }
-
-    if (a.resolution[1] > b.resolution[1]) {
-      return -1;
-    }
-
-    // Check FPS.
-    if (a.resolution[2] < b.resolution[2]) {
-      return 1;
-    }
-
-    if (a.resolution[2] > b.resolution[2]) {
-      return -1;
-    }
-
-    return 0;
-  }
-
-  // Utility function to format resolution entries.
-  protected getResolution(resolution: Resolution): string {
-    return resolution[0].toString() + 'x' + resolution[1].toString() + '@' + resolution[2].toString() + 'fps';
-  }
 }

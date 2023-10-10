@@ -2,8 +2,9 @@ import { Camera, PropertyName } from '@homebridge-eufy-security/eufy-security-cl
 
 import { CameraConfig } from './configTypes';
 import { Logger as TsLogger, ILogObj } from 'tslog';
+import { Duplex } from 'stream';
 
-export const is_rtsp_ready = function(device: Camera, cameraConfig: CameraConfig, log: TsLogger<ILogObj>): boolean {
+export const is_rtsp_ready = function (device: Camera, cameraConfig: CameraConfig, log: TsLogger<ILogObj>): boolean {
 
   log.debug(device.getName(), 'RTSP rtspStream:' + JSON.stringify(device.hasProperty('rtspStream')));
   if (!device.hasProperty('rtspStream')) {
@@ -31,3 +32,21 @@ export const is_rtsp_ready = function(device: Camera, cameraConfig: CameraConfig
 
   return true;
 };
+
+export class Deferred<T> {
+  finished = false;
+  resolve!: (value: T | PromiseLike<T>) => this;
+  reject!: (error: Error) => this;
+  promise: Promise<T> = new Promise((resolve, reject) => {
+    this.resolve = v => {
+      this.finished = true;
+      resolve(v);
+      return this;
+    };
+    this.reject = e => {
+      this.finished = true;
+      reject(e);
+      return this;
+    };
+  });
+}

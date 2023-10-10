@@ -47,8 +47,6 @@ import { EufyClientInteractor } from './utils/EufyClientInteractor';
 import os from 'node:os';
 import { platform } from 'node:process';
 import { readFileSync } from 'node:fs';
-import { FfmpegCodecs } from './utils/ffmpeg-codec';
-import { RtpPortAllocator } from './utils/rtp.js';
 
 import ffmpegPath from 'ffmpeg-for-homebridge';
 
@@ -79,8 +77,6 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
   private readonly DEVICE_INIT_DELAY = 7 * 1000; // 7 seconds;
 
   private _hostSystem: string = '';
-  public codecSupport!: FfmpegCodecs;
-  public readonly rtpPorts: RtpPortAllocator = new RtpPortAllocator();
   public verboseFfmpeg: boolean = true;
 
   constructor(
@@ -252,7 +248,6 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
     this.config.videoProcessor = ffmpegPath ?? 'ffmpeg';
     this.log.info('ffmpegPath?:', ffmpegPath);
     this.log.info('ffmpegPath set:', this.config.videoProcessor);
-    this.codecSupport = new FfmpegCodecs(this);
 
     this.log.info('Country set:', this.config.country ?? 'US');
 
@@ -629,15 +624,7 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
 
     this.log.debug(accessory.displayName, 'UUID:', accessory.UUID);
     const device = container.eufyDevice;
-
-    let isCamera = false;
-
-    if (device.isCamera()) {
-      this.log.debug(accessory.displayName, 'isCamera!');
-      new CameraAccessory(this, accessory, device as Camera);
-      isCamera = true;
-    }
-
+    
     if (device.isMotionSensor()) {
       this.log.debug(accessory.displayName, 'isMotionSensor!');
       new MotionSensorAccessory(this, accessory, device as MotionSensor);
@@ -653,7 +640,13 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
       new LockAccessory(this, accessory, device as Lock);
     }
 
-    return isCamera;
+    if (device.isCamera()) {
+      this.log.debug(accessory.displayName, 'isCamera!');
+      new CameraAccessory(this, accessory, device as Camera);
+      return true;
+    }
+
+    return false;
   }
 
   public getStationById(id: string) {
