@@ -26,9 +26,10 @@
     "lint": "eslint src/** --max-warnings=0",
     "lint-fix": "eslint src/** --max-warnings=0 --fix",
     "watch": "npm run build && npm link && nodemon",
-    "build": "npm run build-plugin && npm run build-configui",
+    "build": "npm run build-plugin && npm run postbuild && npm run build-configui",
     "build-plugin": "rimraf ./dist && tsc --project tsconfig.plugin.json",
     "build-configui": "rimraf ./homebridge-ui && ng build --base-href /api/plugins/settings-ui/homebridge-eufy-security/ && tsc --project tsconfig.configui.server.json",
+    "postbuild": "cp -r ./media ./dist/media",
     "serve-configui": "ng serve",
     "prepublishOnly": "npm run lint && npm run build"
   },
@@ -42,12 +43,13 @@
     "camera"
   ],
   "dependencies": {
+    "@homebridge-eufy-security/eufy-security-client": "^2.8.1",
     "@homebridge/camera-utils": "^2.2.0",
     "@homebridge/plugin-ui-utils": "^0.1.1",
-    "@homebridge-eufy-security/eufy-security-client": "^2.8.1",
     "ffmpeg-for-homebridge": "2.1.1",
-    "pick-port": "^1.0.1",
+    "fs-extra": "^11.1.1",
     "rotating-file-stream": "^3.1.1",
+    "sharp": "^0.32.6",
     "tslog": "^4.9.2",
     "zip-lib": "^0.7.3"
   },

@@ -9,7 +9,7 @@ import {
   Characteristic,
 } from 'homebridge';
 
-import { PLATFORM_NAME, PLUGIN_NAME } from './settings';
+import { PLATFORM_NAME, PLUGIN_NAME, SnapshotBlackPath, SnapshotUnavailablePath } from './settings';
 
 import { EufySecurityPlatformConfig } from './config';
 
@@ -79,6 +79,9 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
   private _hostSystem: string = '';
   public verboseFfmpeg: boolean = true;
 
+  public blackSnapshot: Buffer = this.readFileSync(SnapshotBlackPath);
+  public SnapshotUnavailable: Buffer = this.readFileSync(SnapshotUnavailablePath);
+
   constructor(
     public readonly hblog: Logger,
     config: PlatformConfig,
@@ -91,10 +94,12 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
     if (!fs.existsSync(this.eufyPath)) {
       fs.mkdirSync(this.eufyPath);
     }
+    
     // Identify what we're running on so we can take advantage of hardware-specific features.
     this.probeHwOs();
 
     this.configureLogger();
+
     this.initSetup();
   }
 
@@ -624,7 +629,7 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
 
     this.log.debug(accessory.displayName, 'UUID:', accessory.UUID);
     const device = container.eufyDevice;
-    
+
     if (device.isMotionSensor()) {
       this.log.debug(accessory.displayName, 'isMotionSensor!');
       new MotionSensorAccessory(this, accessory, device as MotionSensor);
@@ -740,6 +745,23 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
 
     } catch (e) {
       this.log.error('Error cleaning config:', e);
+    }
+  }
+
+  /**
+   * Reads a file synchronously and returns its buffer.
+   * Also lists the contents of the current directory.
+   * @param filepath - The path to the file to read.
+   * @returns The file buffer.
+   * @throws An error if the file cannot be read.
+   */
+  private readFileSync(filepath: string): Buffer {
+    try {
+      filepath = __dirname + filepath;
+      // Read and return the file buffer
+      return fs.readFileSync(filepath);
+    } catch (error) {
+      throw new Error(`We could not cache ${filepath} file for further use: ${error}`);
     }
   }
 }

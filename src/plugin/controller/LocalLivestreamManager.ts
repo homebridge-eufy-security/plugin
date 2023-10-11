@@ -38,11 +38,15 @@ export class LocalLivestreamManager extends EventEmitter {
 
   // Initialize the manager.
   private initialize() {
+    this.log.debug(this.camera.name, 'Initialize before livestream.');
     if (this.stationStream) {
-      this.stationStream.audiostream.unpipe();
-      this.stationStream.audiostream.destroy();
+      this.log.debug(this.camera.name, 'Cleaning before livestream.');
+
       this.stationStream.videostream.unpipe();
       this.stationStream.videostream.destroy();
+
+      this.stationStream.audiostream.unpipe();
+      this.stationStream.audiostream.destroy();
     }
     this.stationStream = null;
     this.livestreamStartedAt = null;
@@ -87,7 +91,7 @@ export class LocalLivestreamManager extends EventEmitter {
 
   // Stop the local livestream.
   public stopLocalLiveStream(): void {
-    this.log.debug(this.device.getName(), 'Stopping station livestream.');
+    this.log.debug(this.camera.name, 'Stopping station livestream.');
     this.eufyClient.stopStationLivestream(this.device.getSerial());
     this.initialize();
   }
@@ -112,17 +116,18 @@ export class LocalLivestreamManager extends EventEmitter {
       if (this.stationStream) {
         const diff = (Date.now() - this.stationStream.createdAt) / 1000;
         if (diff < 5) {
-          this.log.warn(this.device.getName(), 'Second livestream was started from station. Ignore.');
+          this.log.warn(this.camera.name, 'Second livestream was started from station. Ignore.');
           return;
         }
       }
       this.initialize(); // important to prevent unwanted behavior when the eufy station emits the 'livestream start' event multiple times
 
-      this.log.info(`${station.getName()} station livestream (P2P session) for ${device.getName()} has started.`);
+      this.log.info(`${station.getName()} station livestream (P2P session) for ${this.camera.name} has started.`);
       this.livestreamStartedAt = Date.now();
       const createdAt = Date.now();
+
       this.stationStream = { station, device, metadata, videostream, audiostream, createdAt };
-      this.log.debug(this.device.getName(), 'Stream metadata: ' + JSON.stringify(this.stationStream.metadata));
+      this.log.debug(this.camera.name, 'Stream metadata: ' + JSON.stringify(this.stationStream.metadata));
 
       this.emit('livestream start');
     }

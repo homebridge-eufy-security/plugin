@@ -85,10 +85,10 @@ export class FFmpegParameters {
 
   // default parameters
   processor?: string;
-  private hideBanner = true;
+  private hideBanner = false;
   private useWallclockAsTimestamp = true;
 
-  private inputSoure = '-i pipe:';
+  private inputSoure = '';
   private protocolWhitelist?: string;
   private inputCodec?: string;
   private inputFormat?: string;
@@ -149,7 +149,7 @@ export class FFmpegParameters {
   }
 
   static async forAudio(debug = false): Promise<FFmpegParameters> {
-    const port = await reservePorts({ count: 1, type: 'tcp' })[0];
+    const port = (await reservePorts({ count: 1, type: 'tcp' }))[0];
     const ffmpeg = new FFmpegParameters(port, false, true, false, debug);
     ffmpeg.useWallclockAsTimestamp = false;
     ffmpeg.flagsGlobalHeader = true;
@@ -157,28 +157,29 @@ export class FFmpegParameters {
   }
 
   static async forVideo(debug = false): Promise<FFmpegParameters> {
-    const port = await reservePorts({ count: 1, type: 'tcp' })[0];
+    const port = (await reservePorts({ count: 1, type: 'tcp' }))[0];
     return new FFmpegParameters(port, true, false, false, debug);
   }
 
   static async forSnapshot(debug = false): Promise<FFmpegParameters> {
-    const port = await reservePorts({ count: 1, type: 'tcp' })[0];
+    const port = (await reservePorts({ count: 1, type: 'tcp' }))[0];
     const ffmpeg = new FFmpegParameters(port, false, false, true, debug);
     ffmpeg.useWallclockAsTimestamp = false;
     ffmpeg.numberFrames = 1;
     ffmpeg.format = 'image2';
+    ffmpeg.setInputSource('pipe:0');
     return ffmpeg;
   }
 
   static async forVideoRecording(debug = false): Promise<FFmpegParameters> {
-    const port = await reservePorts({ count: 1, type: 'tcp' })[0];
+    const port = (await reservePorts({ count: 1, type: 'tcp' }))[0];
     const ffmpeg = new FFmpegParameters(port, true, false, false, debug);
     ffmpeg.useWallclockAsTimestamp = true;
     return ffmpeg;
   }
 
   static async forAudioRecording(debug = false): Promise<FFmpegParameters> {
-    const port = await reservePorts({ count: 1, type: 'tcp' })[0];
+    const port = (await reservePorts({ count: 1, type: 'tcp' }))[0];
     const ffmpeg = new FFmpegParameters(port, false, true, false, debug);
     return ffmpeg;
   }
@@ -194,6 +195,46 @@ export class FFmpegParameters {
 
   public setInputSource(value: string) {
     this.inputSoure = `-i ${value}`;
+  }
+
+  /**
+   * Sets the input stream for the server.
+   * @param input - The Readable stream to be set as input.
+   */
+  public async setInputStream(input: Readable): Promise<string> {
+    // Reserve a TCP port
+    const [port] = await reservePorts({ count: 1, type: 'tcp' });
+
+    // Declare a variable for the kill timeout
+    let killTimeout: NodeJS.Timeout | undefined;
+
+    // Function to clear and reset the kill timeout
+    const resetKillTimeout = () => {
+      if (killTimeout) {
+        clearTimeout(killTimeout);
+      }
+      killTimeout = setTimeout(() => server.close(), 90 * 1000);
+    };
+
+    // Create a new TCP server
+    const server = net.createServer((socket) => {
+      // Reset the kill timeout when a new connection is established
+      resetKillTimeout();
+
+      // Pipe the input stream to the socket
+      input.pipe(socket);
+    });
+
+    // Start listening on the reserved port
+    server.listen(port);
+
+    // Initialize the kill timeout
+    resetKillTimeout();
+
+    // Set the input source to the local TCP server
+    this.setInputSource(`tcp://127.0.0.1:${port}`);
+
+    return `tcp://127.0.0.1:${port}`;
   }
 
   public setDelayedSnapshot() {
@@ -462,7 +503,7 @@ export class FFmpegParameters {
       'config=F8F0212C00BC00\r\n' +
       'a=crypto:1 AES_CM_128_HMAC_SHA1_80 inline:' + sessionInfo.audioSRTP.toString('base64') + '\r\n';
 
-    const port = await reservePorts({ count: 1, type: 'tcp' })[0];
+    const port = (await reservePorts({ count: 1, type: 'tcp' }))[0];
     let killTimeout: NodeJS.Timeout | undefined = undefined;
     const server = net.createServer((socket) => {
       if (killTimeout) {
@@ -685,13 +726,6 @@ export class FFmpegParameters {
     }
 
     params = parameters[0].buildGenericParameters();
-    // params.push(
-    //   '-i', 'pipe:0',  // Input from stdin (pipe:0)
-    //   '-i', 'pipe:1',  // Another input from stdin (pipe:1)
-    //   '-c:v', 'copy',  // Copy video codec
-    //   '-c:a', 'aac',   // Use AAC audio codec
-    //   '/tmp/output.mp4',     // Output file
-    // );
     parameters.forEach((p) => {
       params = params.concat(p.buildInputParamters());
       params = params.concat(p.buildEncodingParameters());
@@ -728,11 +762,7 @@ export class FFmpegParameters {
 export class FFmpeg extends EventEmitter {
 
   private process?: ChildProcessWithoutNullStreams;
-
-  private name: string;
-  private readonly log: TsLogger<ILogObj>;
   private progress?: FFmpegProgress;
-  private parameters: FFmpegParameters[];
 
   private ffmpegExec = ffmpegPath || 'ffmpeg';
 
@@ -742,17 +772,15 @@ export class FFmpeg extends EventEmitter {
   private starttime?: number;
   private killTimeout?: NodeJS.Timeout;
 
-  constructor(name: string, parameters: FFmpegParameters | FFmpegParameters[], log: TsLogger<ILogObj>) {
+  constructor(
+    private name: string,
+    private parameters: FFmpegParameters[],
+    private log: TsLogger<ILogObj>,
+  ) {
     super();
-    this.name = name;
-    this.log = log;
-    if (Array.isArray(parameters)) {
-      if (parameters.length === 0) {
-        throw new Error('No ffmpeg parameters found.');
-      }
-      this.parameters = parameters;
-    } else {
-      this.parameters = [parameters];
+
+    if (parameters.length === 0) {
+      throw new Error('No ffmpeg parameters found.');
     }
 
     if (this.parameters[0].hasCustomFfmpeg()) {
@@ -864,7 +892,7 @@ export class FFmpeg extends EventEmitter {
     this.progress = new FFmpegProgress(this.parameters[0].progressPort);
     this.progress.on('progress started', this.onProgressStarted.bind(this));
 
-    const port = await reservePorts({ count: 1, type: 'tcp' })[0];
+    const port = (await reservePorts({ count: 1, type: 'tcp' }))[0];
 
     return new Promise((resolve, reject) => {
       const server = net.createServer((socket) => {

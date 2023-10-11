@@ -164,7 +164,7 @@ export class CameraAccessory extends DeviceAccessory {
       // Configure HomeKit Secure Video suport.
       this.configureHksv();
       this.configureVideoStream();
-      
+
     } catch (error) {
       this.log.error(`${this.accessory.displayName} while happending Delegate ${error}`);
     }
@@ -715,13 +715,16 @@ export class CameraAccessory extends DeviceAccessory {
   private configureVideoStream(): boolean {
     this.platform.log.debug(`${this.accessory.displayName} StreamingDelegate`);
     this.streamingDelegate = new StreamingDelegate(this);
+    this.recordingDelegate = {} as RecordingDelegate;
 
-    this.platform.log.debug(`${this.accessory.displayName} RecordingDelegate`);
-    this.recordingDelegate = new RecordingDelegate(this);
+    if (this.cameraConfig.hsv) {
+      this.platform.log.debug(`${this.accessory.displayName} RecordingDelegate`);
+      this.recordingDelegate = new RecordingDelegate(this);
+    }
 
     this.platform.log.debug(`${this.accessory.displayName} Controller`);
     const controller = new this.hap.CameraController(this.getCameraControllerOptions());
-
+    
     this.platform.log.debug(`${this.accessory.displayName} streamingDelegate.setController`);
     this.streamingDelegate.setController(controller);
 

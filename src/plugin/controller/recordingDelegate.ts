@@ -115,16 +115,11 @@ export class RecordingDelegate implements CameraRecordingDelegate {
         videoParams.setInputSource(url as string);
         audioParams.setInputSource(url as string);
       } else {
-        this.localLivestreamManager.getLocalLivestream()
+        await this.localLivestreamManager.getLocalLivestream()
           .then((streamData) => {
             cachedStream = streamData;
-            videoParams.setInputSource('video.pipe');
-            audioParams?.setInputSource('audio.pipe');
-
-            const audioPipe = createWriteStream('audio.pipe');
-            const videoPipe = createWriteStream('video.pipe');
-            streamData.videostream.pipe(videoPipe);
-            streamData.audiostream.pipe(audioPipe);
+            videoParams.setInputStream(streamData.videostream);
+            audioParams?.setInputStream(streamData.audiostream);
           }).catch((err) => {
             throw err;
           });
@@ -132,7 +127,7 @@ export class RecordingDelegate implements CameraRecordingDelegate {
 
       const ffmpeg = new FFmpeg(
         `[${this.cameraName}] [HSV Recording Process]`,
-        audioEnabled ? [videoParams, audioParams] : videoParams,
+        audioEnabled ? [videoParams, audioParams] : [videoParams],
         this.log,
       );
 

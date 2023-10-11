@@ -4,9 +4,7 @@ import {
   API,
   APIEvent,
   AudioStreamingCodecType,
-  AudioStreamingSamplerate,
   CameraController,
-  CameraControllerOptions,
   CameraStreamingDelegate,
   HAP,
   PrepareStreamCallback,
@@ -33,7 +31,6 @@ import { SnapshotManager } from './SnapshotManager';
 import { TalkbackStream } from './Talkback';
 import { is_rtsp_ready } from '../utils/utils';
 import { CameraAccessory } from '../accessories/CameraAccessory';
-import { createWriteStream } from 'fs';
 import { reservePorts } from '@homebridge/camera-utils';
 
 export type SessionInfo = {
@@ -92,7 +89,7 @@ export class StreamingDelegate implements CameraStreamingDelegate {
   ) {
     // eslint-disable-line @typescript-eslint/explicit-module-boundary-types
 
-    this.snapshotManager = new SnapshotManager(this.platform, this.device, this.cameraConfig, this.localLivestreamManager, this.log);
+    this.snapshotManager = new SnapshotManager(this.camera, this.localLivestreamManager);
 
     this.api.on(APIEvent.SHUTDOWN, () => {
       for (const session in this.ongoingSessions) {
@@ -110,31 +107,31 @@ export class StreamingDelegate implements CameraStreamingDelegate {
     return this.localLivestreamManager;
   }
 
-  async handleSnapshotRequest(request: SnapshotRequest, callback: SnapshotRequestCallback): Promise<void> {
-    this.log.debug('handleSnapshotRequest');
+  public async handleSnapshotRequest(request: SnapshotRequest, callback: SnapshotRequestCallback): Promise<void> {
+    this.log.debug(`${this.cameraName} Handling snapshot request`);
 
     try {
-      this.log.debug('Snapshot requested: ' + request.width + ' x ' + request.height, this.cameraName, this.videoConfig.debug!);
-
-      const snapshot = await this.snapshotManager.getSnapshotBuffer(request);
-
-      this.log.debug('snapshot byte lenght: ' + snapshot?.byteLength);
-
+      this.log.debug(`${this.cameraName} Snapshot requested: ${request.width} x ${request.height}`);
+      const snapshot: Buffer = await this.snapshotManager.getSnapshotBuffer(request);
+      this.log.debug(`${this.cameraName} snapshot byte lenght: ${snapshot?.byteLength}`);
       callback(undefined, snapshot);
     } catch (err) {
       this.log.error(this.cameraName, err as string);
-      callback();
+      callback(undefined, undefined);
     }
   }
 
   async prepareStream(request: PrepareStreamRequest, callback: PrepareStreamCallback): Promise<void> {
     const ipv6 = request.addressVersion === 'ipv6';
 
-    this.log.debug(this.cameraName, `stream prepare request with session id ${request.sessionID} was received.`);
+    this.log.debug(`${this.cameraName} stream prepare request with session id ${request.sessionID} was received.`);
 
-    const videoReturnPort = await reservePorts({count:1, type: 'udp'})[0];
+    const ports = await reservePorts({ count: 2, type: 'udp' });
+
+    const videoReturnPort = ports[0];
+    const audioReturnPort = ports[1];
+
     const videoSSRC = this.hap.CameraController.generateSynchronisationSource();
-    const audioReturnPort = await reservePorts({count:1, type: 'udp'})[0];
     const audioSSRC = this.hap.CameraController.generateSynchronisationSource();
 
     const sessionInfo: SessionInfo = {
@@ -235,22 +232,31 @@ export class StreamingDelegate implements CameraStreamingDelegate {
       } else {
         try {
 
-          this.log.warn(this.cameraName + ' Piping the livestream: ');
-
-          videoParams.setInputSource('video.pipe');
-          audioParams?.setInputSource('audio.pipe');
-
-          const audioPipe = createWriteStream('audio.pipe');
-          const videoPipe = createWriteStream('video.pipe');
+          this.log.warn(this.cameraName + ' Piping the livestream');
 
           const streamData = await this.localLivestreamManager.getLocalLivestream()
             .catch((err) => {
               throw err;
             });
 
+          this.log.warn(this.cameraName + ' Got result for livestream');
           activeSession.cachedStream = streamData;
-          streamData.videostream.pipe(videoPipe);
-          streamData.audiostream.pipe(audioPipe);
+
+          await videoParams.setInputStream(streamData.videostream)
+            .then((url) => {
+              this.log.warn(this.cameraName + ' video url: ' + url);
+            })
+            .catch((err) => {
+              throw err;
+            });
+
+          await audioParams?.setInputStream(streamData.audiostream)
+            .then((url) => {
+              this.log.warn(this.cameraName + ' audio url: ' + url);
+            })
+            .catch((err) => {
+              throw err;
+            });
 
         } catch (err) {
           this.log.error((this.cameraName + ' Unable to start the livestream: ' + err) as string);
@@ -262,7 +268,7 @@ export class StreamingDelegate implements CameraStreamingDelegate {
 
       const videoProcess = new FFmpeg(
         `[${this.cameraName}] [Video Process]`,
-        !useSeparateProcesses && audioParams ? [videoParams, audioParams] : videoParams,
+        !useSeparateProcesses && audioParams ? [videoParams, audioParams] : [videoParams],
         this.log,
       );
 
@@ -280,7 +286,7 @@ export class StreamingDelegate implements CameraStreamingDelegate {
       if (useSeparateProcesses && audioParams) {
         const audioProcess = new FFmpeg(
           `[${this.cameraName}] [Audio Process]`,
-          audioParams,
+          [audioParams],
           this.log,
         );
 
@@ -305,7 +311,7 @@ export class StreamingDelegate implements CameraStreamingDelegate {
         activeSession.talkbackStream = new TalkbackStream(this.platform, this.device);
         activeSession.returnProcess = new FFmpeg(
           `[${this.cameraName}] [Talkback Process]`,
-          talkbackParameters,
+          [talkbackParameters],
           this.log,
         );
         activeSession.returnProcess.on('error', (err) => {

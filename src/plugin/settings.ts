@@ -39,3 +39,7 @@ export const PROTECT_SNAPSHOT_CACHE_MAXAGE = 90;
 
 // How often, in seconds, should we heartbeat FFmpeg in two-way audio sessions. This should be less than 5 seconds, which is FFmpeg's input timeout interval.
 export const PROTECT_TWOWAY_HEARTBEAT_INTERVAL = 3;
+
+export const SnapshotBlackPath = '/media/Snapshot-black.png';
+
+export const SnapshotUnavailablePath = '/media/Snapshot-Unavailable.png';
