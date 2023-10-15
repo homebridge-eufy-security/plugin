@@ -28,6 +28,7 @@ export interface EufySecurityPlatformConfig extends PlatformConfig {
   unbridge: boolean;
   verboseFfmpeg: boolean;
   videoProcessor: string;
+  videoEncoder: string;
 }
 
 export const DEFAULT_CONFIG_VALUES = {
@@ -47,4 +48,6 @@ export const DEFAULT_CONFIG_VALUES = {
   ignoreMultipleDevicesWarning: false,
   syncStationModes: false,
   verboseFfmpeg: false,
+  videoEncoder: 'libx264',
+  videoProcessor: 'ffmpeg',
 };

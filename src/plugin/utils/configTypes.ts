@@ -14,13 +14,12 @@ export type CameraConfig = {
   motionButton: boolean;
   lightButton: boolean;
   rtsp: boolean;
-  videoConfigEna: boolean;
   enableCamera: boolean;
   forcerefreshsnap: boolean;
   refreshSnapshotIntervalMinutes?: number;
   snapshotHandlingMethod?: number;
   immediateRingNotificationWithoutSnapshot?: boolean;
-  delayCameraSnapshot?:boolean;
+  delayCameraSnapshot?: boolean;
   talkback?: boolean;
   talkbackChannels?: number;
   hsv?: boolean;
@@ -29,7 +28,12 @@ export type CameraConfig = {
   indoorChimeButton?: boolean;
 };
 
-export const DEFAULT_CAMERACONFIG_VALUES = {
+export const DEFAULT_CAMERACONFIG_VALUES: CameraConfig = {
+  name: '',
+  manufacturer: '',
+  model: '',
+  serialNumber: '',
+  firmwareRevision: '',
   enableButton: true,
   motionButton: true,
   lightButton: true,
@@ -40,8 +44,6 @@ export const DEFAULT_CAMERACONFIG_VALUES = {
   rtsp: false,
   enableCamera: true,
   forcerefreshsnap: false,
-  useCachedLocalLivestream: false,
-  useEnhancedSnapshotBehaviour: true,
   refreshSnapshotIntervalMinutes: 0,
   snapshotHandlingMethod: 3,
   immediateRingNotificationWithoutSnapshot: false,
@@ -77,6 +79,13 @@ export type VideoConfig = {
   useSeparateProcesses?: boolean;
   crop?: boolean;
   videoProcessor?: string;
+};
+
+export const DEFAULT_VIDEOCONFIG_VALUES: VideoConfig = {
+  probeSize: 16384,
+  audio: true,
+  vcodec: 'copy',
+  acodec: 'copy',
 };
 
 export type StationConfig = {
