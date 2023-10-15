@@ -143,6 +143,16 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
         errorName: ['bold', 'bgRedBright', 'whiteBright'],
         fileName: ['yellow'],
       },
+      maskValuesOfKeys: [
+        'username',
+        'password',
+        'serialnumber',
+        'serialNumber',
+        'stationSerialNumber',
+        'data',
+        'ignoreStations',
+        'ignoreDevices',
+      ],
     };
 
     this.log = new TsLogger(logOptions);
@@ -172,8 +182,6 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
         });
 
         logger.attachTransport((logObj: ILogObjMeta) => {
-          // logStream.write(JSON.stringify(logObj) + '\n');
-
           const meta = logObj['_meta'];
           const name = meta.name;
           const level = meta.logLevelName;
@@ -183,25 +191,14 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
           // Initialize the message
           let message = '';
 
-          // Loop through logObj from index 0 to 2 and append values to the message
-          for (let i = 0; i <= 2; i++) {
+          // Loop through logObj from index 0 to 5 and append values to the message
+          for (let i = 0; i <= 5; i++) {
             if (logObj[i]) {
-              message += ` ${logObj[i]}`;
+              message += ' ' + typeof logObj[i] === 'string' ? logObj[i] : JSON.stringify(logObj[i]);
             }
           }
 
-          logStream.write(
-            date
-            + '\t'
-            + name
-            + '\t'
-            + level
-            + '\t'
-            + fileNameWithLine
-            + '\t'
-            + message
-            + '\n',
-          );
+          logStream.write(date + '\t' + name + '\t' + level + '\t' + fileNameWithLine + '\t' + message + '\n');
         });
 
       }
@@ -254,7 +251,6 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
 
   // Utility to return the hardware environment we're on.
   public get hostSystem(): string {
-
     return this._hostSystem;
   }
 
@@ -263,9 +259,15 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
     this.log.warn('warning: planned changes, see https://github.com/homebridge-eufy-security/plugin/issues/1');
 
     this.log.debug('plugin data store: ' + this.eufyPath);
+    this.log.debug('OS is', this.hostSystem);
     this.log.debug('Using bropats @homebridge-eufy-security/eufy-security-client library in version ' + libVersion);
 
+    this.videoProcessor = ffmpegPath ?? 'ffmpeg';
+    this.log.info(`ffmpegPath set: ${this.videoProcessor}`);
+
     this.clean_config();
+
+    this.log.debug('The config is:', this.config);
 
     this.eufyConfig = {
       username: this.config.username,
@@ -284,12 +286,10 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
     this.config.cleanCache = this.config.cleanCache ??= true;
     this.config.unbridge = this.config.unbridge ??= true;
 
-    this.videoProcessor = ffmpegPath ?? 'ffmpeg';
-    this.log.info(`ffmpegPath set: ${this.videoProcessor}`);
-
     this.codecSupport = new FfmpegCodecs(this);
 
     this.log.info(`Country set: ${this.eufyConfig.country}`);
+    // this.log.info(`Codec set: ${JSON.stringify(this.codecSupport)}`);
 
     // This function is here to avoid any break while moving from 1.0.x to 1.1.x
     // moving persistent into our dedicated folder (this need to be removed after few release of 1.1.x)

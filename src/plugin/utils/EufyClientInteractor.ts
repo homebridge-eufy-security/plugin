@@ -59,7 +59,7 @@ export class EufyClientInteractor extends EventEmitter implements PluginConfigIn
       this.server = net.createServer((socket) => {
         socket.on('data', (data) => {
           const request = JSON.parse(data.toString('utf-8')) as InteractorRequest;
-          this.log.debug(`incoming Interaction Request: for ${request.serialNumber}, ${JSON.stringify(request)}`);
+          this.log.debug(`incoming Interaction Request: for ${request.serialNumber}, ${request}`);
           this.processIPCRequest(socket, request);
         });
         socket.on('error', this.onSocketError.bind(this));
@@ -199,7 +199,7 @@ export class EufyClientInteractor extends EventEmitter implements PluginConfigIn
     }
 
     // eslint-disable-next-line max-len
-    this.log.debug(`Interaction Response: for ${response.serialNumber}, type: ${JSON.stringify(response)}, error: ${response.error}`);
+    this.log.debug(`Interaction Response: for ${response.serialNumber}, type: ${response}, error: ${response.error}`);
     return Promise.resolve(response);
   }
 

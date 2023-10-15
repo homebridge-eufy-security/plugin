@@ -97,9 +97,7 @@ export abstract class BaseAccessory extends EventEmitter {
 
   // Function to extract and log keys
   private logPropertyKeys() {
-    const properties = this.device.getProperties();
-    const keys = Object.keys(properties).join(', ');
-    this.log.debug(`${this.name} Property Keys: ${keys}`);
+    this.log.debug(`${this.name} Property Keys:`, this.device.getProperties());
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any

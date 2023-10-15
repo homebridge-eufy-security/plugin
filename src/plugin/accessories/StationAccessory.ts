@@ -70,7 +70,7 @@ export class StationAccessory extends BaseAccessory {
 
     SecuritySettings.forEach(item => {
       if (this.device.hasPropertyValue(item) && this.getPropertyValue(item) !== '') {
-        this.log.debug(`${this.accessory.displayName} - ${item} : ${JSON.stringify(this.getPropertyValue(item))}`);
+        this.log.debug(`${this.accessory.displayName} - ${item} :`, this.getPropertyValue(item));
       }
     });
 
@@ -156,7 +156,7 @@ export class StationAccessory extends BaseAccessory {
     const stationConfig = this.platform.config.stations?.find((station) => station.serialNumber === this.SN);
 
     // Debug log to show the retrieved station configuration
-    this.log.debug(`${this.accessory.displayName} Config: ${JSON.stringify(stationConfig)}`);
+    this.log.debug(`${this.accessory.displayName} Config:`, stationConfig);
 
     // Initialize the config object with prioritized values
     const config: StationConfig = {
@@ -263,7 +263,7 @@ export class StationAccessory extends BaseAccessory {
     ];
 
     // Log the mapping for station modes for debugging purposes
-    this.log.debug(`${this.accessory.displayName} Mapping for station modes: ${JSON.stringify(this.modes)}`);
+    this.log.debug(`${this.accessory.displayName} Mapping for station modes:`, this.modes);
   }
 
   /**
