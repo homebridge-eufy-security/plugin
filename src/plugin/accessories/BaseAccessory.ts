@@ -149,13 +149,13 @@ export abstract class BaseAccessory extends EventEmitter {
   }) {
 
     // eslint-disable-next-line max-len
-    this.log.debug(`${this.name} REGISTER CHARACTERISTIC '${serviceType.name} / ${characteristicType.name}`);
+    this.log.debug(`${this.name} REGISTER CHARACTERISTIC ${serviceType.name} / ${characteristicType.name}`);
 
     const service = this.getService(serviceType, name, serviceSubType);
     const characteristic = service.getCharacteristic(characteristicType);
 
     // eslint-disable-next-line max-len
-    this.log.debug(`${this.name} REGISTER CHARACTERISTIC '(${service.UUID}) / (${characteristic.UUID})`);
+    this.log.debug(`${this.name} REGISTER CHARACTERISTIC (${service.UUID}) / (${characteristic.UUID})`);
 
     if (getValue) {
       characteristic.onGet(async (data) => {
