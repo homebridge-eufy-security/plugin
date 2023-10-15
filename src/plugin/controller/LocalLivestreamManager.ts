@@ -1,22 +1,25 @@
 /* eslint-disable max-len */
-import { EventEmitter, Readable } from 'stream';
+import { EventEmitter, PassThrough, Readable, Writable } from 'stream';
 import { Station, Device, StreamMetadata, Camera, EufySecurity } from '@homebridge-eufy-security/eufy-security-client';
 import { EufySecurityPlatform } from '../platform';
 import { Logger as TsLogger, ILogObj } from 'tslog';
 import { CameraAccessory } from '../accessories/CameraAccessory';
+import { UniversalStream } from '../utils/utils';
 
 // Define a type for the station stream data.
 export type StationStream = {
   station: Station;
   device: Device;
   metadata: StreamMetadata;
-  videostream: Readable;
-  audiostream: Readable;
+  vStream: UniversalStream;
+  aStream: UniversalStream;
   createdAt: number;
 };
 
 // Define a class for the local livestream manager.
 export class LocalLivestreamManager extends EventEmitter {
+
+  private _initSegment: Buffer | null = null;
 
   private readonly platform: EufySecurityPlatform = this.camera.platform;
   private readonly device: Camera = this.camera.device;
@@ -42,12 +45,10 @@ export class LocalLivestreamManager extends EventEmitter {
     if (this.stationStream) {
       this.log.debug(this.camera.name, 'Cleaning before livestream.');
 
-      this.stationStream.videostream.unpipe();
-      this.stationStream.videostream.destroy();
-
-      this.stationStream.audiostream.unpipe();
-      this.stationStream.audiostream.destroy();
+      this.stationStream.vStream.close();
+      this.stationStream.aStream.close();
     }
+    this._initSegment = null;
     this.stationStream = null;
     this.livestreamStartedAt = null;
   }
@@ -126,10 +127,32 @@ export class LocalLivestreamManager extends EventEmitter {
       this.livestreamStartedAt = Date.now();
       const createdAt = Date.now();
 
-      this.stationStream = { station, device, metadata, videostream, audiostream, createdAt };
-      this.log.debug(this.camera.name, 'Stream metadata: ' + JSON.stringify(this.stationStream.metadata));
+      videostream.once('data', (chunk: Buffer) => {
+        this._initSegment = chunk;
+      });
+
+      const vStream = UniversalStream.StreamInput(this.camera.SN, videostream, this.log);
+      const aStream = UniversalStream.StreamInput(this.camera.SN, audiostream, this.log);
+
+      this.stationStream = { station, device, metadata, vStream, aStream, createdAt };
 
       this.emit('livestream start');
     }
+  }
+
+  // Asynchronously wait for the initialization segment.
+  public async getInitSegment(): Promise<Buffer> {
+
+    // Return our segment once we've seen it.
+    if (this.initSegment) {
+      return this.initSegment;
+    }
+
+    return this.getInitSegment();
+  }
+
+  // Retrieve the initialization segment, if we've seen it.
+  public get initSegment(): Buffer | null {
+    return this._initSegment;
   }
 }

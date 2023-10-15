@@ -24,12 +24,14 @@ import { DeviceAccessory } from './Device';
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore  
-import { Camera, Device, DeviceEvents, PropertyName, CommandName, PropertyValue } from '@homebridge-eufy-security/eufy-security-client';
+import { Camera, Device, DeviceEvents, PropertyName, CommandName, PropertyValue, StreamMetadata } from '@homebridge-eufy-security/eufy-security-client';
 
 import { StreamingDelegate } from '../controller/streamingDelegate';
 import { RecordingDelegate } from '../controller/recordingDelegate';
 
 import { CameraConfig, DEFAULT_CAMERACONFIG_VALUES } from '../utils/configTypes';
+import { PROTECT_HKSV_SEGMENT_LENGTH, PROTECT_HKSV_TIMESHIFT_BUFFER_MAXLENGTH } from '../settings';
+import { StationStream } from '../controller/LocalLivestreamManager';
 
 // A semi-complete description of the UniFi Protect camera channel JSON.
 export interface ProtectCameraChannelConfig {
@@ -81,6 +83,8 @@ export class CameraAccessory extends DeviceAccessory {
   private isVideoConfigured: boolean = false;
   public rtsp_url: string = '';
 
+  public metadata!: StreamMetadata;
+
   // List of event types
   private eventTypesToHandle: (keyof DeviceEvents)[] = [
     'motion detected',
@@ -97,17 +101,7 @@ export class CameraAccessory extends DeviceAccessory {
   public recordingDelegate?: RecordingDelegate | null = null;
 
   private resolutions: Resolution[] = [
-    [320, 180, 30],
     [320, 240, 15], // Apple Watch requires this configuration
-    [320, 240, 30],
-    [480, 270, 30],
-    [480, 360, 30],
-    [640, 360, 30],
-    [640, 480, 30],
-    [1280, 720, 30],
-    [1280, 960, 30],
-    [1600, 1200, 30],
-    [1920, 1080, 30],
   ];
 
   constructor(
@@ -176,7 +170,7 @@ export class CameraAccessory extends DeviceAccessory {
       video: {
         resolutions: this.resolutions,
         codec: {
-          profiles: [H264Profile.BASELINE, H264Profile.MAIN, H264Profile.HIGH],
+          profiles: [H264Profile.HIGH],
           levels: [H264Level.LEVEL3_1, H264Level.LEVEL3_2, H264Level.LEVEL4_0],
         },
       },
@@ -186,29 +180,38 @@ export class CameraAccessory extends DeviceAccessory {
           {
             type: AudioStreamingCodecType.AAC_ELD,
             samplerate: AudioStreamingSamplerate.KHZ_16,
+            bitrate: 0,
+            audioChannels: 1,
           },
         ],
       },
     };
   }
 
+  /**
+   * Get camera recording options based on device capabilities.
+   * @returns CameraRecordingOptions object
+   */
   private getCameraRecordingOptions(): CameraRecordingOptions {
+    // Determine event trigger options based on device type
+    const eventTriggerOptions = [EventTriggerOption.MOTION];
+    if (this.device.isDoorbell()) {
+      eventTriggerOptions.push(EventTriggerOption.DOORBELL);
+    }
+
     return {
-      overrideEventTriggerOptions: [
-        EventTriggerOption.MOTION,
-        EventTriggerOption.DOORBELL,
-      ],
-      prebufferLength: 0, // prebufferLength always remains 4s ?
+      overrideEventTriggerOptions: eventTriggerOptions,
+      prebufferLength: PROTECT_HKSV_TIMESHIFT_BUFFER_MAXLENGTH,
       mediaContainerConfiguration: [
         {
           type: MediaContainerType.FRAGMENTED_MP4,
-          fragmentLength: 4000,
+          fragmentLength: PROTECT_HKSV_SEGMENT_LENGTH,
         },
       ],
       video: {
         type: this.hap.VideoCodecType.H264,
         parameters: {
-          profiles: [H264Profile.BASELINE, H264Profile.MAIN, H264Profile.HIGH],
+          profiles: [H264Profile.HIGH],
           levels: [H264Level.LEVEL3_1, H264Level.LEVEL3_2, H264Level.LEVEL4_0],
         },
         resolutions: this.resolutions,
@@ -217,8 +220,6 @@ export class CameraAccessory extends DeviceAccessory {
         codecs: {
           type: AudioRecordingCodecType.AAC_ELD,
           samplerate: AudioRecordingSamplerate.KHZ_24,
-          bitrateMode: 0,
-          audioChannels: 1,
         },
       },
     };
@@ -393,7 +394,7 @@ export class CameraAccessory extends DeviceAccessory {
       config.talkback = false;
     }
 
-    this.log.debug(`${this.accessory.displayName} config is: ${JSON.stringify(config)}`);
+    this.log.debug(`${this.accessory.displayName} config is`, config);
 
     return config as CameraConfig;
   }
@@ -715,6 +716,18 @@ export class CameraAccessory extends DeviceAccessory {
   private configureVideoStream(): boolean {
     this.platform.log.debug(`${this.accessory.displayName} StreamingDelegate`);
     this.streamingDelegate = new StreamingDelegate(this);
+
+    // We need to get stream info but we need to initiate a livestream first
+    this.streamingDelegate.localLivestreamManager.getLocalLivestream()
+      .then((stationStream: StationStream) => {
+        this.metadata = stationStream.metadata;
+        this.platform.log.debug(`${this.accessory.displayName} Stream Metadata :`, this.metadata);
+        this.resolutions.push([this.metadata.videoWidth, this.metadata.videoHeight, this.metadata.videoFPS]);
+      })
+      .finally(() => {
+        this.streamingDelegate?.localLivestreamManager.stopLocalLiveStream();
+      });
+
     this.recordingDelegate = {} as RecordingDelegate;
 
     if (this.cameraConfig.hsv) {
@@ -724,7 +737,7 @@ export class CameraAccessory extends DeviceAccessory {
 
     this.platform.log.debug(`${this.accessory.displayName} Controller`);
     const controller = new this.hap.CameraController(this.getCameraControllerOptions());
-    
+
     this.platform.log.debug(`${this.accessory.displayName} streamingDelegate.setController`);
     this.streamingDelegate.setController(controller);
 

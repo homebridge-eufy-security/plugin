@@ -9,7 +9,6 @@ import { Logger as TsLogger, ILogObj } from 'tslog';
 
 import { is_rtsp_ready } from '../utils/utils';
 import { SnapshotRequest } from 'homebridge';
-import { FFmpeg, FFmpegParameters } from '../utils/ffmpeg';
 import * as fs from 'fs';
 import { CameraAccessory } from '../accessories/CameraAccessory';
 
@@ -337,7 +336,7 @@ export class SnapshotManager extends EventEmitter {
       const snapshotBuffer = await this.getCurrentCameraSnapshot();
       this.currentSnapshot = {
         timestamp: Date.now(),
-        image: snapshotBuffer,
+        image: snapshotBuffer as Buffer,
       };
       this.emit('new snapshot');
       this.log.debug(`${this.cameraName} Stored new snapshot from camera in memory.`);
@@ -353,80 +352,81 @@ export class SnapshotManager extends EventEmitter {
    * Get the current snapshot from the camera source.
    * @returns {Promise<Buffer>} A promise that resolves with the snapshot as a Buffer.
    */
-  private async getCurrentCameraSnapshot(): Promise<Buffer> {
-    const source = await this.getCameraSource();
+  private async getCurrentCameraSnapshot(): Promise<Buffer | undefined> {
+    // const source = await this.getCameraSource();
 
-    if (!source) {
-      throw new Error('No camera source detected.');
-    }
+    // if (!source) {
+    //   throw new Error('No camera source detected.');
+    // }
 
-    const parameters = await FFmpegParameters.forSnapshot(this.cameraConfig.videoConfig?.debug);
+    // const parameters = await FFmpegParameters.forSnapshot(this.cameraConfig.videoConfig?.debug);
 
-    if (source.url) {
-      parameters.setInputSource(source.url);
-    } else if (source.stream && source.livestreamId) {
-      parameters.setInputStream(source.stream);
-    } else {
-      throw new Error('No valid camera source detected.');
-    }
+    // if (source.url) {
+    //   parameters.setInputSource(source.url);
+    // } else if (source.stream && source.livestreamId) {
+    //   parameters.setInputStream(source.stream);
+    // } else {
+    //   throw new Error('No valid camera source detected.');
+    // }
 
-    if (this.cameraConfig.delayCameraSnapshot) {
-      parameters.setDelayedSnapshot();
-    }
+    // if (this.cameraConfig.delayCameraSnapshot) {
+    //   parameters.setDelayedSnapshot();
+    // }
 
-    try {
-      const ffmpeg = new FFmpeg(
-        `[${this.cameraName}] [Snapshot Process]`,
-        [parameters],
-        this.platform.ffmpegLogger,
-      );
+    // try {
+    //   const ffmpeg = new FFmpeg(
+    //     `[${this.cameraName}] [Snapshot Process]`,
+    //     [parameters],
+    //     this.platform.ffmpegLogger,
+    //   );
 
-      if (source.stream && source.livestreamId && ffmpeg.stdin) {
-        source.stream.pipe(ffmpeg.stdin[0]);
-      }
+    //   if (source.stream && source.livestreamId && ffmpeg.stdin) {
+    //     source.stream.pipe(ffmpeg.stdin[0]);
+    //   }
 
-      const buffer = await ffmpeg.getResult();
+    //   const buffer = await ffmpeg.getResult();
 
-      if (source.livestreamId) {
-        this.livestreamManager.stopLocalLiveStream();
-      }
+    //   if (source.livestreamId) {
+    //     this.livestreamManager.stopLocalLiveStream();
+    //   }
 
-      return buffer;
-    } catch (error) {
-      if (source.livestreamId) {
-        this.livestreamManager.stopLocalLiveStream();
-      }
-      throw (error);
-    }
+    //   return buffer;
+    // } catch (error) {
+    //   if (source.livestreamId) {
+    //     this.livestreamManager.stopLocalLiveStream();
+    //   }
+    //   throw (error);
+    // }
+    return;
   }
 
   /**
    * Get the camera source either from RTSP or local livestream.
    * @returns {Promise<StreamSource | null>} A promise that resolves with the camera source or null if not available.
    */
-  private async getCameraSource(): Promise<StreamSource | null> {
-    if (is_rtsp_ready(this.device, this.cameraConfig, this.log)) {
-      try {
-        const url = this.device.getPropertyValue(PropertyName.DeviceRTSPStreamUrl) as string;
-        this.log.debug(`${this.cameraName} RTSP URL: ${url}`);
-        return { url };
-      } catch (err) {
-        this.log.warn(`${this.cameraName} Could not get snapshot from RTSP stream!`);
-        return null;
-      }
-    } else {
-      try {
-        const streamData = await this.livestreamManager.getLocalLivestream();
-        return {
-          stream: streamData.videostream,
-          livestreamId: streamData.createdAt,
-        };
-      } catch (err) {
-        this.log.warn(`${this.cameraName} Could not get snapshot from livestream!`);
-        return null;
-      }
-    }
-  }
+  // private async getCameraSource(): Promise<StreamSource | null> {
+  //   if (is_rtsp_ready(this.device, this.cameraConfig, this.log)) {
+  //     try {
+  //       const url = this.device.getPropertyValue(PropertyName.DeviceRTSPStreamUrl) as string;
+  //       this.log.debug(`${this.cameraName} RTSP URL: ${url}`);
+  //       return { url };
+  //     } catch (err) {
+  //       this.log.warn(`${this.cameraName} Could not get snapshot from RTSP stream!`);
+  //       return null;
+  //     }
+  //   } else {
+  //     try {
+  //       const streamData = await this.livestreamManager.getLocalLivestream();
+  //       return {
+  //         stream: streamData.vStream,
+  //         livestreamId: streamData.createdAt,
+  //       };
+  //     } catch (err) {
+  //       this.log.warn(`${this.cameraName} Could not get snapshot from livestream!`);
+  //       return null;
+  //     }
+  //   }
+  // }
 
   /**
    * Resize a snapshot based on provided SnapshotRequest.
