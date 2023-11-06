@@ -1,6 +1,6 @@
 /* eslint-disable max-len */
-import { EventEmitter, PassThrough, Readable, Writable } from 'stream';
-import { Station, Device, StreamMetadata, Camera, EufySecurity } from '@homebridge-eufy-security/eufy-security-client';
+import { EventEmitter, Readable } from 'stream';
+import { Station, Device, StreamMetadata, Camera, EufySecurity } from 'eufy-security-client';
 import { EufySecurityPlatform } from '../platform';
 import { Logger as TsLogger, ILogObj } from 'tslog';
 import { CameraAccessory } from '../accessories/CameraAccessory';

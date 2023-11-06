@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { ChildProcessWithoutNullStreams } from 'child_process';
-import { Camera, PropertyName } from '@homebridge-eufy-security/eufy-security-client';
+import { Camera, PropertyName } from 'eufy-security-client';
 import {
   API,
   CameraController,

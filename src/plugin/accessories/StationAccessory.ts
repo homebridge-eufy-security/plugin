@@ -4,7 +4,7 @@ import { EufySecurityPlatform } from '../platform';
 import { BaseAccessory } from './BaseAccessory';
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore  
-import { Station, DeviceType, PropertyName, PropertyValue, AlarmEvent, GuardMode } from '@homebridge-eufy-security/eufy-security-client';
+import { Station, DeviceType, PropertyName, PropertyValue, AlarmEvent, GuardMode } from 'eufy-security-client';
 import { StationConfig } from '../utils/configTypes';
 
 export enum HKGuardMode {

@@ -1,13 +1,12 @@
 import { EventEmitter, Readable } from 'stream';
 
-import { Camera, Device, DeviceEvents, Picture, PropertyName, PropertyValue } from '@homebridge-eufy-security/eufy-security-client';
+import { Camera, Device, DeviceEvents, Picture, PropertyName, PropertyValue } from 'eufy-security-client';
 
 import { CameraConfig } from '../utils/configTypes';
 import { EufySecurityPlatform } from '../platform';
 import { LocalLivestreamManager } from './LocalLivestreamManager';
 import { Logger as TsLogger, ILogObj } from 'tslog';
 
-import { is_rtsp_ready } from '../utils/utils';
 import { SnapshotRequest } from 'homebridge';
 import * as fs from 'fs';
 import { CameraAccessory } from '../accessories/CameraAccessory';

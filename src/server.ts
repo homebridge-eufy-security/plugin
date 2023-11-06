@@ -6,7 +6,7 @@ import {
   Device,
   Station,
   PropertyName,
-} from '@homebridge-eufy-security/eufy-security-client';
+} from 'eufy-security-client';
 import { HomebridgePluginUiServer } from '@homebridge/plugin-ui-utils';
 
 import fs from 'fs';

@@ -21,7 +21,7 @@ import {
 import { CameraConfig, VideoConfig } from '../utils/configTypes';
 import { Logger as TsLogger, ILogObj } from 'tslog';
 
-import { AudioCodec, Camera, PropertyName } from '@homebridge-eufy-security/eufy-security-client';
+import { AudioCodec, Camera, PropertyName } from 'eufy-security-client';
 import { EufySecurityPlatform } from '../platform';
 
 import { LocalLivestreamManager, StationStream } from './LocalLivestreamManager';

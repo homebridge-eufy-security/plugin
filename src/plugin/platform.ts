@@ -36,7 +36,7 @@ import {
   libVersion,
   // eslint-disable-next-line @typescript-eslint/ban-ts-comment
   // @ts-ignore 
-} from '@homebridge-eufy-security/eufy-security-client';
+} from 'eufy-security-client';
 
 import { Logger as TsLogger, ILogObj, ILogObjMeta } from 'tslog';
 import { createStream } from 'rotating-file-stream';

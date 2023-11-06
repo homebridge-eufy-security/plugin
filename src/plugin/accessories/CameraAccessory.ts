@@ -24,7 +24,7 @@ import { DeviceAccessory } from './Device';
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore  
-import { Camera, Device, DeviceEvents, PropertyName, CommandName, PropertyValue, StreamMetadata } from '@homebridge-eufy-security/eufy-security-client';
+import { Camera, Device, DeviceEvents, PropertyName, CommandName, PropertyValue, StreamMetadata } from 'eufy-security-client';
 
 import { StreamingDelegate } from '../controller/streamingDelegate';
 import { RecordingDelegate } from '../controller/recordingDelegate';
