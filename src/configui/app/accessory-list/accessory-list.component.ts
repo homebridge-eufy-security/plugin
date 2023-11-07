@@ -11,7 +11,7 @@ import { faRotate } from '@fortawesome/free-solid-svg-icons';
 
 import { PluginService } from '../plugin.service';
 
-import { Accessory } from '../accessory';
+import { Accessory } from '../util/types';
 import { DeviceImage } from '../util/deviceToImagesMap';
 
 @Component({
@@ -38,7 +38,7 @@ export class AccessoryListComponent implements OnInit {
     public pluginService: PluginService,
     private route: ActivatedRoute,
     private routerService: Router,
-  ) {}
+  ) { }
 
   ngOnInit(): void {
     this.waitForAccessories = this.route.snapshot.paramMap.get('waitForAccessories') === 'true';
@@ -123,11 +123,7 @@ export class AccessoryListComponent implements OnInit {
     if (accessory.ignored) {
       style += 'opacity: 0.2;';
     }
-    if (DeviceImage.get(accessory.type)) {
-      style += 'padding:' + DeviceImage.get(accessory.type)?.padding;
-    } else {
-      style += 'padding:20px';
-    }
+    style += 'padding:20px';
     return style;
   }
 }

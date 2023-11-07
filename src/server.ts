@@ -6,16 +6,18 @@ import {
   Device,
   Station,
   PropertyName,
+  CommandName,
+  DeviceType,
 } from 'eufy-security-client';
 import { HomebridgePluginUiServer } from '@homebridge/plugin-ui-utils';
 
 import fs from 'fs';
-import path from 'path';
-import { Logger as TsLogger } from 'tslog';
+
+import { Logger as TsLogger, ILogObj } from 'tslog';
 import { createStream } from 'rotating-file-stream';
 import { Zip } from 'zip-lib';
 
-import { Accessory } from './configui/app/accessory';
+import { Accessory } from './configui/app/util/types';
 import { LoginResult, LoginFailReason } from './configui/app/util/types';
 import { EufyClientInteractor } from './plugin/utils/EufyClientInteractor';
 
@@ -27,8 +29,8 @@ class UiServer extends HomebridgePluginUiServer {
   config: EufySecurityConfig;
   eufyClient: EufySecurity | null;
 
-  private log;
-  private tsLog;
+  private log: TsLogger<ILogObj>;
+  private tsLog: TsLogger<ILogObj>;
 
   private logZipFilePath: string;
 
@@ -299,6 +301,7 @@ class UiServer extends HomebridgePluginUiServer {
       displayName: station.getName(),
       station: true,
       type: station.getDeviceType(),
+      typename: DeviceType[station.getDeviceType()],
     };
     this.accessories.push(s);
     this.storeAccessories();
@@ -311,6 +314,11 @@ class UiServer extends HomebridgePluginUiServer {
       displayName: device.getName(),
       station: false,
       type: device.getDeviceType(),
+      typename: DeviceType[device.getDeviceType()],
+      isCamera: device.isCamera(),
+      isDoorbell: device.isDoorbell(),
+      supportsRTSP: device.hasPropertyValue(PropertyName.DeviceRTSPStream),
+      supportsTalkback: device.hasCommand(CommandName.DeviceStartTalkback),
     };
     this.accessories.push(d);
     this.storeAccessories();

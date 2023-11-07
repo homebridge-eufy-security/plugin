@@ -1,10 +1,9 @@
 import { Component, OnInit, Input } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 
-import { Accessory } from '../accessory';
+import { Accessory } from '../util/types';
 import { ConfigOptionsInterpreter } from '../config-options/config-options-interpreter';
 import { PluginService } from '../plugin.service';
-import { Device } from '../util/eufy-security-client.utils';
 
 @Component({
   selector: 'app-camera-config-options',
@@ -28,10 +27,10 @@ export class CameraConfigOptionsComponent extends ConfigOptionsInterpreter imple
     this.accessory = this.pluginService.getDevice(uniqueId);
 
     if (this.accessory) {
-      this.isDoorbell = Device.isDoorbell(this.accessory.type);
-      this.isCamera = Device.isCamera(this.accessory.type);
-      this.supportsRTSP = Device.supportsRTSP(this.accessory.type);
-      this.supportsTalkback = Device.supportsTalkback(this.accessory.type);
+      this.isCamera = this.accessory.isCamera!;
+      this.isDoorbell = this.accessory.isDoorbell!;
+      this.supportsRTSP = this.accessory.supportsRTSP!;
+      this.supportsTalkback = this.accessory.supportsTalkback!;
 
       // reset rtsp and talkback setting if these are not supported
       if (!this.supportsRTSP) {

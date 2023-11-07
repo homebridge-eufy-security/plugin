@@ -1,9 +1,9 @@
 import { Component, Input, OnInit } from '@angular/core';
-import { Accessory } from '../../accessory';
+import { Accessory } from '../../util/types';
 import { AccessoryService } from '../../accessory.service';
 import { PluginService } from '../../plugin.service';
 import { DEFAULT_CAMERACONFIG_VALUES, DEFAULT_CONFIG_VALUES } from '../../util/default-config-values';
-import { ChargingStatus } from '../../util/eufy-security-client.utils';
+import { ChargingType } from '../../util/types';
 import { ConfigOptionsInterpreter } from '../config-options-interpreter';
 
 import { VideoConfig } from '../../../../plugin/utils/configTypes';
@@ -70,7 +70,7 @@ export class EnableHsvComponent extends ConfigOptionsInterpreter implements OnIn
   // acodecOptionsPlaceholder = '-profile:a aac_eld';
   vcodecOptionsPlaceholder = '-preset ultrafast -tune zerolatency';
 
-  chargingStatus = ChargingStatus.PLUGGED;
+  chargingStatus = ChargingType.PLUGGED;
   camerasOnSameStation: string[] = [];
 
   ignoreMultipleDevicesWarning = DEFAULT_CONFIG_VALUES.ignoreMultipleDevicesWarning;

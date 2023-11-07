@@ -1,12 +1,12 @@
 import { Component, Input, OnInit } from '@angular/core';
-import { Accessory } from '../../../app/accessory';
+import { Accessory } from '../../../app/util/types';
 import { PluginService } from '../../../app/plugin.service';
 import { DEFAULT_CAMERACONFIG_VALUES, DEFAULT_CONFIG_VALUES } from '../../../app/util/default-config-values';
 import { ConfigOptionsInterpreter } from '../config-options-interpreter';
 
 import { faPlusCircle, faMinusCircle, faCircle } from '@fortawesome/free-solid-svg-icons';
 import { AccessoryService } from '../../accessory.service';
-import { ChargingStatus } from '../../util/eufy-security-client.utils';
+import { ChargingType } from '../../util/types';
 
 @Component({
   selector: 'app-snapshot-handling-method',
@@ -34,7 +34,7 @@ export class SnapshotHandlingMethodComponent extends ConfigOptionsInterpreter im
 
   value = DEFAULT_CAMERACONFIG_VALUES.snapshotHandlingMethod;
 
-  chargingStatus = ChargingStatus.PLUGGED;
+  chargingStatus = ChargingType.PLUGGED;
   camerasOnSameStation: string[] = [];
 
   ignoreMultipleDevicesWarning = DEFAULT_CONFIG_VALUES.ignoreMultipleDevicesWarning;

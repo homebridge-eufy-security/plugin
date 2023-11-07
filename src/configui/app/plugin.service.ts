@@ -4,7 +4,7 @@ import { fromEvent } from 'rxjs';
 
 import { PluginConfig } from '@homebridge/plugin-ui-utils/dist/ui.interface';
 
-import { Accessory } from './accessory';
+import { Accessory } from './util/types';
 
 @Injectable({
   providedIn: 'root',

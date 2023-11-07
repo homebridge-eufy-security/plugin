@@ -1,5 +1,5 @@
 import { Component, Input, OnInit } from '@angular/core';
-import { Accessory } from '../../accessory';
+import { Accessory } from '../../util/types';
 import { PluginService } from '../../plugin.service';
 import { ConfigOptionsInterpreter } from '../config-options-interpreter';
 

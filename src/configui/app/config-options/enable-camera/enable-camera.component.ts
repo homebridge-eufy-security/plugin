@@ -1,9 +1,7 @@
 import { Component, OnInit, Input } from '@angular/core';
-import { Accessory } from '../../../app/accessory';
+import { Accessory } from '../../../app/util/types';
 import { PluginService } from '../../../app/plugin.service';
 import { ConfigOptionsInterpreter } from '../config-options-interpreter';
-
-import { Device } from '../../../app/util/eufy-security-client.utils';
 
 @Component({
   selector: 'app-enable-camera',
@@ -30,7 +28,7 @@ export class EnableCameraComponent extends ConfigOptionsInterpreter implements O
   disabled = false;
 
   async readValue() {
-    if (this.accessory && Device.isDoorbell(this.accessory.type)) {
+    if (this.accessory && this.accessory.isDoorbell) {
       this.value = 'true';
       this.disabled = true;
       this.update();

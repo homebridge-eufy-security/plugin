@@ -1,7 +1,7 @@
 /* eslint-disable max-len */
 
 import { Component, Input, OnInit } from '@angular/core';
-import { Accessory } from '../../../app/accessory';
+import { Accessory } from '../../../app/util/types';
 import { PluginService } from '../../../app/plugin.service';
 import { ConfigOptionsInterpreter } from '../config-options-interpreter';
 import { DEFAULT_CAMERACONFIG_VALUES } from '../../util/default-config-values';

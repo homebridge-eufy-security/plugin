@@ -1,7 +1,7 @@
 /* eslint-disable no-console */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { PluginConfig } from '@homebridge/plugin-ui-utils/dist/ui.interface';
-import { Accessory } from '../accessory';
+import { Accessory } from '../util/types';
 import { PluginService } from '../plugin.service';
 import { DEFAULT_CONFIG_VALUES } from '../../app/util/default-config-values';
 

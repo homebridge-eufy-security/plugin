@@ -18,3 +18,29 @@ export type LoginResult = {
   failReason?: LoginFailReason;
   data?: any;
 };
+
+export type Accessory = {
+  uniqueId: string;
+  displayName: string;
+  type: number;
+  typename: string;
+  station: boolean;
+  ignored?: boolean;
+  cachedName?: string;
+  isCamera?: boolean;
+  isDoorbell?: boolean;
+  supportsRTSP?: boolean;
+  supportsTalkback?: boolean;
+};
+
+export enum ChargingType {
+  CHARGING = 1,
+  UNPLUGGED = 2,
+  PLUGGED = 3,
+  SOLAR_CHARGING = 4
+}
+
+export type Country = {
+  short: string;
+  long: string;
+};

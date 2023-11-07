@@ -2,10 +2,10 @@
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 
-import { Credentials, LoginResult, LoginFailReason } from '../util/types';
+import { Credentials, LoginResult, LoginFailReason, Country } from '../util/types';
 import { LoginService } from '../login.service';
 
-import { Country, COUNTRIES } from '../countries';
+import { COUNTRIES } from '../countries';
 
 enum LoginStep {
   LOGIN = 1,

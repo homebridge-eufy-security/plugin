@@ -1,12 +1,12 @@
 import { Injectable } from '@angular/core';
-import { ChargingStatus } from './util/eufy-security-client.utils';
+import { ChargingType } from './util/types';
 
 @Injectable({
   providedIn: 'root',
 })
 export class AccessoryService {
 
-  public async getChargingStatus(sn: string): Promise<ChargingStatus> {
+  public async getChargingStatus(sn: string): Promise<ChargingType> {
     return window.homebridge.request('/getChargingStatus', sn);
   }
 

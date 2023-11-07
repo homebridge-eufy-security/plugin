@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { Accessory } from '../accessory';
+import { Accessory } from '../util/types';
 import { PluginService } from '../plugin.service';
 
 @Component({
