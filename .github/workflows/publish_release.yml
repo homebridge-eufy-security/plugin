@@ -7,6 +7,14 @@ on:
         description: 'premajor/prerelease/prepatch/major/minor/patch'
         required: true
         default: 'patch'
+        type: choice
+        options:
+        - major
+        - minor
+        - patch
+        - premajor
+        - prerelease
+        - prepatch
       tag:
         description: 'tag: latest/rc/beta'
         required: true
