@@ -49,12 +49,6 @@
                   "maximumError": "4kb"
                 }
               ],
-              "fileReplacements": [
-                {
-                  "replace": "src/configui/environments/environment.ts",
-                  "with": "src/configui/environments/environment.prod.ts"
-                }
-              ],
               "optimization": {
                 "scripts": true,
                 "styles": {
