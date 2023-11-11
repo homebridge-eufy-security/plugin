@@ -409,7 +409,7 @@ export class CameraAccessory extends DeviceAccessory {
       }
       characteristic.updateValue(this.platform.Characteristic.ProgrammableSwitchEvent.SINGLE_PRESS);
       // Set a new timeout for muting subsequent notifications
-      this.notificationTimeout = setTimeout(() => { }, 3000);
+      this.notificationTimeout = setTimeout(() => { this.notificationTimeout = null; }, 15000);
     }
   }
 
