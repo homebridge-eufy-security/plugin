@@ -4,8 +4,9 @@ import { Station, Device, StreamMetadata, Camera } from 'eufy-security-client';
 
 import { EufySecurityPlatform } from '../platform';
 import { Logger as TsLogger, ILogObj } from 'tslog';
+import { StreamingDelegate } from './streamingDelegate';
 
-type StationStream = {
+export type StationStream = {
   station: Station;
   device: Device;
   metadata: StreamMetadata;
@@ -14,169 +15,35 @@ type StationStream = {
   createdAt: number;
 };
 
-class AudiostreamProxy extends Readable {
-
-  private cacheData: Array<Buffer> = [];
-  private pushNewDataImmediately = false;
-
-  private dataFramesCount = 0;
-
-  constructor(private log: TsLogger<ILogObj>) {
-    super();
-
-  }
-
-  private transmitData(data: Buffer | undefined): boolean {
-    this.dataFramesCount++;
-    return this.push(data);
-  }
-
-  public newAudioData(data: Buffer): void {
-    if (this.pushNewDataImmediately) {
-      this.pushNewDataImmediately = false;
-      this.transmitData(data);
-    } else {
-      this.cacheData.push(data);
-    }
-  }
-
-  public stopProxyStream(): void {
-    this.log.debug('Audiostream was stopped after transmission of ' + this.dataFramesCount + ' data chunks.');
-    this.unpipe();
-    this.destroy();
-  }
-
-  override _read(size: number): void {
-    let pushReturn = true;
-    while (this.cacheData.length > 0 && pushReturn) {
-      const data = this.cacheData.shift();
-      pushReturn = this.transmitData(data);
-    }
-    if (pushReturn) {
-      this.pushNewDataImmediately = true;
-    }
-  }
-}
-
-class VideostreamProxy extends Readable {
-
-  private cacheData: Array<Buffer> = [];
-
-  private killTimeout: NodeJS.Timeout | null = null;
-
-  private pushNewDataImmediately = false;
-  private dataFramesCount = 0;
-
-  constructor(
-    private livestreamId: number,
-    private manager: LocalLivestreamManager,
-    private log: TsLogger<ILogObj>,
-  ) {
-    super();
-
-    this.resetKillTimeout();
-  }
-
-  private transmitData(data: Buffer | undefined): boolean {
-    this.dataFramesCount++;
-    return this.push(data);
-  }
-
-  public newVideoData(data: Buffer): void {
-
-    if (this.pushNewDataImmediately) {
-      this.pushNewDataImmediately = false;
-      try {
-        if (this.transmitData(data)) {
-          this.resetKillTimeout();
-        }
-      } catch (err) {
-        this.log.debug('Push of new data was not succesful. Most likely the target process (ffmpeg) was already terminated. Error: ' + err);
-      }
-    } else {
-      this.cacheData.push(data);
-    }
-  }
-
-  public stopProxyStream(): void {
-    this.log.debug('Videostream was stopped after transmission of ' + this.dataFramesCount + ' data chunks.');
-    this.unpipe();
-    this.destroy();
-    if (this.killTimeout) {
-      clearTimeout(this.killTimeout);
-    }
-  }
-
-  private resetKillTimeout(): void {
-    if (this.killTimeout) {
-      clearTimeout(this.killTimeout);
-    }
-    this.killTimeout = setTimeout(() => {
-      this.log.warn('Proxy Stream (id: ' + this.livestreamId + ') was terminated due to inactivity. (no data transmitted in 15 seconds)');
-      this.manager.stopProxyStream(this.livestreamId);
-    }, 15000);
-  }
-
-  override _read(size: number): void {
-    this.resetKillTimeout();
-    let pushReturn = true;
-    while (this.cacheData.length > 0 && pushReturn) {
-      const data = this.cacheData.shift();
-      pushReturn = this.transmitData(data);
-    }
-    if (pushReturn) {
-      this.pushNewDataImmediately = true;
-    }
-  }
-
-}
-
-type ProxyStream = {
-  id: number;
-  videostream: VideostreamProxy;
-  audiostream: AudiostreamProxy;
-};
-
 export class LocalLivestreamManager extends EventEmitter {
 
-  private readonly SECONDS_UNTIL_TERMINATION_AFTER_LAST_USED = 45;
-  private readonly CONNECTION_ESTABLISHED_TIMEOUT = 5;
-
   private stationStream: StationStream | null;
-  private log: TsLogger<ILogObj>;
-
-  private livestreamCount = 1;
-
-  private proxyStreams: Set<ProxyStream> = new Set<ProxyStream>();
-
-  private connectionTimeout?: NodeJS.Timeout;
-  private terminationTimeout?: NodeJS.Timeout;
 
   private livestreamStartedAt: number | null;
   private livestreamIsStarting = false;
 
-  private readonly platform: EufySecurityPlatform;
-  private readonly device: Camera;
+  private readonly platform: EufySecurityPlatform = this.streamingDelegate.platform;
+  private readonly device: Camera = this.streamingDelegate.device;
+  private log: TsLogger<ILogObj> = this.platform.log;
 
-  constructor(platform: EufySecurityPlatform, device: Camera, log: TsLogger<ILogObj>) {
+  constructor(
+    private streamingDelegate: StreamingDelegate,
+  ) {
     super();
-
-    this.log = log;
-    this.platform = platform;
-    this.device = device;
 
     this.stationStream = null;
     this.livestreamStartedAt = null;
 
     this.initialize();
 
-    this.platform.eufyClient.on('station livestream stop', (station: Station, device: Device) => {
-      this.onStationLivestreamStop(station, device);
-    });
     this.platform.eufyClient.on('station livestream start',
       (station: Station, device: Device, metadata: StreamMetadata, videostream: Readable, audiostream: Readable) => {
         this.onStationLivestreamStart(station, device, metadata, videostream, audiostream);
       });
+
+    this.platform.eufyClient.on('station livestream stop', (station: Station, device: Device) => {
+      this.onStationLivestreamStop(station, device);
+    });
   }
 
   private initialize() {
@@ -188,33 +55,22 @@ export class LocalLivestreamManager extends EventEmitter {
     }
     this.stationStream = null;
     this.livestreamStartedAt = null;
-
-    if (this.connectionTimeout) {
-      clearTimeout(this.connectionTimeout);
-    }
   }
 
-  public async getLocalLivestream(): Promise<ProxyStream> {
-    this.log.debug(this.device.getName(), 'New instance requests livestream. There were ' +
-      this.proxyStreams.size + ' instance(s) using the livestream until now.');
-    if (this.terminationTimeout) {
-      clearTimeout(this.terminationTimeout);
-    }
-    const proxyStream = await this.getProxyStream();
-    if (proxyStream) {
+  public async getLocalLivestream(): Promise<StationStream> {
+    this.log.debug(this.device.getName(), 'New instance requests livestream.');
+    if (this.stationStream) {
       const runtime = (Date.now() - this.livestreamStartedAt!) / 1000;
-      this.log.debug(
-        this.device.getName(),
-        'Using livestream that was started ' + runtime + ' seconds ago. The proxy stream has id: ' + proxyStream.id + '.');
-      return proxyStream;
+      this.log.debug(this.device.getName(), 'Using livestream that was started ' + runtime + ' seconds ago.');
+      return this.stationStream;
     } else {
       return await this.startAndGetLocalLiveStream();
     }
   }
 
-  private async startAndGetLocalLiveStream(): Promise<ProxyStream> {
+  private async startAndGetLocalLiveStream(): Promise<StationStream> {
     return new Promise((resolve, reject) => {
-      this.log.debug(this.device.getName(), 'Start new station livestream (P2P Session)...');
+      this.log.debug(this.device.getName(), 'Start new station livestream...');
       if (!this.livestreamIsStarting) { // prevent multiple stream starts from eufy station
         this.livestreamIsStarting = true;
         this.platform.eufyClient.startStationLivestream(this.device.getSerial());
@@ -222,45 +78,16 @@ export class LocalLivestreamManager extends EventEmitter {
         this.log.debug(this.device.getName(), 'stream is already starting. waiting...');
       }
 
-      if (this.connectionTimeout) {
-        clearTimeout(this.connectionTimeout);
-      }
-      this.connectionTimeout = setTimeout(() => {
-        this.livestreamIsStarting = false;
-        this.log.error(this.device.getName(), 'Local livestream didn\'t start in time. Abort livestream request.');
-        reject('no started livestream found');
-      }, this.CONNECTION_ESTABLISHED_TIMEOUT * 2000);
-
       this.once('livestream start', async () => {
-        if (this.connectionTimeout) {
-          clearTimeout(this.connectionTimeout);
-        }
-        const proxyStream = await this.getProxyStream();
-        if (proxyStream !== null) {
-          this.log.debug(this.device.getName(), 'New livestream started. Proxy stream has id: ' + proxyStream.id + '.');
+        if (this.stationStream !== null) {
+          this.log.debug(this.device.getName(), 'New livestream started.');
           this.livestreamIsStarting = false;
-          resolve(proxyStream);
+          resolve(this.stationStream);
         } else {
           reject('no started livestream found');
         }
       });
     });
-  }
-
-  private scheduleLivestreamCacheTermination(streamingTimeLeft: number): void {
-    // eslint-disable-next-line max-len
-    const terminationTime = ((streamingTimeLeft - this.SECONDS_UNTIL_TERMINATION_AFTER_LAST_USED) > 20) ? this.SECONDS_UNTIL_TERMINATION_AFTER_LAST_USED : streamingTimeLeft - 20;
-    this.log.debug(
-      this.device.getName(),
-      'Schedule livestream termination in ' + terminationTime + ' seconds.');
-    if (this.terminationTimeout) {
-      clearTimeout(this.terminationTimeout);
-    }
-    this.terminationTimeout = setTimeout(() => {
-      if (this.proxyStreams.size <= 0) {
-        this.stopLocalLiveStream();
-      }
-    }, terminationTime * 1000);
   }
 
   public stopLocalLiveStream(): void {
@@ -272,11 +99,6 @@ export class LocalLivestreamManager extends EventEmitter {
   private onStationLivestreamStop(station: Station, device: Device) {
     if (device.getSerial() === this.device.getSerial()) {
       this.log.info(station.getName() + ' station livestream for ' + device.getName() + ' has stopped.');
-      this.proxyStreams.forEach((proxyStream) => {
-        proxyStream.audiostream.stopProxyStream();
-        proxyStream.videostream.stopProxyStream();
-        this.removeProxyStream(proxyStream.id);
-      });
       this.initialize();
     }
   }
@@ -297,37 +119,6 @@ export class LocalLivestreamManager extends EventEmitter {
         }
       }
       this.initialize(); // important to prevent unwanted behaviour when the eufy station emits the 'livestream start' event multiple times
-      videostream.on('data', (data) => {
-        this.proxyStreams.forEach((proxyStream) => {
-          proxyStream.videostream.newVideoData(data);
-        });
-      });
-      videostream.on('error', (error) => {
-        this.log.error(this.device.getName(), 'Local videostream had Error: ' + error);
-        this.stopAllProxyStreams();
-        this.stopLocalLiveStream();
-      });
-      videostream.on('end', () => {
-        this.log.debug(this.device.getName(), 'Local videostream has ended. Clean up.');
-        this.stopAllProxyStreams();
-        this.stopLocalLiveStream();
-      });
-
-      audiostream.on('data', (data) => {
-        this.proxyStreams.forEach((proxyStream) => {
-          proxyStream.audiostream.newAudioData(data);
-        });
-      });
-      audiostream.on('error', (error) => {
-        this.log.error(this.device.getName(), 'Local audiostream had Error: ' + error);
-        this.stopAllProxyStreams();
-        this.stopLocalLiveStream();
-      });
-      audiostream.on('end', () => {
-        this.log.debug(this.device.getName(), 'Local audiostream has ended. Clean up.');
-        this.stopAllProxyStreams();
-        this.stopLocalLiveStream();
-      });
 
       this.log.info(station.getName() + ' station livestream (P2P session) for ' + device.getName() + ' has started.');
       this.livestreamStartedAt = Date.now();
@@ -336,58 +127,6 @@ export class LocalLivestreamManager extends EventEmitter {
       this.log.debug(this.device.getName(), 'Stream metadata: ' + JSON.stringify(this.stationStream.metadata));
 
       this.emit('livestream start');
-    }
-  }
-
-  private getProxyStream(): ProxyStream | null {
-    if (this.stationStream) {
-      const id = this.livestreamCount;
-      this.livestreamCount++;
-      if (this.livestreamCount > 1024) {
-        this.livestreamCount = 1;
-      }
-      const videostream = new VideostreamProxy(id, this, this.log);
-      const audiostream = new AudiostreamProxy(this.log);
-      const proxyStream = { id, videostream, audiostream };
-      this.proxyStreams.add(proxyStream);
-      return proxyStream;
-    } else {
-      return null;
-    }
-  }
-
-  public stopProxyStream(id: number): void {
-    this.proxyStreams.forEach((pStream) => {
-      if (pStream.id === id) {
-        pStream.audiostream.stopProxyStream();
-        pStream.videostream.stopProxyStream();
-        this.removeProxyStream(id);
-      }
-    });
-  }
-
-  private stopAllProxyStreams(): void {
-    this.proxyStreams.forEach((proxyStream) => {
-      this.stopProxyStream(proxyStream.id);
-    });
-  }
-
-  private removeProxyStream(id: number): void {
-    let proxyStream: ProxyStream | null = null;
-    this.proxyStreams.forEach((pStream) => {
-      if (pStream.id === id) {
-        proxyStream = pStream;
-      }
-    });
-    if (proxyStream !== null) {
-      this.proxyStreams.delete(proxyStream);
-
-      this.log.debug(this.device.getName(), 'One stream instance (id: ' + id + ') released livestream. There are now ' +
-        this.proxyStreams.size + ' instance(s) using the livestream.');
-      if (this.proxyStreams.size === 0) {
-        this.log.debug(this.device.getName(), 'All proxy instances to the livestream have terminated.');
-        this.stopLocalLiveStream();
-      }
     }
   }
 }

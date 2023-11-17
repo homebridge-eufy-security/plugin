@@ -26,13 +26,15 @@ import { CameraConfig, VideoConfig } from '../utils/configTypes';
 import { FFmpeg, FFmpegParameters } from '../utils/ffmpeg';
 import { Logger as TsLogger, ILogObj } from 'tslog';
 
-import { Station, Device, Camera, PropertyName } from 'eufy-security-client';
+import { Camera, PropertyName } from 'eufy-security-client';
 import { EufySecurityPlatform } from '../platform';
 
-import { LocalLivestreamManager } from './LocalLivestreamManager';
 import { SnapshotManager } from './SnapshotManager';
 import { TalkbackStream } from '../utils/Talkback';
 import { is_rtsp_ready } from '../utils/utils';
+import { CameraAccessory } from '../accessories/CameraAccessory';
+import { LocalLivestreamManager, StationStream } from './LocalLivestreamManager';
+import { Writable } from 'stream';
 
 export type SessionInfo = {
   address: string; // address of the HAP controller
@@ -57,20 +59,26 @@ type ActiveSession = {
   returnProcess?: FFmpeg;
   timeout?: NodeJS.Timeout;
   socket?: Socket;
-  cachedStreamId?: number;
   talkbackStream?: TalkbackStream;
 };
 
 export class StreamingDelegate implements CameraStreamingDelegate {
+
+  public readonly platform: EufySecurityPlatform = this.camera.platform;
+  public readonly device: Camera = this.camera.device;
+  public readonly cameraConfig: CameraConfig = this.camera.cameraConfig;
+
   private readonly hap: HAP = this.platform.api.hap;
   private readonly api: API = this.platform.api;
   private readonly log: TsLogger<ILogObj> = this.platform.log;
-  private readonly cameraName: string;
-  private videoConfig: VideoConfig;
+  private readonly cameraName: string = this.device.getName()!;
+
+  private readonly videoConfig: VideoConfig = this.cameraConfig.videoConfig!;
   private controller?: CameraController;
 
-  private localLivestreamManager: LocalLivestreamManager;
-  private snapshotManager: SnapshotManager;
+  public readonly localLivestreamManager: LocalLivestreamManager = new LocalLivestreamManager(this);
+
+  private snapshotManager: SnapshotManager = new SnapshotManager(this);
 
   // keep track of sessions
   pendingSessions: Map<string, SessionInfo> = new Map();
@@ -79,25 +87,8 @@ export class StreamingDelegate implements CameraStreamingDelegate {
 
   // eslint-disable-next-line max-len
   constructor(
-    public readonly platform: EufySecurityPlatform,
-    public readonly device: Camera,
-    public cameraConfig: CameraConfig,
+    public readonly camera: CameraAccessory,
   ) {
-    // eslint-disable-line @typescript-eslint/explicit-module-boundary-types
-
-    this.cameraName = device.getName()!;
-
-    this.cameraConfig = cameraConfig;
-    this.videoConfig = cameraConfig.videoConfig!;
-
-    this.localLivestreamManager = new LocalLivestreamManager(
-      this.platform,
-      this.device,
-      this.log,
-    );
-
-    this.snapshotManager = new SnapshotManager(this.platform, this.device, this.cameraConfig, this.localLivestreamManager, this.log);
-
     this.api.on(APIEvent.SHUTDOWN, () => {
       for (const session in this.ongoingSessions) {
         this.stopStream(session);
@@ -133,8 +124,6 @@ export class StreamingDelegate implements CameraStreamingDelegate {
 
   async prepareStream(request: PrepareStreamRequest, callback: PrepareStreamCallback): Promise<void> {
     const ipv6 = request.addressVersion === 'ipv6';
-
-    this.log.debug(this.cameraName, `stream prepare request with session id ${request.sessionID} was received.`);
 
     const options: pickPortOptions = {
       type: 'udp',
@@ -235,64 +224,57 @@ export class StreamingDelegate implements CameraStreamingDelegate {
 
       const rtsp = is_rtsp_ready(this.device, this.cameraConfig, this.log);
 
+      let streamData: StationStream | null = null;
+
       if (rtsp) {
         const url = this.device.getPropertyValue(PropertyName.DeviceRTSPStreamUrl);
         this.platform.log.debug(this.cameraName, 'RTSP URL: ' + url);
         videoParams.setInputSource(url as string);
         audioParams?.setInputSource(url as string);
       } else {
-        try {
-          const streamData = await this.localLivestreamManager.getLocalLivestream().catch((err) => {
-            throw err;
-          });
-          activeSession.cachedStreamId = streamData.id;
-          await videoParams.setInputStream(streamData.videostream);
-          await audioParams?.setInputStream(streamData.audiostream);
-        } catch (err) {
-          this.log.error((this.cameraName + ' Unable to start the livestream: ' + err) as string);
-          callback(err as Error);
-          this.pendingSessions.delete(request.sessionID);
-          return;
-        }
-      }
 
-      const useSeparateProcesses = this.videoConfig.useSeparateProcesses ??= false;
+        const value = await this.localLivestreamManager.getLocalLivestream()
+          .catch((err) => {
+            throw ((this.cameraName + ' Unable to start the livestream: ' + err) as string);
+          });
+
+        streamData = value;
+
+        videoParams.setInputSource('pipe:3');
+        audioParams?.setInputSource('pipe:4');
+
+      }
 
       const videoProcess = new FFmpeg(
         `[${this.cameraName}] [Video Process]`,
-        !useSeparateProcesses && audioParams ? [videoParams, audioParams] : [videoParams],
+        audioParams ? [videoParams, audioParams] : [videoParams],
         this.platform.ffmpegLogger,
       );
+
       videoProcess.on('started', () => {
         callback();
       });
+
       videoProcess.on('error', (err) => {
         this.log.error(this.cameraName, 'Video process ended with error: ' + err);
         this.stopStream(request.sessionID);
       });
+
       activeSession.videoProcess = videoProcess;
       activeSession.videoProcess.start();
 
-      if (useSeparateProcesses && audioParams) {
-        const audioProcess = new FFmpeg(
-          `[${this.cameraName}] [Audio Process]`,
-          [audioParams],
-          this.platform.ffmpegLogger,
-        );
-        audioProcess.on('error', (err) => { // TODO: better reestablish connection
-          this.log.error(this.cameraName, 'Audio process ended with error: ' + err);
-          this.stopStream(request.sessionID);
-        });
-        activeSession.audioProcess = audioProcess;
-        activeSession.audioProcess.start();
+      if (activeSession.videoProcess && activeSession.videoProcess.stdio) {
+        // stdio is defined and can be used
+
+        if (streamData !== null) {
+          streamData.videostream.pipe(activeSession.videoProcess.stdio[3] as Writable);
+          streamData.audiostream.pipe(activeSession.videoProcess.stdio[4] as Writable);
+        }
       }
 
       if (this.cameraConfig.talkback) {
         const talkbackParameters = await FFmpegParameters.forAudio(this.videoConfig.debug);
         await talkbackParameters.setTalkbackInput(sessionInfo!);
-        if (this.cameraConfig.talkbackChannels) {
-          talkbackParameters.setTalkbackChannels(this.cameraConfig.talkbackChannels);
-        }
         activeSession.talkbackStream = new TalkbackStream(this.platform, this.device);
         activeSession.returnProcess = new FFmpeg(
           `[${this.cameraName}] [Talkback Process]`,
@@ -328,8 +310,6 @@ export class StreamingDelegate implements CameraStreamingDelegate {
   handleStreamRequest(request: StreamingRequest, callback: StreamRequestCallback): void {
     switch (request.type) {
       case StreamRequestTypes.START:
-        this.log.debug(this.cameraName, `Received request to start stream with id ${request.sessionID}`);
-        this.log.debug(this.cameraName, `request data: ${JSON.stringify(request)}`);
         this.startStream(request, callback);
         break;
       case StreamRequestTypes.RECONFIGURE:
@@ -392,8 +372,8 @@ export class StreamingDelegate implements CameraStreamingDelegate {
         this.log.error(this.cameraName, 'Error occurred closing socket: ' + err);
       }
       try {
-        if (!is_rtsp_ready(this.device, this.cameraConfig, this.log) && session.cachedStreamId) {
-          this.localLivestreamManager.stopProxyStream(session.cachedStreamId);
+        if (!is_rtsp_ready(this.device, this.cameraConfig, this.log)) {
+          this.localLivestreamManager.stopLocalLiveStream();
         }
       } catch (err) {
         this.log.error(this.cameraName, 'Error occurred terminating Eufy Station livestream: ' + err);

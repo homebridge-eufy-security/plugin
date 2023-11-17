@@ -1,6 +1,6 @@
-import https from 'https';
-import { readFileSync } from 'fs';
-import { EventEmitter, Readable } from 'stream';
+import https from 'node:https';
+import { readFileSync } from 'node:fs';
+import { EventEmitter, Readable } from 'node:stream';
 
 import { Camera, Device, PropertyName, PropertyValue } from 'eufy-security-client';
 import ffmpegPath from 'ffmpeg-for-homebridge';
@@ -13,8 +13,11 @@ import { Logger as TsLogger, ILogObj } from 'tslog';
 import { is_rtsp_ready } from '../utils/utils';
 import { SnapshotRequest } from 'homebridge';
 import { FFmpeg, FFmpegParameters } from '../utils/ffmpeg';
+import { StreamingDelegate } from './streamingDelegate';
+import { CameraAccessory } from '../accessories/CameraAccessory';
 
 const SnapshotBlackPath = require.resolve('../../media/Snapshot-black.png');
+const SnapshotUnavailablePath = require.resolve('../../media/Snapshot-Unavailable.png');
 
 let MINUTES_TO_WAIT_FOR_AUTOMATIC_REFRESH_TO_BEGIN = 1; // should be incremented by 1 for every device
 
@@ -54,44 +57,40 @@ type StreamSource = {
 
 export class SnapshotManager extends EventEmitter {
 
-  private readonly platform: EufySecurityPlatform;
-  private readonly device: Camera;
-  private cameraConfig: CameraConfig;
+  private readonly platform: EufySecurityPlatform = this.streamingDelegate.platform;
+  private readonly device: Camera = this.streamingDelegate.device;
+  private readonly accessory: CameraAccessory = this.streamingDelegate.camera;
+  private cameraConfig: CameraConfig = this.streamingDelegate.cameraConfig;
 
   private readonly videoProcessor = ffmpegPath || 'ffmpeg';
 
-  private log;
-  private livestreamManager;
+  private log: TsLogger<ILogObj> = this.platform.log;
+  private livestreamManager: LocalLivestreamManager = this.streamingDelegate.localLivestreamManager;
 
   private lastCloudSnapshot?: Snapshot;
   private currentSnapshot?: Snapshot;
-  public blackSnapshot?: Buffer;
+  private blackSnapshot?: Buffer = readFileSync(SnapshotBlackPath);
+  private UnavailableSnapshot?: Buffer = readFileSync(SnapshotUnavailablePath);
 
   private refreshProcessRunning = false;
   private lastEvent = 0;
   private lastRingEvent = 0;
-  private lastPictureUrlChanged = 0;
 
   private snapshotRefreshTimer?: NodeJS.Timeout;
 
   // eslint-disable-next-line max-len
-  constructor(platform: EufySecurityPlatform, device: Camera, cameraConfig: CameraConfig, livestreamManager: LocalLivestreamManager, log: TsLogger<ILogObj>) {
+  constructor(
+    private streamingDelegate: StreamingDelegate,
+  ) {
     super();
 
-    this.log = log;
-    this.platform = platform;
-    this.device = device;
-    this.cameraConfig = cameraConfig;
-    this.livestreamManager = livestreamManager;
-
     this.device.on('property changed', this.onPropertyValueChanged.bind(this));
-
-    this.device.on('crying detected', (device, state) => this.onEvent(device, state));
-    this.device.on('motion detected', (device, state) => this.onEvent(device, state));
-    this.device.on('person detected', (device, state) => this.onEvent(device, state));
-    this.device.on('pet detected', (device, state) => this.onEvent(device, state));
-    this.device.on('sound detected', (device, state) => this.onEvent(device, state));
     this.device.on('rings', (device, state) => this.onRingEvent(device, state));
+
+    this.accessory.eventTypesToHandle.forEach(eventType => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      this.device.on(eventType, (device: Device, state: boolean) => this.onEvent(device, state));
+    });
 
     if (this.cameraConfig.refreshSnapshotIntervalMinutes) {
       if (this.cameraConfig.refreshSnapshotIntervalMinutes < 5) {
@@ -122,7 +121,6 @@ export class SnapshotManager extends EventEmitter {
     }
 
     try {
-      this.blackSnapshot = readFileSync(SnapshotBlackPath);
       if (this.cameraConfig.immediateRingNotificationWithoutSnapshot) {
         this.log.info(this.device.getName(), 'Empty snapshot will be sent on ring events immediately to speed up homekit notifications.');
       }
@@ -154,7 +152,6 @@ export class SnapshotManager extends EventEmitter {
     if (this.currentSnapshot) {
       const diff = Math.abs((Date.now() - this.currentSnapshot.timestamp) / 1000);
       if (diff <= 15) {
-        this.log.debug(this.device.getName(), `returning snapshot that is just ${diff} seconds old.`);
         return this.resizeSnapshot(this.currentSnapshot.image, request);
       }
     }
@@ -173,15 +170,12 @@ export class SnapshotManager extends EventEmitter {
     try {
       if (this.cameraConfig.snapshotHandlingMethod === 1) {
         // return a preferablly most recent snapshot every time
-        this.log.debug(this.device.getName(), 'trying to get newest possible snapshot from camera.');
         snapshot = await this.getNewestSnapshotBuffer();
       } else if (this.cameraConfig.snapshotHandlingMethod === 2) {
         // balanced method
-        this.log.debug(this.device.getName(), 'trying to get snapshot from camera with balanced method.');
         snapshot = await this.getBalancedSnapshot();
       } else if (this.cameraConfig.snapshotHandlingMethod === 3) {
         // fastest method with potentially old snapshots
-        this.log.debug(this.device.getName(), 'trying to return cloud snapshot.');
         snapshot = await this.getNewestCloudSnapshot();
       } else {
         return Promise.reject('No suitable handling method for snapshots defined');
@@ -190,7 +184,7 @@ export class SnapshotManager extends EventEmitter {
 
     } catch (err) {
       this.log.error(err);
-      return this.resizeSnapshot(this.blackSnapshot!, request);
+      return this.resizeSnapshot(this.UnavailableSnapshot!, request);
     }
   }
 
@@ -233,7 +227,7 @@ export class SnapshotManager extends EventEmitter {
       const newestEvent = (this.lastRingEvent > this.lastEvent) ? this.lastRingEvent : this.lastEvent;
       const diff = (Date.now() - newestEvent) / 1000;
       if (diff < 15) { // wait for cloud or camera snapshot
-        this.log.debug(this.device.getName(), 'Waiting on cloud or camera snapshot...');
+        this.log.debug(this.device.getName(), 'Waiting on cloud snapshot...');
         if (snapshotTimeout) {
           clearTimeout(snapshotTimeout);
         }
@@ -267,30 +261,13 @@ export class SnapshotManager extends EventEmitter {
       const diff = (Date.now() - newestEvent) / 1000;
       if (diff < 15) { // wait for cloud snapshot
         this.log.debug(this.device.getName(), 'Waiting on cloud snapshot...');
-
         const snapshotTimeout = setTimeout(() => {
           reject('No snapshot has been retrieved in time from eufy cloud.');
         }, 15000);
 
-        const pictureUrlTimeout = setTimeout(() => {
-          const diff = (Date.now() - this.lastPictureUrlChanged) / 1000;
-          if (diff > 5) {
-            // eslint-disable-next-line max-len
-            this.log.debug(this.device.getName(), 'There was no new cloud snapshot announced in time, although an event occured. Trying to return last cloud snapshot.');
-            if (this.currentSnapshot) {
-              resolve(this.currentSnapshot.image);
-            } else {
-              reject('No snapshot in memory');
-            }
-          }
-        }, 2500);
-
         this.once('new snapshot', () => {
           if (snapshotTimeout) {
             clearTimeout(snapshotTimeout);
-          }
-          if (pictureUrlTimeout) {
-            clearTimeout(pictureUrlTimeout);
           }
 
           if (this.currentSnapshot) {
@@ -324,7 +301,6 @@ export class SnapshotManager extends EventEmitter {
 
   private async onPropertyValueChanged(device: Device, name: string, value: PropertyValue): Promise<void> {
     if (name === 'pictureUrl') {
-      this.lastPictureUrlChanged = Date.now();
       this.handlePictureUrl(value as string);
     }
   }
@@ -492,13 +468,13 @@ export class SnapshotManager extends EventEmitter {
       const buffer = await ffmpeg.getResult();
 
       if (source.livestreamId) {
-        this.livestreamManager.stopProxyStream(source.livestreamId);
+        this.livestreamManager.stopLocalLiveStream();
       }
 
       return Promise.resolve(buffer);
     } catch (err) {
       if (source.livestreamId) {
-        this.livestreamManager.stopProxyStream(source.livestreamId);
+        this.livestreamManager.stopLocalLiveStream();
       }
       return Promise.reject(err);
     }
@@ -521,7 +497,7 @@ export class SnapshotManager extends EventEmitter {
         const streamData = await this.livestreamManager.getLocalLivestream();
         return {
           stream: streamData.videostream,
-          livestreamId: streamData.id,
+          livestreamId: 1,
         };
       } catch (err) {
         this.log.warn(this.device.getName(), 'Could not get snapshot from livestream!');

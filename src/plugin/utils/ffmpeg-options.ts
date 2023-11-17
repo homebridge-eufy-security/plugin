@@ -672,26 +672,6 @@ export class FfmpegOptions {
     }
   }
 
-  // Use the host system information to determine which recording channel to use by default for HKSV.
-  public get recordingDefaultChannel(): string | undefined {
-
-    switch (this.platform.hostSystem) {
-
-      case 'raspbian':
-
-        // For constrained CPU environments like Raspberry Pi, we default to recording from the highest quality channel we can, that's at or below 1080p.
-        // That provides a reasonable default, while still allowing users who really want to, to be able to specify something else.
-        return this.camera.findRtsp(1920, 1080, undefined, this.hostSystemMaxPixels)?.channel.name ?? undefined;
-
-        break;
-
-      default:
-
-        // We default to no preference for the default Protect camera channel.
-        return undefined;
-    }
-  }
-
   // Return the maximum pixel count supported by a specific hardware encoder on the host system.
   public get hostSystemMaxPixels(): number {
 

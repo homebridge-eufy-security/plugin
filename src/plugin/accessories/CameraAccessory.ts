@@ -4,7 +4,6 @@ import {
   Characteristic,
   CharacteristicValue,
   Resolution,
-  CameraController,
   CameraControllerOptions,
   SRTPCryptoSuites,
   H264Profile,
@@ -24,14 +23,13 @@ import { DeviceAccessory } from './Device';
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore  
-import { Camera, Device, DeviceEvents, PropertyName, CommandName, PropertyValue, StreamMetadata } from 'eufy-security-client';
+import { Camera, Device, DeviceEvents, PropertyName, CommandName, StreamMetadata } from 'eufy-security-client';
 
 import { StreamingDelegate } from '../controller/streamingDelegate';
 import { RecordingDelegate } from '../controller/recordingDelegate';
 
 import { CameraConfig, DEFAULT_CAMERACONFIG_VALUES } from '../utils/configTypes';
 import { PROTECT_HKSV_SEGMENT_LENGTH, PROTECT_HKSV_TIMESHIFT_BUFFER_MAXLENGTH } from '../settings';
-import { LocalLivestreamManager } from '../controller/LocalLivestreamManager';
 
 // A semi-complete description of the UniFi Protect camera channel JSON.
 export interface ProtectCameraChannelConfig {
@@ -79,14 +77,13 @@ export class CameraAccessory extends DeviceAccessory {
 
   private rtspEntries: RtspEntry[] = [];
   private rtspQuality: { [index: string]: string } = {};
-  public hasHksv: boolean = false;
   private isVideoConfigured: boolean = false;
   public rtsp_url: string = '';
 
   public metadata!: StreamMetadata;
 
   // List of event types
-  private eventTypesToHandle: (keyof DeviceEvents)[] = [
+  public readonly eventTypesToHandle: (keyof DeviceEvents)[] = [
     'motion detected',
     'person detected',
     'pet detected',
@@ -101,7 +98,17 @@ export class CameraAccessory extends DeviceAccessory {
   public recordingDelegate?: RecordingDelegate | null = null;
 
   private resolutions: Resolution[] = [
+    [320, 180, 30],
     [320, 240, 15], // Apple Watch requires this configuration
+    [320, 240, 30],
+    [480, 270, 30],
+    [480, 360, 30],
+    [640, 360, 30],
+    [640, 480, 30],
+    [1280, 720, 30],
+    [1280, 960, 30],
+    [1920, 1080, 30],
+    [1600, 1200, 30],
   ];
 
   constructor(
@@ -145,8 +152,7 @@ export class CameraAccessory extends DeviceAccessory {
     }
 
     try {
-      // Configure HomeKit Secure Video suport.
-      this.configureHksv();
+
       this.configureVideoStream();
 
     } catch (error) {
@@ -160,7 +166,7 @@ export class CameraAccessory extends DeviceAccessory {
       video: {
         resolutions: this.resolutions,
         codec: {
-          profiles: [H264Profile.HIGH],
+          profiles: [H264Profile.BASELINE, H264Profile.MAIN, H264Profile.HIGH],
           levels: [H264Level.LEVEL3_1, H264Level.LEVEL3_2, H264Level.LEVEL4_0],
         },
       },
@@ -201,7 +207,7 @@ export class CameraAccessory extends DeviceAccessory {
       video: {
         type: this.hap.VideoCodecType.H264,
         parameters: {
-          profiles: [H264Profile.HIGH],
+          profiles: [H264Profile.BASELINE, H264Profile.MAIN, H264Profile.HIGH],
           levels: [H264Level.LEVEL3_1, H264Level.LEVEL3_2, H264Level.LEVEL4_0],
         },
         resolutions: this.resolutions,
@@ -236,50 +242,6 @@ export class CameraAccessory extends DeviceAccessory {
     };
 
     return option;
-  }
-
-  /**
-   * Sets up RTSP and waits for the DeviceRTSPStreamUrl property to change.
-   * @returns {Promise<void>}
-   */
-  private async setupRTSP(): Promise<PropertyValue> {
-    return new Promise<PropertyValue>((resolve, reject) => {
-      // Set a timeout to reject the promise after 10 seconds
-      const timeout = setTimeout(() => {
-        this.log.error('Timeout waiting for RTSP Stream URL');
-        reject(new Error('Timeout waiting for RTSP Stream URL'));
-      }, 10000);
-
-      if (this.device.hasProperty(PropertyName.DeviceRTSPStream)) {
-        if (!this.device.getPropertyValue(PropertyName.DeviceRTSPStream)) {
-          this.setPropertyValue(PropertyName.DeviceRTSPStream, true)
-            .then(() => {
-              this.log.info(`${this.accessory.displayName} enabling RTSP`);
-
-              // Register for property changes
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              this.device.on('property changed', (device: any, name: string, value: PropertyValue) => {
-                if (name === PropertyName.DeviceRTSPStreamUrl && value !== undefined) {
-                  clearTimeout(timeout); // Clear the timeout
-                  resolve(value);
-                }
-              });
-            })
-            .catch((error) => {
-              clearTimeout(timeout); // Clear the timeout
-              this.log.error('Error setting RTSP property:', error);
-              reject(error);
-            });
-        } else {
-          clearTimeout(timeout); // Clear the timeout
-          this.log.info(`${this.accessory.displayName} RTSP enabled`);
-          resolve(this.device.getPropertyValue(PropertyName.DeviceRTSPStreamUrl));
-        }
-      } else {
-        clearTimeout(timeout); // Clear the timeout
-        reject(`${this.accessory.displayName} no RTSP settings found`);
-      }
-    });
   }
 
   private setupButtonService(
@@ -634,82 +596,21 @@ export class CameraAccessory extends DeviceAccessory {
     return true;
   }
 
-  // Find an RTSP configuration for a given target resolution.
-  private findRtspEntry(width: number, height: number, rtspEntries: RtspEntry[], defaultStream = this.rtspQuality['StreamingDefault']): RtspEntry | null {
-
-    // No RTSP entries to choose from, we're done.
-    if (!rtspEntries || !rtspEntries.length) {
-
-      return null;
-    }
-
-    // Second, we check to see if we've set an explicit preference for stream quality.
-    if (defaultStream) {
-
-      defaultStream = defaultStream.toUpperCase();
-
-      return rtspEntries.find(x => x.channel.name.toUpperCase() === defaultStream) ?? null;
-    }
-
-    // See if we have a match for our desired resolution on the camera. We ignore FPS - HomeKit clients seem to be able to handle it just fine.
-    const exactRtsp = rtspEntries.find(x => (x.resolution[0] === width) && (x.resolution[1] === height));
-
-    if (exactRtsp) {
-
-      return exactRtsp;
-    }
-
-    // No match found, let's see what we have that's closest. We try to be a bit smart about how we select our stream - if it's an HD quality stream request (720p+),
-    // we want to try to return something that's HD quality before looking for something lower resolution.
-    if ((width >= 1280) && (height >= 720)) {
-
-      const entry = rtspEntries.find(x => x.resolution[0] >= 1280);
-
-      if (entry) {
-
-        return entry;
-      }
-    }
-
-    // If we didn't request an HD resolution, or we couldn't find anything HD to use, we try to find the highest resolution we can find that's at least our requested
-    // width or larger. If we can't find anything that matches, we return the lowest resolution we have available.
-    return rtspEntries.filter(x => x.resolution[0] >= width)?.pop() ?? rtspEntries[rtspEntries.length - 1];
-  }
-
-  // Find a streaming RTSP configuration for a given target resolution.
-  public findRtsp(width: number, height: number, rtspEntries = this.rtspEntries, constrainPixels = 0): RtspEntry | null {
-
-    // If we've imposed a constraint on the maximum dimensions of what we want due to a hardware limitation, filter out those entries.
-    if (constrainPixels) {
-
-      rtspEntries = rtspEntries.filter(x => (x.channel.width * x.channel.height) <= constrainPixels);
-    }
-
-    return this.findRtspEntry(width, height, rtspEntries);
-  }
-
-  // Configure HomeKit Secure Video support.
-  private configureHksv(): boolean {
-
-    this.hasHksv = true;
-
-    // If we have smart motion events enabled, let's warn the user that things will not work quite the way they expect.
-    if (this.accessory.getService(this.hap.Service.MotionSensor)) {
-      this.log.info('WARNING: Motion detection and HomeKit Secure Video provide overlapping functionality. ' +
-        'Only HomeKit Secure Video, when event recording is enabled in the Home app, will be used to trigger motion event notifications for this camera.');
-    }
-
-    return true;
-  }
-
   // Configure a camera accessory for HomeKit.
   private configureVideoStream(): boolean {
     this.platform.log.debug(`${this.accessory.displayName} StreamingDelegate`);
-    this.streamingDelegate = new StreamingDelegate(this.platform, this.device, this.cameraConfig);
+    this.streamingDelegate = new StreamingDelegate(this);
 
     this.recordingDelegate = {} as RecordingDelegate;
 
     if (this.cameraConfig.hsv) {
+
+      // If we have smart motion events enabled, let's warn the user that things will not work quite the way they expect.
+      if (this.accessory.getService(this.hap.Service.MotionSensor)) {
+        this.log.info('WARNING: Motion detection and HomeKit Secure Video provide overlapping functionality. ' +
+          'Only HomeKit Secure Video, when event recording is enabled in the Home app, will be used to trigger motion event notifications for this camera.');
+      }
+
       this.platform.log.debug(`${this.accessory.displayName} RecordingDelegate`);
       this.recordingDelegate = new RecordingDelegate(this.streamingDelegate, this.accessory);
     }

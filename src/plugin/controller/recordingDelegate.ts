@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { ChildProcessWithoutNullStreams } from 'child_process';
+import { ChildProcess } from 'child_process';
 import { Camera, PropertyName } from 'eufy-security-client';
 import {
   CameraController,
@@ -10,15 +10,16 @@ import {
   RecordingPacket,
 } from 'homebridge';
 import { EufySecurityPlatform } from '../platform';
-import { CameraConfig, VideoConfig } from '../utils/configTypes';
+import { CameraConfig } from '../utils/configTypes';
 import { FFmpeg, FFmpegParameters } from '../utils/ffmpeg';
 import { Logger as TsLogger, ILogObj } from 'tslog';
 import net from 'net';
 import { is_rtsp_ready } from '../utils/utils';
-import { LocalLivestreamManager } from './LocalLivestreamManager';
+import { LocalLivestreamManager, StationStream } from './LocalLivestreamManager';
 import { StreamingDelegate } from './streamingDelegate';
+import { Writable } from 'stream';
 
-const MAX_RECORDING_MINUTES = 1; // should never be used
+const MAX_RECORDING_MINUTES = 3;
 
 const HKSVQuitReason = [
   'Normal',
@@ -51,7 +52,7 @@ export class RecordingDelegate implements CameraRecordingDelegate {
 
   private session?: {
     socket: net.Socket;
-    process?: ChildProcessWithoutNullStreams | undefined;
+    process?: ChildProcess | undefined;
     generator: AsyncGenerator<{
       header: Buffer;
       length: number;
@@ -79,8 +80,6 @@ export class RecordingDelegate implements CameraRecordingDelegate {
     this.handlingStreamingRequest = true;
     this.log.info(this.camera.getName(), 'requesting recording for HomeKit Secure Video.');
 
-    let cachedStreamId: number | undefined = undefined;
-
     let pending: Buffer[] = [];
     let filebuffer = Buffer.alloc(0);
 
@@ -96,29 +95,30 @@ export class RecordingDelegate implements CameraRecordingDelegate {
       const videoParams = await FFmpegParameters.forVideoRecording();
       const audioParams = await FFmpegParameters.forAudioRecording();
 
-      const hsvConfig: VideoConfig = this.cameraConfig.hsvConfig ?? {};
-
-      if (this.cameraConfig.videoConfig && this.cameraConfig.videoConfig.videoProcessor) {
-        hsvConfig.videoProcessor = this.cameraConfig.videoConfig.videoProcessor;
-      }
-
-      videoParams.setupForRecording(hsvConfig, this.configuration!);
-      audioParams.setupForRecording(hsvConfig, this.configuration!);
+      videoParams.setupForRecording(this.cameraConfig.videoConfig || {}, this.configuration!);
+      audioParams.setupForRecording(this.cameraConfig.videoConfig || {}, this.configuration!);
 
       const rtsp = is_rtsp_ready(this.camera, this.cameraConfig, this.log);
+
+      let streamData: StationStream | null = null;
 
       if (rtsp) {
         const url = this.camera.getPropertyValue(PropertyName.DeviceRTSPStreamUrl);
         this.platform.log.debug(this.camera.getName(), 'RTSP URL: ' + url);
         videoParams.setInputSource(url as string);
-        audioParams.setInputSource(url as string);
+        audioParams?.setInputSource(url as string);
       } else {
-        const streamData = await this.localLivestreamManager.getLocalLivestream().catch((err) => {
-          throw err;
-        });
-        await videoParams.setInputStream(streamData.videostream);
-        await audioParams.setInputStream(streamData.audiostream);
-        cachedStreamId = streamData.id;
+
+        const value = await this.localLivestreamManager.getLocalLivestream()
+          .catch((err) => {
+            throw ((this.camera.getName() + ' Unable to start the livestream: ' + err) as string);
+          });
+
+        streamData = value;
+
+        videoParams.setInputSource('pipe:3');
+        audioParams?.setInputSource('pipe:4');
+
       }
 
       const ffmpeg = new FFmpeg(
@@ -129,7 +129,16 @@ export class RecordingDelegate implements CameraRecordingDelegate {
 
       this.session = await ffmpeg.startFragmentedMP4Session();
 
-      let timer = this.cameraConfig.hsvRecordingDuration ?? MAX_RECORDING_MINUTES * 60;
+      if (this.session.process && this.session.process.stdio) {
+        // stdio is defined and can be used
+
+        if (streamData !== null) {
+          streamData.videostream.pipe(this.session.process.stdio[3] as Writable);
+          streamData.audiostream.pipe(this.session.process.stdio[4] as Writable);
+        }
+      }
+
+      let timer = MAX_RECORDING_MINUTES * 60;
       if (this.platform.config.CameraMaxLivestreamDuration < timer) {
         timer = this.platform.config.CameraMaxLivestreamDuration;
       }
@@ -219,9 +228,7 @@ export class RecordingDelegate implements CameraRecordingDelegate {
           .updateValue(false);
       }
 
-      if (cachedStreamId) {
-        this.localLivestreamManager.stopProxyStream(cachedStreamId);
-      }
+      this.localLivestreamManager.stopLocalLiveStream();
     }
   }
 
