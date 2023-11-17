@@ -31,7 +31,7 @@ import { RecordingDelegate } from '../controller/recordingDelegate';
 
 import { CameraConfig, DEFAULT_CAMERACONFIG_VALUES } from '../utils/configTypes';
 import { PROTECT_HKSV_SEGMENT_LENGTH, PROTECT_HKSV_TIMESHIFT_BUFFER_MAXLENGTH } from '../settings';
-import { StationStream } from '../controller/LocalLivestreamManager';
+import { LocalLivestreamManager } from '../controller/LocalLivestreamManager';
 
 // A semi-complete description of the UniFi Protect camera channel JSON.
 export interface ProtectCameraChannelConfig {
@@ -145,16 +145,6 @@ export class CameraAccessory extends DeviceAccessory {
     }
 
     try {
-      // this.setupRTSP()
-      //   .then((rtspUrl) => {
-      //     this.rtsp_url = rtspUrl as string;
-      //     this.log.info(`${this.accessory.displayName} RTSP url: ${rtspUrl}`);
-
-      //   })
-      //   .catch((error) => {
-      //     // Handle any errors that occur during the promise chain
-      //     this.log.error('Error in setupRTSP:', error);
-      //   });
       // Configure HomeKit Secure Video suport.
       this.configureHksv();
       this.configureVideoStream();
@@ -715,24 +705,13 @@ export class CameraAccessory extends DeviceAccessory {
   // Configure a camera accessory for HomeKit.
   private configureVideoStream(): boolean {
     this.platform.log.debug(`${this.accessory.displayName} StreamingDelegate`);
-    this.streamingDelegate = new StreamingDelegate(this);
-
-    // We need to get stream info but we need to initiate a livestream first
-    this.streamingDelegate.localLivestreamManager.getLocalLivestream()
-      .then((stationStream: StationStream) => {
-        this.metadata = stationStream.metadata;
-        this.platform.log.debug(`${this.accessory.displayName} Stream Metadata :`, this.metadata);
-        this.resolutions.push([this.metadata.videoWidth, this.metadata.videoHeight, this.metadata.videoFPS]);
-      })
-      .finally(() => {
-        this.streamingDelegate?.localLivestreamManager.stopLocalLiveStream();
-      });
+    this.streamingDelegate = new StreamingDelegate(this.platform, this.device, this.cameraConfig);
 
     this.recordingDelegate = {} as RecordingDelegate;
 
     if (this.cameraConfig.hsv) {
       this.platform.log.debug(`${this.accessory.displayName} RecordingDelegate`);
-      this.recordingDelegate = new RecordingDelegate(this);
+      this.recordingDelegate = new RecordingDelegate(this.streamingDelegate, this.accessory);
     }
 
     this.platform.log.debug(`${this.accessory.displayName} Controller`);
