@@ -22,28 +22,22 @@ import { LoginResult, LoginFailReason } from './configui/app/util/types';
 import { EufyClientInteractor } from './plugin/utils/EufyClientInteractor';
 
 class UiServer extends HomebridgePluginUiServer {
-  storagePath: string;
-  storedAccessories_file: string;
   accessories: Accessory[] = [];
 
   config: EufySecurityConfig;
-  eufyClient: EufySecurity | null;
+  private eufyClient: EufySecurity | null = null;
 
   private log: TsLogger<ILogObj>;
   private tsLog: TsLogger<ILogObj>;
 
-  private logZipFilePath: string;
+  private storagePath: string = this.homebridgeStoragePath + '/eufysecurity';
+  private storedAccessories_file: string = this.storagePath + '/accessories.json';
+  private logZipFilePath: string = this.storagePath + '/logs.zip';
 
   private pluginConfigInteractor: EufyClientInteractor;
 
   constructor() {
     super();
-
-    this.storagePath = this.homebridgeStoragePath + '/eufysecurity';
-    this.storedAccessories_file = this.storagePath + '/accessories.json';
-    this.logZipFilePath = this.storagePath + '/logs.zip';
-
-    this.eufyClient = null;
 
     const plugin = require('../package.json');
 
