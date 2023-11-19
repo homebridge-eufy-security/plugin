@@ -22,8 +22,8 @@ const EXTENDED_WAIT_MS = 15000;
 const SNAPSHOT_WAIT_THRESHOLD_SECONDS = 15;
 const MILLISECONDS_PER_MINUTE = 60 * 1000;
 
-const SnapshotBlackPath = require.resolve('../../media/Snapshot-black.png');
-const SnapshotUnavailablePath = require.resolve('../../media/Snapshot-Unavailable.png');
+const SnapshotBlack = readFileSync(require.resolve('../../media/Snapshot-black.png'));
+const SnapshotUnavailable = readFileSync(require.resolve('../../media/Snapshot-Unavailable.png'));
 
 let MINUTES_TO_WAIT_FOR_AUTOMATIC_REFRESH_TO_BEGIN = 1; // should be incremented by 1 for every device
 
@@ -75,10 +75,10 @@ export class SnapshotManager extends EventEmitter {
 
   private lastCloudSnapshot?: Snapshot;
   private currentSnapshot?: Snapshot;
-  private blackSnapshot?: Buffer = readFileSync(SnapshotBlackPath);
-  private UnavailableSnapshot?: Buffer = readFileSync(SnapshotUnavailablePath);
 
   private refreshProcessRunning = false;
+  private refreshSnapshotIntervalMinutes = 0;
+
   private lastEvent = 0;
   private lastRingEvent = 0;
   private lastImageEvent = 0;
@@ -91,6 +91,8 @@ export class SnapshotManager extends EventEmitter {
   ) {
     super();
 
+    this.refreshSnapshotIntervalMinutes = this.cameraConfig.refreshSnapshotIntervalMinutes ?? 0;
+
     this.device.on('property changed', this.onPropertyValueChanged.bind(this));
     this.device.on('rings', (device, state) => this.onRingEvent(device, state));
 
@@ -99,13 +101,13 @@ export class SnapshotManager extends EventEmitter {
       this.device.on(eventType, (device: Device, state: boolean) => this.onMotionEvent(device, state));
     });
 
-    if (this.cameraConfig.refreshSnapshotIntervalMinutes) {
-      if (this.cameraConfig.refreshSnapshotIntervalMinutes < 5) {
+    if (this.refreshSnapshotIntervalMinutes) {
+      if (this.refreshSnapshotIntervalMinutes < 5) {
         this.log.warn(this.cameraName, 'The interval to automatically refresh snapshots is set too low. Minimum is one minute.');
-        this.cameraConfig.refreshSnapshotIntervalMinutes = 5;
+        this.refreshSnapshotIntervalMinutes = 5;
       }
       // eslint-disable-next-line max-len
-      this.log.info(this.cameraName, 'Setting up automatic snapshot refresh every ' + this.cameraConfig.refreshSnapshotIntervalMinutes + ' minutes. This may decrease battery life dramatically. The refresh process for ' + this.cameraName + ' should begin in ' + MINUTES_TO_WAIT_FOR_AUTOMATIC_REFRESH_TO_BEGIN + ' minutes.');
+      this.log.info(this.cameraName, 'Setting up automatic snapshot refresh every ' + this.refreshSnapshotIntervalMinutes + ' minutes. This may decrease battery life dramatically. The refresh process for ' + this.cameraName + ' should begin in ' + MINUTES_TO_WAIT_FOR_AUTOMATIC_REFRESH_TO_BEGIN + ' minutes.');
       setTimeout(() => { // give homebridge some time to start up
         this.automaticSnapshotRefresh();
       }, MINUTES_TO_WAIT_FOR_AUTOMATIC_REFRESH_TO_BEGIN * MILLISECONDS_PER_MINUTE);
@@ -115,7 +117,7 @@ export class SnapshotManager extends EventEmitter {
     if (this.cameraConfig.snapshotHandlingMethod === 1) {
       // eslint-disable-next-line max-len
       this.log.info(this.cameraName, 'is set to generate new snapshots on events every time. This might reduce homebridge performance and increase power consumption.');
-      if (this.cameraConfig.refreshSnapshotIntervalMinutes) {
+      if (this.refreshSnapshotIntervalMinutes) {
         // eslint-disable-next-line max-len
         this.log.warn(this.cameraName, 'You have enabled automatic snapshot refreshing. It is recommened not to use this setting with forced snapshot refreshing.');
       }
@@ -164,51 +166,49 @@ export class SnapshotManager extends EventEmitter {
 
   public async getSnapshotBuffer(request: SnapshotRequest): Promise<Buffer> {
     const now = Date.now();
-
-    // Return a recent snapshot if available
-    if (this.currentSnapshot && Math.abs((now - this.currentSnapshot.timestamp) / 1000) <= 15) {
-      this.log.debug('Returning recent snapshot.');
-      return this.resizeSnapshot(this.currentSnapshot.image, request);
-    }
-
-    // Send empty snapshot to prioritize ring notification, if applicable
-    if (this.cameraConfig.immediateRingNotificationWithoutSnapshot && (now - this.lastRingEvent) / 1000 < 5) {
-      if (this.blackSnapshot) {
-        this.log.debug('Sending black snapshot to prioritize ring notification.');
-        return this.resizeSnapshot(this.blackSnapshot, request);
-      } else {
-        this.log.debug('Unable to send black snapshot - prioritizing ring notification over snapshot request.');
-        return Promise.reject('Prioritize ring notification over snapshot request. But could not supply empty snapshot.');
-      }
-    }
+    let snapshot = SnapshotUnavailable;
 
     // Fetch snapshot based on handling method
     try {
-      let snapshot = Buffer.from([]);
 
-      switch (this.cameraConfig.snapshotHandlingMethod) {
-        case 1:
-          this.log.debug('Fetching the newest snapshot buffer.');
-          snapshot = await this.getNewestSnapshotBuffer();
-          break;
-        case 2:
-          this.log.debug('Fetching a balanced snapshot.');
-          snapshot = await this.getBalancedSnapshot();
-          break;
-        case 3:
-          this.log.debug('Fetching the newest cloud snapshot.');
-          snapshot = await this.getNewestCloudSnapshot();
-          break;
-        default:
-          this.log.debug('No suitable snapshot handling method defined.');
-          return Promise.reject('No suitable handling method for snapshots defined');
+      // Return a recent snapshot if available
+      if (this.currentSnapshot && Math.abs((now - this.currentSnapshot.timestamp) / 1000) <= 15) {
+
+        this.log.debug('Returning recent cached snapshot.');
+        snapshot = this.currentSnapshot.image;
+
+      } else if (this.cameraConfig.immediateRingNotificationWithoutSnapshot && (now - this.lastRingEvent) / 1000 < 5) {
+
+        this.log.debug('Sending black snapshot to prioritize ring notification.');
+        snapshot = SnapshotBlack;
+
+      } else {
+
+        switch (this.cameraConfig.snapshotHandlingMethod) {
+          case 1:
+            this.log.debug('Fetching the newest snapshot buffer.');
+            snapshot = await this.getNewestSnapshotBuffer();
+            break;
+          case 2:
+            this.log.debug('Fetching a balanced snapshot.');
+            snapshot = await this.getBalancedSnapshot();
+            break;
+          case 3:
+            this.log.debug('Fetching the newest cloud snapshot.');
+            snapshot = await this.getNewestCloudSnapshot();
+            break;
+          default:
+            this.log.debug('No suitable snapshot handling method defined.');
+            return Promise.reject('No suitable handling method for snapshots defined');
+
+        }
       }
 
-      return this.resizeSnapshot(snapshot, request);
     } catch (err) {
       this.log.error('Error fetching snapshot:', err);
-      return this.resizeSnapshot(this.UnavailableSnapshot!, request);
     }
+
+    return this.resizeSnapshot(snapshot, request);
   }
 
   /**
@@ -331,7 +331,7 @@ export class SnapshotManager extends EventEmitter {
     }
 
     // Schedule the next snapshot refresh, if configured
-    const refreshInterval = this.cameraConfig.refreshSnapshotIntervalMinutes;
+    const refreshInterval = this.refreshSnapshotIntervalMinutes;
     if (refreshInterval) {
       this.snapshotRefreshTimer = setTimeout(() => {
         this.automaticSnapshotRefresh();
