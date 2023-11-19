@@ -15,6 +15,7 @@ import { SnapshotRequest } from 'homebridge';
 import { FFmpeg, FFmpegParameters } from '../utils/ffmpeg';
 import { StreamingDelegate } from './streamingDelegate';
 import { CameraAccessory } from '../accessories/CameraAccessory';
+import sharp from 'sharp';
 
 const SnapshotBlackPath = require.resolve('../../media/Snapshot-black.png');
 const SnapshotUnavailablePath = require.resolve('../../media/Snapshot-Unavailable.png');
@@ -307,10 +308,6 @@ export class SnapshotManager extends EventEmitter {
   }
 
   private async onPropertyValueChanged(device: Device, name: string, value: PropertyValue): Promise<void> {
-    if (name === 'pictureUrl') {
-      this.log.debug(this.cameraName, 'New picture URL event');
-      this.handlePictureUrl(value as string);
-    }
     if (name === 'picture') {
       this.log.debug(this.cameraName, 'New picture DATA event');
       this.getSnapshotFromCloud();
@@ -340,88 +337,6 @@ export class SnapshotManager extends EventEmitter {
       this.log.warn(this.cameraName, 'Couldt not get cloud snapshot: ' + err);
       return Promise.reject(err);
     }
-  }
-
-  private async handlePictureUrl(url: string): Promise<void> {
-    this.log.debug(this.cameraName, 'Got picture Url from eufy cloud: ' + url);
-    if (!this.lastCloudSnapshot ||
-      (this.lastCloudSnapshot && this.lastCloudSnapshot.sourceUrl && !this.urlsAreEqual(this.lastCloudSnapshot.sourceUrl, url))) {
-      try {
-        const timestamp = Date.now();
-        const response = await this.downloadImageData(url);
-        if (!(response.image.length < 20000 && this.refreshProcessRunning)) {
-          if (!this.lastCloudSnapshot ||
-            (this.lastCloudSnapshot && this.lastCloudSnapshot.timestamp < timestamp)) {
-            this.log.debug(this.cameraName, 'stored new snapshot from cloud in memory.');
-            this.lastCloudSnapshot = {
-              timestamp: timestamp,
-              sourceUrl: response.url,
-              image: response.image,
-            };
-            if (!this.currentSnapshot ||
-              (this.currentSnapshot && this.currentSnapshot.timestamp < timestamp)) {
-              this.log.debug(this.cameraName, 'cloud snapshot is most recent one. Storing this for future use.');
-              this.currentSnapshot = this.lastCloudSnapshot;
-            }
-            this.emit('new snapshot');
-          }
-        } else {
-          this.log.debug(this.cameraName, 'cloud snapshot had to low resolution. Waiting for snapshot from camera.');
-        }
-      } catch (err) {
-        this.log.debug(this.cameraName, 'image data could not be retireved: ' + err);
-      }
-    } else {
-      this.log.debug(this.cameraName, 'picture Url was already known. Ignore it.');
-      this.lastCloudSnapshot.sourceUrl = url;
-    }
-  }
-
-  private downloadImageData(url: string, retries = 40): Promise<ImageDataResponse> {
-    return new Promise((resolve, reject) => {
-      https.get(url, response => {
-        if (response.headers.location) { // url forwarding; use new url
-          this.downloadImageData(response.headers.location, retries)
-            .then((imageResponse) => resolve(imageResponse))
-            .catch((err) => reject(err));
-        } else { // get image buffer
-          let imageBuffer = Buffer.alloc(0);
-          response.on('data', (chunk: Buffer) => {
-            imageBuffer = Buffer.concat([imageBuffer, chunk]);
-          });
-          response.on('end', () => {
-            if (!this.isXMLNotImage(imageBuffer) && response.statusCode && response.statusCode < 400) {
-              resolve({
-                url: url,
-                image: imageBuffer,
-              });
-            } else if (retries <= 0) {
-              this.log.warn(this.cameraName, 'Did not retrieve cloud snapshot in time. Reached max. retries.');
-              reject('Could not get image data');
-            } else {
-              setTimeout(() => {
-                this.downloadImageData(url, retries - 1)
-                  .then((imageResponse) => resolve(imageResponse))
-                  .catch((err) => reject(err));
-              }, 500);
-            }
-          });
-          response.on('error', (err) => {
-            reject(err);
-          });
-        }
-      }).on('error', (err) => {
-        reject(err);
-      });
-    });
-  }
-
-  private isXMLNotImage(dataBuffer: Buffer): boolean {
-    const possibleXML = dataBuffer.toString('utf8');
-    return (possibleXML.indexOf('<?xml') !== -1 ||
-      possibleXML.indexOf('<xml') !== -1 ||
-      possibleXML.indexOf('<?html') !== -1 ||
-      possibleXML.indexOf('<html') !== -1);
   }
 
   private async fetchCurrentCameraSnapshot(): Promise<void> {
@@ -519,29 +434,29 @@ export class SnapshotManager extends EventEmitter {
       }
     }
   }
-
-  private urlsAreEqual(url1: string, url2: string) {
-    return (this.getUrlWithoutParameters(url1) === this.getUrlWithoutParameters(url2));
-  }
-
-  private getUrlWithoutParameters(url: string): string {
-    const endIndex = url.indexOf('.jpg');
-    if (endIndex === -1) {
-      return '';
-    }
-    return url.substring(0, endIndex);
-  }
-
+  /**
+   * Resizes a given snapshot image buffer to the specified dimensions.
+   * 
+   * This function utilizes the Sharp library to resize an image buffer. The image is resized
+   * to the width and height specified in the SnapshotRequest object. Sharp provides a more
+   * efficient and Node.js-native way of handling image processing compared to FFmpeg.
+   * 
+   * @param {Buffer} snapshot - The image buffer to be resized.
+   * @param {SnapshotRequest} request - The object containing the desired dimensions.
+   * @returns {Promise<Buffer>} A Promise that resolves to the resized image buffer.
+   * @throws Will throw an error if the resizing process fails.
+   */
   private async resizeSnapshot(snapshot: Buffer, request: SnapshotRequest): Promise<Buffer> {
+    try {
+      // Using Sharp to resize the image
+      const resizedImage = await sharp(snapshot)
+        .resize(request.width, request.height)
+        .toBuffer();
 
-    const parameters = await FFmpegParameters.create({ type: 'snapshot', debug: this.cameraConfig.videoConfig?.debug });
-    parameters.setup(this.cameraConfig, request);
-
-    const ffmpeg = new FFmpeg(
-      `[${this.cameraName}] [Snapshot Resize Process]`,
-      [parameters],
-      this.platform.ffmpegLogger,
-    );
-    return ffmpeg.getResult(snapshot);
+      return resizedImage;
+    } catch (error) {
+      this.log.error('Error resizing snapshot:', error);
+      throw error;
+    }
   }
 }
