@@ -18,7 +18,6 @@ import { StreamingDelegate } from './streamingDelegate';
 import { CameraAccessory } from '../accessories/CameraAccessory';
 import sharp from 'sharp';
 
-const IMMEDIATE_CHECK_MS = 1000;
 const EXTENDED_WAIT_MS = 15000;
 const SNAPSHOT_WAIT_THRESHOLD_SECONDS = 15;
 const MILLISECONDS_PER_MINUTE = 60 * 1000;
@@ -270,48 +269,6 @@ export class SnapshotManager extends EventEmitter {
   }
 
   /**
-   * Retrieves a balanced snapshot from the camera. This function is designed to fetch the most recent 
-   * snapshot available, balancing between immediate availability and waiting for a potentially newer snapshot 
-   * from the cloud. It employs a strategy to optimize the retrieval based on the timing of the last event.
-   * 
-   * The function operates as follows:
-   * 1. Sets a timeout for an immediate snapshot check (IMMEDIATE_CHECK_MS). If a snapshot is already available 
-   *    in memory, the function resolves the promise with this snapshot.
-   * 2. Simultaneously, it attempts to fetch a new snapshot from the camera by calling `fetchCurrentCameraSnapshot`.
-   * 3. If the last event (either `lastRingEvent` or `lastEvent`) occurred within the last 
-   *    SNAPSHOT_WAIT_THRESHOLD_SECONDS, the function assumes a new snapshot might soon be available. It then extends 
-   *    the waiting period to EXTENDED_WAIT_MS (15 seconds).
-   * 4. If a new snapshot is received within this extended period (triggered by the 'new snapshot' event), 
-   *    the function resolves with this new snapshot. If no new snapshot is received in time, 
-   *    it attempts to resolve with any available snapshot in memory.
-   * 
-   * This approach ensures that the function does not unnecessarily delay returning a snapshot
-   * when a recent one is already available, while also allowing a brief window to wait for 
-   * a new snapshot if one is expected soon.
-   * 
-   * @returns {Promise<Buffer>} A promise that resolves with the most recent snapshot image 
-   *                            available within the defined waiting period.
-   */
-  private async getBalancedSnapshot(): Promise<Buffer> {
-    return new Promise((resolve, reject) => {
-      let snapshotTimeout = this.setupSnapshotTimeout(resolve, reject, IMMEDIATE_CHECK_MS);
-
-      this.fetchCurrentCameraSnapshot().catch((err) => this.log.warn(this.cameraName, err));
-
-      const newestEvent = Math.max(this.lastRingEvent, this.lastEvent);
-      const diff = (Date.now() - newestEvent) / 1000;
-
-      if (diff < SNAPSHOT_WAIT_THRESHOLD_SECONDS) {
-        this.log.debug(this.cameraName, 'Waiting on cloud snapshot...');
-        clearTimeout(snapshotTimeout);
-        snapshotTimeout = this.setupSnapshotTimeout(resolve, reject, EXTENDED_WAIT_MS);
-      }
-
-      this.setupNewSnapshotListener(resolve, reject, snapshotTimeout);
-    });
-  }
-
-  /**
    * Attempts to retrieve the newest snapshot from the cloud. If a new snapshot is not available
    * within a specified timeout, it either resolves with the current snapshot or rejects.
    * @returns {Promise<Buffer>} A promise that resolves with the newest snapshot.
@@ -326,6 +283,33 @@ export class SnapshotManager extends EventEmitter {
         : this.setupSnapshotTimeout(resolve, reject, 0);
 
       this.setupNewSnapshotListener(resolve, reject, snapshotTimeout);
+    });
+  }
+
+  /**
+   * Retrieves a balanced snapshot by considering battery impact and data freshness.
+   * This function attempts to fetch the newest snapshot, either from the camera or the cloud,
+   * depending on the situation and timeout thresholds.
+   * @returns {Promise<Buffer>} A promise that resolves with the balanced snapshot image buffer
+   *                            or rejects with an error message if the snapshot is not 
+   *                            retrieved within the expected time frame.
+   */
+  private async getBalancedSnapshot(): Promise<Buffer> {
+    return new Promise((resolve, reject) => {
+      const newestEvent = Math.max(this.lastRingEvent, this.lastEvent);
+      const diffInSeconds = (Date.now() - newestEvent) / 1000;
+
+      // Check if the difference between events is less than the threshold
+      if (diffInSeconds < SNAPSHOT_WAIT_THRESHOLD_SECONDS) {
+        // If within the threshold, prioritize camera snapshot
+        this.fetchCurrentCameraSnapshot().catch((err) => reject(err));
+        const snapshotTimeout = this.setupSnapshotTimeout(resolve, reject, EXTENDED_WAIT_MS);
+        this.setupNewSnapshotListener(resolve, reject, snapshotTimeout);
+      } else {
+        // If beyond the threshold, prioritize cloud snapshot
+        const snapshotTimeout = this.setupSnapshotTimeout(resolve, reject, SNAPSHOT_WAIT_THRESHOLD_SECONDS * 1000);
+        this.setupNewSnapshotListener(resolve, reject, snapshotTimeout);
+      }
     });
   }
 
