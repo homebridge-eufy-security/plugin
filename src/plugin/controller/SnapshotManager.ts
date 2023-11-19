@@ -25,7 +25,6 @@ let MINUTES_TO_WAIT_FOR_AUTOMATIC_REFRESH_TO_BEGIN = 1; // should be incremented
 type Snapshot = {
   timestamp: number;
   image: Buffer;
-  sourceUrl?: string;
 };
 
 type ImageDataResponse = {
@@ -149,6 +148,13 @@ export class SnapshotManager extends EventEmitter {
     } else {
       this.platform.eufyClient.refreshCloudData()
         .then(() => this.getSnapshotFromCloud());
+    }
+  }
+
+  private async onPropertyValueChanged(device: Device, name: string, value: PropertyValue): Promise<void> {
+    if (name === 'picture') {
+      this.log.debug(this.cameraName, 'New picture DATA event');
+      this.getSnapshotFromCloud();
     }
   }
 
@@ -307,26 +313,19 @@ export class SnapshotManager extends EventEmitter {
     }
   }
 
-  private async onPropertyValueChanged(device: Device, name: string, value: PropertyValue): Promise<void> {
-    if (name === 'picture') {
-      this.log.debug(this.cameraName, 'New picture DATA event');
-      this.getSnapshotFromCloud();
-    }
-  }
-
+  /**
+   * Asynchronously retrieves a snapshot from the cloud.
+   * If no previous snapshots are available, it sets the last and current snapshots to the fetched image.
+   * @returns Promise<void>
+   */
   private async getSnapshotFromCloud(): Promise<void> {
     try {
-      const url = this.device.getPropertyValue(PropertyName.DevicePictureUrl) as string;
       const image = this.device.getPropertyValue(PropertyName.DevicePicture) as Picture;
-      this.log.debug(this.cameraName, 'trying to download latest cloud snapshot for future use from: ' + url);
-      // const snapshot = await this.downloadImageData(url, 0);
-      const snapshot = image.data;
+      this.log.debug(this.cameraName, 'trying to download latest cloud snapshot for future use');
       if (!this.lastCloudSnapshot && !this.currentSnapshot) {
         this.lastCloudSnapshot = {
-          // eslint-disable-next-line max-len
-          timestamp: Date.now() - 60 * 60 * 1000, // set snapshot an hour old so future requests try to get a more recent one since we don't know how old it really is
-          image: snapshot,
-          sourceUrl: url,
+          timestamp: Date.now() - 60 * 60 * 1000, // An hour earlier
+          image: image.data,
         };
         this.currentSnapshot = this.lastCloudSnapshot;
         this.log.debug(this.cameraName, 'Stored cloud snapshot for future use.');
@@ -339,41 +338,75 @@ export class SnapshotManager extends EventEmitter {
     }
   }
 
+  /**
+   * Fetches the current camera snapshot and updates the current snapshot state.
+   * This function will exit early if a refresh process is already running.
+   * @returns Promise<void>
+   */
   private async fetchCurrentCameraSnapshot(): Promise<void> {
     if (this.refreshProcessRunning) {
-      return Promise.resolve();
+      return;
     }
+
     this.refreshProcessRunning = true;
-    this.log.debug(this.cameraName, 'Locked refresh process.');
-    this.log.debug(this.cameraName, 'Fetching new snapshot from camera.');
+    this.log.debug(`${this.cameraName} Locked refresh process.`);
+    this.log.debug(`${this.cameraName} Fetching new snapshot from camera.`);
+
     const timestamp = Date.now();
+
     try {
       const snapshotBuffer = await this.getCurrentCameraSnapshot();
-      this.refreshProcessRunning = false;
-      this.log.debug(this.cameraName, 'Unlocked refresh process.');
 
-      this.log.debug(this.cameraName, 'store new snapshot from camera in memory. Using this for future use.');
+      this.log.debug(`${this.cameraName} Store new snapshot from camera in memory for future use.`);
       this.currentSnapshot = {
         timestamp: timestamp,
         image: snapshotBuffer,
       };
       this.emit('new snapshot');
-
-      return Promise.resolve();
     } catch (err) {
+      this.log.warn(`${this.cameraName} Error fetching snapshot: ${err}`);
+      throw err;
+    } finally {
       this.refreshProcessRunning = false;
-      this.log.debug(this.cameraName, 'Unlocked refresh process.');
-      return Promise.reject(err);
+      this.log.debug(`${this.cameraName} Unlocked refresh process.`);
     }
   }
 
+  /**
+   * Retrieves the camera source for capturing snapshots.
+   * 
+   * This method determines the appropriate camera source based on the camera configuration
+   * and device capabilities. It supports fetching the RTSP stream URL directly from the device
+   * if the RTSP service is ready. Otherwise, it attempts to fetch a local live stream source.
+   * 
+   * @returns {Promise<StreamSource>} A promise that resolves to the camera source object.
+   * @throws Throws an error if the camera source cannot be determined or retrieved.
+   */
+  private async getCameraSource(): Promise<StreamSource> {
+    if (is_rtsp_ready(this.device, this.cameraConfig, this.log)) {
+      const url = this.device.getPropertyValue(PropertyName.DeviceRTSPStreamUrl);
+      this.log.debug(`${this.cameraName} RTSP URL: ${url}`);
+      return { url: url as string };
+    } else {
+      const streamData = await this.livestreamManager.getLocalLivestream();
+      return { stream: streamData.videostream, livestreamId: 1 };
+    }
+  }
+
+  /**
+   * Captures a snapshot from the current camera source.
+   * 
+   * This method first retrieves the current camera source. Depending on the source type (URL or stream),
+   * it configures the FFmpeg parameters accordingly. If a delay is configured for the camera snapshot,
+   * it sets up the delayed snapshot parameter. The method then uses FFmpeg to capture the snapshot and
+   * returns the result as a buffer. If capturing from a live stream, it ensures to stop the live stream
+   * after capturing the snapshot or in case of an error.
+   * 
+   * @returns {Promise<Buffer>} A promise that resolves to the snapshot captured as a buffer.
+   * @throws Throws an error if no valid camera source is detected or if the snapshot capturing process fails.
+   */
   private async getCurrentCameraSnapshot(): Promise<Buffer> {
     const source = await this.getCameraSource();
-
-    if (!source) {
-      return Promise.reject('No camera source detected.');
-    }
-
     const parameters = await FFmpegParameters.create({ type: 'snapshot', debug: this.cameraConfig.videoConfig?.debug });
 
     if (source.url) {
@@ -381,7 +414,7 @@ export class SnapshotManager extends EventEmitter {
     } else if (source.stream && source.livestreamId) {
       await parameters.setInputStream(source.stream);
     } else {
-      return Promise.reject('No valid camera source detected.');
+      throw new Error('No valid camera source detected.');
     }
 
     if (this.cameraConfig.delayCameraSnapshot) {
@@ -389,51 +422,15 @@ export class SnapshotManager extends EventEmitter {
     }
 
     try {
-      const ffmpeg = new FFmpeg(
-        `[${this.cameraName}] [Snapshot Process]`,
-        [parameters],
-        this.platform.ffmpegLogger,
-      );
-      const buffer = await ffmpeg.getResult();
-
+      const ffmpeg = new FFmpeg(`[${this.cameraName}] [Snapshot Process]`, [parameters], this.platform.ffmpegLogger);
+      return await ffmpeg.getResult();
+    } finally {
       if (source.livestreamId) {
         this.livestreamManager.stopLocalLiveStream();
       }
-
-      return Promise.resolve(buffer);
-    } catch (err) {
-      if (source.livestreamId) {
-        this.livestreamManager.stopLocalLiveStream();
-      }
-      return Promise.reject(err);
     }
   }
 
-  private async getCameraSource(): Promise<StreamSource | null> {
-    if (is_rtsp_ready(this.device, this.cameraConfig, this.log)) {
-      try {
-        const url = this.device.getPropertyValue(PropertyName.DeviceRTSPStreamUrl);
-        this.log.debug(this.cameraName, 'RTSP URL: ' + url);
-        return {
-          url: url as string,
-        };
-      } catch (err) {
-        this.log.warn(this.cameraName, 'Could not get snapshot from rtsp stream!');
-        return null;
-      }
-    } else {
-      try {
-        const streamData = await this.livestreamManager.getLocalLivestream();
-        return {
-          stream: streamData.videostream,
-          livestreamId: 1,
-        };
-      } catch (err) {
-        this.log.warn(this.cameraName, 'Could not get snapshot from livestream!');
-        return null;
-      }
-    }
-  }
   /**
    * Resizes a given snapshot image buffer to the specified dimensions.
    * 
