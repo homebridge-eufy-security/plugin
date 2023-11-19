@@ -20,7 +20,6 @@ import { IgnoreAccessoryComponent } from './config-options/ignore-accessory/igno
 import { EnableCameraComponent } from './config-options/enable-camera/enable-camera.component';
 import { CameraButtonsComponent } from './config-options/camera-buttons/camera-buttons.component';
 import { UnbridgeAccessoryComponent } from './config-options/unbridge-accessory/unbridge-accessory.component';
-import { LivestreamCacheComponent } from './config-options/livestream-cache/livestream-cache.component';
 import { RtspStreamingComponent } from './config-options/rtsp-streaming/rtsp-streaming.component';
 import { EnableAudioComponent } from './config-options/enable-audio/enable-audio.component';
 import { EnableSnapshotBehaviourComponent } from './config-options/enable-snapshot-behaviour/enable-snapshot-behaviour.component';
@@ -62,7 +61,6 @@ import { IgnoreMultipleDevicesWarningComponent }
     EnableCameraComponent,
     CameraButtonsComponent,
     UnbridgeAccessoryComponent,
-    LivestreamCacheComponent,
     RtspStreamingComponent,
     EnableAudioComponent,
     EnableSnapshotBehaviourComponent,
@@ -87,4 +85,4 @@ import { IgnoreMultipleDevicesWarningComponent }
   providers: [{ provide: LocationStrategy, useClass: HashLocationStrategy }],
   bootstrap: [AppComponent],
 })
-export class AppModule {}
+export class AppModule { }

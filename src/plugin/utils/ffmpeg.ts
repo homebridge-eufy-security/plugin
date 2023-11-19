@@ -137,67 +137,71 @@ export class FFmpegParameters {
   private maxMuxingQueueSize?: number;
   private iFrameInterval?: number;
 
-  private constructor(port: number, isVideo: boolean, isAudio: boolean, isSnapshot: boolean, debug = false) {
-    this.progressPort = port;
-    this.isVideo = isVideo;
-    this.isAudio = isAudio;
-    this.isSnapshot = isSnapshot;
-    this.debug = debug;
+  private constructor(
+    options: {
+      port: number;
+      isVideo: boolean;
+      isAudio: boolean;
+      isSnapshot: boolean;
+      debug: boolean;
+    },
+  ) {
+    this.progressPort = options.port;
+    this.isVideo = options.isVideo;
+    this.isAudio = options.isAudio;
+    this.isSnapshot = options.isSnapshot;
+    this.debug = options.debug;
   }
 
-  static async forAudio(debug = false): Promise<FFmpegParameters> {
-    const port = await pickPort({
+  private static async allocatePort(): Promise<number> {
+    return pickPort({
       type: 'tcp',
       ip: '0.0.0.0',
       reserveTimeout: 15,
     });
-    const ffmpeg = new FFmpegParameters(port, false, true, false, debug);
-    ffmpeg.useWallclockAsTimestamp = false;
-    ffmpeg.flagsGlobalHeader = true;
-    return ffmpeg;
   }
 
-  static async forVideo(debug = false): Promise<FFmpegParameters> {
-    const port = await pickPort({
-      type: 'tcp',
-      ip: '0.0.0.0',
-      reserveTimeout: 15,
-    });
-    return new FFmpegParameters(port, true, false, false, debug);
-  }
+  static async create(
+    options: {
+      type: 'audio' | 'video' | 'snapshot' | 'videoRecording' | 'audioRecording';
+      debug?: boolean;
+    },
+  ): Promise<FFmpegParameters> {
+    const port = await FFmpegParameters.allocatePort();
+    const baseOptions = { port, isVideo: false, isAudio: false, isSnapshot: false, debug: options.debug ?? false };
 
-  static async forSnapshot(debug = false): Promise<FFmpegParameters> {
-    const port = await pickPort({
-      type: 'tcp',
-      ip: '0.0.0.0',
-      reserveTimeout: 15,
-    });
-    const ffmpeg = new FFmpegParameters(port, false, false, true, debug);
-    ffmpeg.useWallclockAsTimestamp = false;
-    ffmpeg.numberFrames = 1;
-    ffmpeg.format = 'image2';
-    return ffmpeg;
-  }
+    switch (options.type) {
+      case 'audio': {
+        const params = new FFmpegParameters({ ...baseOptions, isAudio: true });
+        params.useWallclockAsTimestamp = false;
 
-  static async forVideoRecording(debug = false): Promise<FFmpegParameters> {
-    const port = await pickPort({
-      type: 'tcp',
-      ip: '0.0.0.0',
-      reserveTimeout: 15,
-    });
-    const ffmpeg = new FFmpegParameters(port, true, false, false, debug);
-    ffmpeg.useWallclockAsTimestamp = true;
-    return ffmpeg;
-  }
+        // The '-flags +global_header' option is crucial for encoding streams, especially when using codecs like 'libfdk_aac'.
+        // This flag ensures the inclusion of global headers in the output stream, which contain essential codec initialization data.
+        // It's particularly important for streaming scenarios to ensure the receiving end can properly decode the stream from the start.
+        // Omitting this flag can lead to errors in stream initialization and decoding failures in certain codecs and streaming contexts.
 
-  static async forAudioRecording(debug = false): Promise<FFmpegParameters> {
-    const port = await pickPort({
-      type: 'tcp',
-      ip: '0.0.0.0',
-      reserveTimeout: 15,
-    });
-    const ffmpeg = new FFmpegParameters(port, false, true, false, debug);
-    return ffmpeg;
+        params.flagsGlobalHeader = true;
+        return params;
+      }
+      case 'video':
+        return new FFmpegParameters({ ...baseOptions, isVideo: true });
+      case 'snapshot': {
+        const params = new FFmpegParameters({ ...baseOptions, isSnapshot: true });
+        params.useWallclockAsTimestamp = true;
+        params.numberFrames = 1;
+        params.format = 'image2';
+        return params;
+      }
+      case 'videoRecording': {
+        const params = new FFmpegParameters({ ...baseOptions, isVideo: true });
+        params.useWallclockAsTimestamp = true;
+        return params;
+      }
+      case 'audioRecording':
+        return new FFmpegParameters({ ...baseOptions, isAudio: true });
+      default:
+        throw new Error('Invalid FFmpegParameters type');
+    }
   }
 
   public setResolution(width: number, height: number) {
@@ -534,7 +538,7 @@ export class FFmpegParameters {
     params.push(this.inputFormat ? `-f ${this.inputFormat}` : '');
     params.push(this.inputCodec ? `-c:a ${this.inputCodec}` : '');
 
-    params.push('-thread_queue_size 64');
+    params.push('-thread_queue_size 128');
 
     params.push(this.inputSoure);
 

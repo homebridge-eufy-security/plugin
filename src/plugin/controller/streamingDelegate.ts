@@ -203,7 +203,7 @@ export class StreamingDelegate implements CameraStreamingDelegate {
       activeSession.socket.bind(sessionInfo!.videoReturnPort);
 
       // get streams
-      const videoParams = await FFmpegParameters.forVideo(this.videoConfig.debug);
+      const videoParams = await FFmpegParameters.create({ type: 'video', debug: this.videoConfig.debug });
       videoParams.setup(this.cameraConfig, request);
       videoParams.setRTPTarget(sessionInfo!, request);
 
@@ -217,7 +217,7 @@ export class StreamingDelegate implements CameraStreamingDelegate {
 
       let audioParams: FFmpegParameters | undefined = undefined;
       if (useAudio) {
-        audioParams = await FFmpegParameters.forAudio(this.videoConfig.debug);
+        audioParams = await FFmpegParameters.create({ type: 'audio', debug: this.videoConfig.debug });
         audioParams.setup(this.cameraConfig, request);
         audioParams.setRTPTarget(sessionInfo!, request);
       }
@@ -273,7 +273,7 @@ export class StreamingDelegate implements CameraStreamingDelegate {
       }
 
       if (this.cameraConfig.talkback) {
-        const talkbackParameters = await FFmpegParameters.forAudio(this.videoConfig.debug);
+        const talkbackParameters = await FFmpegParameters.create({ type: 'audio', debug: this.videoConfig.debug });
         await talkbackParameters.setTalkbackInput(sessionInfo!);
         activeSession.talkbackStream = new TalkbackStream(this.platform, this.device);
         activeSession.returnProcess = new FFmpeg(

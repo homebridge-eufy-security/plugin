@@ -64,9 +64,7 @@ export class RecordingDelegate implements CameraRecordingDelegate {
   constructor(
     private streamingDelegate: StreamingDelegate,
     private accessory: PlatformAccessory,
-  ) {
-
-  }
+  ) { }
 
   public setController(controller: CameraController) {
     this.controller = controller;
@@ -92,8 +90,8 @@ export class RecordingDelegate implements CameraRecordingDelegate {
         this.log.debug('HKSV and plugin are set to omit audio recording.');
       }
 
-      const videoParams = await FFmpegParameters.forVideoRecording();
-      const audioParams = await FFmpegParameters.forAudioRecording();
+      const videoParams = await FFmpegParameters.create({ type: 'videoRecording', debug: true });
+      const audioParams = await FFmpegParameters.create({ type: 'audioRecording', debug: true });
 
       videoParams.setupForRecording(this.cameraConfig.videoConfig || {}, this.configuration!);
       audioParams.setupForRecording(this.cameraConfig.videoConfig || {}, this.configuration!);

@@ -27,7 +27,6 @@ export const DEFAULT_CAMERACONFIG_VALUES = {
   rtsp: false,
   enableCamera: true,
   forcerefreshsnap: false,
-  useCachedLocalLivestream: false,
   useEnhancedSnapshotBehaviour: true,
   refreshSnapshotIntervalMinutes: 0,
   snapshotHandlingMethod: 3,
