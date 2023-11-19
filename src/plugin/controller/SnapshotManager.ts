@@ -4,7 +4,6 @@ import { readFileSync } from 'node:fs';
 import { EventEmitter, Readable } from 'node:stream';
 
 import { Camera, Device, Picture, PropertyName, PropertyValue } from 'eufy-security-client';
-import ffmpegPath from 'ffmpeg-for-homebridge';
 
 import { CameraConfig } from '../utils/configTypes';
 import { EufySecurityPlatform } from '../platform';
@@ -13,10 +12,11 @@ import { Logger as TsLogger, ILogObj } from 'tslog';
 
 import { is_rtsp_ready } from '../utils/utils';
 import { SnapshotRequest } from 'homebridge';
-import { FFmpeg, FFmpegParameters } from '../utils/ffmpeg';
+import { FFmpeg } from '../utils/ffmpeg';
 import { StreamingDelegate } from './streamingDelegate';
 import { CameraAccessory } from '../accessories/CameraAccessory';
 import sharp from 'sharp';
+import { FFmpegParameters } from '../utils/ffmpeg-params';
 
 const EXTENDED_WAIT_MS = 15000;
 const SNAPSHOT_WAIT_THRESHOLD_SECONDS = 15;

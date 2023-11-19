@@ -4,9 +4,7 @@ import {
   API,
   APIEvent,
   AudioStreamingCodecType,
-  AudioStreamingSamplerate,
   CameraController,
-  CameraControllerOptions,
   CameraStreamingDelegate,
   HAP,
   PrepareStreamCallback,
@@ -23,7 +21,8 @@ import {
 import { createSocket, Socket } from 'dgram';
 import pickPort, { pickPortOptions } from 'pick-port';
 import { CameraConfig, VideoConfig } from '../utils/configTypes';
-import { FFmpeg, FFmpegParameters } from '../utils/ffmpeg';
+import { FFmpeg } from '../utils/ffmpeg';
+import { FFmpegParameters } from '../utils/ffmpeg-params';
 import { Logger as TsLogger, ILogObj } from 'tslog';
 
 import { Camera, PropertyName } from 'eufy-security-client';

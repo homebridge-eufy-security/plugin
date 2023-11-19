@@ -11,7 +11,8 @@ import {
 } from 'homebridge';
 import { EufySecurityPlatform } from '../platform';
 import { CameraConfig } from '../utils/configTypes';
-import { FFmpeg, FFmpegParameters } from '../utils/ffmpeg';
+import { FFmpeg } from '../utils/ffmpeg';
+import { FFmpegParameters } from '../utils/ffmpeg-params';
 import { Logger as TsLogger, ILogObj } from 'tslog';
 import net from 'net';
 import { is_rtsp_ready } from '../utils/utils';
