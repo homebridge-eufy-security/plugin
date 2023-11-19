@@ -157,35 +157,34 @@ export class FFmpegParameters {
     this.inputSoure = `-i ${value}`;
   }
 
-  public async setInputStream(input: Readable) {
+  private async createServerWithTimeout(handleConnection: (socket: net.Socket) => void): Promise<number> {
     const port = await pickPort({
       type: 'tcp',
       ip: '0.0.0.0',
       reserveTimeout: 15,
     });
+
     let killTimeout: NodeJS.Timeout | undefined = undefined;
     const server = net.createServer((socket) => {
       if (killTimeout) {
         clearTimeout(killTimeout);
       }
       server.close();
+      socket.on('error', (_) => { /* handle error */ });
+      handleConnection(socket);
+    });
 
-      socket.on('error', (_) => {
-        // ignore since this is handled elsewhere
-      });
+    server.listen(port);
+    server.on('error', (_) => { /* handle error */ });
 
+    killTimeout = setTimeout(() => server.close(), 30 * 1000);
+    return port;
+  }
+
+  public async setInputStream(input: Readable) {
+    const port = await this.createServerWithTimeout((socket) => {
       input.pipe(socket);
     });
-    server.listen(port);
-
-    server.on('error', (_) => {
-      // ignore since this is handled elsewhere
-    });
-
-    killTimeout = setTimeout(() => {
-      server.close();
-    }, 30 * 1000);
-
     this.setInputSource(`tcp://127.0.0.1:${port}`);
   }
 
@@ -424,33 +423,9 @@ export class FFmpegParameters {
       'config=F8F0212C00BC00\r\n' +
       'a=crypto:1 AES_CM_128_HMAC_SHA1_80 inline:' + sessionInfo.audioSRTP.toString('base64') + '\r\n';
 
-    const port = await pickPort({
-      type: 'tcp',
-      ip: '0.0.0.0',
-      reserveTimeout: 15,
-    });
-    let killTimeout: NodeJS.Timeout | undefined = undefined;
-    const server = net.createServer((socket) => {
-      if (killTimeout) {
-        clearTimeout(killTimeout);
-      }
-      server.close();
-
-      socket.on('error', (_) => {
-        // ignore since this is handled elsewhere
-      });
-
+    const port = await this.createServerWithTimeout((socket) => {
       socket.end(sdpInput);
     });
-    server.listen(port);
-
-    server.on('error', (_) => {
-      // ignore since this is handled elsewhere
-    });
-
-    killTimeout = setTimeout(() => {
-      server.close();
-    }, 30 * 1000);
     this.setInputSource(`tcp://127.0.0.1:${port}`);
   }
 
@@ -486,6 +461,26 @@ export class FFmpegParameters {
     return params;
   }
 
+  private buildFilterParameters(): string[] {
+    const filters: string[] = this.filters ? this.filters.split(',') : [];
+    const noneFilter = filters.indexOf('none');
+    if (noneFilter >= 0) {
+      filters.splice(noneFilter, 1);
+    }
+    if (noneFilter < 0 && this.width && this.height) {
+      const resizeFilter = 'scale=' +
+        `'min(${this.width},iw)':` +
+        `'min(${this.height},iw)':` +
+        'force_original_aspect_ratio=decrease';
+      filters.push(resizeFilter);
+      filters.push('scale=\'trunc(iw/2)*2:trunc(ih/2)*2\''); // Force to fit encoder restrictions
+      if (this.isSnapshot) {
+        filters.push('fps=30');
+      }
+    }
+    return filters.length > 0 ? ['-filter:v ' + filters.join(',')] : [];
+  }
+
   private buildEncodingParameters(): string[] {
     const params: string[] = [];
     if (this.isVideo) {
@@ -495,25 +490,7 @@ export class FFmpegParameters {
       params.push(this.colorRange ? '-color_range ' + this.colorRange : '');
       params.push(this.codecOptions ? this.codecOptions : '');
 
-      // video filters
-      const filters: string[] = this.filters ? this.filters.split(',') : [];
-      const noneFilter = filters.indexOf('none');
-      if (noneFilter >= 0) {
-        filters.splice(noneFilter, 1);
-      }
-      if (noneFilter < 0 && this.width && this.height) {
-        const resizeFilter = 'scale=' +
-          '\'min(' + this.width + ',iw)\'' +
-          ':' +
-          '\'min(' + this.height + ',iw)\'' +
-          ':force_original_aspect_ratio=decrease';
-        filters.push(resizeFilter);
-        filters.push('scale=\'trunc(iw/2)*2:trunc(ih/2)*2\''); // Force to fit encoder restrictions
-        filters.push('fps=30');
-      }
-      if (filters.length > 0) {
-        params.push('-filter:v ' + filters.join(','));
-      }
+      params.concat(this.buildFilterParameters());
 
       params.push(this.bitrate ? '-b:v ' + this.bitrate + 'k' : '');
       params.push(this.bufsize ? '-bufsize ' + this.bufsize + 'k' : '');
@@ -535,23 +512,7 @@ export class FFmpegParameters {
     if (this.isSnapshot) {
       params.push(this.numberFrames ? `-frames:v ${this.numberFrames}` : '');
       params.push(this.delaySnapshot ? '-ss 00:00:00.500' : '');
-      const filters: string[] = this.filters ? this.filters.split(',') : [];
-      const noneFilter = filters.indexOf('none');
-      if (noneFilter >= 0) {
-        filters.splice(noneFilter, 1);
-      }
-      if (noneFilter < 0 && this.width && this.height) {
-        const resizeFilter = 'scale=' +
-          '\'min(' + this.width + ',iw)\'' +
-          ':' +
-          '\'min(' + this.height + ',iw)\'' +
-          ':force_original_aspect_ratio=decrease';
-        filters.push(resizeFilter);
-        filters.push('scale=\'trunc(iw/2)*2:trunc(ih/2)*2\''); // Force to fit encoder restrictions
-      }
-      if (filters.length > 0) {
-        params.push('-filter:v ' + filters.join(','));
-      }
+      params.concat(this.buildFilterParameters());
     }
     return params;
   }
