@@ -54,9 +54,9 @@
     "zip-lib": "^0.7.3"
   },
   "devDependencies": {
-    "@angular-devkit/build-angular": "~16.2.9",
+    "@angular-devkit/build-angular": "~16.2.10",
     "@angular/animations": "~16.2.12",
-    "@angular/cli": "~16.2.9",
+    "@angular/cli": "~16.2.10",
     "@angular/common": "~16.2.12",
     "@angular/compiler": "~16.2.12",
     "@angular/compiler-cli": "~16.2.12",
@@ -73,7 +73,7 @@
     "@fortawesome/free-solid-svg-icons": "^6.4.2",
     "@ng-bootstrap/ng-bootstrap": "^15.1.2",
     "@popperjs/core": "^2.11.8",
-    "@types/jasmine": "~5.1.1",
+    "@types/jasmine": "~5.1.2",
     "@types/node": "^20.8.10",
     "@typescript-eslint/eslint-plugin": "^6.9.1",
     "@typescript-eslint/parser": "^6.9.1",
