@@ -19,7 +19,7 @@ import sharp from 'sharp';
 import { FFmpegParameters } from '../utils/ffmpeg-params';
 
 const EXTENDED_WAIT_MS = 15000;
-const SNAPSHOT_WAIT_THRESHOLD_SECONDS = 15;
+const SNAPSHOT_WAIT_THRESHOLD_SECONDS = 30;
 const MILLISECONDS_PER_MINUTE = 60 * 1000;
 
 const SnapshotBlack = readFileSync(require.resolve('../../media/Snapshot-black.png'));
@@ -301,13 +301,11 @@ export class SnapshotManager extends EventEmitter {
       if (diffInSeconds < SNAPSHOT_WAIT_THRESHOLD_SECONDS) {
         // If within the threshold, prioritize camera snapshot
         this.fetchCurrentCameraSnapshot().catch((err) => reject(err));
-        const snapshotTimeout = this.setupSnapshotTimeout(resolve, reject, EXTENDED_WAIT_MS);
-        this.setupNewSnapshotListener(resolve, reject, snapshotTimeout);
-      } else {
-        // If beyond the threshold, prioritize cloud snapshot
-        const snapshotTimeout = this.setupSnapshotTimeout(resolve, reject, SNAPSHOT_WAIT_THRESHOLD_SECONDS * 1000);
-        this.setupNewSnapshotListener(resolve, reject, snapshotTimeout);
       }
+
+      const snapshotTimeout = this.setupSnapshotTimeout(resolve, reject, 200);
+      this.setupNewSnapshotListener(resolve, reject, snapshotTimeout);
+
     });
   }
 
