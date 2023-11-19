@@ -10,7 +10,7 @@ import { Credentials, LoginResult, LoginFailReason } from './util/types';
   providedIn: 'root',
 })
 export class LoginService {
-  constructor(private pluginService: PluginService) {}
+  constructor(private pluginService: PluginService) { }
 
   public async getCredentials(): Promise<Credentials> {
     try {

@@ -1,4 +1,5 @@
-import https from 'node:https';
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
 import { readFileSync } from 'node:fs';
 import { EventEmitter, Readable } from 'node:stream';
 
@@ -16,6 +17,11 @@ import { FFmpeg, FFmpegParameters } from '../utils/ffmpeg';
 import { StreamingDelegate } from './streamingDelegate';
 import { CameraAccessory } from '../accessories/CameraAccessory';
 import sharp from 'sharp';
+
+const IMMEDIATE_CHECK_MS = 1000;
+const EXTENDED_WAIT_MS = 15000;
+const SNAPSHOT_WAIT_THRESHOLD_SECONDS = 15;
+const MILLISECONDS_PER_MINUTE = 60 * 1000;
 
 const SnapshotBlackPath = require.resolve('../../media/Snapshot-black.png');
 const SnapshotUnavailablePath = require.resolve('../../media/Snapshot-Unavailable.png');
@@ -76,6 +82,7 @@ export class SnapshotManager extends EventEmitter {
   private refreshProcessRunning = false;
   private lastEvent = 0;
   private lastRingEvent = 0;
+  private lastImageEvent = 0;
 
   private snapshotRefreshTimer?: NodeJS.Timeout;
 
@@ -90,7 +97,7 @@ export class SnapshotManager extends EventEmitter {
 
     this.accessory.eventTypesToHandle.forEach(eventType => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      this.device.on(eventType, (device: Device, state: boolean) => this.onEvent(device, state));
+      this.device.on(eventType, (device: Device, state: boolean) => this.onMotionEvent(device, state));
     });
 
     if (this.cameraConfig.refreshSnapshotIntervalMinutes) {
@@ -102,7 +109,7 @@ export class SnapshotManager extends EventEmitter {
       this.log.info(this.cameraName, 'Setting up automatic snapshot refresh every ' + this.cameraConfig.refreshSnapshotIntervalMinutes + ' minutes. This may decrease battery life dramatically. The refresh process for ' + this.cameraName + ' should begin in ' + MINUTES_TO_WAIT_FOR_AUTOMATIC_REFRESH_TO_BEGIN + ' minutes.');
       setTimeout(() => { // give homebridge some time to start up
         this.automaticSnapshotRefresh();
-      }, MINUTES_TO_WAIT_FOR_AUTOMATIC_REFRESH_TO_BEGIN * 60 * 1000);
+      }, MINUTES_TO_WAIT_FOR_AUTOMATIC_REFRESH_TO_BEGIN * MILLISECONDS_PER_MINUTE);
       MINUTES_TO_WAIT_FOR_AUTOMATIC_REFRESH_TO_BEGIN++;
     }
 
@@ -141,19 +148,17 @@ export class SnapshotManager extends EventEmitter {
     }
   }
 
-  private async onEvent(device: Device, state: boolean) {
+  private async onMotionEvent(device: Device, state: boolean) {
     if (state) {
       this.log.debug(this.cameraName, 'Snapshot handler detected event.');
       this.lastEvent = Date.now();
-    } else {
-      this.platform.eufyClient.refreshCloudData()
-        .then(() => this.getSnapshotFromCloud());
     }
   }
 
   private async onPropertyValueChanged(device: Device, name: string, value: PropertyValue): Promise<void> {
     if (name === 'picture') {
-      this.log.debug(this.cameraName, 'New picture DATA event');
+      this.lastImageEvent = Date.now();
+      this.log.debug(this.cameraName, 'New picture event');
       this.getSnapshotFromCloud();
     }
   }
@@ -207,109 +212,146 @@ export class SnapshotManager extends EventEmitter {
     }
   }
 
-  private async getNewestSnapshotBuffer(): Promise<Buffer> {
-    return new Promise((resolve, reject) => {
+  /**
+   * Attempts to resolve or reject the promise based on the current snapshot state.
+   * @param resolve - The resolve function of the Promise.
+   * @param reject - The reject function of the Promise.
+   */
+  private handleSnapshotResolution(resolve: (value: Buffer) => void, reject: (reason?: any) => void) {
+    if (this.currentSnapshot) {
+      resolve(this.currentSnapshot.image);
+    } else {
+      reject('No snapshot in memory');
+    }
+  }
 
-      this.fetchCurrentCameraSnapshot().catch((err) => reject(err));
+  /**
+   * Sets up a timeout for snapshot retrieval and handles the resolution or rejection.
+   * @param resolve - The resolve function of the Promise.
+   * @param reject - The reject function of the Promise.
+   * @param timeout - The timeout duration in milliseconds.
+   */
+  private setupSnapshotTimeout(resolve: (value: Buffer) => void, reject: (reason?: any) => void, timeout: number): NodeJS.Timeout {
+    return setTimeout(() => {
+      this.handleSnapshotResolution(resolve, reject);
+    }, timeout);
+  }
 
-      const requestTimeout = setTimeout(() => {
-        reject('snapshot request timed out');
-      }, 15000);
-
-      this.once('new snapshot', () => {
-        if (requestTimeout) {
-          clearTimeout(requestTimeout);
-        }
-
-        if (this.currentSnapshot) {
-          resolve(this.currentSnapshot.image);
-        } else {
-          reject('Unknown snapshot request error');
-        }
-      });
+  /**
+   * Sets up an event listener for the 'new snapshot' event.
+   * Clears the provided timeout and handles the snapshot resolution.
+   * @param resolve - The resolve function of the Promise.
+   * @param reject - The reject function of the Promise.
+   * @param snapshotTimeout - The timeout object to clear.
+   */
+  private setupNewSnapshotListener(resolve: (value: Buffer) => void, reject: (reason?: any) => void, snapshotTimeout: NodeJS.Timeout) {
+    this.once('new snapshot', () => {
+      clearTimeout(snapshotTimeout);
+      this.handleSnapshotResolution(resolve, reject);
     });
   }
 
+  /**
+   * Asynchronously retrieves the newest snapshot buffer from the camera.
+   * Initiates a snapshot fetch request and waits for the snapshot to be available,
+   * with a timeout to handle cases where the snapshot is not received promptly.
+   * @returns {Promise<Buffer>} A promise that resolves with the latest snapshot image buffer
+   *                            or rejects with an error message if the snapshot is not 
+   *                            retrieved within the expected time frame.
+   */
+  private async getNewestSnapshotBuffer(): Promise<Buffer> {
+    return new Promise((resolve, reject) => {
+      this.fetchCurrentCameraSnapshot().catch((err) => reject(err));
+
+      const requestTimeout = this.setupSnapshotTimeout(resolve, reject, EXTENDED_WAIT_MS);
+
+      this.setupNewSnapshotListener(resolve, reject, requestTimeout);
+    });
+  }
+
+  /**
+   * Retrieves a balanced snapshot from the camera. This function is designed to fetch the most recent 
+   * snapshot available, balancing between immediate availability and waiting for a potentially newer snapshot 
+   * from the cloud. It employs a strategy to optimize the retrieval based on the timing of the last event.
+   * 
+   * The function operates as follows:
+   * 1. Sets a timeout for an immediate snapshot check (IMMEDIATE_CHECK_MS). If a snapshot is already available 
+   *    in memory, the function resolves the promise with this snapshot.
+   * 2. Simultaneously, it attempts to fetch a new snapshot from the camera by calling `fetchCurrentCameraSnapshot`.
+   * 3. If the last event (either `lastRingEvent` or `lastEvent`) occurred within the last 
+   *    SNAPSHOT_WAIT_THRESHOLD_SECONDS, the function assumes a new snapshot might soon be available. It then extends 
+   *    the waiting period to EXTENDED_WAIT_MS (15 seconds).
+   * 4. If a new snapshot is received within this extended period (triggered by the 'new snapshot' event), 
+   *    the function resolves with this new snapshot. If no new snapshot is received in time, 
+   *    it attempts to resolve with any available snapshot in memory.
+   * 
+   * This approach ensures that the function does not unnecessarily delay returning a snapshot
+   * when a recent one is already available, while also allowing a brief window to wait for 
+   * a new snapshot if one is expected soon.
+   * 
+   * @returns {Promise<Buffer>} A promise that resolves with the most recent snapshot image 
+   *                            available within the defined waiting period.
+   */
   private async getBalancedSnapshot(): Promise<Buffer> {
     return new Promise((resolve, reject) => {
-
-      let snapshotTimeout = setTimeout(() => {
-        if (this.currentSnapshot) {
-          resolve(this.currentSnapshot.image);
-        } else {
-          reject('No snapshot in memory');
-        }
-      }, 1000);
+      let snapshotTimeout = this.setupSnapshotTimeout(resolve, reject, IMMEDIATE_CHECK_MS);
 
       this.fetchCurrentCameraSnapshot().catch((err) => this.log.warn(this.cameraName, err));
 
-      const newestEvent = (this.lastRingEvent > this.lastEvent) ? this.lastRingEvent : this.lastEvent;
+      const newestEvent = Math.max(this.lastRingEvent, this.lastEvent);
       const diff = (Date.now() - newestEvent) / 1000;
-      if (diff < 15) { // wait for cloud or camera snapshot
+
+      if (diff < SNAPSHOT_WAIT_THRESHOLD_SECONDS) {
         this.log.debug(this.cameraName, 'Waiting on cloud snapshot...');
-        if (snapshotTimeout) {
-          clearTimeout(snapshotTimeout);
-        }
-        snapshotTimeout = setTimeout(() => {
-          if (this.currentSnapshot) {
-            resolve(this.currentSnapshot.image);
-          } else {
-            reject('No snapshot in memory');
-          }
-        }, 15000);
+        clearTimeout(snapshotTimeout);
+        snapshotTimeout = this.setupSnapshotTimeout(resolve, reject, EXTENDED_WAIT_MS);
       }
 
-      this.once('new snapshot', () => {
-        if (snapshotTimeout) {
-          clearTimeout(snapshotTimeout);
-        }
-
-        if (this.currentSnapshot) {
-          resolve(this.currentSnapshot.image);
-        } else {
-          reject('No snapshot in memory');
-        }
-      });
+      this.setupNewSnapshotListener(resolve, reject, snapshotTimeout);
     });
   }
 
+  /**
+   * Attempts to retrieve the newest snapshot from the cloud. If a new snapshot is not available
+   * within a specified timeout, it either resolves with the current snapshot or rejects.
+   * @returns {Promise<Buffer>} A promise that resolves with the newest snapshot.
+   */
   private async getNewestCloudSnapshot(): Promise<Buffer> {
     return new Promise((resolve, reject) => {
       const newestEvent = Math.max(this.lastRingEvent, this.lastEvent);
       const diffInSeconds = (Date.now() - newestEvent) / 1000;
 
-      if (diffInSeconds < 15) {
-        this.log.debug(this.cameraName, 'Waiting on cloud snapshot...');
+      const snapshotTimeout = diffInSeconds < SNAPSHOT_WAIT_THRESHOLD_SECONDS
+        ? this.setupSnapshotTimeout(resolve, reject, SNAPSHOT_WAIT_THRESHOLD_SECONDS * 1000)
+        : this.setupSnapshotTimeout(resolve, reject, 0);
 
-        const snapshotTimeout = setTimeout(() => {
-          reject('No snapshot has been retrieved in time from eufy cloud.');
-        }, 15000);
-
-        this.once('new snapshot', () => {
-          clearTimeout(snapshotTimeout);
-          if (this.currentSnapshot) {
-            resolve(this.currentSnapshot.image);
-          } else {
-            reject('No snapshot in memory');
-          }
-        });
-      } else {
-        // Directly resolve or reject based on currentSnapshot's availability
-        this.currentSnapshot ? resolve(this.currentSnapshot.image) : reject('No snapshot in memory');
-      }
+      this.setupNewSnapshotListener(resolve, reject, snapshotTimeout);
     });
   }
 
+  /**
+   * Triggers an automatic refresh of the camera snapshot at intervals defined in the camera configuration.
+   * If an error occurs during snapshot fetching, it logs a warning.
+   */
   private automaticSnapshotRefresh() {
     this.log.debug(this.cameraName, 'Automatic snapshot refresh triggered.');
-    this.fetchCurrentCameraSnapshot().catch((err) => this.log.warn(this.cameraName, err));
+
+    this.fetchCurrentCameraSnapshot().catch((err) => {
+      // Enhanced error logging
+      this.log.warn(this.cameraName, 'Snapshot fetch error:', err);
+    });
+
+    // Clear existing timer if it exists
     if (this.snapshotRefreshTimer) {
       clearTimeout(this.snapshotRefreshTimer);
     }
-    if (this.cameraConfig.refreshSnapshotIntervalMinutes) {
+
+    // Schedule the next snapshot refresh, if configured
+    const refreshInterval = this.cameraConfig.refreshSnapshotIntervalMinutes;
+    if (refreshInterval) {
       this.snapshotRefreshTimer = setTimeout(() => {
         this.automaticSnapshotRefresh();
-      }, this.cameraConfig.refreshSnapshotIntervalMinutes * 60 * 1000);
+      }, refreshInterval * MILLISECONDS_PER_MINUTE);
     }
   }
 
@@ -324,7 +366,7 @@ export class SnapshotManager extends EventEmitter {
       this.log.debug(this.cameraName, 'trying to download latest cloud snapshot for future use');
       if (!this.lastCloudSnapshot && !this.currentSnapshot) {
         this.lastCloudSnapshot = {
-          timestamp: Date.now() - 60 * 60 * 1000, // An hour earlier
+          timestamp: Date.now() - 60 * MILLISECONDS_PER_MINUTE, // An hour earlier
           image: image.data,
         };
         this.currentSnapshot = this.lastCloudSnapshot;
@@ -352,14 +394,12 @@ export class SnapshotManager extends EventEmitter {
     this.log.debug(`${this.cameraName} Locked refresh process.`);
     this.log.debug(`${this.cameraName} Fetching new snapshot from camera.`);
 
-    const timestamp = Date.now();
-
     try {
       const snapshotBuffer = await this.getCurrentCameraSnapshot();
 
       this.log.debug(`${this.cameraName} Store new snapshot from camera in memory for future use.`);
       this.currentSnapshot = {
-        timestamp: timestamp,
+        timestamp: Date.now(),
         image: snapshotBuffer,
       };
       this.emit('new snapshot');

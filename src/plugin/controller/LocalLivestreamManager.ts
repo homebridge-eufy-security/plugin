@@ -98,7 +98,7 @@ export class LocalLivestreamManager extends EventEmitter {
 
   private onStationLivestreamStop(station: Station, device: Device) {
     if (device.getSerial() === this.device.getSerial()) {
-      this.log.info(station.getName() + ' station livestream for ' + device.getName() + ' has stopped.');
+      this.log.debug(station.getName() + ' station livestream for ' + device.getName() + ' has stopped.');
       this.initialize();
     }
   }
@@ -120,7 +120,7 @@ export class LocalLivestreamManager extends EventEmitter {
       }
       this.initialize(); // important to prevent unwanted behaviour when the eufy station emits the 'livestream start' event multiple times
 
-      this.log.info(station.getName() + ' station livestream (P2P session) for ' + device.getName() + ' has started.');
+      this.log.debug(station.getName() + ' station livestream (P2P session) for ' + device.getName() + ' has started.');
       this.livestreamStartedAt = Date.now();
       const createdAt = Date.now();
       this.stationStream = { station, device, metadata, videostream, audiostream, createdAt };
