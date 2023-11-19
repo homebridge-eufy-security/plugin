@@ -68,8 +68,6 @@ export class SnapshotManager extends EventEmitter {
   private cameraConfig: CameraConfig = this.streamingDelegate.cameraConfig;
   private cameraName: string = this.device.getName();
 
-  private readonly videoProcessor = ffmpegPath || 'ffmpeg';
-
   private log: TsLogger<ILogObj> = this.platform.log;
   private livestreamManager: LocalLivestreamManager = this.streamingDelegate.localLivestreamManager;
 
@@ -137,7 +135,7 @@ export class SnapshotManager extends EventEmitter {
       this.log.error(this.cameraName, 'could not cache black snapshot file for further use: ' + err);
     }
 
-    this.getSnapshotFromCloud() // get current cloud snapshot for balanced mode scenarios -> first snapshot can be resolved
+    this.fetchSnapshotFromCloud() // get current cloud snapshot for balanced mode scenarios -> first snapshot can be resolved
       .catch(err => this.log.warn(this.cameraName,
         'snapshot handler is initialized without cloud snapshot. Maybe no snapshot will displayed the first times.'));
   }
@@ -160,7 +158,7 @@ export class SnapshotManager extends EventEmitter {
     if (name === 'picture') {
       this.lastImageEvent = Date.now();
       this.log.debug(this.cameraName, 'New picture event');
-      this.getSnapshotFromCloud();
+      this.fetchSnapshotFromCloud();
     }
   }
 
@@ -344,7 +342,7 @@ export class SnapshotManager extends EventEmitter {
    * If no previous snapshots are available, it sets the last and current snapshots to the fetched image.
    * @returns Promise<void>
    */
-  private async getSnapshotFromCloud(): Promise<void> {
+  private async fetchSnapshotFromCloud(): Promise<void> {
     try {
       const image = this.device.getPropertyValue(PropertyName.DevicePicture) as Picture;
       this.log.debug(this.cameraName, 'trying to download latest cloud snapshot for future use');
