@@ -92,12 +92,20 @@ export class FFmpegParameters {
     this.debug = options.debug;
   }
 
-  private static async allocatePort(): Promise<number> {
+  private static async allocateddPort(type: string): Promise<number> {
     return pickPort({
-      type: 'tcp',
+      type: type,
       ip: '0.0.0.0',
       reserveTimeout: 15,
     });
+  }
+
+  public static async allocateTCPPort(): Promise<number> {
+    return FFmpegParameters.allocateddPort('tcp');
+  }
+
+  public static async allocateUDPPort(): Promise<number> {
+    return FFmpegParameters.allocateddPort('udp');
   }
 
   static async create(
@@ -106,7 +114,7 @@ export class FFmpegParameters {
       debug?: boolean;
     },
   ): Promise<FFmpegParameters> {
-    const port = await FFmpegParameters.allocatePort();
+    const port = await FFmpegParameters.allocateTCPPort();
     const baseOptions = { port, isVideo: false, isAudio: false, isSnapshot: false, debug: options.debug ?? false };
 
     switch (options.type) {
@@ -143,11 +151,6 @@ export class FFmpegParameters {
     }
   }
 
-  public setResolution(width: number, height: number) {
-    this.width = width;
-    this.height = height;
-  }
-
   public usesStdInAsInput(): boolean {
     return this.inputSoure === '-i pipe:';
   }
@@ -158,11 +161,7 @@ export class FFmpegParameters {
   }
 
   private async createServerWithTimeout(handleConnection: (socket: net.Socket) => void): Promise<number> {
-    const port = await pickPort({
-      type: 'tcp',
-      ip: '0.0.0.0',
-      reserveTimeout: 15,
-    });
+    const port = await FFmpegParameters.allocateTCPPort();
 
     let killTimeout: NodeJS.Timeout | undefined = undefined;
     const server = net.createServer((socket) => {

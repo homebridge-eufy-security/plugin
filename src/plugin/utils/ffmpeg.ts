@@ -4,7 +4,6 @@ import os from 'os';
 import { Readable, Writable } from 'stream';
 
 import ffmpegPath from 'ffmpeg-for-homebridge';
-import pickPort from 'pick-port';
 
 import { Logger as TsLogger, ILogObj } from 'tslog';
 import EventEmitter from 'events';
@@ -150,11 +149,7 @@ export class FFmpeg extends EventEmitter {
     this.progress = new FFmpegProgress(this.parameters[0].progressPort);
     this.progress.on('progress started', this.onProgressStarted.bind(this));
 
-    const port = await pickPort({
-      type: 'tcp',
-      ip: '0.0.0.0',
-      reserveTimeout: 15,
-    });
+    const port = await FFmpegParameters.allocateTCPPort();
 
     return new Promise((resolve, reject) => {
       const server = net.createServer((socket) => {

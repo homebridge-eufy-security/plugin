@@ -19,7 +19,7 @@ import {
   StreamRequestTypes,
 } from 'homebridge';
 import { createSocket, Socket } from 'dgram';
-import pickPort, { pickPortOptions } from 'pick-port';
+
 import { CameraConfig, VideoConfig } from '../utils/configTypes';
 import { FFmpeg } from '../utils/ffmpeg';
 import { FFmpegParameters } from '../utils/ffmpeg-params';
@@ -124,14 +124,9 @@ export class StreamingDelegate implements CameraStreamingDelegate {
   async prepareStream(request: PrepareStreamRequest, callback: PrepareStreamCallback): Promise<void> {
     const ipv6 = request.addressVersion === 'ipv6';
 
-    const options: pickPortOptions = {
-      type: 'udp',
-      ip: ipv6 ? '::' : '0.0.0.0',
-      reserveTimeout: 15,
-    };
-    const videoReturnPort = await pickPort(options);
+    const videoReturnPort = await FFmpegParameters.allocateUDPPort();
     const videoSSRC = this.hap.CameraController.generateSynchronisationSource();
-    const audioReturnPort = await pickPort(options);
+    const audioReturnPort = await FFmpegParameters.allocateUDPPort();
     const audioSSRC = this.hap.CameraController.generateSynchronisationSource();
 
     const sessionInfo: SessionInfo = {

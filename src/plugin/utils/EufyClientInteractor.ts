@@ -3,10 +3,10 @@ import fs from 'fs';
 import net from 'net';
 
 import { EufySecurity, PropertyName } from 'eufy-security-client';
-import pickPort from 'pick-port';
 
 import { EufyClientNotRunningError, PluginConfigInteractor } from './interfaces';
 import { Logger as TsLogger, ILogObj } from 'tslog';
+import { FFmpegParameters } from './ffmpeg-params';
 
 enum InteractorRequestType {
   DeviceChargingStatus = 'deviceChargingStatus',
@@ -49,7 +49,7 @@ export class EufyClientInteractor extends EventEmitter implements PluginConfigIn
   }
 
   public async setupServer(): Promise<void> {
-    const port = await this.getFreePort();
+    const port = await FFmpegParameters.allocateTCPPort();
 
     if (!this.writePortToStoragePath(port)) {
       return Promise.reject(new Error('Could not start interaction server'));
@@ -78,14 +78,6 @@ export class EufyClientInteractor extends EventEmitter implements PluginConfigIn
     if (this.server) {
       this.server.close();
     }
-  }
-
-  private async getFreePort(): Promise<number> {
-    return await pickPort({
-      type: 'tcp',
-      ip: '0.0.0.0',
-      reserveTimeout: 15,
-    });
   }
 
   private writePortToStoragePath(port: number): boolean {
