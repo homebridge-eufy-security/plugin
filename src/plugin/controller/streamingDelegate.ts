@@ -122,7 +122,6 @@ export class StreamingDelegate implements CameraStreamingDelegate {
   }
 
   async prepareStream(request: PrepareStreamRequest, callback: PrepareStreamCallback): Promise<void> {
-    const ipv6 = request.addressVersion === 'ipv6';
 
     const videoReturnPort = await FFmpegParameters.allocateUDPPort();
     const videoSSRC = this.hap.CameraController.generateSynchronisationSource();
@@ -131,7 +130,7 @@ export class StreamingDelegate implements CameraStreamingDelegate {
 
     const sessionInfo: SessionInfo = {
       address: request.targetAddress,
-      ipv6: ipv6,
+      ipv6: request.addressVersion === 'ipv6',
 
       videoPort: request.video.port,
       videoReturnPort: videoReturnPort,
