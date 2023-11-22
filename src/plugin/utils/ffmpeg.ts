@@ -60,7 +60,9 @@ export class FFmpeg extends EventEmitter {
       this.log.info(this.name, p.getStreamStartText());
     });
 
-    this.process = spawn(this.ffmpegExec, processArgs.join(' ').split(/\s+/),
+    this.process = spawn(
+      this.ffmpegExec,
+      processArgs.join(' ').split(/\s+/),
       {
         env: process.env,
         stdio: [
@@ -69,7 +71,8 @@ export class FFmpeg extends EventEmitter {
           /* Custom: pipe:3, pipe:4 */
           'pipe', 'pipe',
         ],
-      });
+      },
+    );
 
     this.stdin = this.process.stdin;
     this.stdout = this.process.stdout;
@@ -171,7 +174,19 @@ export class FFmpeg extends EventEmitter {
           this.log.info(this.name, p.getStreamStartText());
         });
 
-        this.process = spawn(this.ffmpegExec, processArgs.join(' ').split(/\s+/), { env: process.env });
+        this.process = spawn(
+          this.ffmpegExec,
+          processArgs.join(' ').split(/\s+/),
+          {
+            env: process.env,
+            stdio: [
+              /* Standard: stdin, stdout, stderr */
+              'inherit', 'inherit', 'inherit',
+              /* Custom: pipe:3, pipe:4 */
+              'pipe', 'pipe',
+            ],
+          },
+        );
         this.stdin = this.process.stdin;
         this.stdout = this.process.stdout;
         this.stdio = this.process.stdio;
