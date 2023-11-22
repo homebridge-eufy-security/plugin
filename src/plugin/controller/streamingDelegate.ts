@@ -18,7 +18,6 @@ import {
   StreamRequestCallback,
   StreamRequestTypes,
 } from 'homebridge';
-import { createSocket, Socket } from 'dgram';
 
 import { CameraConfig, VideoConfig } from '../utils/configTypes';
 import { FFmpeg } from '../utils/ffmpeg';
@@ -56,8 +55,6 @@ type ActiveSession = {
   videoProcess?: FFmpeg;
   audioProcess?: FFmpeg;
   returnProcess?: FFmpeg;
-  timeout?: NodeJS.Timeout;
-  socket?: Socket;
   talkbackStream?: TalkbackStream;
 };
 
@@ -180,22 +177,6 @@ export class StreamingDelegate implements CameraStreamingDelegate {
 
     try {
       const activeSession: ActiveSession = {};
-      activeSession.socket = createSocket(sessionInfo!.ipv6 ? 'udp6' : 'udp4');
-      activeSession.socket.on('error', (err: Error) => {
-        this.log.error(this.cameraName, 'Socket error: ' + err.message);
-        this.stopStream(request.sessionID);
-      });
-      activeSession.socket.on('message', () => {
-        if (activeSession.timeout) {
-          clearTimeout(activeSession.timeout);
-        }
-        activeSession.timeout = setTimeout(() => {
-          this.log.debug(this.cameraName, 'Device appears to be inactive. Stopping video stream.');
-          this.controller?.forceStopStreamingSession(request.sessionID);
-          this.stopStream(request.sessionID);
-        }, request.video.rtcp_interval * 5 * 1000);
-      });
-      activeSession.socket.bind(sessionInfo!.videoReturnPort);
 
       // get streams
       const videoParams = await FFmpegParameters.create({ type: 'video', debug: this.videoConfig.debug });
@@ -256,7 +237,7 @@ export class StreamingDelegate implements CameraStreamingDelegate {
       });
 
       videoProcess.on('exit', () => {
-        this.log.error(this.cameraName, 'Video process ended');
+        this.log.info(this.cameraName, 'Video process ended');
         this.stopStream(request.sessionID);
       });
 
@@ -378,9 +359,6 @@ export class StreamingDelegate implements CameraStreamingDelegate {
 
     const session = this.ongoingSessions.get(sessionId);
     if (session) {
-      if (session.timeout) {
-        clearTimeout(session.timeout);
-      }
       this.safelyStopResource('talkbackStream', () => session.talkbackStream?.stopTalkbackStream());
       this.safelyStopResource('returnAudio FFmpeg process', () => {
         session.returnProcess?.stdout?.unpipe();
@@ -388,7 +366,6 @@ export class StreamingDelegate implements CameraStreamingDelegate {
       });
       this.safelyStopResource('video FFmpeg process', () => session.videoProcess?.stop());
       this.safelyStopResource('audio FFmpeg process', () => session.audioProcess?.stop());
-      this.safelyStopResource('socket', () => session.socket?.close());
 
       if (!is_rtsp_ready(this.device, this.cameraConfig, this.log)) {
         this.safelyStopResource('Eufy Station livestream', () => this.localLivestreamManager.stopLocalLiveStream());
