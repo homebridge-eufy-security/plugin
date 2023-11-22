@@ -167,6 +167,8 @@ export class StreamingDelegate implements CameraStreamingDelegate {
   }
 
   private async startStream(request: StartStreamRequest, callback: StreamRequestCallback): Promise<void> {
+    this.log.debug('Starting session with id: ' + request.sessionID);
+
     const sessionInfo = this.pendingSessions.get(request.sessionID);
 
     if (!sessionInfo) {
@@ -253,6 +255,11 @@ export class StreamingDelegate implements CameraStreamingDelegate {
         this.stopStream(request.sessionID);
       });
 
+      videoProcess.on('exit', () => {
+        this.log.error(this.cameraName, 'Video process ended');
+        this.stopStream(request.sessionID);
+      });
+
       activeSession.videoProcess = videoProcess;
       activeSession.videoProcess.start();
 
@@ -276,6 +283,11 @@ export class StreamingDelegate implements CameraStreamingDelegate {
         );
         activeSession.returnProcess.on('error', (err) => {
           this.log.error(this.cameraName, 'Talkback process ended with error: ' + err);
+          this.stopStream(request.sessionID);
+        });
+        activeSession.returnProcess.on('exit', () => {
+          this.log.info(this.cameraName, 'Talkback process ended');
+          this.stopStream(request.sessionID);
         });
         activeSession.returnProcess.start();
         activeSession.returnProcess.stdout?.pipe(activeSession.talkbackStream);
@@ -300,35 +312,62 @@ export class StreamingDelegate implements CameraStreamingDelegate {
     }
   }
 
+  /**
+   * Handles various types of streaming requests.
+   *
+   * This method delegates different types of streaming requests (like starting, reconfiguring, or stopping a stream)
+   * to their respective handlers. It enhances code organization by segregating different request handling logics into
+   * separate methods. This makes the code easier to read and maintain.
+   *
+   * @param {StreamingRequest} request - The streaming request to be handled.
+   * @param {StreamRequestCallback} callback - The callback to be invoked after handling the request.
+   */
   handleStreamRequest(request: StreamingRequest, callback: StreamRequestCallback): void {
+    this.log.debug(this.cameraName, 'Receive Apple HK stream request' + JSON.stringify(request));
     switch (request.type) {
       case StreamRequestTypes.START:
         this.startStream(request, callback);
         break;
       case StreamRequestTypes.RECONFIGURE:
-        this.log.debug(
-          this.cameraName,
-          'Received request to reconfigure: ' +
-          request.video.width +
-          ' x ' +
-          request.video.height +
-          ', ' +
-          request.video.fps +
-          ' fps, ' +
-          request.video.max_bit_rate +
-          ' kbps (Ignored)',
-          this.videoConfig.debug,
-        );
         callback();
         break;
       case StreamRequestTypes.STOP:
-        this.log.debug(this.cameraName, 'Receive Apple HK Stop request' + JSON.stringify(request));
         this.stopStream(request.sessionID);
         callback();
         break;
     }
   }
 
+  /**
+   * Safely stops a specific resource associated with the streaming session.
+   *
+   * This method attempts to stop or clean up a given resource (like a stream or a socket) and handles any errors that
+   * may occur in the process. It's a general-purpose utility method to ensure that all resources are closed properly
+   * without causing unhandled exceptions. This improves the robustness of the resource management in streaming sessions.
+   * 
+   * @param {string} resourceName - A descriptive name of the resource for logging purposes.
+   * @param {() => void} stopAction - A function encapsulating the logic to stop or clean up the resource.
+   */
+  private safelyStopResource(resourceName: string, stopAction: () => void): void {
+    try {
+      stopAction();
+    } catch (err) {
+      this.log.error(this.cameraName, `Error occurred terminating ${resourceName}: ${err}`);
+    }
+  }
+
+  /**
+   * Stops an ongoing streaming session.
+   *
+   * This method is responsible for stopping all processes and resources associated with a given streaming session.
+   * It first checks for any pending sessions with the provided session ID and removes them if found.
+   * Then, it proceeds to stop all active processes (video, audio, return processes) and resources (talkback stream, socket)
+   * associated with the ongoing session. Each resource is stopped safely using the `safelyStopResource` method, which handles
+   * any errors that may occur during the stopping process. If no session is found with the given ID, it logs that no session
+   * needs to be stopped.
+   * 
+   * @param {string} sessionId - The unique identifier of the streaming session to be stopped.
+   */
   public stopStream(sessionId: string): void {
     this.log.debug('Stopping session with id: ' + sessionId);
 
@@ -342,34 +381,17 @@ export class StreamingDelegate implements CameraStreamingDelegate {
       if (session.timeout) {
         clearTimeout(session.timeout);
       }
-      try {
-        session.talkbackStream?.stopTalkbackStream();
+      this.safelyStopResource('talkbackStream', () => session.talkbackStream?.stopTalkbackStream());
+      this.safelyStopResource('returnAudio FFmpeg process', () => {
         session.returnProcess?.stdout?.unpipe();
         session.returnProcess?.stop();
-      } catch (err) {
-        this.log.error(this.cameraName, 'Error occurred terminating returnAudio FFmpeg process: ' + err);
-      }
-      try {
-        session.videoProcess?.stop();
-      } catch (err) {
-        this.log.error(this.cameraName, 'Error occurred terminating video FFmpeg process: ' + err);
-      }
-      try {
-        session.audioProcess?.stop();
-      } catch (err) {
-        this.log.error(this.cameraName, 'Error occurred terminating audio FFmpeg process: ' + err);
-      }
-      try {
-        session.socket?.close();
-      } catch (err) {
-        this.log.error(this.cameraName, 'Error occurred closing socket: ' + err);
-      }
-      try {
-        if (!is_rtsp_ready(this.device, this.cameraConfig, this.log)) {
-          this.localLivestreamManager.stopLocalLiveStream();
-        }
-      } catch (err) {
-        this.log.error(this.cameraName, 'Error occurred terminating Eufy Station livestream: ' + err);
+      });
+      this.safelyStopResource('video FFmpeg process', () => session.videoProcess?.stop());
+      this.safelyStopResource('audio FFmpeg process', () => session.audioProcess?.stop());
+      this.safelyStopResource('socket', () => session.socket?.close());
+
+      if (!is_rtsp_ready(this.device, this.cameraConfig, this.log)) {
+        this.safelyStopResource('Eufy Station livestream', () => this.localLivestreamManager.stopLocalLiveStream());
       }
 
       this.ongoingSessions.delete(sessionId);
