@@ -16,6 +16,7 @@ import {
   AudioRecordingSamplerate,
   CameraStreamingOptions,
   CameraRecordingOptions,
+  AudioBitrate,
 } from 'homebridge';
 
 import { EufySecurityPlatform } from '../platform';
@@ -176,7 +177,7 @@ export class CameraAccessory extends DeviceAccessory {
           {
             type: AudioStreamingCodecType.AAC_ELD,
             samplerate: AudioStreamingSamplerate.KHZ_16,
-            bitrate: 0,
+            bitrate: AudioBitrate.VARIABLE,
             audioChannels: 1,
           },
         ],
@@ -214,8 +215,8 @@ export class CameraAccessory extends DeviceAccessory {
       },
       audio: {
         codecs: {
-          type: AudioRecordingCodecType.AAC_ELD,
-          samplerate: AudioRecordingSamplerate.KHZ_24,
+          type: AudioRecordingCodecType.AAC_LC,
+          samplerate: AudioRecordingSamplerate.KHZ_16,
         },
       },
     };
