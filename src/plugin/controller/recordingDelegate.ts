@@ -45,6 +45,7 @@ export class RecordingDelegate implements CameraRecordingDelegate {
 
   private platform: EufySecurityPlatform = this.streamingDelegate.platform;
   private camera: Camera = this.streamingDelegate.device;
+  private cameraName: string = this.streamingDelegate.cameraName;
   private cameraConfig: CameraConfig = this.streamingDelegate.cameraConfig;
   private localLivestreamManager: LocalLivestreamManager = this.streamingDelegate.getLivestreamManager();
   private log: TsLogger<ILogObj> = this.platform.log;
@@ -77,7 +78,7 @@ export class RecordingDelegate implements CameraRecordingDelegate {
 
   async * handleRecordingStreamRequest(streamId: number): AsyncGenerator<RecordingPacket, any, unknown> {
     this.handlingStreamingRequest = true;
-    this.log.info(this.camera.getName(), 'requesting recording for HomeKit Secure Video.');
+    this.log.info(this.cameraName, 'requesting recording for HomeKit Secure Video.');
 
     let pending: Buffer[] = [];
     let filebuffer = Buffer.alloc(0);
@@ -103,14 +104,14 @@ export class RecordingDelegate implements CameraRecordingDelegate {
 
       if (rtsp) {
         const url = this.camera.getPropertyValue(PropertyName.DeviceRTSPStreamUrl);
-        this.platform.log.debug(this.camera.getName(), 'RTSP URL: ' + url);
+        this.platform.log.debug(this.cameraName, 'RTSP URL: ' + url);
         videoParams.setInputSource(url as string);
         audioParams?.setInputSource(url as string);
       } else {
 
         const value = await this.localLivestreamManager.getLocalLivestream()
           .catch((err) => {
-            throw ((this.camera.getName() + ' Unable to start the livestream: ' + err) as string);
+            throw ((this.cameraName + ' Unable to start the livestream: ' + err) as string);
           });
 
         streamData = value;
@@ -121,7 +122,7 @@ export class RecordingDelegate implements CameraRecordingDelegate {
       }
 
       const ffmpeg = new FFmpeg(
-        `[${this.camera.getName()}] [HSV Recording Process]`,
+        `[${this.cameraName}] [HSV Recording Process]`,
         audioEnabled ? [videoParams, audioParams] : [videoParams],
         this.platform.ffmpegLogger,
       );
@@ -145,7 +146,7 @@ export class RecordingDelegate implements CameraRecordingDelegate {
       if (timer > 0) {
         this.forceStopTimeout = setTimeout(() => {
           this.log.warn(
-            this.camera.getName(),
+            this.cameraName,
             `The recording process has been running for ${timer} seconds and is now being forced closed!`,
           );
 
@@ -155,10 +156,17 @@ export class RecordingDelegate implements CameraRecordingDelegate {
         }, timer * 1000);
       }
 
+      let isMotionActive = true;
+      setTimeout(() => {
+        isMotionActive = false;
+        this.log.debug(this.cameraName, 'Ending recording session due to motion stopped!');
+      }, 15000); // Set the flag to false after 15 seconds
+
+
       for await (const box of this.session.generator) {
 
         if (!this.handlingStreamingRequest) {
-          this.log.debug(this.camera.getName(), 'Recording was ended prematurely.');
+          this.log.debug(this.cameraName, 'Recording was ended prematurely.');
           break;
         }
 
@@ -177,40 +185,40 @@ export class RecordingDelegate implements CameraRecordingDelegate {
 
           yield {
             data: fragment,
-            isLast: !motionDetected,
+            isLast: !isMotionActive,
           };
 
-          if (!motionDetected) {
-            this.log.debug(this.camera.getName(), 'Ending recording session due to motion stopped!');
+          if (!isMotionActive) {
+            this.log.debug(this.cameraName, 'Ending recording session due to motion stopped!');
             break;
           }
         }
       }
     } catch (error) {
       if (!this.handlingStreamingRequest && this.closeReason && this.closeReason === HDSProtocolSpecificErrorReason.CANCELLED) {
-        this.log.debug(this.camera.getName(),
+        this.log.debug(this.cameraName,
           'Recording encountered an error but that is expected, as the recording was canceled beforehand. Error: ' + error);
       } else {
-        this.log.error(this.camera.getName(), 'Error while recording: ' + error);
+        this.log.error(this.cameraName, 'Error while recording: ' + error);
       }
     } finally {
       if (this.closeReason &&
         this.closeReason !== HDSProtocolSpecificErrorReason.NORMAL && this.closeReason !== HDSProtocolSpecificErrorReason.CANCELLED) {
 
         this.log.warn(
-          this.camera.getName(),
+          this.cameraName,
           `The recording process was aborted by HSV with reason "${HKSVQuitReason[this.closeReason]}"`,
         );
       }
       if (this.closeReason && this.closeReason === HDSProtocolSpecificErrorReason.CANCELLED) {
 
         this.log.debug(
-          this.camera.getName(),
+          this.cameraName,
           'The recording process was canceled by the HomeKit Controller."',
         );
       }
       if (filebuffer.length > 0) {
-        this.log.debug(this.camera.getName(), 'Recording completed (HSV). Send ' + filebuffer.length + ' bytes.');
+        this.log.debug(this.cameraName, 'Recording completed (HSV). Send ' + filebuffer.length + ' bytes.');
       }
 
       if (this.forceStopTimeout) {
@@ -232,7 +240,7 @@ export class RecordingDelegate implements CameraRecordingDelegate {
   }
 
   updateRecordingActive(active: boolean): void {
-    //this.log.debug(`Recording: ${active}`, this.accessory.displayName);
+    this.log.debug(`Recording: ${active}`, this.accessory.displayName);
   }
 
   updateRecordingConfiguration(configuration: CameraRecordingConfiguration | undefined): void {
@@ -240,10 +248,10 @@ export class RecordingDelegate implements CameraRecordingDelegate {
   }
 
   closeRecordingStream(streamId: number, reason: HDSProtocolSpecificErrorReason | undefined): void {
-    this.log.info(this.camera.getName(), 'Closing recording process');
+    this.log.info(this.cameraName, 'Closing recording process');
 
     if (this.session) {
-      this.log.debug(this.camera.getName(), 'Stopping recording session.');
+      this.log.debug(this.cameraName, 'Stopping recording session.');
       this.session.socket?.destroy();
       this.session.process?.kill('SIGKILL');
       this.session = undefined;

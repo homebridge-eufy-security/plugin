@@ -67,7 +67,7 @@ export class StreamingDelegate implements CameraStreamingDelegate {
   private readonly hap: HAP = this.platform.api.hap;
   private readonly api: API = this.platform.api;
   private readonly log: TsLogger<ILogObj> = this.platform.log;
-  private readonly cameraName: string = this.device.getName()!;
+  public readonly cameraName: string = this.device.getName()!;
 
   private readonly videoConfig: VideoConfig = this.cameraConfig.videoConfig!;
   private controller?: CameraController;
