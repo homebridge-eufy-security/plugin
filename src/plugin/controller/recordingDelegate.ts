@@ -11,7 +11,7 @@ import {
 } from 'homebridge';
 import { EufySecurityPlatform } from '../platform';
 import { CameraConfig } from '../utils/configTypes';
-import { FFmpeg } from '../utils/ffmpeg';
+import { FFmpegRecord } from '../utils/ffmpeg-record';
 import { FFmpegParameters } from '../utils/ffmpeg-params';
 import { Logger as TsLogger, ILogObj } from 'tslog';
 import net from 'net';
@@ -52,16 +52,7 @@ export class RecordingDelegate implements CameraRecordingDelegate {
 
   private controller?: CameraController;
 
-  private session?: {
-    socket: net.Socket;
-    process?: ChildProcess | undefined;
-    generator: AsyncGenerator<{
-      header: Buffer;
-      length: number;
-      type: string;
-      data: Buffer;
-    }, any, unknown>;
-  };
+  private session?: FFmpegRecord;
 
   constructor(
     private streamingDelegate: StreamingDelegate,
@@ -79,9 +70,6 @@ export class RecordingDelegate implements CameraRecordingDelegate {
   async * handleRecordingStreamRequest(streamId: number): AsyncGenerator<RecordingPacket, any, unknown> {
     this.handlingStreamingRequest = true;
     this.log.info(this.cameraName, 'requesting recording for HomeKit Secure Video.');
-
-    let pending: Buffer[] = [];
-    let filebuffer = Buffer.alloc(0);
 
     try {
       // eslint-disable-next-line max-len
@@ -121,18 +109,24 @@ export class RecordingDelegate implements CameraRecordingDelegate {
 
       }
 
-      const ffmpeg = new FFmpeg(
+      this.log.debug(this.cameraName, 'FFMPEG Process definition!');
+
+      this.session = new FFmpegRecord(
         `[${this.cameraName}] [HSV Recording Process]`,
         audioEnabled ? [videoParams, audioParams] : [videoParams],
         this.platform.ffmpegLogger,
       );
 
-      this.session = await ffmpeg.startFragmentedMP4Session();
+      this.log.debug(this.cameraName, 'startFragmentedMP4Session Start!');
+      await this.session.start();
+      this.log.debug(this.cameraName, 'startFragmentedMP4Session Finish!');
 
       if (this.session.process && this.session.process.stdio) {
         // stdio is defined and can be used
+        this.log.debug(this.cameraName, 'stdio is defined and can be used!');
 
         if (streamData !== null) {
+          this.log.debug(this.cameraName, 'Stream Data!');
           streamData.videostream.pipe(this.session.process.stdio[3] as Writable);
           streamData.audiostream.pipe(this.session.process.stdio[4] as Writable);
         }
@@ -163,36 +157,34 @@ export class RecordingDelegate implements CameraRecordingDelegate {
       }, 15000); // Set the flag to false after 15 seconds
 
 
-      for await (const box of this.session.generator) {
+      this.log.debug(this.cameraName, 'Generator Start!');
 
-        if (!this.handlingStreamingRequest) {
+      for await (const segment of this.session.segmentGenerator()) {
+
+        this.log.debug(this.cameraName, 'Generator!!!');
+
+        if (!this.isRecording()) {
           this.log.debug(this.cameraName, 'Recording was ended prematurely.');
           break;
         }
 
-        const { header, type, data } = box;
-
-        pending.push(header, data);
+        if (!segment) {
+          continue;
+        }
 
         const motionDetected = this.accessory
           .getService(this.platform.Service.MotionSensor)?.getCharacteristic(this.platform.Characteristic.MotionDetected).value;
 
-        if (type === 'moov' || type === 'mdat') {
-          const fragment = Buffer.concat(pending);
+        yield {
+          data: segment,
+          isLast: !isMotionActive,
+        };
 
-          filebuffer = Buffer.concat([filebuffer, Buffer.concat(pending)]);
-          pending = [];
-
-          yield {
-            data: fragment,
-            isLast: !isMotionActive,
-          };
-
-          if (!isMotionActive) {
-            this.log.debug(this.cameraName, 'Ending recording session due to motion stopped!');
-            break;
-          }
+        if (!isMotionActive) {
+          this.log.debug(this.cameraName, 'Ending recording session due to motion stopped!');
+          break;
         }
+
       }
     } catch (error) {
       if (!this.handlingStreamingRequest && this.closeReason && this.closeReason === HDSProtocolSpecificErrorReason.CANCELLED) {
@@ -217,9 +209,6 @@ export class RecordingDelegate implements CameraRecordingDelegate {
           'The recording process was canceled by the HomeKit Controller."',
         );
       }
-      if (filebuffer.length > 0) {
-        this.log.debug(this.cameraName, 'Recording completed (HSV). Send ' + filebuffer.length + ' bytes.');
-      }
 
       if (this.forceStopTimeout) {
         clearTimeout(this.forceStopTimeout);
@@ -235,6 +224,7 @@ export class RecordingDelegate implements CameraRecordingDelegate {
           .updateValue(false);
       }
 
+      this.log.debug(this.cameraName, 'Streaming STOP! Recording!');
       this.localLivestreamManager.stopLocalLiveStream();
     }
   }
@@ -252,7 +242,6 @@ export class RecordingDelegate implements CameraRecordingDelegate {
 
     if (this.session) {
       this.log.debug(this.cameraName, 'Stopping recording session.');
-      this.session.socket?.destroy();
       this.session.process?.kill('SIGKILL');
       this.session = undefined;
     } else {

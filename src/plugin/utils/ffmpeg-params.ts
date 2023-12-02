@@ -360,7 +360,7 @@ export class FFmpegParameters {
         this.codecOptions = (configuration.audioCodec.type === AudioRecordingCodecType.AAC_LC)
           ? '-profile:a aac_low'
           : '-profile:a aac_eld';
-        this.codecOptions += ' -flags +global_header';
+        // this.codecOptions += ' -flags +global_header';
       }
 
       if (this.codec !== 'copy') {
@@ -432,7 +432,7 @@ export class FFmpegParameters {
     const params: string[] = [];
 
     params.push(this.hideBanner ? '-hide_banner' : '');
-    params.push('-loglevel level+verbose'); // default log to stderr
+    params.push('-loglevel level+warning'); // default log to stderr
     params.push(this.useWallclockAsTimestamp ? '-use_wallclock_as_timestamps 1' : '');
 
     return params;
@@ -555,26 +555,34 @@ export class FFmpegParameters {
     }
 
     params = parameters[0].buildGenericParameters();
-    // input
-    params.push(parameters[0].inputSoure);
 
-    params.push('-an -sn -dn');
+    params.push('-nostats');
+    params.push('-fflags', '+discardcorrupt+genpts');
+    params.push('-thread_queue_size 128');    
+
+    // video input
+    params.push(parameters[0].inputSoure);
+    // params.push('-an -sn -dn');
+
+    // audio input
+    if (parameters.length > 1 && parameters[0].inputSoure !== parameters[1].inputSoure) { // don't include extra audio source for rtsp
+      params.push('-thread_queue_size 128');
+      params.push(parameters[1].inputSoure);
+      // params.push('-vn -sn -dn');
+    }
 
     // video encoding
     params = params.concat(parameters[0].buildEncodingParameters());
+
     params.push(parameters[0].iFrameInterval ? `-force_key_frames expr:gte(t,n_forced*${parameters[0].iFrameInterval / 1000})` : '');
 
     // audio encoding
-    if (parameters.length > 1 && parameters[0].inputSoure !== parameters[1].inputSoure) { // don't include extra audio source for rtsp
-      params.push(parameters[1].inputSoure);
-      params.push('-vn -sn -dn');
-    }
-
     if (parameters.length > 1) {
       params = params.concat(parameters[1].buildEncodingParameters());
     }
 
     // fragmented mp4 options
+    params.push('-reset_timestamps', '1');
     params.push(parameters[0].movflags ? `-movflags ${parameters[0].movflags}` : '');
     params.push(parameters[0].maxMuxingQueueSize ? `-max_muxing_queue_size ${parameters[0].maxMuxingQueueSize}` : '');
 
