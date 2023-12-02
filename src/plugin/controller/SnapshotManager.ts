@@ -204,6 +204,7 @@ export class SnapshotManager extends EventEmitter {
 
     } catch (err) {
       this.log.error('Error fetching snapshot:', err);
+      snapshot = SnapshotUnavailable;
     }
 
     return this.resizeSnapshot(snapshot, request);
@@ -446,6 +447,7 @@ export class SnapshotManager extends EventEmitter {
       return await ffmpeg.getResult();
     } finally {
       if (source.livestreamId) {
+        this.log.debug('STOP! Snapshot');
         this.livestreamManager.stopLocalLiveStream();
       }
     }
