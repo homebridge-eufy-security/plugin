@@ -25,7 +25,7 @@ export class FFmpegProgress extends EventEmitter {
 
     killTimeout = setTimeout(() => {
       this.server.close();
-    }, 30 * 1000);
+    }, 5 * 60 * 1000);
 
     this.server.on('close', () => {
       this.emit('progress stopped');
