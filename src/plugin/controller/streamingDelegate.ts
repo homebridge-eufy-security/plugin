@@ -89,6 +89,7 @@ export class StreamingDelegate implements CameraStreamingDelegate {
       for (const session in this.ongoingSessions) {
         this.stopStream(session);
       }
+      this.log.debug(this.cameraName, 'Streaming STOP! API shutdown!');
       this.localLivestreamManager.stopLocalLiveStream();
     });
   }
@@ -102,14 +103,14 @@ export class StreamingDelegate implements CameraStreamingDelegate {
   }
 
   async handleSnapshotRequest(request: SnapshotRequest, callback: SnapshotRequestCallback): Promise<void> {
-    this.log.debug('handleSnapshotRequest');
+    this.log.debug(this.cameraName, 'handleSnapshotRequest');
 
     try {
-      this.log.debug('Snapshot requested: ' + request.width + ' x ' + request.height, this.cameraName, this.videoConfig.debug);
+      this.log.debug(this.cameraName, 'Snapshot requested: ' + request.width + ' x ' + request.height, this.videoConfig.debug);
 
       const snapshot = await this.snapshotManager.getSnapshotBuffer(request);
 
-      this.log.debug('snapshot byte lenght: ' + snapshot?.byteLength);
+      this.log.debug(this.cameraName, 'snapshot byte lenght: ' + snapshot?.byteLength);
 
       callback(undefined, snapshot);
     } catch (err) {
@@ -164,7 +165,7 @@ export class StreamingDelegate implements CameraStreamingDelegate {
   }
 
   private async startStream(request: StartStreamRequest, callback: StreamRequestCallback): Promise<void> {
-    this.log.debug('Starting session with id: ' + request.sessionID);
+    this.log.debug(this.cameraName, 'Starting session with id: ' + request.sessionID);
 
     const sessionInfo = this.pendingSessions.get(request.sessionID);
 
@@ -368,13 +369,14 @@ export class StreamingDelegate implements CameraStreamingDelegate {
       this.safelyStopResource('audio FFmpeg process', () => session.audioProcess?.stop());
 
       if (!is_rtsp_ready(this.device, this.cameraConfig, this.log)) {
+        this.log.debug(this.cameraName, 'Streaming STOP! Stream!');
         this.safelyStopResource('Eufy Station livestream', () => this.localLivestreamManager.stopLocalLiveStream());
       }
 
       this.ongoingSessions.delete(sessionId);
       this.log.info(this.cameraName, 'Stopped video stream.');
     } else {
-      this.log.debug('No session to stop.');
+      this.log.debug(this.cameraName, 'No session to stop.');
     }
   }
 }
