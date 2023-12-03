@@ -1,3 +1,5 @@
+import { CameraConfig } from '../../../plugin/utils/configTypes';
+
 export const DEFAULT_CONFIG_VALUES = {
   enableDetailedLogging: false,
   CameraMaxLivestreamDuration: 30,
@@ -16,7 +18,7 @@ export const DEFAULT_CONFIG_VALUES = {
   syncStationModes: false,
 };
 
-export const DEFAULT_CAMERACONFIG_VALUES = {
+export const DEFAULT_CAMERACONFIG_VALUES:CameraConfig = {
   enableButton: true,
   motionButton: true,
   lightButton: true,
@@ -27,7 +29,6 @@ export const DEFAULT_CAMERACONFIG_VALUES = {
   rtsp: false,
   enableCamera: true,
   forcerefreshsnap: false,
-  useEnhancedSnapshotBehaviour: true,
   refreshSnapshotIntervalMinutes: 0,
   snapshotHandlingMethod: 3,
   immediateRingNotificationWithoutSnapshot: false,

@@ -22,7 +22,6 @@ import { CameraButtonsComponent } from './config-options/camera-buttons/camera-b
 import { UnbridgeAccessoryComponent } from './config-options/unbridge-accessory/unbridge-accessory.component';
 import { RtspStreamingComponent } from './config-options/rtsp-streaming/rtsp-streaming.component';
 import { EnableAudioComponent } from './config-options/enable-audio/enable-audio.component';
-import { EnableSnapshotBehaviourComponent } from './config-options/enable-snapshot-behaviour/enable-snapshot-behaviour.component';
 import { ForceRefreshsnapComponent } from './config-options/force-refreshsnap/force-refreshsnap.component';
 import { SnapshotHandlingMethodComponent } from './config-options/snapshot-handling-method/snapshot-handling-method.component';
 import {
@@ -63,7 +62,6 @@ import { IgnoreMultipleDevicesWarningComponent }
     UnbridgeAccessoryComponent,
     RtspStreamingComponent,
     EnableAudioComponent,
-    EnableSnapshotBehaviourComponent,
     ForceRefreshsnapComponent,
     SnapshotHandlingMethodComponent,
     ImmediateNotificationOnRingComponent,

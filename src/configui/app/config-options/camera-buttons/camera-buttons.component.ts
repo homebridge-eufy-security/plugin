@@ -25,7 +25,7 @@ export class CameraButtonsComponent extends ConfigOptionsInterpreter implements 
     { name: 'Enable', description: 'camera', value: DEFAULT_CAMERACONFIG_VALUES.enableButton, propertyName: 'DeviceEnabled' },
     { name: 'Motion', description: 'detection', value: DEFAULT_CAMERACONFIG_VALUES.motionButton, propertyName: 'DeviceMotionDetection' },
     { name: 'Light', description: 'light', value: DEFAULT_CAMERACONFIG_VALUES.lightButton, propertyName: 'DeviceLight' },
-    { name: 'IndoorChime', description: 'indoor chime', value: DEFAULT_CAMERACONFIG_VALUES.indoorChimeButton, propertyName: 'DeviceChimeIndoor' },
+    { name: 'IndoorChime', description: 'indoor chime', value: DEFAULT_CAMERACONFIG_VALUES.indoorChimeButton!, propertyName: 'DeviceChimeIndoor' },
   ];
 
   constructor(

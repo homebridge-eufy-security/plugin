@@ -26,7 +26,7 @@ export class PeriodicSnapshotRefreshComponent extends ConfigOptionsInterpreter i
   /** updateConfig() takes an optional second parameter to specify the accessoriy for which the setting is changed */
 
   @Input() accessory?: Accessory;
-  value = DEFAULT_CAMERACONFIG_VALUES.refreshSnapshotIntervalMinutes;
+  value = DEFAULT_CAMERACONFIG_VALUES.refreshSnapshotIntervalMinutes!;
   inputIsInvalid = false;
 
   async readValue() {
