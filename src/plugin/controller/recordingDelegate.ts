@@ -67,7 +67,7 @@ export class RecordingDelegate implements CameraRecordingDelegate {
     return this.handlingStreamingRequest;
   }
 
-  async * handleRecordingStreamRequest(streamId: number): AsyncGenerator<RecordingPacket, any, unknown> {
+  async * handleRecordingStreamRequest(streamId: number): AsyncGenerator<RecordingPacket> {
     this.handlingStreamingRequest = true;
     this.log.info(this.cameraName, 'requesting recording for HomeKit Secure Video.');
 
@@ -128,7 +128,9 @@ export class RecordingDelegate implements CameraRecordingDelegate {
         if (streamData !== null) {
           this.log.debug(this.cameraName, 'Stream Data!');
           streamData.videostream.pipe(this.session.process.stdio[3] as Writable);
-          streamData.audiostream.pipe(this.session.process.stdio[4] as Writable);
+          if (audioEnabled) {
+            streamData.audiostream.pipe(this.session.process.stdio[4] as Writable);
+          }
         }
       }
 
@@ -154,7 +156,7 @@ export class RecordingDelegate implements CameraRecordingDelegate {
       setTimeout(() => {
         isMotionActive = false;
         this.log.debug(this.cameraName, 'Ending recording session due to motion stopped!');
-      }, 15000); // Set the flag to false after 15 seconds
+      }, 30 * 1000); // Set the flag to false after 15 seconds
 
 
       this.log.debug(this.cameraName, 'Generator Start!');
