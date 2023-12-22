@@ -69,7 +69,7 @@ export class RecordingDelegate implements CameraRecordingDelegate {
 
   async * handleRecordingStreamRequest(streamId: number): AsyncGenerator<RecordingPacket> {
     this.handlingStreamingRequest = true;
-    this.log.info(this.cameraName, 'requesting recording for HomeKit Secure Video.');
+    this.log.info(`${this.cameraName} requesting recording for HomeKit Secure Video. ID: ${streamId}`);
 
     try {
       // eslint-disable-next-line max-len
@@ -156,14 +156,12 @@ export class RecordingDelegate implements CameraRecordingDelegate {
       setTimeout(() => {
         isMotionActive = false;
         this.log.debug(this.cameraName, 'Ending recording session due to motion stopped!');
-      }, 30 * 1000); // Set the flag to false after 15 seconds
+      }, 60 * 1000); // Set the flag to false after 15 seconds
 
 
       this.log.debug(this.cameraName, 'Generator Start!');
 
       for await (const segment of this.session.segmentGenerator()) {
-
-        this.log.debug(this.cameraName, 'Generator!!!');
 
         if (!this.isRecording()) {
           this.log.debug(this.cameraName, 'Recording was ended prematurely.');
@@ -173,6 +171,7 @@ export class RecordingDelegate implements CameraRecordingDelegate {
         if (!segment) {
           continue;
         }
+        this.log.debug(`${this.cameraName} Yeah a good segment!`);
 
         const motionDetected = this.accessory
           .getService(this.platform.Service.MotionSensor)?.getCharacteristic(this.platform.Characteristic.MotionDetected).value;

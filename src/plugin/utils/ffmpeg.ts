@@ -15,10 +15,10 @@ export class FFmpeg extends EventEmitter {
 
   protected progress?: FFmpegProgress;
 
+  protected commandLineArgs: string[] = [];
+
   protected ffmpegExec = ffmpegPath || 'ffmpeg';
 
-  public stdin?: Writable | null;
-  public stdout?: Readable | null;
   public stdio?: [
     Writable | null,
     // stdin
@@ -53,16 +53,16 @@ export class FFmpeg extends EventEmitter {
     this.progress = new FFmpegProgress(this.parameters[0].progressPort);
     this.progress.on('progress started', this.onProgressStarted.bind(this));
 
-    const processArgs = FFmpegParameters.getCombinedArguments(this.parameters);
+    this.commandLineArgs = FFmpegParameters.getCombinedArguments(this.parameters);
 
-    this.log.debug(this.name, 'Stream command: ' + this.ffmpegExec + ' ' + processArgs.join(' '));
+    this.log.debug(this.name, 'Stream command: ' + this.ffmpegExec + ' ' + this.commandLineArgs.join(' '));
     this.parameters.forEach((p) => {
       this.log.info(this.name, p.getStreamStartText());
     });
 
     this.process = spawn(
       this.ffmpegExec,
-      processArgs.join(' ').split(/\s+/),
+      this.commandLineArgs.join(' ').split(/\s+/),
       {
         env: process.env,
         stdio: [
@@ -74,8 +74,6 @@ export class FFmpeg extends EventEmitter {
       },
     );
 
-    this.stdin = this.process.stdin;
-    this.stdout = this.process.stdout;
     this.stdio = this.process.stdio;
 
     this.process.stderr?.on('data', (chunk) => {
@@ -138,24 +136,21 @@ export class FFmpeg extends EventEmitter {
   }
 
   public stop(): void {
-    let usesStdIn = false;
     this.isEnded = true;
-    this.parameters.forEach(p => {
-      if (p.usesStdInAsInput()) {
-        usesStdIn = true;
-      }
-    });
 
-    if (usesStdIn) {
-      this.process?.stdin?.destroy();
-      this.process?.kill('SIGTERM');
-    } else {
-      this.process?.stdin?.write('q' + os.EOL);
+    if(!this.commandLineArgs.includes('pipe:')) {
+      this.process?.stdin?.end('q');
     }
+
+    this.process?.stdin?.destroy();
+    this.process?.stdout?.destroy();
 
     this.killTimeout = setTimeout(() => {
       this.process?.kill('SIGKILL');
-    }, 2 * 1000);
+    }, 5 * 1000);
+
+    // Send the kill shot.
+    this.process?.kill();
   }
 
   protected onProgressStarted() {
@@ -188,5 +183,20 @@ export class FFmpeg extends EventEmitter {
       this.emit('error', message + ' (Error)');
       this.log.error(this.name, message + ' (Error)');
     }
+  }
+
+  // Return the standard input for this process.
+  public get stdin(): Writable | null {
+    return this.process?.stdin ?? null;
+  }
+
+  // Return the standard output for this process.
+  public get stdout(): Readable | null {
+    return this.process?.stdout ?? null;
+  }
+
+  // Return the standard error for this process.
+  public get stderr(): Readable | null {
+    return this.process?.stderr ?? null;
   }
 }

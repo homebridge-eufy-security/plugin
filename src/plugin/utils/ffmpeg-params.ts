@@ -432,7 +432,7 @@ export class FFmpegParameters {
     const params: string[] = [];
 
     params.push(this.hideBanner ? '-hide_banner' : '');
-    params.push('-loglevel level+warning'); // default log to stderr
+    params.push('-loglevel level+verbose'); // default log to stderr
     params.push(this.useWallclockAsTimestamp ? '-use_wallclock_as_timestamps 1' : '');
 
     return params;
@@ -558,37 +558,62 @@ export class FFmpegParameters {
 
     params.push('-nostats');
     params.push('-fflags', '+discardcorrupt+genpts');
-    params.push('-thread_queue_size 128');    
+    // params.push('-thread_queue_size 128');
+
+    // params.push('-probesize 5000000');
+    // params.push('-analyzeduration 5000000');
+    // params.push('-max_delay 500000');
+
+
+
+    // params.push('-r 15');
 
     // video input
+    params.push('-thread_queue_size 128');
+    params.push('-f h264');
     params.push(parameters[0].inputSoure);
+
+    
+
     // params.push('-an -sn -dn');
 
     // audio input
     if (parameters.length > 1 && parameters[0].inputSoure !== parameters[1].inputSoure) { // don't include extra audio source for rtsp
       params.push('-thread_queue_size 128');
+      params.push('-f aac');
       params.push(parameters[1].inputSoure);
       // params.push('-vn -sn -dn');
+
+      // params.push('-bsf:a aac_adtstoasc');
     }
 
-    // video encoding
-    params = params.concat(parameters[0].buildEncodingParameters());
+    params.push('-map 0:v');
+    params.push('-vcodec copy');
+    // params.push('-vsync 1');
+    // params.push('-filter:v setpts=PTS-STARTPTS');
 
-    params.push(parameters[0].iFrameInterval ? `-force_key_frames expr:gte(t,n_forced*${parameters[0].iFrameInterval / 1000})` : '');
+    params.push('-map 1:a');
+    params.push('-acodec copy');
+    // params.push('-rtpflags latm');
+    params.push('-bsf:a aac_adtstoasc');
+    // params.push('-filter:a asetpts=PTS-STARTPTS');
+
+    // params.push(parameters[0].iFrameInterval ? `-force_key_frames expr:gte(t,n_forced*${parameters[0].iFrameInterval / 1000})` : '');
+    params.push('-reset_timestamps', '1');
+
+    // fragmented mp4 options
+    params.push(parameters[0].movflags ? `-movflags ${parameters[0].movflags}` : '');
+    // params.push(parameters[0].maxMuxingQueueSize ? `-max_muxing_queue_size ${parameters[0].maxMuxingQueueSize}` : '');
 
     // audio encoding
     if (parameters.length > 1) {
-      params = params.concat(parameters[1].buildEncodingParameters());
+      // params = params.concat(parameters[1].buildEncodingParameters());
     }
-
-    // fragmented mp4 options
-    params.push('-reset_timestamps', '1');
-    params.push(parameters[0].movflags ? `-movflags ${parameters[0].movflags}` : '');
-    params.push(parameters[0].maxMuxingQueueSize ? `-max_muxing_queue_size ${parameters[0].maxMuxingQueueSize}` : '');
 
     // output
     params.push('-f mp4');
     params.push(parameters[0].output);
+    // params.push(`/tmp/${this.name}.mp4`);
     params.push(`-progress tcp://127.0.0.1:${parameters[0].progressPort}`);
     params = params.filter(x => x !== '');
 
