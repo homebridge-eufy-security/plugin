@@ -21,6 +21,7 @@ export const DeviceImage = new Map<DeviceType, { image: string; padding: string 
   [DeviceType.INDOOR_CAMERA, { image: 'indoorcammini_large.jpg', padding: '0px' }],
   [DeviceType.INDOOR_PT_CAMERA, { image: 'indoorcamp24_large.jpg', padding: '0px' }],
   [DeviceType.SOLO_CAMERA, { image: 'solocame20_large.jpg', padding: '0px' }],
+  [DeviceType.SOLO_CAMERA_SOLAR, { image: 'solocams220.png', padding: '0px' }],
   [DeviceType.SOLO_CAMERA_PRO, { image: 'solocame20_large.jpg', padding: '0px' }],
   [DeviceType.INDOOR_CAMERA_1080, { image: 'soloindoorcamc24_large.jpg', padding: '10px' }],
   [DeviceType.INDOOR_PT_CAMERA_1080, { image: 'indoorcamp24_large.jpg', padding: '0px' }],

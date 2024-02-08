@@ -1,7 +1,7 @@
 {
   "displayName": "Homebridge Eufy Security",
   "name": "homebridge-eufy-security",
-  "version": "2.2.21",
+  "version": "2.2.21-s220",
   "description": "Control Eufy Security from homebridge.",
   "license": "Apache-2.0",
   "repository": {
@@ -43,7 +43,7 @@
   ],
   "dependencies": {
     "@homebridge/plugin-ui-utils": "^0.1.1",
-    "eufy-security-client": "2.8.1",
+    "eufy-security-client": "2.9.1",
     "ffmpeg-for-homebridge": "2.1.0",
     "pick-port": "^1.0.1",
     "rotating-file-stream": "^3.1.1",
@@ -97,6 +97,6 @@
       "ban-ts-comment": 0
     }
   },
-  "homepage": "https://github.com/homebridge-eufy-security/plugin/wiki",
-  "author": "homebridge-eufy-security"
+  "homepage": "https://github.com/ubreu/homebridge-eufy-security/wiki",
+  "author": "ubreu"
 }

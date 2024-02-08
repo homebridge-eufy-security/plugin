@@ -570,6 +570,7 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
       case DeviceType.INDOOR_PT_CAMERA_1080:
       case DeviceType.SOLO_CAMERA:
       case DeviceType.SOLO_CAMERA_PRO:
+      case DeviceType.SOLO_CAMERA_SOLAR:
       case DeviceType.SOLO_CAMERA_SPOTLIGHT_1080:
       case DeviceType.SOLO_CAMERA_SPOTLIGHT_2K:
       case DeviceType.SOLO_CAMERA_SPOTLIGHT_SOLAR:
