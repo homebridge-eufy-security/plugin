@@ -8,6 +8,7 @@ import { DEFAULT_CAMERACONFIG_VALUES } from '../../util/default-config-values';
 interface UpdatedConfig {
   enableButton: boolean;
   motionButton: boolean;
+  lightButton: boolean;
   indoorChimeButton?: boolean;
 }
 
@@ -29,6 +30,7 @@ export class CameraButtonsComponent extends ConfigOptionsInterpreter implements 
 
   enableCameraButton = true;
   enableMotionButton = true;
+  enableLightButton = true;
   showIndoorChimeButtonSetting = false;
   indoorChimeButton = DEFAULT_CAMERACONFIG_VALUES.indoorChimeButton;
 
@@ -47,6 +49,10 @@ export class CameraButtonsComponent extends ConfigOptionsInterpreter implements 
       this.enableMotionButton = config.motionButton;
     }
 
+    if ('lightButton' in config) {
+      this.enableLightButton = config.lightButton;
+    }
+
     if ('indoorChimeButton' in config) {
       this.indoorChimeButton = config.indoorChimeButton;
     }
@@ -56,6 +62,7 @@ export class CameraButtonsComponent extends ConfigOptionsInterpreter implements 
     const updated: UpdatedConfig = {
       enableButton: this.enableCameraButton,
       motionButton: this.enableMotionButton,
+      lightButton: this.enableLightButton,
     };
 
     if (this.showIndoorChimeButtonSetting) {

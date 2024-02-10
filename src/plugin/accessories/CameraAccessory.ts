@@ -4,7 +4,7 @@ import { EufySecurityPlatform } from '../platform';
 import { DeviceAccessory } from './Device';
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-ignore  
+// @ts-ignore
 import { Camera, Device, DeviceEvents, PropertyName, CommandName } from 'eufy-security-client';
 import { StreamingDelegate } from '../controller/streamingDelegate';
 
@@ -134,7 +134,7 @@ export class CameraAccessory extends DeviceAccessory {
   }
 
   private async setupLightButton() {
-    this.setupButtonService('Light', true, PropertyName.DeviceLight, 'lightbulb');
+    this.setupButtonService('Light', this.cameraConfig.lightButton, PropertyName.DeviceLight, 'lightbulb');
   }
 
   private async setupChimeButton() {
@@ -154,6 +154,7 @@ export class CameraAccessory extends DeviceAccessory {
     config.name = this.accessory.displayName;
     config.enableButton = config.enableButton ??= true;
     config.motionButton = config.motionButton ??= true;
+    config.lightButton = config.lightButton ??= true;
     config.rtsp = config.rtsp ??= false;
     config.forcerefreshsnap = config.forcerefreshsnap ??= false;
     config.videoConfig = config.videoConfig ??= {};
@@ -344,7 +345,7 @@ export class CameraAccessory extends DeviceAccessory {
         return value === 1;
       }
 
-      // Override for PropertyName.DeviceEnabled when enabled button is fired and 
+      // Override for PropertyName.DeviceEnabled when enabled button is fired and
       if (
         propertyName === PropertyName.DeviceEnabled &&
         Date.now() - this.cameraStatus.timestamp <= 60000
