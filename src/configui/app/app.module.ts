@@ -1,4 +1,4 @@
-import { NgModule } from '@angular/core';
+import { NgModule, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
 import { FormsModule } from '@angular/forms';
 
@@ -82,5 +82,6 @@ import { IgnoreMultipleDevicesWarningComponent }
   imports: [BrowserModule, FormsModule, NgbModule, AppRoutingModule, FontAwesomeModule],
   providers: [{ provide: LocationStrategy, useClass: HashLocationStrategy }],
   bootstrap: [AppComponent],
+  schemas: [CUSTOM_ELEMENTS_SCHEMA],
 })
 export class AppModule { }

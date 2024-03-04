@@ -8,7 +8,6 @@ import { VideoConfig } from '../../../../plugin/utils/configTypes';
 @Component({
   selector: 'app-advanced-videoconfig',
   templateUrl: './advanced-videoconfig.component.html',
-  styleUrls: ['./advanced-videoconfig.component.css'],
 })
 export class AdvancedVideoconfigComponent
   extends ConfigOptionsInterpreter
