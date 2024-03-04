@@ -1,7 +1,7 @@
 import net from 'net';
 import { Readable } from 'stream';
 
-import pickPort from 'pick-port';
+import { pickPort } from 'pick-port';
 
 import { CameraConfig, VideoConfig } from './configTypes';
 import {
@@ -93,11 +93,20 @@ export class FFmpegParameters {
   }
 
   private static async allocateddPort(type: string): Promise<number> {
-    return pickPort({
-      type: type,
-      ip: '0.0.0.0',
-      reserveTimeout: 15,
-    });
+    try {
+      // Call pickPort function and await its result
+      const port = await pickPort({
+        type: type as "tcp" | "udp",
+        ip: '0.0.0.0',
+        reserveTimeout: 15,
+      });
+
+      return port; // Return the allocated port
+    } catch (error) {
+      // Handle any errors that might occur during port allocation
+      console.error('Error allocating port:', error);
+      throw error; // Rethrow the error to propagate it further if needed
+    }
   }
 
   public static async allocateTCPPort(): Promise<number> {
@@ -573,7 +582,7 @@ export class FFmpegParameters {
     params.push('-f h264');
     params.push(parameters[0].inputSoure);
 
-    
+
 
     // params.push('-an -sn -dn');
 
