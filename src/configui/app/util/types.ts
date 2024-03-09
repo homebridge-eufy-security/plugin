@@ -20,14 +20,26 @@ export type LoginResult = {
 };
 
 export type Accessory = {
+  stations?: L_Station[];
+};
+
+export type L_Station = {
   uniqueId: string;
   displayName: string;
   type: number;
   typename: string;
-  station: boolean;
   ignored?: boolean;
-  cachedName?: string;
+  devices?: L_Device[];
+};
+
+export type L_Device = {
+  uniqueId: string;
+  displayName: string;
+  type: number;
+  typename: string;
+  ignored?: boolean;
   isCamera?: boolean;
+  hasBattery?: boolean;
   isDoorbell?: boolean;
   supportsRTSP?: boolean;
   supportsTalkback?: boolean;

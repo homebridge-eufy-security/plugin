@@ -1,5 +1,5 @@
 import { Component, Input, OnInit } from '@angular/core';
-import { Accessory } from '../../util/types';
+import { Accessory, L_Device } from '../../util/types';
 import { AccessoryService } from '../../accessory.service';
 import { PluginService } from '../../plugin.service';
 import { DEFAULT_CAMERACONFIG_VALUES, DEFAULT_CONFIG_VALUES } from '../../util/default-config-values';
@@ -9,11 +9,25 @@ import { ConfigOptionsInterpreter } from '../config-options-interpreter';
 import { VideoConfig } from '../../../../plugin/utils/configTypes';
 
 import { faQuestionCircle } from '@fortawesome/free-regular-svg-icons';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { NgbCollapse, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { RouterLink } from '@angular/router';
+import { NgIf, NgFor } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 
 @Component({
   selector: 'app-enable-hsv',
   templateUrl: './enable-hsv.component.html',
-  styles: [
+  styles: [],
+  standalone: true,
+  imports: [
+    FormsModule,
+    NgIf,
+    RouterLink,
+    NgFor,
+    NgbCollapse,
+    FaIconComponent,
+    NgbTooltip,
   ],
 })
 export class EnableHsvComponent extends ConfigOptionsInterpreter implements OnInit {
@@ -38,7 +52,7 @@ export class EnableHsvComponent extends ConfigOptionsInterpreter implements OnIn
 
   /** updateConfig() takes an optional second parameter to specify the accessoriy for which the setting is changed */
 
-  @Input() accessory?: Accessory;
+  @Input() device?: L_Device;
   value = DEFAULT_CAMERACONFIG_VALUES.hsv;
 
   showAdvancedSettings = false;
@@ -74,9 +88,9 @@ export class EnableHsvComponent extends ConfigOptionsInterpreter implements OnIn
   camerasOnSameStation: string[] = [];
 
   ignoreMultipleDevicesWarning = DEFAULT_CONFIG_VALUES.ignoreMultipleDevicesWarning;
-  
+
   async readValue() {
-    const config = await this.getCameraConfig(this.accessory?.uniqueId || '');
+    const config = await this.getCameraConfig(this.device?.uniqueId || '');
 
     if (config && Object.prototype.hasOwnProperty.call(config, 'hsv')) {
       this.value = config['hsv'];
@@ -94,8 +108,8 @@ export class EnableHsvComponent extends ConfigOptionsInterpreter implements OnIn
       });
     }
 
-    if (this.accessory) {
-      this.accessoryService.getChargingStatus(this.accessory.uniqueId)
+    if (this.device) {
+      this.accessoryService.getChargingStatus(this.device.uniqueId)
         .then((chargingStatus) => this.chargingStatus = chargingStatus);
 
       if (Object.prototype.hasOwnProperty.call(this.config, 'ignoreMultipleDevicesWarning')) {
@@ -103,7 +117,7 @@ export class EnableHsvComponent extends ConfigOptionsInterpreter implements OnIn
       }
 
       const ignoredDevices = (config && Object.prototype.hasOwnProperty.call(config, 'ignoreDevices')) ? config['ignoreDevices'] : [];
-      this.accessoryService.getCamerasOnSameStation(this.accessory.uniqueId, ignoredDevices)
+      this.accessoryService.getCamerasOnSameStation(this.device.uniqueId, ignoredDevices)
         .then(devices => {
           this.camerasOnSameStation = devices;
           if (this.camerasOnSameStation.length > 1 && !this.ignoreMultipleDevicesWarning) {
@@ -148,14 +162,14 @@ export class EnableHsvComponent extends ConfigOptionsInterpreter implements OnIn
   }
 
   async update() {
-    const config = await this.getCameraConfig(this.accessory?.uniqueId || '');
+    const config = await this.getCameraConfig(this.device?.uniqueId || '');
     const videoConfig =
       config && Object.prototype.hasOwnProperty.call(config, 'videoConfig')
         ? config['videoConfig']
         : {};
     const newConfig: VideoConfig = {};
 
-    
+
     if (!this.audio) {
       newConfig['audio'] = this.audio;
     }
@@ -178,13 +192,13 @@ export class EnableHsvComponent extends ConfigOptionsInterpreter implements OnIn
       newConfig['maxBitrate'] = this.maxBitrate;
     }
 
-    this.updateConfig(
+    this.updateDeviceConfig(
       {
         hsv: this.value,
         hsvRecordingDuration: this.recordingDuration,
         hsvConfig: newConfig,
       },
-      this.accessory,
+      this.device!,
     );
 
     this.placeholderUpdate();

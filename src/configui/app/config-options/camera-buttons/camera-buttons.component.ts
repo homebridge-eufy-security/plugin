@@ -1,11 +1,13 @@
 /* eslint-disable max-len */
 
 import { Component, Input, OnInit } from '@angular/core';
-import { Accessory } from '../../../app/util/types';
+import { Accessory, L_Device } from '../../../app/util/types';
 import { PluginService } from '../../../app/plugin.service';
 import { ConfigOptionsInterpreter } from '../config-options-interpreter';
 import { DEFAULT_CAMERACONFIG_VALUES } from '../../util/default-config-values';
 import { AccessoryService } from '../../accessory.service';
+import { FormsModule } from '@angular/forms';
+import { NgFor } from '@angular/common';
 
 interface ButtonConfig {
   name: string;
@@ -15,11 +17,13 @@ interface ButtonConfig {
 }
 
 @Component({
-  selector: 'app-camera-buttons',
-  templateUrl: './camera-buttons.component.html',
+    selector: 'app-camera-buttons',
+    templateUrl: './camera-buttons.component.html',
+    standalone: true,
+    imports: [NgFor, FormsModule],
 })
 export class CameraButtonsComponent extends ConfigOptionsInterpreter implements OnInit {
-  @Input() accessory?: Accessory;
+  @Input() device?: L_Device;
 
   buttonConfigs: ButtonConfig[] = [
     { name: 'Enable', description: 'camera', value: DEFAULT_CAMERACONFIG_VALUES.enableButton, propertyName: 'DeviceEnabled' },
@@ -40,16 +44,16 @@ export class CameraButtonsComponent extends ConfigOptionsInterpreter implements 
   }
 
   async readValue(): Promise<void> {
-    const uniqueId = this.accessory?.uniqueId ?? '';
+    const uniqueId = this.device?.uniqueId ?? '';
     const config = await this.getCameraConfig(uniqueId);
 
     // Create a new array without the buttonConfig if catch is fired
     const updatedButtonConfigs: ButtonConfig[] = [];
 
     await Promise.all(this.buttonConfigs.map(async (buttonConfig) => {
-      if (this.accessory) {
+      if (this.device) {
         try {
-          if (await this.accessoryService.hasProperty(this.accessory.uniqueId, buttonConfig.propertyName)) {
+          if (await this.accessoryService.hasProperty(this.device.uniqueId, buttonConfig.propertyName)) {
 
             if (Object.prototype.hasOwnProperty.call(config, buttonConfig.name)) {
               buttonConfig.value = config[buttonConfig.name] ?? buttonConfig.value;
@@ -73,6 +77,6 @@ export class CameraButtonsComponent extends ConfigOptionsInterpreter implements 
       updated[buttonConfig.name.toLowerCase()] = buttonConfig.value;
     });
 
-    this.updateConfig(updated, this.accessory);
+    this.updateDeviceConfig(updated, this.device!);
   }
 }

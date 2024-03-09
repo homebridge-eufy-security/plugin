@@ -1,12 +1,15 @@
 import { Component } from '@angular/core';
 import { Router } from '@angular/router';
 import { PluginService } from '../plugin.service';
+import { NgbAlert } from '@ng-bootstrap/ng-bootstrap';
+import { NgIf } from '@angular/common';
 
 @Component({
-  selector: 'app-reset-confirmation',
-  templateUrl: './reset-confirmation.component.html',
-  styles: [
-  ],
+    selector: 'app-reset-confirmation',
+    templateUrl: './reset-confirmation.component.html',
+    styles: [],
+    standalone: true,
+    imports: [NgIf, NgbAlert],
 })
 export class ResetConfirmationComponent {
 

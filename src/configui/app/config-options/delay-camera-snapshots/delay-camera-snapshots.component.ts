@@ -1,13 +1,16 @@
 import { Component, Input, OnInit } from '@angular/core';
-import { Accessory } from '../../../app/util/types';
+import { Accessory, L_Device } from '../../../app/util/types';
 import { PluginService } from '../../../app/plugin.service';
 import { DEFAULT_CAMERACONFIG_VALUES } from '../../../app/util/default-config-values';
 import { ConfigOptionsInterpreter } from '../config-options-interpreter';
+import { FormsModule } from '@angular/forms';
 
 @Component({
-  selector: 'app-delay-camera-snapshots',
-  templateUrl: './delay-camera-snapshots.component.html',
-  styles: [],
+    selector: 'app-delay-camera-snapshots',
+    templateUrl: './delay-camera-snapshots.component.html',
+    styles: [],
+    standalone: true,
+    imports: [FormsModule],
 })
 export class DelayCameraSnapshotsComponent extends ConfigOptionsInterpreter implements OnInit {
   constructor(pluginService: PluginService) {
@@ -25,11 +28,11 @@ export class DelayCameraSnapshotsComponent extends ConfigOptionsInterpreter impl
 
   /** updateConfig() takes an optional second parameter to specify the accessoriy for which the setting is changed */
 
-  @Input() accessory?: Accessory;
+  @Input() device?: L_Device;
   value = DEFAULT_CAMERACONFIG_VALUES.delayCameraSnapshot;
 
   async readValue() {
-    const config = await this.getCameraConfig(this.accessory?.uniqueId || '');
+    const config = await this.getCameraConfig(this.device?.uniqueId || '');
 
     if (config && Object.prototype.hasOwnProperty.call(config, 'delayCameraSnapshot')) {
       this.value = config['delayCameraSnapshot'];
@@ -37,11 +40,11 @@ export class DelayCameraSnapshotsComponent extends ConfigOptionsInterpreter impl
   }
 
   update() {
-    this.updateConfig(
+    this.updateDeviceConfig(
       {
         delayCameraSnapshot: this.value,
       },
-      this.accessory,
+      this.device!,
     );
   }
 }

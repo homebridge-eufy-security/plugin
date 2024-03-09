@@ -1,5 +1,5 @@
 import { Component, Input, OnInit } from '@angular/core';
-import { Accessory } from '../../../app/util/types';
+import { L_Device } from '../../../app/util/types';
 import { PluginService } from '../../../app/plugin.service';
 import { DEFAULT_CAMERACONFIG_VALUES, DEFAULT_CONFIG_VALUES } from '../../../app/util/default-config-values';
 import { ConfigOptionsInterpreter } from '../config-options-interpreter';
@@ -7,14 +7,26 @@ import { ConfigOptionsInterpreter } from '../config-options-interpreter';
 import { faPlusCircle, faMinusCircle, faCircle } from '@fortawesome/free-solid-svg-icons';
 import { AccessoryService } from '../../accessory.service';
 import { ChargingType } from '../../util/types';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { RouterLink } from '@angular/router';
+import { NgIf, NgFor } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 
 @Component({
-  selector: 'app-snapshot-handling-method',
-  templateUrl: './snapshot-handling-method.component.html',
-  styles: [],
+    selector: 'app-snapshot-handling-method',
+    templateUrl: './snapshot-handling-method.component.html',
+    styles: [],
+    standalone: true,
+    imports: [
+        FormsModule,
+        NgIf,
+        RouterLink,
+        NgFor,
+        FaIconComponent,
+    ],
 })
 export class SnapshotHandlingMethodComponent extends ConfigOptionsInterpreter implements OnInit {
-  @Input() accessory?: Accessory;
+  @Input() device?: L_Device;
 
   constructor(
     pluginService: PluginService,
@@ -40,7 +52,7 @@ export class SnapshotHandlingMethodComponent extends ConfigOptionsInterpreter im
   ignoreMultipleDevicesWarning = DEFAULT_CONFIG_VALUES.ignoreMultipleDevicesWarning;
 
   async readValue() {
-    const uniqueId = this.accessory?.uniqueId || '';
+    const uniqueId = this.device?.uniqueId || '';
     const config = await this.getCameraConfig(uniqueId);
 
     // Check for ignoreMultipleDevicesWarning in config using hasOwnProperty
@@ -48,9 +60,9 @@ export class SnapshotHandlingMethodComponent extends ConfigOptionsInterpreter im
       this.ignoreMultipleDevicesWarning = config['ignoreMultipleDevicesWarning'];
     }
 
-    if (this.accessory) {
+    if (this.device) {
       // Get charging status asynchronously
-      this.accessoryService.getChargingStatus(this.accessory.uniqueId)
+      this.accessoryService.getChargingStatus(this.device.uniqueId)
         .then((chargingStatus) => this.chargingStatus = chargingStatus);
       
       // Check for snapshotHandlingMethod or forcerefreshsnap in config using hasOwnProperty
@@ -64,7 +76,7 @@ export class SnapshotHandlingMethodComponent extends ConfigOptionsInterpreter im
 
       // Get cameras on the same station and handle multiple devices
       const ignoredDevices = (config && Object.prototype.hasOwnProperty.call(config, 'ignoreDevices')) ? config['ignoreDevices'] : [];
-      this.accessoryService.getCamerasOnSameStation(this.accessory.uniqueId, ignoredDevices)
+      this.accessoryService.getCamerasOnSameStation(this.device.uniqueId, ignoredDevices)
         .then(devices => {
           this.camerasOnSameStation = devices;
           if (this.camerasOnSameStation.length > 1 && !this.ignoreMultipleDevicesWarning) {
@@ -77,11 +89,11 @@ export class SnapshotHandlingMethodComponent extends ConfigOptionsInterpreter im
 
   update() {
     // Update the configuration with snapshotHandlingMethod
-    this.updateConfig(
+    this.updateDeviceConfig(
       {
         snapshotHandlingMethod: this.value,
       },
-      this.accessory,
+      this.device!,
     );
   }
 }

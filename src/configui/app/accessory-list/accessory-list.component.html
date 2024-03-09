@@ -4,18 +4,34 @@
         <button type="button" class="btn-close" aria-label="Close" (click)="modal.dismiss('Cross click')"></button>
     </div>
     <div class="modal-body">
-            <div class="mb-3">
-                To refresh all stations and devices you will be logged into your eufy account. This can interfere with the plugins connection to the eufy cloud.
-                <p></p><b style="color: #dc3545">We strongly recommened that you restart the plugin after you're done with the configuration even if you didn't change any settings.</b><p></p>
-                Otherwise you might experience glitches like no longer working push notifications for the plugin (see <a href="https://github.com/homebridge-eufy-security/plugin/issues/59#issuecomment-1147314942" target="_blank" rel="noopener noreferrer">here</a> for more information).
-            </div>
+        <div class="mb-3">
+            To refresh all stations and devices you will be logged into your eufy account. This can interfere with the
+            plugins connection to the eufy cloud.
+            <p></p><b style="color: #dc3545">We strongly recommened that you restart the plugin after you're done with
+                the configuration even if you didn't change any settings.</b>
+            <p></p>
+            Otherwise you might experience glitches like no longer working push notifications for the plugin (see <a
+                href="https://github.com/homebridge-eufy-security/plugin/issues/59#issuecomment-1147314942"
+                target="_blank" rel="noopener noreferrer">here</a> for more information).
+        </div>
     </div>
     <div class="modal-footer">
         <a routerLink="/login" class="btn btn-success" (click)="modal.close('Login')">Login with eufy</a>
     </div>
 </ng-template>
 
-<div *ngIf="stations.length === 0 && devices.length === 0" class="container">
+<div *ngIf="stations.length === 0" class="container">
+    <div class="row">
+        <div class="col-6">
+            <button type="button" class="btn btn-success" (click)="openReloadModal(reloadModal)">
+                <fa-icon [icon]="reloadIcon" size="lg"></fa-icon>
+            </button>
+        </div>
+        <div class="col-6 text-end">
+            <a routerLink="/advancedConfig" class="btn btn-secondary">Plugin Settings</a>
+        </div>
+    </div>
+
     <div class="row pl-5 pr-5">
         <div class="col" style="max-width: 20%;"></div>
         <div class="col d-flex justify-content-center">
@@ -33,8 +49,7 @@
     </div>
 </div>
 
-<div *ngIf="stations.length !== 0 || devices.length !== 0" class="container">
-
+<div *ngIf="stations.length !== 0" class="container">
     <div class="row">
         <div class="col-6">
             <button type="button" class="btn btn-success" (click)="openReloadModal(reloadModal)">
@@ -49,78 +64,96 @@
     <p></p>
     <span>Click on any device below to access its settings.</span>
     <p></p>
-    <div class="card">
-        <div class="card-header">
-            Stations
-        </div>
-        <div class="card-body pt-0 pb-0">
-            <div class="row">
 
-                <div *ngFor="let station of stations" class="col-6 col-sm-4 mt-3 mb-3 d-flex flex-column align-items-center">
+    <div ngbAccordion [closeOthers]="true">
 
-                    <div class="col-12 col-sm-7">
-                        <div class="text-center">
-                            <a routerLink="/stationConfig/{{station.uniqueId}}" style="color: black;">
-                                <div class="device ratio ratio-1x1 border rounded shadow-sm">
-                                    <img class="deviceimage" [src]="'assets/devices/' + (DeviceImage.get(station.type) ? DeviceImage.get(station.type)?.image : 'unknown.png')" [attr.style]="getDevicePanelStyle(station)">
-                                    <span class="devicesettingsicon d-flex border align-items-center justify-content-center" style="z-index: 15;">
-                                        <fa-icon [icon]="settingsIcon" size="2x"></fa-icon>
-                                    </span>
-                                    <span *ngIf="station.ignored" class="d-flex border align-items-top justify-content-end" style="z-index: 20;">
-                                        <fa-icon [icon]="ignoreIcon" class="mt-sm-1 m-sm-2 m-1 mt-0" size="xs"></fa-icon>
-                                    </span>
+        <div *ngFor="let station of stations" ngbAccordionItem>
+            <h2 ngbAccordionHeader>
+                <button ngbAccordionButton>{{ station.displayName }}</button>
+            </h2>
+            <div ngbAccordionCollapse>
+                <div ngbAccordionBody>
+                    <ng-template>
+
+                        <div class="row">
+
+                            <div class="col-6 col-sm-4 mt-3 mb-3 d-flex flex-column align-items-center">
+
+                                <div class="col-12 col-sm-7">
+                                    <div class="text-center">
+                                        <a routerLink="/stationConfig/{{station.uniqueId}}" style="color: black;">
+                                            <div class="device ratio ratio-1x1 border rounded shadow-sm">
+                                                <img class="deviceimage"
+                                                    [src]="'assets/devices/' + (DeviceImage.get(station.type) ? DeviceImage.get(station.type)?.image : 'unknown.png')"
+                                                    style="padding:20px"
+                                                    [style.opacity]="station.ignored === true ? 0.5 : 1">
+                                                <span
+                                                    class="devicesettingsicon d-flex border align-items-center justify-content-center"
+                                                    style="z-index: 15;">
+                                                    <fa-icon [icon]="settingsIcon" size="2x"></fa-icon>
+                                                </span>
+                                                <span *ngIf="station.ignored"
+                                                    class="d-flex border align-items-top justify-content-end"
+                                                    style="z-index: 20;">
+                                                    <fa-icon [icon]="ignoreIcon" class="mt-sm-1 m-sm-2 m-1 mt-0"
+                                                        size="xs"></fa-icon>
+                                                </span>
+                                            </div>
+                                        </a>
+                                    </div>
                                 </div>
-                            </a>
+
+                                <span class="col-12 text-center">{{ station.displayName }}</span>
+                                <span class="col-12 serial fw-light text-center">({{station.typename}})</span>
+
+                            </div>
+
+                            <div *ngFor="let device of station.devices"
+                                class="col-6 col-sm-4 mt-3 mb-3 d-flex flex-column align-items-center">
+
+                                <div class="col-12 col-sm-7">
+                                    <div class="text-center">
+                                        <a routerLink="/cameraConfig/{{device.uniqueId}}" style="color: black;">
+                                            <div class="device ratio ratio-1x1 border rounded shadow-sm">
+                                                <img class="deviceimage"
+                                                    [src]="'assets/devices/' + (DeviceImage.get(device.type) ? DeviceImage.get(device.type)?.image : 'unknown.png')"
+                                                    style="padding:20px"
+                                                    [style.opacity]="device.ignored === true ? 0.5 : 1">
+                                                <span
+                                                    class="devicesettingsicon d-flex border align-items-center justify-content-center"
+                                                    style="z-index: 15;">
+                                                    <fa-icon [icon]="settingsIcon" size="2x"></fa-icon>
+                                                </span>
+                                                <span *ngIf="device.ignored"
+                                                    class="d-flex border align-items-top justify-content-end"
+                                                    style="z-index: 20;">
+                                                    <fa-icon [icon]="ignoreIcon" class="mt-sm-1 m-sm-2 m-1 mt-0"
+                                                        size="xs"></fa-icon>
+                                                </span>
+                                            </div>
+                                        </a>
+                                    </div>
+                                </div>
+
+                                <span class="col-12 text-center">{{ device.displayName }}</span>
+                                <span class="col-12 serial fw-light text-center">({{device.uniqueId}})</span>
+
+                            </div>
+
                         </div>
-                    </div>
-                        
-                    <span class="col-12 text-center">{{ station.cachedName ? station.cachedName : station.displayName }}</span>
-                    <span class="col-12 serial fw-light text-center">({{station.uniqueId}})</span>
-                    
+                    </ng-template>
                 </div>
             </div>
         </div>
-    </div>
-    <p></p>
-    <div class="card">
-        <div class="card-header">
-            Devices
-        </div>
-        <div class="card-body">
-            <div class="row">
 
-                <div *ngFor="let device of devices" class="col-6 col-sm-4 mt-3 mb-3 d-flex flex-column align-items-center">
-
-                    <div class="col-12 col-sm-7">
-                        <div class="text-center">
-                            <a routerLink="/cameraConfig/{{device.uniqueId}}" style="color: black;">
-                                <div class="device ratio ratio-1x1 border rounded shadow-sm">
-                                    <img class="deviceimage" [src]="'assets/devices/' + (DeviceImage.get(device.type) ? DeviceImage.get(device.type)?.image : 'unknown.png')" [attr.style]="getDevicePanelStyle(device)">
-                                    <span class="devicesettingsicon d-flex border align-items-center justify-content-center" style="z-index: 15;">
-                                        <fa-icon [icon]="settingsIcon" size="2x"></fa-icon>
-                                    </span>
-                                    <span *ngIf="device.ignored" class="d-flex border align-items-top justify-content-end" style="z-index: 20;">
-                                        <fa-icon [icon]="ignoreIcon" class="mt-sm-1 m-sm-2 m-1 mt-0" size="xs"></fa-icon>
-                                    </span>
-                                </div>
-                            </a>
-                        </div>
-                    </div>
-                        
-                    <span class="col-12 text-center">{{ device.cachedName ? device.cachedName : device.displayName }}</span>
-                    <span class="col-12 serial fw-light text-center">({{device.uniqueId}})</span>
-                    
-                </div>
-
-            </div>
-        </div>
     </div>
 
     <p></p>
 
     <span><i>The images used above are 'best effort' for now, since we do not own every eufy device.
-        If you experience that your device is depicted with a wrong image please feel free to let
-        us know in an issue on our <a href="https://github.com/homebridge-eufy-security/plugin" target="_blank" rel="noopener noreferrer">Github page.</a></i>
+            If you experience that your device is depicted with a wrong image please feel free to let
+            us know in an issue on our <a href="https://github.com/homebridge-eufy-security/plugin" target="_blank"
+                rel="noopener noreferrer">Github page.</a></i>
     </span>
 
 </div>

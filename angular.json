@@ -33,7 +33,7 @@
             "scripts": [],
             "allowedCommonJsDependencies": [
               "buffer"
-           ]
+            ]
           },
           "configurations": {
             "production": {
@@ -52,9 +52,9 @@
               "optimization": {
                 "scripts": true,
                 "styles": {
-                     "minify": true,
-                     "inlineCritical": false
-                     },
+                  "minify": true,
+                  "inlineCritical": false
+                },
                 "fonts": true
               },
               "outputHashing": "all"
@@ -104,11 +104,23 @@
             ],
             "scripts": []
           }
+        },
+        "lint": {
+          "builder": "@angular-eslint/builder:lint",
+          "options": {
+            "lintFilePatterns": [
+              "src/configui/**/*.ts",
+              "src/configui/**/*.html"
+            ]
+          }
         }
       }
     }
   },
   "cli": {
-    "analytics": false
+    "analytics": false,
+    "schematicCollections": [
+      "@angular-eslint/schematics"
+    ]
   }
 }

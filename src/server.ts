@@ -17,12 +17,12 @@ import { Logger as TsLogger, ILogObj } from 'tslog';
 import { createStream } from 'rotating-file-stream';
 import { Zip } from 'zip-lib';
 
-import { Accessory } from './configui/app/util/types';
+import { Accessory, L_Station, L_Device } from './configui/app/util/types';
 import { LoginResult, LoginFailReason } from './configui/app/util/types';
 import { EufyClientInteractor } from './plugin/utils/EufyClientInteractor';
 
 class UiServer extends HomebridgePluginUiServer {
-  accessories: Accessory[] = [];
+  stations: L_Station[] = [];
 
   config: EufySecurityConfig;
   private eufyClient: EufySecurity | null = null;
@@ -164,7 +164,7 @@ class UiServer extends HomebridgePluginUiServer {
     }
 
     if (!this.eufyClient && options && options.username && options.password && options.country) {
-      this.accessories = []; // clear accessories array so that it can be filled with all devices after login
+      this.stations = []; // clear accessories array so that it can be filled with all devices after login
       this.log.debug('init eufyClient');
       this.config.username = options.username;
       this.config.password = options.password;
@@ -290,37 +290,52 @@ class UiServer extends HomebridgePluginUiServer {
   }
 
   addStation(station: Station) {
-    const s: Accessory = {
+    const s: L_Station = {
       uniqueId: station.getSerial(),
       displayName: station.getName(),
-      station: true,
       type: station.getDeviceType(),
       typename: DeviceType[station.getDeviceType()],
     };
-    this.accessories.push(s);
+    this.stations.push(s);
     this.storeAccessories();
     this.pushEvent('addAccessory', s);
   }
 
   addDevice(device: Device) {
-    const d: Accessory = {
+    const d: L_Device = {
       uniqueId: device.getSerial(),
       displayName: device.getName(),
-      station: false,
       type: device.getDeviceType(),
       typename: DeviceType[device.getDeviceType()],
+      hasBattery: device.hasBattery(),
       isCamera: device.isCamera(),
       isDoorbell: device.isDoorbell(),
       supportsRTSP: device.hasPropertyValue(PropertyName.DeviceRTSPStream),
       supportsTalkback: device.hasCommand(CommandName.DeviceStartTalkback),
     };
-    this.accessories.push(d);
-    this.storeAccessories();
-    this.pushEvent('addAccessory', d);
+
+    // Get the station's unique ID from the device
+    const stationUniqueId = device.getStationSerial();
+
+    // Find the station in the stations array based on its unique ID
+    const stationIndex = this.stations.findIndex(station => station.uniqueId === stationUniqueId);
+
+    // If the station is found, push the device into its devices array
+    if (stationIndex !== -1) {
+      // Ensure devices array exists for the station
+      if (!this.stations[stationIndex].devices) {
+        this.stations[stationIndex].devices = [];
+      }
+      this.stations[stationIndex].devices!.push(d); // Ensure devices array is not null/undefined
+      this.storeAccessories();
+      this.pushEvent('addAccessory', d);
+    } else {
+      this.log.error('Station not found for device:', d.displayName);
+    }
   }
 
   storeAccessories() {
-    fs.writeFileSync(this.storedAccessories_file, JSON.stringify(this.accessories));
+    fs.writeFileSync(this.storedAccessories_file, JSON.stringify(this.stations));
   }
 
   async resetPlugin() {

@@ -1,13 +1,16 @@
 import { Component, Input, OnInit } from '@angular/core';
-import { Accessory } from '../../../app/util/types';
+import { Accessory, L_Device } from '../../../app/util/types';
 import { PluginService } from '../../../app/plugin.service';
 import { DEFAULT_CAMERACONFIG_VALUES } from '../../../app/util/default-config-values';
 import { ConfigOptionsInterpreter } from '../config-options-interpreter';
+import { FormsModule } from '@angular/forms';
 
 @Component({
-  selector: 'app-periodic-snapshot-refresh',
-  templateUrl: './periodic-snapshot-refresh.component.html',
-  styles: [],
+    selector: 'app-periodic-snapshot-refresh',
+    templateUrl: './periodic-snapshot-refresh.component.html',
+    styles: [],
+    standalone: true,
+    imports: [FormsModule],
 })
 export class PeriodicSnapshotRefreshComponent extends ConfigOptionsInterpreter implements OnInit {
   constructor(pluginService: PluginService) {
@@ -25,12 +28,12 @@ export class PeriodicSnapshotRefreshComponent extends ConfigOptionsInterpreter i
 
   /** updateConfig() takes an optional second parameter to specify the accessoriy for which the setting is changed */
 
-  @Input() accessory?: Accessory;
+  @Input() device?: L_Device;
   value = DEFAULT_CAMERACONFIG_VALUES.refreshSnapshotIntervalMinutes!;
   inputIsInvalid = false;
 
   async readValue() {
-    const config = await this.getCameraConfig(this.accessory?.uniqueId || '');
+    const config = await this.getCameraConfig(this.device?.uniqueId || '');
 
     if (config && Object.prototype.hasOwnProperty.call(config, 'refreshSnapshotIntervalMinutes')) {
       this.value = config['refreshSnapshotIntervalMinutes'];
@@ -47,11 +50,11 @@ export class PeriodicSnapshotRefreshComponent extends ConfigOptionsInterpreter i
       return;
     }
 
-    this.updateConfig(
+    this.updateDeviceConfig(
       {
         refreshSnapshotIntervalMinutes: this.value,
       },
-      this.accessory,
+      this.device!,
     );
   }
 

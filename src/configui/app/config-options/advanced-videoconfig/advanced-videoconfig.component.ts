@@ -1,13 +1,17 @@
 import { Component, Input, OnInit } from '@angular/core';
-import { Accessory } from '../../../app/util/types';
+import { Accessory, L_Device } from '../../../app/util/types';
 import { PluginService } from '../../../app/plugin.service';
 import { ConfigOptionsInterpreter } from '../config-options-interpreter';
 
 import { VideoConfig } from '../../../../plugin/utils/configTypes';
+import { NgIf } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 
 @Component({
   selector: 'app-advanced-videoconfig',
   templateUrl: './advanced-videoconfig.component.html',
+  standalone: true,
+  imports: [FormsModule, NgIf],
 })
 export class AdvancedVideoconfigComponent
   extends ConfigOptionsInterpreter
@@ -27,7 +31,7 @@ export class AdvancedVideoconfigComponent
 
   /** updateConfig() takes an optional second parameter to specify the accessoriy for which the setting is changed */
 
-  @Input() accessory?: Accessory;
+  @Input() device?: L_Device;
 
   debug: boolean | undefined = undefined;
   readRate: boolean | undefined = undefined;
@@ -48,7 +52,7 @@ export class AdvancedVideoconfigComponent
   presetDescription?: string;
 
   async readValue() {
-    const config = await this.getCameraConfig(this.accessory?.uniqueId || '');
+    const config = await this.getCameraConfig(this.device?.uniqueId || '');
 
     if (config && Object.prototype.hasOwnProperty.call(config, 'videoConfig')) {
       Object.entries(config['videoConfig']).forEach(([key, value]) => {
@@ -92,7 +96,7 @@ export class AdvancedVideoconfigComponent
       this.maxFPS = undefined;
       this.maxBitrate = undefined;
       this.useSeparateProcesses = true;
-      
+
       // eslint-disable-next-line max-len
       this.presetDescription = 'Most eufy cams support the same codec that HomeKit requests. You can try and \'forward\' the stream directly without encoding it with ffmpeg. This can increase performance and quality drastically.';
     } else if (this.preset === 2) {
@@ -109,7 +113,7 @@ export class AdvancedVideoconfigComponent
       this.maxFPS = 15;
       this.maxBitrate = undefined;
       this.useSeparateProcesses = true;
-      
+
       // eslint-disable-next-line max-len
       this.presetDescription = 'This preset tries to increase performance by reducing the quality of the stream. This can work for low performance hardware like raspberry pis.';
     } else {
@@ -176,7 +180,7 @@ export class AdvancedVideoconfigComponent
   }
 
   async update() {
-    const config = await this.getCameraConfig(this.accessory?.uniqueId || '');
+    const config = await this.getCameraConfig(this.device?.uniqueId || '');
 
     const videoConfig =
       config && Object.prototype.hasOwnProperty.call(config, 'videoConfig')
@@ -230,11 +234,11 @@ export class AdvancedVideoconfigComponent
       newConfig['useSeparateProcesses'] = this.useSeparateProcesses;
     }
 
-    this.updateConfig(
+    this.updateDeviceConfig(
       {
         videoConfig: newConfig,
       },
-      this.accessory,
+      this.device!,
     );
 
     this.updatePreset();

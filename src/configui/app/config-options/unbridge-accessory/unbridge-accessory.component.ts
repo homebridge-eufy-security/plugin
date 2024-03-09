@@ -2,10 +2,13 @@ import { Component, OnInit } from '@angular/core';
 import { PluginService } from '../../../app/plugin.service';
 import { ConfigOptionsInterpreter } from '../config-options-interpreter';
 import { DEFAULT_CONFIG_VALUES } from '../../../app/util/default-config-values';
+import { FormsModule } from '@angular/forms';
 
 @Component({
-  selector: 'app-unbridge-accessory',
-  templateUrl: './unbridge-accessory.component.html',
+    selector: 'app-unbridge-accessory',
+    templateUrl: './unbridge-accessory.component.html',
+    standalone: true,
+    imports: [FormsModule],
 })
 export class UnbridgeAccessoryComponent extends ConfigOptionsInterpreter implements OnInit {
   constructor(pluginService: PluginService) {

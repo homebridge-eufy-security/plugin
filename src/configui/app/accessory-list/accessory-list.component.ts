@@ -1,7 +1,7 @@
 /* eslint-disable no-console */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Component, OnInit, Input } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 
 import { NgbModal, ModalDismissReasons } from '@ng-bootstrap/ng-bootstrap';
 
@@ -11,17 +11,27 @@ import { faRotate } from '@fortawesome/free-solid-svg-icons';
 
 import { PluginService } from '../plugin.service';
 
-import { Accessory } from '../util/types';
+import { L_Station } from '../util/types';
 import { DeviceImage } from '../util/deviceToImagesMap';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { NgIf, NgFor } from '@angular/common';
+import { NgbAccordionModule } from '@ng-bootstrap/ng-bootstrap';
 
 @Component({
   selector: 'app-accessory-list',
   templateUrl: './accessory-list.component.html',
   styleUrls: ['./accessory-list.component.css'],
+  standalone: true,
+  imports: [
+    RouterLink,
+    NgIf,
+    FaIconComponent,
+    NgFor,
+    NgbAccordionModule,
+  ],
 })
 export class AccessoryListComponent implements OnInit {
-  stations: Accessory[] = [];
-  devices: Accessory[] = [];
+  stations: L_Station[] = [];
 
   @Input() waitForAccessories?: boolean;
 
@@ -45,14 +55,12 @@ export class AccessoryListComponent implements OnInit {
 
     this.pluginService.addEventListener('newAccessories', () => {
       console.log('plugin accessories have changed. updating...');
-      this.updateDevices();
       this.updateStations();
     });
 
     this.updateStations();
-    this.updateDevices();
 
-    if (!this.waitForAccessories && this.stations.length === 0 && this.devices.length === 0) {
+    if (!this.waitForAccessories && this.stations.length === 0) {
       this.pluginService.loadStoredAccessories().then((result) => {
         if (!result) {
           this.routerService.navigateByUrl('/login');
@@ -68,33 +76,21 @@ export class AccessoryListComponent implements OnInit {
     this.updateProperties();
   }
 
-  private updateDevices() {
-    this.devices = this.pluginService.getDevices();
-    this.updateProperties();
-  }
-
   private async updateProperties() {
     const config = await this.pluginService.getConfig();
 
     if (Array.isArray(config['ignoreStations'])) {
       this.stations.forEach((station) => {
         station.ignored = config['ignoreStations'].find((uId: string) => uId === station.uniqueId) !== undefined;
+
+        if (Array.isArray(config['ignoreDevices'])) {
+          station.devices!.forEach((device) => {
+            device.ignored = config['ignoreDevices'].find((uId: string) => uId === device.uniqueId) !== undefined;
+          });
+        }
       });
     }
 
-    if (Array.isArray(config['ignoreDevices'])) {
-      this.devices.forEach((device) => {
-        device.ignored = config['ignoreDevices'].find((uId: string) => uId === device.uniqueId) !== undefined;
-      });
-    }
-
-    // load cached Names
-    this.stations.forEach((station) => {
-      this.pluginService.getCachedName(station).then((cachedName) => (station.cachedName = cachedName));
-    });
-    this.devices.forEach((device) => {
-      this.pluginService.getCachedName(device).then((cachedName) => (device.cachedName = cachedName));
-    });
   }
 
   openReloadModal(content: any) {
@@ -118,12 +114,4 @@ export class AccessoryListComponent implements OnInit {
     }
   }
 
-  getDevicePanelStyle(accessory: Accessory): string {
-    let style = '';
-    if (accessory.ignored) {
-      style += 'opacity: 0.2;';
-    }
-    style += 'padding:20px';
-    return style;
-  }
 }
