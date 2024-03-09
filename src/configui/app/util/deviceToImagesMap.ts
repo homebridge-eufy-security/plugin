@@ -1,12 +1,11 @@
-// Define an array of device type IDs based on the previously given DeviceType enum values
+// Define an array of device type IDs based on the updated DeviceType enum values
 const deviceTypeIds = [
-  0, 1, 2, 3, 4, 5, 7, 8, 9, 10, 11, 14, 15, 16, 18, 19, 23, 30, 31, 32, 33, 34,
-  35, 37, 38, 39, 44, 45, 46, 50, 51, 52, 53, 54, 55, 56, 57, 58, 60, 61, 62, 63,
-  90, 91, 93, 100, 101, 102, 110, 131, 132, 133, 140, 141, 142, 143, 151, 157,
-  159, 180, 184, 10005,
+  0, 1, 2, 3, 4, 5, 7, 8, 9, 10, 11, 14, 15, 16, 18, 19, 23, 24, 25, 30, 31, 32, 33, 34,
+  35, 37, 38, 39, 44, 45, 46, 47, 48, 50, 51, 52, 53, 54, 55, 56, 57, 58, 60, 61, 62, 63,
+  64, 90, 91, 93, 94, 100, 101, 102, 104, 110, 131, 132, 133, 140, 141, 142, 143, 151,
+  157, 159, 180, 184, 10005,
 ];
 
-// Function to get the image based on the device type number
 // Function to get the image based on the device type number
 export function getImageForDeviceType(deviceType: number): string {
   switch (deviceType) {
@@ -40,7 +39,12 @@ export function getImageForDeviceType(deviceType: number): string {
       return 'eufycam3_large.jpg';
     case 23: // CAMERA3C
       return 'eufycam3c_large.jpg';
+    case 24: // PROFESSIONAL_247
+      return 'eufycame330_large.jpg';
+    case 25: // MINIBASE_CHIME
+      return 'minibase_chime_T8023_large.jpg';
     case 30: // INDOOR_CAMERA
+      return 'indoorcamc120_large.png';
     case 100: // INDOOR_COST_DOWN_CAMERA
       return 'indoorcammini_large.jpg';
     case 31: // INDOOR_PT_CAMERA
@@ -61,6 +65,10 @@ export function getImageForDeviceType(deviceType: number): string {
       return 'solooutdoorcamc22_large.jpg';
     case 45: // INDOOR_OUTDOOR_CAMERA_2K
       return 'solooutdoorcamc24_large.jpg';
+    case 47: // FLOODLIGHT_CAMERA_8425
+      return 'floodlightcame340_large.jpg';
+    case 48: // OUTDOOR_PT_CAMERA
+      return 'solocams340_large.jpg';
     case 50: // LOCK_BLE
     case 51: // LOCK_WIFI
     case 52: // LOCK_BLE_NO_FINGER
@@ -79,10 +87,16 @@ export function getImageForDeviceType(deviceType: number): string {
       return 'solooutdoorcamc24_large.jpg';
     case 63: // SOLO_CAMERA_SOLAR
       return 'solocams220_large.jpg';
+    case 64: // SOLO_CAMERA_C210
+      return 'solocamc210_large.jpg';
     case 90: // SMART_DROP
       return 'smartdrop_t8790_large.jpg';
     case 93: // DOORBELL_SOLO
       return 'wireddoorbelldual_large.jpg';
+    case 94: // BATTERY_DOORBELL_PLUS_E340
+      return 'batterydoorbell_e340_large.jpg';
+    case 104: // INDOOR_PT_CAMERA_S350
+      return 'indoorcams350_large.jpg';
     case 101: // CAMERA_GUN
     case 102: // CAMERA_SNAIL
     case 110: // CAMERA_FG
