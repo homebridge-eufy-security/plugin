@@ -178,12 +178,12 @@ export class FFmpegParameters {
         clearTimeout(killTimeout);
       }
       server.close();
-      socket.on('error', (_) => { /* handle error */ });
+      socket.on('error', () => { /* handle error */ });
       handleConnection(socket);
     });
 
     server.listen(port);
-    server.on('error', (_) => { /* handle error */ });
+    server.on('error', () => { /* handle error */ });
 
     killTimeout = setTimeout(() => server.close(), 30 * 1000);
     return port;

@@ -43,7 +43,7 @@ export class MotionSensorAccessory extends DeviceAccessory {
       this.registerCharacteristic({
         serviceType: this.platform.Service.MotionSensor,
         characteristicType: this.platform.Characteristic.MotionDetected,
-        getValue: (data) => this.device.getPropertyValue(PropertyName.DeviceMotionDetected),
+        getValue: () => this.device.getPropertyValue(PropertyName.DeviceMotionDetected),
         onSimpleValue: 'motion detected',
       });
 

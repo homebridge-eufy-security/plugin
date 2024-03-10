@@ -358,7 +358,7 @@ export class CameraAccessory extends DeviceAccessory {
       this.registerCharacteristic({
         serviceType: this.platform.Service.CameraOperatingMode,
         characteristicType: this.platform.Characteristic.EventSnapshotsActive,
-        getValue: (data) => this.handleDummyEventGet('EventSnapshotsActive'),
+        getValue: () => this.handleDummyEventGet('EventSnapshotsActive'),
         setValue: (value) => this.handleDummyEventSet('EventSnapshotsActive', value),
       });
 

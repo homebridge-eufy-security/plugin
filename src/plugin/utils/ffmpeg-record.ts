@@ -1,5 +1,4 @@
-import { ChildProcess, spawn } from 'child_process';
-import net from 'net';
+import { spawn } from 'child_process';
 
 import { Logger as TsLogger, ILogObj } from 'tslog';
 import { FFmpegProgress } from './ffmpeg-progress';

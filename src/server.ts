@@ -5,10 +5,10 @@ import { Logger as TsLogger, ILogObj } from 'tslog';
 import { createStream } from 'rotating-file-stream';
 import { Zip } from 'zip-lib';
 import { Accessory, L_Station, L_Device, LoginResult, LoginFailReason } from './configui/app/util/types';
+import { version } from '../package.json';
 
 class UiServer extends HomebridgePluginUiServer {
   public stations: L_Station[] = [];
-  public version: number = require('../package.json').version;
 
   private eufyClient: EufySecurity | null = null;
   private log!: TsLogger<ILogObj>;
@@ -39,9 +39,8 @@ class UiServer extends HomebridgePluginUiServer {
   }
 
   private initLogger() {
-    const plugin = require('../package.json');
     this.log = new TsLogger({
-      name: `[${plugin.version}]`,
+      name: `[${version}]`,
       prettyLogTemplate: '{{name}}\t{{logLevelName}}\t[{{fileNameWithLine}}]\t',
       prettyErrorTemplate: '\n{{errorName}} {{errorMessage}}\nerror stack:\n{{errorStack}}',
       prettyErrorStackTemplate: '  • {{fileName}}\t{{method}}\n\t{{fileNameWithLine}}',
@@ -166,9 +165,9 @@ class UiServer extends HomebridgePluginUiServer {
       const storedData = JSON.parse(fs.readFileSync(this.storedAccessories_file, { encoding: 'utf-8' }));
       const { version: storedVersion, stations: storedAccessories } = storedData;
 
-      if (storedVersion !== this.version) {
-        this.pushEvent('versionUnmatched', { currentVersion: this.version, storedVersion: storedVersion });
-        this.log.warn(`Stored version (${storedVersion}) does not match current version (${this.version})`);
+      if (storedVersion !== version) {
+        this.pushEvent('versionUnmatched', { currentVersion: version, storedVersion: storedVersion });
+        this.log.warn(`Stored version (${storedVersion}) does not match current version (${version})`);
       }
 
       return Promise.resolve(storedAccessories as Accessory[]);
@@ -229,7 +228,7 @@ class UiServer extends HomebridgePluginUiServer {
   }
 
   storeAccessories() {
-    const dataToStore = { version: this.version, stations: this.stations };
+    const dataToStore = { version: version, stations: this.stations };
     fs.writeFileSync(this.storedAccessories_file, JSON.stringify(dataToStore));
   }
 

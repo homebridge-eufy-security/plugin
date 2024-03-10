@@ -32,11 +32,6 @@ type Snapshot = {
   image: Buffer;
 };
 
-type ImageDataResponse = {
-  url: string;
-  image: Buffer;
-};
-
 type StreamSource = {
   url?: string;
   stream?: Readable;

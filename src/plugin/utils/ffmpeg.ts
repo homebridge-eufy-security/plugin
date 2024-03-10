@@ -1,5 +1,4 @@
 import { ChildProcess, spawn } from 'child_process';
-import os from 'os';
 import { Readable, Writable } from 'stream';
 
 import ffmpegPath from 'ffmpeg-for-homebridge';

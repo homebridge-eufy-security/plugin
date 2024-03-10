@@ -1,5 +1,4 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { ChildProcess } from 'child_process';
 import { Camera, PropertyName } from 'eufy-security-client';
 import {
   CameraController,
@@ -14,7 +13,6 @@ import { CameraConfig } from '../utils/configTypes';
 import { FFmpegRecord } from '../utils/ffmpeg-record';
 import { FFmpegParameters } from '../utils/ffmpeg-params';
 import { Logger as TsLogger, ILogObj } from 'tslog';
-import net from 'net';
 import { is_rtsp_ready } from '../utils/utils';
 import { LocalLivestreamManager, StationStream } from './LocalLivestreamManager';
 import { StreamingDelegate } from './streamingDelegate';
@@ -173,8 +171,8 @@ export class RecordingDelegate implements CameraRecordingDelegate {
         }
         this.log.debug(`${this.cameraName} Yeah a good segment!`);
 
-        const motionDetected = this.accessory
-          .getService(this.platform.Service.MotionSensor)?.getCharacteristic(this.platform.Characteristic.MotionDetected).value;
+        // const motionDetected = this.accessory
+        //   .getService(this.platform.Service.MotionSensor)?.getCharacteristic(this.platform.Characteristic.MotionDetected).value;
 
         yield {
           data: segment,

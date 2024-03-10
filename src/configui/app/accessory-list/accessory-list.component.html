@@ -106,7 +106,8 @@
                                                 <img class="deviceimage"
                                                     [src]="'assets/devices/' + (DeviceImage.get(device.type) ? DeviceImage.get(device.type)?.image : 'unknown.png')"
                                                     style="padding:20px"
-                                                    [style.opacity]="device.ignored === true ? 0.5 : 1">
+                                                    [style.opacity]="device.ignored === true ? 0.5 : 1"
+                                                    alt="{{ device.displayName }}">
                                                 <span
                                                     class="devicesettingsicon d-flex border align-items-center justify-content-center"
                                                     style="z-index: 15;">

@@ -1,7 +1,7 @@
 import { Duplex, Writable } from 'stream';
 
 import { EufySecurityPlatform } from '../platform';
-import { EufySecurity, Device, Station } from 'eufy-security-client';
+import { Device, Station } from 'eufy-security-client';
 
 export class TalkbackStream extends Duplex {
 
@@ -58,7 +58,7 @@ export class TalkbackStream extends Duplex {
     this.destroy();
   }
 
-  override _read(size: number): void {
+  override _read(): void {
     let pushReturn = true;
     while (this.cacheData.length > 0 && pushReturn) {
       const data = this.cacheData.shift();

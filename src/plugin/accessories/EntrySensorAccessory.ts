@@ -43,7 +43,7 @@ export class EntrySensorAccessory extends DeviceAccessory {
       this.registerCharacteristic({
         serviceType: this.platform.Service.ContactSensor,
         characteristicType: this.platform.Characteristic.ContactSensorState,
-        getValue: (data) => this.device.getPropertyValue(PropertyName.DeviceSensorOpen),
+        getValue: () => this.device.getPropertyValue(PropertyName.DeviceSensorOpen),
         onSimpleValue: 'open',
       });
 

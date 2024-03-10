@@ -5,8 +5,6 @@ import { DEFAULT_CAMERACONFIG_VALUES, DEFAULT_CONFIG_VALUES } from '../../util/d
 import { ChargingType } from '../../util/types';
 import { ConfigOptionsInterpreter } from '../config-options-interpreter';
 
-import { VideoConfig } from '../../../../plugin/utils/configTypes';
-
 import { faQuestionCircle } from '@fortawesome/free-regular-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbCollapse, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';

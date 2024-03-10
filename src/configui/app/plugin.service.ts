@@ -22,7 +22,7 @@ export class PluginService extends EventTarget {
   }
 
   private init() {
-    this.accessories$.subscribe((event) => {
+    this.accessories$.subscribe(() => {
       this.loadStoredAccessories();
     });
 

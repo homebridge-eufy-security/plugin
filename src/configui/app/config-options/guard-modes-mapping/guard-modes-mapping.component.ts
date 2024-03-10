@@ -1,5 +1,5 @@
 import { Component, Input, OnInit } from '@angular/core';
-import { Accessory, L_Station } from '../../../app/util/types';
+import { L_Station } from '../../../app/util/types';
 import { PluginService } from '../../../app/plugin.service';
 import { DEFAULT_CONFIG_VALUES } from '../../../app/util/default-config-values';
 import { ConfigOptionsInterpreter } from '../config-options-interpreter';

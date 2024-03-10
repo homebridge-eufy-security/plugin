@@ -12,7 +12,7 @@ import {
 
 import { PLATFORM_NAME, PLUGIN_NAME, SnapshotBlackPath, SnapshotUnavailablePath } from './settings';
 
-import { DEFAULT_CONFIG_VALUES, EufySecurityPlatformConfig } from './config';
+import { EufySecurityPlatformConfig } from './config';
 
 import { DeviceIdentifier, StationContainer, DeviceContainer } from './interfaces';
 
@@ -343,7 +343,7 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
         this.log.debug(`Error: ${error}`);
         await this.pluginShutdown();
       });
-      this.eufyClient.once('captcha request', async (id, captcha) => {
+      this.eufyClient.once('captcha request', async () => {
         this.log.error(`
         ***************************
         ***** WARNING MESSAGE *****
@@ -547,14 +547,14 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
       return;
     }
 
-    const deviceContainer: DeviceContainer = {
-      deviceIdentifier: {
-        uniqueId: device.getSerial(),
-        displayName: device.getName(),
-        type: device.getDeviceType(),
-      } as DeviceIdentifier,
-      eufyDevice: device,
-    };
+    // const deviceContainer: DeviceContainer = {
+    //   deviceIdentifier: {
+    //     uniqueId: device.getSerial(),
+    //     displayName: device.getName(),
+    //     type: device.getDeviceType(),
+    //   } as DeviceIdentifier,
+    //   eufyDevice: device,
+    // };
 
     // this.processAccessory(deviceContainer);
   }

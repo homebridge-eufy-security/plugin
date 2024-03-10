@@ -98,7 +98,7 @@ export class AccessoryListComponent implements OnInit {
         if (!result) {
           this.routerService.navigateByUrl('/login');
         }
-      }).catch(err => {
+      }).catch(() => {
         this.routerService.navigateByUrl('/login');
       });
     }

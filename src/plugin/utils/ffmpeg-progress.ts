@@ -18,9 +18,7 @@ export class FFmpegProgress extends EventEmitter {
 
       socket.on('data', this.analyzeProgress.bind(this));
 
-      socket.on('error', (err) => {
-        // ignore since this is handled elsewhere
-      });
+      socket.on('error', () => { });
     });
 
     killTimeout = setTimeout(() => {
@@ -31,9 +29,7 @@ export class FFmpegProgress extends EventEmitter {
       this.emit('progress stopped');
     });
 
-    this.server.on('error', (err) => {
-      // ignore since this is handled elsewhere
-    });
+    this.server.on('error', () => { });
 
     this.server.listen(this.port);
   }

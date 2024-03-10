@@ -1,5 +1,5 @@
 import { Component, OnInit, Input } from '@angular/core';
-import { Accessory, L_Device } from '../../../app/util/types';
+import { L_Device } from '../../../app/util/types';
 import { PluginService } from '../../../app/plugin.service';
 import { ConfigOptionsInterpreter } from '../config-options-interpreter';
 import { NgIf } from '@angular/common';

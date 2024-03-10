@@ -53,32 +53,32 @@ export abstract class BaseAccessory extends EventEmitter {
     this.registerCharacteristic({
       serviceType: this.platform.Service.AccessoryInformation,
       characteristicType: this.platform.Characteristic.Manufacturer,
-      getValue: (data) => 'Eufy',
+      getValue: () => 'Eufy',
     });
     this.registerCharacteristic({
       serviceType: this.platform.Service.AccessoryInformation,
       characteristicType: this.platform.Characteristic.Name,
-      getValue: (data) => this.name || 'Unknowm',
+      getValue: () => this.name || 'Unknowm',
     });
     this.registerCharacteristic({
       serviceType: this.platform.Service.AccessoryInformation,
       characteristicType: this.platform.Characteristic.Model,
-      getValue: (data) => DeviceType[this.device.getDeviceType()] || 'Unknowm',
+      getValue: () => DeviceType[this.device.getDeviceType()] || 'Unknowm',
     });
     this.registerCharacteristic({
       serviceType: this.platform.Service.AccessoryInformation,
       characteristicType: this.platform.Characteristic.SerialNumber,
-      getValue: (data) => this.SN || 'Unknowm',
+      getValue: () => this.SN || 'Unknowm',
     });
     this.registerCharacteristic({
       serviceType: this.platform.Service.AccessoryInformation,
       characteristicType: this.platform.Characteristic.FirmwareRevision,
-      getValue: (data) => this.device.getSoftwareVersion() || 'Unknowm',
+      getValue: () => this.device.getSoftwareVersion() || 'Unknowm',
     });
     this.registerCharacteristic({
       serviceType: this.platform.Service.AccessoryInformation,
       characteristicType: this.platform.Characteristic.HardwareRevision,
-      getValue: (data) => this.device.getHardwareVersion() || 'Unknowm',
+      getValue: () => this.device.getHardwareVersion() || 'Unknowm',
     });
 
     if (this.platform.config.enableDetailedLogging) {

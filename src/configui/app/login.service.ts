@@ -4,7 +4,7 @@ import { Injectable } from '@angular/core';
 import { PluginConfig } from '@homebridge/plugin-ui-utils/dist/ui.interface';
 
 import { PluginService } from './plugin.service';
-import { Credentials, LoginResult, LoginFailReason } from './util/types';
+import { Credentials, LoginResult } from './util/types';
 
 @Injectable({
   providedIn: 'root',
