@@ -420,7 +420,7 @@ export class CameraAccessory extends DeviceAccessory {
     this.registerCharacteristic({
       serviceType: this.platform.Service.MotionSensor,
       characteristicType: this.platform.Characteristic.MotionDetected,
-      getValue: (data) => this.device.getPropertyValue(PropertyName.DeviceMotionDetected),
+      getValue: () => this.device.getPropertyValue(PropertyName.DeviceMotionDetected),
       onValue: (service, characteristic) => {
         this.eventTypesToHandle.forEach(eventType => {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -475,8 +475,7 @@ export class CameraAccessory extends DeviceAccessory {
         characteristicType: this.platform.Characteristic.ProgrammableSwitchEvent,
         getValue: () => this.handleDummyEventGet('EventSnapshotsActive'),
         onValue: (service, characteristic) => {
-          this.device.on('rings', (device: Device, state: boolean) =>
-            this.onDeviceRingsPushNotification(characteristic),
+          this.device.on('rings', () => this.onDeviceRingsPushNotification(characteristic),
           );
         },
       });
@@ -490,7 +489,7 @@ export class CameraAccessory extends DeviceAccessory {
     this.registerCharacteristic({
       serviceType: this.platform.Service.MotionSensor,
       characteristicType: this.platform.Characteristic.MotionDetected,
-      getValue: (data) => this.device.getPropertyValue(PropertyName.DeviceMotionDetected),
+      getValue: () => this.device.getPropertyValue(PropertyName.DeviceMotionDetected),
       onMultipleValue: this.eventTypesToHandle,
     });
 
@@ -499,7 +498,7 @@ export class CameraAccessory extends DeviceAccessory {
     this.registerCharacteristic({
       serviceType: this.platform.Service.MotionSensor,
       characteristicType: this.platform.Characteristic.StatusTampered,
-      getValue: (data) => {
+      getValue: () => {
         const tampered = this.device.getPropertyValue(PropertyName.DeviceEnabled);
         this.log.debug(`${this.accessory.displayName} TAMPERED? ${!tampered}`);
         return tampered
@@ -589,13 +588,13 @@ export class CameraAccessory extends DeviceAccessory {
   }
 
   // Get the current bitrate for a specific camera channel.
-  public getBitrate(channelId: number): number {
+  public getBitrate(): number {
     return -1;
   }
 
 
   // Set the bitrate for a specific camera channel.
-  public async setBitrate(channelId: number, value: number): Promise<boolean> {
+  public async setBitrate(): Promise<boolean> {
     return true;
   }
 

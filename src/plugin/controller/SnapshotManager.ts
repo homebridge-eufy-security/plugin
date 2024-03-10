@@ -3,7 +3,7 @@
 import { readFileSync } from 'node:fs';
 import { EventEmitter, Readable } from 'node:stream';
 
-import { Camera, Device, Picture, PropertyName, PropertyValue } from 'eufy-security-client';
+import { Camera, Device, Picture, PropertyName } from 'eufy-security-client';
 
 import { CameraConfig } from '../utils/configTypes';
 import { EufySecurityPlatform } from '../platform';
@@ -131,8 +131,8 @@ export class SnapshotManager extends EventEmitter {
     }
 
     this.fetchSnapshotFromCloud() // get current cloud snapshot for balanced mode scenarios -> first snapshot can be resolved
-      .catch(err => this.log.warn(this.cameraName,
-        'snapshot handler is initialized without cloud snapshot. Maybe no snapshot will displayed the first times.'));
+      .catch((err) => this.log.warn(this.cameraName,
+        'snapshot handler is initialized without cloud snapshot. Maybe no snapshot will displayed the first times.' + err));
   }
 
   private onRingEvent(device: Device, state: boolean) {
@@ -149,7 +149,7 @@ export class SnapshotManager extends EventEmitter {
     }
   }
 
-  private async onPropertyValueChanged(device: Device, name: string, value: PropertyValue): Promise<void> {
+  private async onPropertyValueChanged(device: Device, name: string): Promise<void> {
     if (name === 'picture') {
       this.lastImageEvent = Date.now();
       this.log.debug(this.cameraName, 'New picture event');

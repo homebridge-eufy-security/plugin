@@ -81,7 +81,7 @@ export class StationAccessory extends BaseAccessory {
     this.registerCharacteristic({
       serviceType: this.platform.Service.SecuritySystem,
       characteristicType: this.platform.Characteristic.SecuritySystemCurrentState,
-      getValue: (data) => this.handleSecuritySystemCurrentStateGet(),
+      getValue: () => this.handleSecuritySystemCurrentStateGet(),
       onValue: (service, characteristic) => {
         this.device.on('current mode', (station: Station, currentMode: number) => {
           this.onStationCurrentModePushNotification(characteristic, station, currentMode);
@@ -95,7 +95,7 @@ export class StationAccessory extends BaseAccessory {
     this.registerCharacteristic({
       serviceType: this.platform.Service.SecuritySystem,
       characteristicType: this.platform.Characteristic.SecuritySystemTargetState,
-      getValue: (data) => this.handleSecuritySystemTargetStateGet(),
+      getValue: () => this.handleSecuritySystemTargetStateGet(),
       setValue: (value) => this.handleSecuritySystemTargetStateSet(value),
       onValue: (service, characteristic) => {
         // eslint-disable-next-line max-len
@@ -115,7 +115,7 @@ export class StationAccessory extends BaseAccessory {
       serviceType: this.platform.Service.Switch,
       characteristicType: this.platform.Characteristic.On,
       name: this.accessory.displayName + '_Siren',
-      getValue: (data) => this.handleManualTriggerSwitchStateGet(),
+      getValue: () => this.handleManualTriggerSwitchStateGet(),
       setValue: (value) => this.handleManualTriggerSwitchStateSet(value),
     });
 
@@ -428,7 +428,7 @@ export class StationAccessory extends BaseAccessory {
     }, (armDelay + 1) * 1000);
   }
 
-  private onStationAlarmArmedEvent(station: Station) {
+  private onStationAlarmArmedEvent() {
     this.log.debug(`${this.accessory.displayName} alarm for this station is armed now.`);
     this.alarm_delayed = false;
 
