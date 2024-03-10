@@ -47,7 +47,7 @@ export class CameraButtonsComponent extends ConfigOptionsInterpreter implements 
 
     this.buttonConfigs = this.buttonConfigs.filter((buttonConfig) => {
       if (this.device && this.device[buttonConfig.propertyName]) {
-        if (config.hasOwnProperty(buttonConfig.name)) {
+        if (buttonConfig.name in config) {
           buttonConfig.value = config[buttonConfig.name] ?? buttonConfig.value;
         }
         return true; // Keep the buttonConfig

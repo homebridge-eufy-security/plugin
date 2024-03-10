@@ -52,7 +52,7 @@
 <div *ngIf="stations.length !== 0" class="container">
     <div class="row">
         <div class="col-6">
-            <button type="button" class="btn btn-success" (click)="openReloadModal(reloadModal)">
+            <button type="button" class="btn btn-success" (click)="openReloadModal(reloadModal)" (keydown.enter)="openReloadModal(reloadModal)">
                 <fa-icon [icon]="reloadIcon" size="lg"></fa-icon>
                 Reload
             </button>
@@ -65,7 +65,7 @@
     <div *ngIf="versionUnmatched">
         <p></p>
         <ngb-alert type="warning" [dismissible]="false">
-            <a (click)="openReloadModal(reloadModal)">Plugin has been updated, please refresh and reboot the plugin.</a>
+            <a (click)="openReloadModal(reloadModal)" (keydown.enter)="openReloadModal(reloadModal)" tabindex="0">Plugin has been updated, please refresh and reboot the plugin.</a>
         </ngb-alert>
         <p></p>
     </div>

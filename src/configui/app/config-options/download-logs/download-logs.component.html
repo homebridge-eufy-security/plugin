@@ -12,7 +12,7 @@
       <span *ngIf="isDownloading"> Generating Log File...</span>
     </button>
 
-    <a *ngIf="hasDownloaded" (click)="openLink()" class="btn btn-success col-12 col-sm-4">
+    <a *ngIf="hasDownloaded" (click)="openLink()" (keydown.enter)="openLink()" tabindex="0" class="btn btn-success col-12 col-sm-4">
       <span>Download Logs</span>
     </a>
   </div>
