@@ -4,7 +4,7 @@ import { fromEvent } from 'rxjs';
 
 import { PluginConfig } from '@homebridge/plugin-ui-utils/dist/ui.interface';
 
-import { Accessory, L_Device, L_Station } from './util/types';
+import { L_Device, L_Station } from './util/types';
 
 @Injectable({
   providedIn: 'root',
@@ -68,6 +68,10 @@ export class PluginService extends EventTarget {
     if (!this.stations.find((a) => a.uniqueId === station.uniqueId)) {
       this.stations.push(station);
     }
+  }
+
+  private version_unmatched() {
+
   }
 
   public async getConfig(): Promise<PluginConfig> {

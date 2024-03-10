@@ -37,12 +37,18 @@ export type L_Device = {
   displayName: string;
   type: number;
   typename: string;
+  standalone: boolean;
   ignored?: boolean;
   isCamera?: boolean;
   hasBattery?: boolean;
+  chargingStatus?: number;
   isDoorbell?: boolean;
   supportsRTSP?: boolean;
   supportsTalkback?: boolean;
+  DeviceEnabled: boolean;
+  DeviceMotionDetection: boolean;
+  DeviceLight: boolean;
+  DeviceChimeIndoor: boolean;
 };
 
 export enum ChargingType {

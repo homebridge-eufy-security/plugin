@@ -2,7 +2,10 @@
 <div *ngIf="device">
   <p><i>{{device.displayName}} ({{device.uniqueId}}) ({{device.typename}})</i></p>
 
-  <div ngbAccordion [closeOthers]="true">
+  <app-ignore-accessory [accessory]="device" [station]="false" (ignored)="ignoredChanged($event)"></app-ignore-accessory>
+  <p></p>
+
+  <div ngbAccordion [closeOthers]="true" *ngIf="!device.ignored && isCamera">
 
     <div ngbAccordionItem [collapsed]="false">
       <h2 ngbAccordionHeader>
@@ -11,11 +14,7 @@
       <div ngbAccordionCollapse>
         <div ngbAccordionBody>
           <ng-template>
-
-            <!-- Put config options components here -->
-            <app-ignore-accessory [accessory]="device" [station]="false"></app-ignore-accessory>
-            <div *ngIf="isCamera">
-              <hr />
+            <div>
               <app-enable-camera [device]="device"></app-enable-camera>
               <hr *ngIf="supportsRTSP" />
               <app-rtsp-streaming [device]="device" *ngIf="supportsRTSP"></app-rtsp-streaming>
@@ -29,7 +28,6 @@
       </div>
     </div>
 
-
     <div *ngIf="isCamera" ngbAccordionItem>
       <h2 ngbAccordionHeader>
         <button ngbAccordionButton>HomeKit Behaviour</button>
@@ -37,13 +35,9 @@
       <div ngbAccordionCollapse>
         <div ngbAccordionBody>
           <ng-template>
-
-
-            <!-- Put config options components here -->
             <app-camera-buttons [device]="device"></app-camera-buttons>
             <hr />
             <app-enable-hsv [device]="device"></app-enable-hsv>
-
           </ng-template>
         </div>
       </div>

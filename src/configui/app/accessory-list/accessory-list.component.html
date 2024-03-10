@@ -54,6 +54,7 @@
         <div class="col-6">
             <button type="button" class="btn btn-success" (click)="openReloadModal(reloadModal)">
                 <fa-icon [icon]="reloadIcon" size="lg"></fa-icon>
+                Reload
             </button>
         </div>
         <div class="col-6 text-end">
@@ -61,52 +62,39 @@
         </div>
     </div>
 
+    <div *ngIf="versionUnmatched">
+        <p></p>
+        <ngb-alert type="warning" [dismissible]="false">
+            <a (click)="openReloadModal(reloadModal)">Plugin has been updated, please refresh and reboot the plugin.</a>
+        </ngb-alert>
+        <p></p>
+    </div>
+
     <p></p>
-    <span>Click on any device below to access its settings.</span>
+    <span>Click on the name to discovers the attached device(s) behing.</span>
     <p></p>
 
     <div ngbAccordion [closeOthers]="true">
 
         <div *ngFor="let station of stations" ngbAccordionItem>
-            <h2 ngbAccordionHeader>
-                <button ngbAccordionButton>{{ station.displayName }}</button>
-            </h2>
+            <div ngbAccordionHeader>
+
+                <button ngbAccordionButton class="row m-0">
+                    <div class="col">{{ station.displayName }}</div>
+                    <div class="col">
+                        <button type="button" class="btn text-muted m-0 float-right"
+                            routerLink="/stationConfig/{{station.uniqueId}}">
+                            <fa-icon [icon]="settingsIcon" size="lg"></fa-icon>
+                        </button>
+                    </div>
+                </button>
+
+            </div>
             <div ngbAccordionCollapse>
                 <div ngbAccordionBody>
                     <ng-template>
 
                         <div class="row">
-
-                            <div class="col-6 col-sm-4 mt-3 mb-3 d-flex flex-column align-items-center">
-
-                                <div class="col-12 col-sm-7">
-                                    <div class="text-center">
-                                        <a routerLink="/stationConfig/{{station.uniqueId}}" style="color: black;">
-                                            <div class="device ratio ratio-1x1 border rounded shadow-sm">
-                                                <img class="deviceimage"
-                                                    [src]="'assets/devices/' + (DeviceImage.get(station.type) ? DeviceImage.get(station.type)?.image : 'unknown.png')"
-                                                    style="padding:20px"
-                                                    [style.opacity]="station.ignored === true ? 0.5 : 1">
-                                                <span
-                                                    class="devicesettingsicon d-flex border align-items-center justify-content-center"
-                                                    style="z-index: 15;">
-                                                    <fa-icon [icon]="settingsIcon" size="2x"></fa-icon>
-                                                </span>
-                                                <span *ngIf="station.ignored"
-                                                    class="d-flex border align-items-top justify-content-end"
-                                                    style="z-index: 20;">
-                                                    <fa-icon [icon]="ignoreIcon" class="mt-sm-1 m-sm-2 m-1 mt-0"
-                                                        size="xs"></fa-icon>
-                                                </span>
-                                            </div>
-                                        </a>
-                                    </div>
-                                </div>
-
-                                <span class="col-12 text-center">{{ station.displayName }}</span>
-                                <span class="col-12 serial fw-light text-center">({{station.typename}})</span>
-
-                            </div>
 
                             <div *ngFor="let device of station.devices"
                                 class="col-6 col-sm-4 mt-3 mb-3 d-flex flex-column align-items-center">
@@ -136,7 +124,8 @@
                                 </div>
 
                                 <span class="col-12 text-center">{{ device.displayName }}</span>
-                                <span class="col-12 serial fw-light text-center">({{device.uniqueId}})</span>
+                                <span class="col-12 serial fw-light text-center">({{device.type}} -
+                                    {{device.uniqueId}})</span>
 
                             </div>
 

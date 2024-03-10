@@ -1,14 +1,14 @@
-import { Component, OnInit, Input } from '@angular/core';
-import { Accessory, L_Device, L_Station } from '../../../app/util/types';
+import { Component, OnInit, Input, Output, EventEmitter } from '@angular/core';
+import { L_Device, L_Station } from '../../../app/util/types';
 import { PluginService } from '../../../app/plugin.service';
 import { ConfigOptionsInterpreter } from '../config-options-interpreter';
 import { FormsModule } from '@angular/forms';
 
 @Component({
-    selector: 'app-ignore-accessory',
-    templateUrl: './ignore-accessory.component.html',
-    standalone: true,
-    imports: [FormsModule],
+  selector: 'app-ignore-accessory',
+  templateUrl: './ignore-accessory.component.html',
+  standalone: true,
+  imports: [FormsModule],
 })
 export class IgnoreAccessoryComponent extends ConfigOptionsInterpreter implements OnInit {
   constructor(pluginService: PluginService) {
@@ -28,6 +28,7 @@ export class IgnoreAccessoryComponent extends ConfigOptionsInterpreter implement
 
   @Input() accessory?: L_Station | L_Device;
   @Input() station?: boolean;
+  @Output() ignored = new EventEmitter<boolean>();
   value = false;
 
   async readValue() {
@@ -44,6 +45,8 @@ export class IgnoreAccessoryComponent extends ConfigOptionsInterpreter implement
     if (!this.accessory) {
       return;
     }
+
+    this.ignored.emit(this.value); // Warn the parent app to show or hide the camera settings menu
 
     const identifier = this.station ? 'ignoreStations' : 'ignoreDevices';
     this.config = await this.pluginService.getConfig();

@@ -87,6 +87,10 @@ export class CameraConfigOptionsComponent extends ConfigOptionsInterpreter imple
     }
   }
 
+  ignoredChanged(state: boolean) {
+    this.device!.ignored = state;
+  }
+
   updateSnapshotView(value: boolean) {
     this.showEnhancedSnapshotBehaviour = value;
   }

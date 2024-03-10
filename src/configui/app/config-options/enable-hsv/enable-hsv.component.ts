@@ -1,6 +1,5 @@
 import { Component, Input, OnInit } from '@angular/core';
-import { Accessory, L_Device } from '../../util/types';
-import { AccessoryService } from '../../accessory.service';
+import { L_Device } from '../../util/types';
 import { PluginService } from '../../plugin.service';
 import { DEFAULT_CAMERACONFIG_VALUES, DEFAULT_CONFIG_VALUES } from '../../util/default-config-values';
 import { ChargingType } from '../../util/types';
@@ -36,7 +35,6 @@ export class EnableHsvComponent extends ConfigOptionsInterpreter implements OnIn
 
   constructor(
     pluginService: PluginService,
-    private accessoryService: AccessoryService,
   ) {
     super(pluginService);
   }
@@ -55,37 +53,9 @@ export class EnableHsvComponent extends ConfigOptionsInterpreter implements OnIn
   @Input() device?: L_Device;
   value = DEFAULT_CAMERACONFIG_VALUES.hsv;
 
-  showAdvancedSettings = false;
-
-  // debug: boolean | undefined = undefined;
-  // readRate: boolean | undefined = undefined;
-  vcodec: string | undefined = undefined;
-  // acodec: string | undefined = undefined;
-  videoFilter: string | undefined = undefined;
-  encoderOptions: string | undefined = undefined;
-  // probeSize: number | undefined = undefined;
-  // analyzeDuration: number | undefined = undefined;
-  // maxStreams: number | undefined = undefined;
-  // maxWidth: number | undefined = undefined;
-  // maxHeight: number | undefined = undefined;
-  maxFPS: number | undefined = undefined;
-  maxBitrate: number | undefined = undefined;
-  // useSeparateProcesses: boolean | undefined = undefined;
-  crop = true;
-  audio = true;
-  // audioSampleRate: number | undefined = undefined;
-  // audioBitrate: number | undefined = undefined;
-  // acodecHK: string | undefined = undefined;
-  // acodecOptions: string | undefined = undefined;
-  // videoProcessor: string | undefined = undefined;
-  recordingDuration = DEFAULT_CAMERACONFIG_VALUES.hsvRecordingDuration;
-
-  // acodecPlaceholder = 'libfdk_aac';
-  // acodecOptionsPlaceholder = '-profile:a aac_eld';
-  vcodecOptionsPlaceholder = '-preset ultrafast -tune zerolatency';
-
   chargingStatus = ChargingType.PLUGGED;
   camerasOnSameStation: string[] = [];
+  standalone = true;
 
   ignoreMultipleDevicesWarning = DEFAULT_CONFIG_VALUES.ignoreMultipleDevicesWarning;
 
@@ -96,10 +66,6 @@ export class EnableHsvComponent extends ConfigOptionsInterpreter implements OnIn
       this.value = config['hsv'];
     }
 
-    if (config && Object.prototype.hasOwnProperty.call(config, 'hsvRecordingDuration')) {
-      this.recordingDuration = config['hsvRecordingDuration'];
-    }
-
     if (config && Object.prototype.hasOwnProperty.call(config, 'hsvConfig')) {
       Object.entries(config['hsvConfig']).forEach(([key, value]) => {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -108,100 +74,32 @@ export class EnableHsvComponent extends ConfigOptionsInterpreter implements OnIn
       });
     }
 
-    if (this.device) {
-      this.accessoryService.getChargingStatus(this.device.uniqueId)
-        .then((chargingStatus) => this.chargingStatus = chargingStatus);
+    try {
 
-      if (Object.prototype.hasOwnProperty.call(this.config, 'ignoreMultipleDevicesWarning')) {
-        this.ignoreMultipleDevicesWarning = this.config['ignoreMultipleDevicesWarning'];
+      if (this.device) {
+
+        this.chargingStatus = this.device.chargingStatus!;
+        this.standalone = this.device.standalone!;
+
+        if (Object.prototype.hasOwnProperty.call(this.config, 'ignoreMultipleDevicesWarning')) {
+          this.ignoreMultipleDevicesWarning = this.config['ignoreMultipleDevicesWarning'];
+        }
+
+        if (this.camerasOnSameStation.length > 1 && !this.ignoreMultipleDevicesWarning) {
+          this.value = false;
+          this.update();
+        }
+
       }
-
-      const ignoredDevices = (config && Object.prototype.hasOwnProperty.call(config, 'ignoreDevices')) ? config['ignoreDevices'] : [];
-      this.accessoryService.getCamerasOnSameStation(this.device.uniqueId, ignoredDevices)
-        .then(devices => {
-          this.camerasOnSameStation = devices;
-          if (this.camerasOnSameStation.length > 1 && !this.ignoreMultipleDevicesWarning) {
-            this.value = false;
-            this.update();
-          }
-        });
+    } catch (error) {
+      console.log(error);
     }
 
-    this.placeholderUpdate();
   }
 
-  private placeholderUpdate() {
-    // switch (this.acodecHK) {
-    //   case 'ACC-eld':
-    //     this.acodecPlaceholder = 'libfdk_aac';
-    //     this.acodecOptionsPlaceholder = '-profile:a aac_eld';
-    //     break;
-    //   case 'OPUS':
-    //     this.acodecPlaceholder = 'libopus';
-    //     this.acodecOptionsPlaceholder = '-application lowdelay';
-    //     break;
-    //   default:
-    //     this.acodecPlaceholder = 'libfdk_aac';
-    //     this.acodecOptionsPlaceholder = '-profile:a aac_eld';
-    //     break;
-    // }
-
-    switch (this.vcodec) {
-      case 'copy':
-        this.vcodecOptionsPlaceholder = '';
-        break;
-      case '':
-      case 'libx264':
-      case undefined:
-        this.vcodecOptionsPlaceholder = '-preset ultrafast -tune zerolatency';
-        break;
-      default:
-        this.vcodecOptionsPlaceholder = 'leave blank if you don\'t know';
-        break;
-    }
+  update() {
+    this.updateConfig({
+      hsv: this.value,
+    });
   }
-
-  async update() {
-    const config = await this.getCameraConfig(this.device?.uniqueId || '');
-    const videoConfig =
-      config && Object.prototype.hasOwnProperty.call(config, 'videoConfig')
-        ? config['videoConfig']
-        : {};
-    const newConfig: VideoConfig = {};
-
-
-    if (!this.audio) {
-      newConfig['audio'] = this.audio;
-    }
-    if (!this.crop) {
-      newConfig['crop'] = this.crop;
-    }
-    if (this.vcodec && this.vcodec !== '') {
-      newConfig['vcodec'] = this.vcodec;
-    }
-    if (this.videoFilter && this.videoFilter !== '') {
-      newConfig['videoFilter'] = this.videoFilter;
-    }
-    if (this.encoderOptions !== undefined) {
-      newConfig['encoderOptions'] = this.encoderOptions;
-    }
-    if (this.maxFPS !== undefined) {
-      newConfig['maxFPS'] = this.maxFPS;
-    }
-    if (this.maxBitrate !== undefined) {
-      newConfig['maxBitrate'] = this.maxBitrate;
-    }
-
-    this.updateDeviceConfig(
-      {
-        hsv: this.value,
-        hsvRecordingDuration: this.recordingDuration,
-        hsvConfig: newConfig,
-      },
-      this.device!,
-    );
-
-    this.placeholderUpdate();
-  }
-
 }

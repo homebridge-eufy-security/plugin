@@ -5,7 +5,6 @@ import { Accessory, L_Device } from '../../../app/util/types';
 import { PluginService } from '../../../app/plugin.service';
 import { ConfigOptionsInterpreter } from '../config-options-interpreter';
 import { DEFAULT_CAMERACONFIG_VALUES } from '../../util/default-config-values';
-import { AccessoryService } from '../../accessory.service';
 import { FormsModule } from '@angular/forms';
 import { NgFor } from '@angular/common';
 
@@ -13,14 +12,14 @@ interface ButtonConfig {
   name: string;
   description: string;
   value: boolean;
-  propertyName: string;
+  propertyName: keyof L_Device;
 }
 
 @Component({
-    selector: 'app-camera-buttons',
-    templateUrl: './camera-buttons.component.html',
-    standalone: true,
-    imports: [NgFor, FormsModule],
+  selector: 'app-camera-buttons',
+  templateUrl: './camera-buttons.component.html',
+  standalone: true,
+  imports: [NgFor, FormsModule],
 })
 export class CameraButtonsComponent extends ConfigOptionsInterpreter implements OnInit {
   @Input() device?: L_Device;
@@ -33,47 +32,34 @@ export class CameraButtonsComponent extends ConfigOptionsInterpreter implements 
   ];
 
   constructor(
-    pluginService: PluginService,
-    private accessoryService: AccessoryService,
+    pluginService: PluginService
   ) {
     super(pluginService);
   }
 
-  async ngOnInit(): Promise<void> {
-    await this.readValue();
+  ngOnInit(): void {
+    this.readValue();
   }
 
   async readValue(): Promise<void> {
     const uniqueId = this.device?.uniqueId ?? '';
     const config = await this.getCameraConfig(uniqueId);
 
-    // Create a new array without the buttonConfig if catch is fired
-    const updatedButtonConfigs: ButtonConfig[] = [];
-
-    await Promise.all(this.buttonConfigs.map(async (buttonConfig) => {
-      if (this.device) {
-        try {
-          if (await this.accessoryService.hasProperty(this.device.uniqueId, buttonConfig.propertyName)) {
-
-            if (Object.prototype.hasOwnProperty.call(config, buttonConfig.name)) {
-              buttonConfig.value = config[buttonConfig.name] ?? buttonConfig.value;
-            }
-
-            updatedButtonConfigs.push(buttonConfig);
-          }
-        } catch (error) {
-          // The catch block is executed when the property does not exist,
-          // so the buttonConfig is not added to the updatedButtonConfigs array
+    this.buttonConfigs = this.buttonConfigs.filter((buttonConfig) => {
+      if (this.device && this.device[buttonConfig.propertyName]) {
+        if (config.hasOwnProperty(buttonConfig.name)) {
+          buttonConfig.value = config[buttonConfig.name] ?? buttonConfig.value;
         }
+        return true; // Keep the buttonConfig
+      } else {
+        return false; // Remove the buttonConfig
       }
-    }));
-
-    this.buttonConfigs = updatedButtonConfigs; // Update the buttonConfigs array
+    });
   }
 
   update(): void {
-    const updated: Record<string, boolean | undefined> = {};
-    this.buttonConfigs.forEach((buttonConfig) => {
+    const updated: Record<string, boolean> = {};
+    this.buttonConfigs.forEach(buttonConfig => {
       updated[buttonConfig.name.toLowerCase()] = buttonConfig.value;
     });
 

@@ -1,49 +1,47 @@
-/* eslint-disable @typescript-eslint/no-var-requires */
-import {
-  EufySecurity,
-  EufySecurityConfig,
-  libVersion,
-  Device,
-  Station,
-  PropertyName,
-  CommandName,
-  DeviceType,
-} from 'eufy-security-client';
+import { EufySecurity, EufySecurityConfig, libVersion, Device, Station, PropertyName, CommandName, DeviceType } from 'eufy-security-client';
 import { HomebridgePluginUiServer } from '@homebridge/plugin-ui-utils';
-
 import fs from 'fs';
-
 import { Logger as TsLogger, ILogObj } from 'tslog';
 import { createStream } from 'rotating-file-stream';
 import { Zip } from 'zip-lib';
-
-import { Accessory, L_Station, L_Device } from './configui/app/util/types';
-import { LoginResult, LoginFailReason } from './configui/app/util/types';
-import { EufyClientInteractor } from './plugin/utils/EufyClientInteractor';
+import { Accessory, L_Station, L_Device, LoginResult, LoginFailReason } from './configui/app/util/types';
 
 class UiServer extends HomebridgePluginUiServer {
-  stations: L_Station[] = [];
+  public stations: L_Station[] = [];
+  public version: number = require('../package.json').version;
 
-  config: EufySecurityConfig;
   private eufyClient: EufySecurity | null = null;
-
-  private log: TsLogger<ILogObj>;
-  private tsLog: TsLogger<ILogObj>;
-
+  private log!: TsLogger<ILogObj>;
+  private tsLog!: TsLogger<ILogObj>;
   private storagePath: string = this.homebridgeStoragePath + '/eufysecurity';
   private storedAccessories_file: string = this.storagePath + '/accessories.json';
   private logZipFilePath: string = this.storagePath + '/logs.zip';
 
-  private pluginConfigInteractor: EufyClientInteractor;
+  public config: EufySecurityConfig = {
+    username: '',
+    password: '',
+    language: 'en',
+    country: 'US',
+    trustedDeviceName: 'My Phone',
+    persistentDir: this.storagePath,
+    p2pConnectionSetup: 0,
+    pollingIntervalMinutes: 10,
+    eventDurationSeconds: 10,
+    acceptInvitations: true,
+  } as EufySecurityConfig;
 
   constructor() {
     super();
+    this.initLogger();
+    this.initTransportStreams();
+    this.initEventListeners();
+    this.ready();
+  }
 
+  private initLogger() {
     const plugin = require('../package.json');
-
-    const mainLogObj = {
+    this.log = new TsLogger({
       name: `[${plugin.version}]`,
-      // eslint-disable-next-line max-len
       prettyLogTemplate: '{{name}}\t{{logLevelName}}\t[{{fileNameWithLine}}]\t',
       prettyErrorTemplate: '\n{{errorName}} {{errorMessage}}\nerror stack:\n{{errorStack}}',
       prettyErrorStackTemplate: '  • {{fileName}}\t{{method}}\n\t{{fileNameWithLine}}',
@@ -71,76 +69,26 @@ class UiServer extends HomebridgePluginUiServer {
         errorName: ['bold', 'bgRedBright', 'whiteBright'],
         fileName: ['yellow'],
       },
-    };
-
-    this.log = new TsLogger(mainLogObj);
+    });
     this.tsLog = new TsLogger({ type: 'hidden', minLevel: 2 });
+  }
 
+  private initTransportStreams() {
     if (!fs.existsSync(this.storagePath)) {
       fs.mkdirSync(this.storagePath);
     }
-
-    const pluginLogStream = createStream('configui-server.log', {
-      path: this.storagePath,
-      interval: '1d',
-      rotate: 3,
-      maxSize: '200M',
-    });
-
-    const pluginLogLibStream = createStream('configui-lib.log', {
-      path: this.storagePath,
-      interval: '1d',
-      rotate: 3,
-      maxSize: '200M',
-    });
-
-    this.log.attachTransport((logObj) => {
-      pluginLogStream.write(JSON.stringify(logObj) + '\n');
-    });
-
-    this.tsLog.attachTransport((logObj) => {
-      pluginLogLibStream.write(JSON.stringify(logObj) + '\n');
-    });
-
+    const pluginLogStream = createStream('configui-server.log', { path: this.storagePath, interval: '1d', rotate: 3, maxSize: '200M' });
+    const pluginLogLibStream = createStream('configui-lib.log', { path: this.storagePath, interval: '1d', rotate: 3, maxSize: '200M' });
+    this.log.attachTransport((logObj) => pluginLogStream.write(JSON.stringify(logObj) + '\n'));
+    this.tsLog.attachTransport((logObj) => pluginLogLibStream.write(JSON.stringify(logObj) + '\n'));
     this.log.debug('Using bropats eufy-security-client library in version ' + libVersion);
+  }
 
-    this.config = {
-      username: '',
-      password: '',
-      language: 'en',
-      country: 'US',
-      trustedDeviceName: 'My Phone',
-      persistentDir: this.storagePath,
-      p2pConnectionSetup: 0,
-      pollingIntervalMinutes: 10,
-      eventDurationSeconds: 10,
-      acceptInvitations: true,
-    } as EufySecurityConfig;
-
+  private initEventListeners() {
     this.onRequest('/login', this.login.bind(this));
     this.onRequest('/storedAccessories', this.loadStoredAccessories.bind(this));
     this.onRequest('/reset', this.resetPlugin.bind(this));
     this.onRequest('/downloadLogs', this.downloadLogs.bind(this));
-
-    this.pluginConfigInteractor = new EufyClientInteractor(this.storagePath, this.log);
-
-    this.onRequest('/getChargingStatus', (sn: string) => {
-      return this.pluginConfigInteractor.DeviceIsCharging(sn);
-    });
-
-    this.onRequest('/hasProperty',
-      (options: {
-        sn: string;
-        propertyName: string;
-      }) => {
-        return this.pluginConfigInteractor.DeviceHasProperty(options.sn, PropertyName[options.propertyName]);
-      });
-
-    this.onRequest('/getStationDeviceMapping', () => {
-      return this.pluginConfigInteractor.GetStationCamerasMapping();
-    });
-
-    this.ready();
   }
 
   async resetPersistentData(): Promise<void> {
@@ -152,8 +100,6 @@ class UiServer extends HomebridgePluginUiServer {
   }
 
   async login(options): Promise<LoginResult> {
-
-    // delete persistent.json if new login
     try {
       if (options && options.username && options.password) {
         this.log.info('deleting persistent.json due to new login');
@@ -164,7 +110,7 @@ class UiServer extends HomebridgePluginUiServer {
     }
 
     if (!this.eufyClient && options && options.username && options.password && options.country) {
-      this.stations = []; // clear accessories array so that it can be filled with all devices after login
+      this.stations = [];
       this.log.debug('init eufyClient');
       this.config.username = options.username;
       this.config.password = options.password;
@@ -172,77 +118,42 @@ class UiServer extends HomebridgePluginUiServer {
       this.config.trustedDeviceName = options.deviceName;
       try {
         this.eufyClient = await EufySecurity.initialize(this.config, this.tsLog);
+        this.eufyClient?.on('station added', this.addStation.bind(this));
+        this.eufyClient?.on('device added', this.addDevice.bind(this));
       } catch (err) {
         this.log.error(err);
       }
-      this.eufyClient?.on('station added', this.addStation.bind(this));
-      this.eufyClient?.on('device added', this.addDevice.bind(this));
     }
 
     return new Promise((resolve, reject) => {
-      const connectionTimeout = setTimeout(() => {
-        resolve({
-          success: false,
-          failReason: LoginFailReason.TIMEOUT,
-        });
+      setTimeout(() => {
+        resolve({ success: false, failReason: LoginFailReason.TIMEOUT });
       }, 25000);
 
       if (options && options.username && options.password && options.country) {
-        // login with credentials
         this.log.debug('login with credentials');
         try {
           this.loginHandlers(resolve);
           this.eufyClient?.connect()
-            .then(() => {
-              this.log.debug('connected?: ' + this.eufyClient?.isConnected());
-            })
+            .then(() => this.log.debug('connected?: ' + this.eufyClient?.isConnected()))
             .catch((err) => this.log.error(err));
         } catch (err) {
           this.log.error(err);
-          resolve({
-            success: false,
-            failReason: LoginFailReason.UNKNOWN,
-            data: {
-              error: err,
-            },
-          });
+          resolve({ success: false, failReason: LoginFailReason.UNKNOWN, data: { error: err } });
         }
       } else if (options && options.verifyCode) {
-        // login with tfa code
         try {
           this.loginHandlers(resolve);
-          this.eufyClient?.connect({
-            verifyCode: options.verifyCode,
-            force: false,
-          });
+          this.eufyClient?.connect({ verifyCode: options.verifyCode, force: false });
         } catch (err) {
-          resolve({
-            success: false,
-            failReason: LoginFailReason.UNKNOWN,
-            data: {
-              error: err,
-            },
-          });
+          resolve({ success: false, failReason: LoginFailReason.UNKNOWN, data: { error: err } });
         }
       } else if (options && options.captcha) {
-        // login witch captcha
         try {
           this.loginHandlers(resolve);
-          this.eufyClient?.connect({
-            captcha: {
-              captchaCode: options.captcha.captchaCode,
-              captchaId: options.captcha.captchaId,
-            },
-            force: false,
-          });
+          this.eufyClient?.connect({ captcha: { captchaCode: options.captcha.captchaCode, captchaId: options.captcha.captchaId }, force: false });
         } catch (err) {
-          resolve({
-            success: false,
-            failReason: LoginFailReason.UNKNOWN,
-            data: {
-              error: err,
-            },
-          });
+          resolve({ success: false, failReason: LoginFailReason.UNKNOWN, data: { error: err } });
         }
       } else {
         reject('unsupported login method');
@@ -252,8 +163,15 @@ class UiServer extends HomebridgePluginUiServer {
 
   async loadStoredAccessories(): Promise<Accessory[]> {
     try {
-      const accessories = JSON.parse(fs.readFileSync(this.storedAccessories_file, { encoding: 'utf-8' }));
-      return Promise.resolve(accessories as Accessory[]);
+      const storedData = JSON.parse(fs.readFileSync(this.storedAccessories_file, { encoding: 'utf-8' }));
+      const { version: storedVersion, stations: storedAccessories } = storedData;
+
+      if (storedVersion !== this.version) {
+        this.pushEvent('versionUnmatched', { currentVersion: this.version, storedVersion: storedVersion });
+        this.log.warn(`Stored version (${storedVersion}) does not match current version (${this.version})`);
+      }
+
+      return Promise.resolve(storedAccessories as Accessory[]);
     } catch (err) {
       this.log.error('Could not get stored accessories. Most likely no stored accessories yet: ' + err);
       return Promise.reject([]);
@@ -261,41 +179,13 @@ class UiServer extends HomebridgePluginUiServer {
   }
 
   loginHandlers(resolveCallback) {
-    this.eufyClient?.once('tfa request', () => {
-      this.log.debug('tfa request event');
-      resolveCallback({
-        success: false,
-        failReason: LoginFailReason.TFA, // TFA
-      });
-    });
-
-    this.eufyClient?.once('captcha request', (id, captcha) => {
-      this.log.debug('captcha request event');
-      resolveCallback({
-        success: false,
-        failReason: LoginFailReason.CAPTCHA, // Captcha
-        data: {
-          id: id,
-          captcha: captcha,
-        },
-      });
-    });
-
-    this.eufyClient?.once('connect', () => {
-      this.log.debug('connect event');
-      resolveCallback({
-        success: true,
-      });
-    });
+    this.eufyClient?.once('tfa request', () => resolveCallback({ success: false, failReason: LoginFailReason.TFA }));
+    this.eufyClient?.once('captcha request', (id, captcha) => resolveCallback({ success: false, failReason: LoginFailReason.CAPTCHA, data: { id: id, captcha: captcha } }));
+    this.eufyClient?.once('connect', () => resolveCallback({ success: true }));
   }
 
   addStation(station: Station) {
-    const s: L_Station = {
-      uniqueId: station.getSerial(),
-      displayName: station.getName(),
-      type: station.getDeviceType(),
-      typename: DeviceType[station.getDeviceType()],
-    };
+    const s: L_Station = { uniqueId: station.getSerial(), displayName: station.getName(), type: station.getDeviceType(), typename: DeviceType[station.getDeviceType()] };
     this.stations.push(s);
     this.storeAccessories();
     this.pushEvent('addAccessory', s);
@@ -307,26 +197,30 @@ class UiServer extends HomebridgePluginUiServer {
       displayName: device.getName(),
       type: device.getDeviceType(),
       typename: DeviceType[device.getDeviceType()],
+      standalone: device.getSerial() === device.getStationSerial(),
       hasBattery: device.hasBattery(),
       isCamera: device.isCamera(),
       isDoorbell: device.isDoorbell(),
       supportsRTSP: device.hasPropertyValue(PropertyName.DeviceRTSPStream),
       supportsTalkback: device.hasCommand(CommandName.DeviceStartTalkback),
+      DeviceEnabled: device.hasProperty(PropertyName.DeviceEnabled),
+      DeviceMotionDetection: device.hasProperty(PropertyName.DeviceMotionDetection),
+      DeviceLight: device.hasProperty(PropertyName.DeviceLight),
+      DeviceChimeIndoor: device.hasProperty(PropertyName.DeviceChimeIndoor),
     };
 
-    // Get the station's unique ID from the device
-    const stationUniqueId = device.getStationSerial();
+    if (device.hasProperty(PropertyName.DeviceChargingStatus)) {
+      d.chargingStatus = (device.getPropertyValue(PropertyName.DeviceChargingStatus) as number);
+    }
 
-    // Find the station in the stations array based on its unique ID
+    const stationUniqueId = device.getStationSerial();
     const stationIndex = this.stations.findIndex(station => station.uniqueId === stationUniqueId);
 
-    // If the station is found, push the device into its devices array
     if (stationIndex !== -1) {
-      // Ensure devices array exists for the station
       if (!this.stations[stationIndex].devices) {
         this.stations[stationIndex].devices = [];
       }
-      this.stations[stationIndex].devices!.push(d); // Ensure devices array is not null/undefined
+      this.stations[stationIndex].devices!.push(d);
       this.storeAccessories();
       this.pushEvent('addAccessory', d);
     } else {
@@ -335,19 +229,19 @@ class UiServer extends HomebridgePluginUiServer {
   }
 
   storeAccessories() {
-    fs.writeFileSync(this.storedAccessories_file, JSON.stringify(this.stations));
+    const dataToStore = { version: this.version, stations: this.stations };
+    fs.writeFileSync(this.storedAccessories_file, JSON.stringify(dataToStore));
   }
 
   async resetPlugin() {
     try {
       fs.rmSync(this.storagePath, { recursive: true });
-      return { result: 1 }; //file removed
+      return { result: 1 };
     } catch (err) {
-      return { result: 0 }; //error while removing the file
+      return { result: 0 };
     }
   }
 
-  // TODO: test for different configurations (apt-install, npm -g install, windows, ...)
   async downloadLogs(): Promise<Buffer> {
     this.log.info(`compressing log files to ${this.logZipFilePath} and sending to client.`);
     if (!this.removeCompressedLogs()) {
@@ -357,57 +251,16 @@ class UiServer extends HomebridgePluginUiServer {
     return new Promise((resolve, reject) => {
       const zip = new Zip();
       let numberOfFiles = 0;
-
-      if (fs.existsSync(this.storagePath + '/log-lib.log')) {
-        zip.addFile(this.storagePath + '/log-lib.log');
-        numberOfFiles++;
-      }
-      if (fs.existsSync(this.storagePath + '/log-lib.log.0')) {
-        zip.addFile(this.storagePath + '/log-lib.log.0');
-        numberOfFiles++;
-      }
-      if (fs.existsSync(this.storagePath + '/log-lib.log.1')) {
-        zip.addFile(this.storagePath + '/log-lib.log.1');
-        numberOfFiles++;
-      }
-      if (fs.existsSync(this.storagePath + '/log-lib.log.2')) {
-        zip.addFile(this.storagePath + '/log-lib.log.2');
-        numberOfFiles++;
-      }
-
-      if (fs.existsSync(this.storagePath + '/eufy-log.log')) {
-        zip.addFile(this.storagePath + '/eufy-log.log');
-        numberOfFiles++;
-      }
-      if (fs.existsSync(this.storagePath + '/eufy-log.log.0')) {
-        zip.addFile(this.storagePath + '/eufy-log.log.0');
-        numberOfFiles++;
-      }
-      if (fs.existsSync(this.storagePath + '/eufy-log.log.1')) {
-        zip.addFile(this.storagePath + '/eufy-log.log.1');
-        numberOfFiles++;
-      }
-      if (fs.existsSync(this.storagePath + '/eufy-log.log.2')) {
-        zip.addFile(this.storagePath + '/eufy-log.log.2');
-        numberOfFiles++;
-      }
-
-      if (fs.existsSync(this.storagePath + '/configui-server.log')) {
-        zip.addFile(this.storagePath + '/configui-server.log');
-        numberOfFiles++;
-      }
-      if (fs.existsSync(this.storagePath + '/configui-server.log.0')) {
-        zip.addFile(this.storagePath + '/configui-server.log.0');
-        numberOfFiles++;
-      }
-      if (fs.existsSync(this.storagePath + '/configui-server.log.1')) {
-        zip.addFile(this.storagePath + '/configui-server.log.1');
-        numberOfFiles++;
-      }
-      if (fs.existsSync(this.storagePath + '/configui-server.log.2')) {
-        zip.addFile(this.storagePath + '/configui-server.log.2');
-        numberOfFiles++;
-      }
+      ['log-lib.log', 'eufy-log.log', 'configui-server.log'].forEach(logFile => {
+        for (let i = 0; i < 3; i++) {
+          const fileName = i === 0 ? logFile : `${logFile}.${i}`;
+          const filePath = `${this.storagePath}/${fileName}`;
+          if (fs.existsSync(filePath)) {
+            zip.addFile(filePath);
+            numberOfFiles++;
+          }
+        }
+      });
 
       if (numberOfFiles === 0) {
         throw new Error('No log files were found');
@@ -415,14 +268,16 @@ class UiServer extends HomebridgePluginUiServer {
 
       this.pushEvent('downloadLogsFileCount', { numberOfFiles: numberOfFiles });
 
-      zip.archive(this.logZipFilePath).then(() => {
-        const fileBuffer = fs.readFileSync(this.logZipFilePath);
-        resolve(fileBuffer);
-      }).catch((err) => {
-        this.log.error('Error while generating log files: ' + err);
-        reject(err);
-      }).finally(() => this.removeCompressedLogs());
-
+      zip.archive(this.logZipFilePath)
+        .then(() => {
+          const fileBuffer = fs.readFileSync(this.logZipFilePath);
+          resolve(fileBuffer);
+        })
+        .catch((err) => {
+          this.log.error('Error while generating log files: ' + err);
+          reject(err);
+        })
+        .finally(() => this.removeCompressedLogs());
     });
   }
 
@@ -438,7 +293,5 @@ class UiServer extends HomebridgePluginUiServer {
   }
 }
 
-// start the instance of the server
-(() => {
-  return new UiServer();
-})();
+// Start the instance of the server
+new UiServer();

@@ -1,16 +1,17 @@
 <a routerLink="/accessories" class="btn btn-secondary mb-3">Back to Devices List</a>
-<div class="card" *ngIf="station">
+
+<!-- Put config options components here -->
+<app-ignore-accessory [accessory]="station" [station]="true" (ignored)="ignoredChanged($event)"></app-ignore-accessory>
+<p></p>
+
+<div class="card" *ngIf="station && !station.ignored">
   <div class="card-header">
-      <b>Station Settings</b> for <i>{{station.displayName}} ({{station.uniqueId}})</i>
+    <b>Station Settings</b> for <i>{{station.displayName}} ({{station.uniqueId}})</i>
   </div>
+
   <div class="card-body pt-0 pb-4">
-    
-    <!-- Put config options components here -->
-    <app-ignore-accessory [accessory]="station" [station]="true"></app-ignore-accessory>
-    <hr />
     <app-guard-modes-mapping [station]="station"></app-guard-modes-mapping>
     <hr />
     <app-manual-alarm-modes [station]="station"></app-manual-alarm-modes>
-    
   </div>
 </div>

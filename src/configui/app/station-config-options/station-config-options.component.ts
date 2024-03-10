@@ -29,4 +29,8 @@ export class StationConfigOptionsComponent implements OnInit {
     const uniqueId = this.route.snapshot.paramMap.get('uniqueId');
     this.station = this.pluginService.getStation(uniqueId);
   }
+
+  ignoredChanged(state: boolean) {
+    this.station!.ignored = state;
+  }
 }

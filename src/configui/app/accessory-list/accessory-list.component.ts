@@ -15,7 +15,7 @@ import { L_Station } from '../util/types';
 import { DeviceImage } from '../util/deviceToImagesMap';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgIf, NgFor } from '@angular/common';
-import { NgbAccordionModule } from '@ng-bootstrap/ng-bootstrap';
+import { NgbAccordionModule, NgbAlertModule } from '@ng-bootstrap/ng-bootstrap';
 
 @Component({
   selector: 'app-accessory-list',
@@ -28,10 +28,38 @@ import { NgbAccordionModule } from '@ng-bootstrap/ng-bootstrap';
     FaIconComponent,
     NgFor,
     NgbAccordionModule,
+    NgbAlertModule,
   ],
+  styles: `
+  .accordion-button::before {
+    flex-shrink: 0;
+    width: var(--bs-accordion-btn-icon-width);
+    height: var(--bs-accordion-btn-icon-width);
+    margin-right: var(--bs-accordion-btn-icon-width);
+    content: "";
+    background-image: var(--bs-accordion-btn-active-icon);
+    background-repeat: no-repeat;
+    background-size: var(--bs-accordion-btn-icon-width);
+    transition: var(--bs-accordion-btn-icon-transition);
+  }
+  .accordion-button:not(.collapsed)::before {
+    background-image: var(--bs-accordion-btn-active-icon);
+    transform: var(--bs-accordion-btn-icon-transform);
+  }
+  .accordion-button::after {
+    display: none !important;
+  }
+  .serial {
+    filter: blur(5px);
+  }
+  .serial:hover {
+    filter: none;
+  }
+	`,
 })
 export class AccessoryListComponent implements OnInit {
   stations: L_Station[] = [];
+  versionUnmatched: boolean = false;
 
   @Input() waitForAccessories?: boolean;
 
@@ -52,6 +80,11 @@ export class AccessoryListComponent implements OnInit {
 
   ngOnInit(): void {
     this.waitForAccessories = this.route.snapshot.paramMap.get('waitForAccessories') === 'true';
+
+    window.homebridge.addEventListener('versionUnmatched', (event: any) => {
+      console.log(`Stored version (${event.data['storedVersion']}) does not match current version (${event.data['currentVersion']})`);
+      this.versionUnmatched = true;
+    });
 
     this.pluginService.addEventListener('newAccessories', () => {
       console.log('plugin accessories have changed. updating...');
@@ -77,20 +110,14 @@ export class AccessoryListComponent implements OnInit {
   }
 
   private async updateProperties() {
-    const config = await this.pluginService.getConfig();
+    const { ignoreStations = [], ignoreDevices = [] } = await this.pluginService.getConfig();
 
-    if (Array.isArray(config['ignoreStations'])) {
-      this.stations.forEach((station) => {
-        station.ignored = config['ignoreStations'].find((uId: string) => uId === station.uniqueId) !== undefined;
-
-        if (Array.isArray(config['ignoreDevices'])) {
-          station.devices!.forEach((device) => {
-            device.ignored = config['ignoreDevices'].find((uId: string) => uId === device.uniqueId) !== undefined;
-          });
-        }
+    this.stations.forEach((station) => {
+      station.ignored = ignoreStations.includes(station.uniqueId);
+      station.devices?.forEach((device) => {
+        device.ignored = ignoreDevices.includes(device.uniqueId);
       });
-    }
-
+    });
   }
 
   openReloadModal(content: any) {

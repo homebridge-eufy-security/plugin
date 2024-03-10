@@ -43,8 +43,6 @@ import { createStream } from 'rotating-file-stream';
 
 import fs from 'fs';
 
-import { EufyClientInteractor } from './utils/EufyClientInteractor';
-
 import os from 'node:os';
 import { platform } from 'node:process';
 import { readFileSync } from 'node:fs';
@@ -75,8 +73,6 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
 
   private activeAccessoryIds: string[] = [];
   private cleanCachedAccessoriesTimeout?: NodeJS.Timeout;
-
-  private pluginConfigInteractor?: EufyClientInteractor;
 
   private readonly STATION_INIT_DELAY = 5 * 1000; // 5 seconds
   private readonly DEVICE_INIT_DELAY = 7 * 1000; // 7 seconds;
@@ -411,13 +407,6 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
 
     this.eufyClient.setCameraMaxLivestreamDuration(cameraMaxLivestreamDuration);
     this.log.debug(`CameraMaxLivestreamDuration: ${this.eufyClient.getCameraMaxLivestreamDuration()}`);
-
-    try {
-      this.pluginConfigInteractor = new EufyClientInteractor(this.eufyPath, this.log, this.eufyClient);
-      await this.pluginConfigInteractor.setupServer();
-    } catch (err) {
-      this.log.warn(err);
-    }
   }
 
   private generateUUID(identifier: string, type: DeviceType): string {
@@ -582,10 +571,6 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
 
     if (this.cleanCachedAccessoriesTimeout) {
       clearTimeout(this.cleanCachedAccessoriesTimeout);
-    }
-
-    if (this.pluginConfigInteractor) {
-      this.pluginConfigInteractor.stopServer();
     }
 
     try {
