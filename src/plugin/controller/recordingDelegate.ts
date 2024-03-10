@@ -41,12 +41,12 @@ export class RecordingDelegate implements CameraRecordingDelegate {
   private closeReason?: number;
   private handlingStreamingRequest = false;
 
-  private platform: EufySecurityPlatform = this.streamingDelegate.platform;
-  private camera: Camera = this.streamingDelegate.device;
-  private cameraName: string = this.streamingDelegate.cameraName;
-  private cameraConfig: CameraConfig = this.streamingDelegate.cameraConfig;
-  private localLivestreamManager: LocalLivestreamManager = this.streamingDelegate.getLivestreamManager();
-  private log: TsLogger<ILogObj> = this.platform.log;
+  private platform: EufySecurityPlatform;
+  private camera: Camera;
+  private cameraName: string;
+  private cameraConfig: CameraConfig;
+  private localLivestreamManager: LocalLivestreamManager;
+  private log: TsLogger<ILogObj>;
 
   private controller?: CameraController;
 
@@ -55,7 +55,14 @@ export class RecordingDelegate implements CameraRecordingDelegate {
   constructor(
     private streamingDelegate: StreamingDelegate,
     private accessory: PlatformAccessory,
-  ) { }
+  ) {
+    this.platform = this.streamingDelegate.platform;
+    this.camera = this.streamingDelegate.device;
+    this.cameraName = this.streamingDelegate.cameraName;
+    this.cameraConfig = this.streamingDelegate.cameraConfig;
+    this.localLivestreamManager = this.streamingDelegate.getLivestreamManager();
+    this.log = this.platform.log;
+  }
 
   public setController(controller: CameraController) {
     this.controller = controller;

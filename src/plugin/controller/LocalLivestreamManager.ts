@@ -22,14 +22,18 @@ export class LocalLivestreamManager extends EventEmitter {
   private livestreamStartedAt: number | null;
   private livestreamIsStarting = false;
 
-  private readonly platform: EufySecurityPlatform = this.streamingDelegate.platform;
-  private readonly device: Camera = this.streamingDelegate.device;
-  private log: TsLogger<ILogObj> = this.platform.log;
+  private readonly platform: EufySecurityPlatform;
+  private readonly device: Camera;
+  private log: TsLogger<ILogObj>;
 
   constructor(
     private streamingDelegate: StreamingDelegate,
   ) {
     super();
+
+    this.platform = this.streamingDelegate.platform;
+    this.device = this.streamingDelegate.device;
+    this.log = this.platform.log;
 
     this.stationStream = null;
     this.livestreamStartedAt = null;

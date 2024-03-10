@@ -60,16 +60,16 @@ type ActiveSession = {
 
 export class StreamingDelegate implements CameraStreamingDelegate {
 
-  public readonly platform: EufySecurityPlatform = this.camera.platform;
-  public readonly device: Camera = this.camera.device;
-  public readonly cameraConfig: CameraConfig = this.camera.cameraConfig;
+  public readonly platform: EufySecurityPlatform;
+  public readonly device: Camera;
+  public readonly cameraConfig: CameraConfig;
 
-  private readonly hap: HAP = this.platform.api.hap;
-  private readonly api: API = this.platform.api;
-  private readonly log: TsLogger<ILogObj> = this.platform.log;
-  public readonly cameraName: string = this.device.getName()!;
+  private readonly hap: HAP;
+  private readonly api: API;
+  private readonly log: TsLogger<ILogObj>;
+  public readonly cameraName: string;
 
-  private readonly videoConfig: VideoConfig = this.cameraConfig.videoConfig!;
+  private readonly videoConfig: VideoConfig;
   private controller?: CameraController;
 
   public readonly localLivestreamManager: LocalLivestreamManager = new LocalLivestreamManager(this);
@@ -85,6 +85,17 @@ export class StreamingDelegate implements CameraStreamingDelegate {
   constructor(
     public readonly camera: CameraAccessory,
   ) {
+    this.platform = this.camera.platform;
+    this.device = this.camera.device;
+    this.cameraConfig = this.camera.cameraConfig;
+
+    this.hap = this.platform.api.hap;
+    this.api = this.platform.api;
+    this.log = this.platform.log;
+    this.cameraName = this.device.getName()!;
+  
+    this.videoConfig = this.cameraConfig.videoConfig!;
+
     this.api.on(APIEvent.SHUTDOWN, () => {
       for (const session in this.ongoingSessions) {
         this.stopStream(session);

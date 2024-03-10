@@ -51,8 +51,8 @@ import ffmpegPath from 'ffmpeg-for-homebridge';
 import { FfmpegCodecs } from './utils/ffmpeg-codecs';
 
 export class EufySecurityPlatform implements DynamicPlatformPlugin {
-  public readonly Service: typeof Service = this.api.hap.Service;
-  public readonly Characteristic: typeof Characteristic = this.api.hap.Characteristic;
+  public readonly Service: typeof Service;
+  public readonly Characteristic: typeof Characteristic;
 
   public eufyClient!: EufySecurity;
 
@@ -89,6 +89,8 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
     public readonly api: API,
   ) {
     this.config = config as EufySecurityPlatformConfig;
+    this.Service = this.api.hap.Service;
+    this.Characteristic = this.api.hap.Characteristic;
 
     this.eufyPath = this.api.user.storagePath() + '/eufysecurity';
 

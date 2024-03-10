@@ -32,8 +32,8 @@ export abstract class BaseAccessory extends EventEmitter {
   protected servicesInUse: Service[] = [];
   public readonly SN: string;
   public readonly name: string;
-  public readonly log: TsLogger<ILogObj> = this.platform.log;
-  public readonly hap: HAP = this.platform.api.hap;
+  public readonly log: TsLogger<ILogObj>;
+  public readonly hap: HAP;
 
   constructor(
     public readonly platform: EufySecurityPlatform,
@@ -43,8 +43,8 @@ export abstract class BaseAccessory extends EventEmitter {
   ) {
     super();
 
-    this.platform = platform;
-    this.accessory = accessory;
+    this.log = this.platform.log;
+    this.hap = this.platform.api.hap;
     this.device = device as Device | Station;
 
     this.SN = this.device.getSerial();

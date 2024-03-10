@@ -57,14 +57,14 @@ type StreamSource = {
 
 export class SnapshotManager extends EventEmitter {
 
-  private readonly platform: EufySecurityPlatform = this.streamingDelegate.platform;
-  private readonly device: Camera = this.streamingDelegate.device;
-  private readonly accessory: CameraAccessory = this.streamingDelegate.camera;
-  private cameraConfig: CameraConfig = this.streamingDelegate.cameraConfig;
-  private cameraName: string = this.device.getName();
+  private readonly platform: EufySecurityPlatform;
+  private readonly device: Camera;
+  private readonly accessory: CameraAccessory;
+  private cameraConfig: CameraConfig;
+  private cameraName: string;
 
-  private log: TsLogger<ILogObj> = this.platform.log;
-  private livestreamManager: LocalLivestreamManager = this.streamingDelegate.localLivestreamManager;
+  private log: TsLogger<ILogObj>;
+  private livestreamManager: LocalLivestreamManager;
 
   private lastCloudSnapshot?: Snapshot;
   private currentSnapshot?: Snapshot;
@@ -83,6 +83,15 @@ export class SnapshotManager extends EventEmitter {
     private streamingDelegate: StreamingDelegate,
   ) {
     super();
+
+    this.platform = this.streamingDelegate.platform;
+    this.device = this.streamingDelegate.device;
+    this.accessory = this.streamingDelegate.camera;
+    this.cameraConfig = this.streamingDelegate.cameraConfig;
+    this.cameraName = this.device.getName();
+
+    this.log = this.platform.log;
+    this.livestreamManager = this.streamingDelegate.localLivestreamManager;
 
     this.refreshSnapshotIntervalMinutes = this.cameraConfig.refreshSnapshotIntervalMinutes ?? 0;
 

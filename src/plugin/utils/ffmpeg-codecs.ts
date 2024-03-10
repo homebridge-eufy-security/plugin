@@ -14,14 +14,16 @@ export class FfmpegCodecs {
 
   private _gpuMem: number;
   private _ffmpegVersion: string;
-  private readonly log: TsLogger<ILogObj> = this.platform.log;
-  private readonly videoProcessor: string = this.platform.videoProcessor;
+  private readonly log: TsLogger<ILogObj>;
+  private readonly videoProcessor: string;
   private readonly videoProcessorCodecs: { [index: string]: { decoders: string[]; encoders: string[] } };
   private readonly videoProcessorHwAccels: { [index: string]: boolean };
 
   constructor(private readonly platform: EufySecurityPlatform) {
     this._gpuMem = 0;
     this._ffmpegVersion = '';
+    this.log = this.platform.log;
+    this.videoProcessor = this.platform.videoProcessor;
     this.videoProcessorCodecs = {};
     this.videoProcessorHwAccels = {};
   }

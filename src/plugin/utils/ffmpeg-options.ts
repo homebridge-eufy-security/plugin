@@ -11,8 +11,8 @@ import { EufySecurityPlatform } from '../platform.js';
 
 export class FfmpegOptions {
 
-  private readonly platform: EufySecurityPlatform = this.camera.platform;
-  private readonly log: TsLogger<ILogObj> = this.platform.log;
+  private readonly platform: EufySecurityPlatform;
+  private readonly log: TsLogger<ILogObj>;
 
   private readonly hwPixelFormat: string[];
 
@@ -21,8 +21,9 @@ export class FfmpegOptions {
 
     this.hwPixelFormat = [];
     this.log = camera.log;
-    this.platform = camera.platform;
     this.camera = camera;
+    this.platform = this.camera.platform;
+    this.log = this.platform.log;
 
     // Configure our hardware acceleration support.
     this.configureHwAccel();
