@@ -57,7 +57,7 @@ export class ConfigOptionsInterpreter {
 
   protected async updateStationConfig(options: any, accessory: L_Station) {
     // Fetch the current configuration
-    let config = await this.pluginService.getConfig();
+    const config = await this.pluginService.getConfig();
 
     if (!Array.isArray(config['stations'])) {
       config['stations'] = [];
@@ -86,7 +86,7 @@ export class ConfigOptionsInterpreter {
 
   protected async updateDeviceConfig(options: any, accessory: L_Device) {
     // Fetch the current configuration
-    let config = await this.pluginService.getConfig();
+    const config = await this.pluginService.getConfig();
 
     if (!Array.isArray(config['cameras'])) {
       config['cameras'] = [];
