@@ -52,46 +52,68 @@
 <div *ngIf="stations.length !== 0" class="container">
     <div class="row">
         <div class="col-6">
-            <button type="button" class="btn btn-success" (click)="openReloadModal(reloadModal)" (keydown.enter)="openReloadModal(reloadModal)">
+            <button type="button" class="btn btn-success" (click)="openReloadModal(reloadModal)"
+                (keydown.enter)="openReloadModal(reloadModal)">
                 <fa-icon [icon]="reloadIcon" size="lg"></fa-icon>
                 Reload
             </button>
         </div>
         <div class="col-6 text-end">
-            <a routerLink="/advancedConfig" class="btn btn-secondary">Plugin Settings</a>
+            <a routerLink="/advancedConfig" class="btn btn-secondary">Global Settings</a>
         </div>
     </div>
 
     <div *ngIf="versionUnmatched">
         <p></p>
         <ngb-alert type="warning" [dismissible]="false">
-            <a (click)="openReloadModal(reloadModal)" (keydown.enter)="openReloadModal(reloadModal)" tabindex="0">Plugin has been updated, please refresh and reboot the plugin.</a>
+            <a (click)="openReloadModal(reloadModal)" (keydown.enter)="openReloadModal(reloadModal)" tabindex="0">Plugin
+                has been updated, please refresh and reboot the plugin.</a>
         </ngb-alert>
         <p></p>
     </div>
 
     <p></p>
-    <span>Click on the name to discovers the attached device(s) behing.</span>
+    <span>Click the name to reveal the attached device(s) or access camera configuration.
+        The shield icon allows you to configure alarm settings.</span>
     <p></p>
 
     <div ngbAccordion [closeOthers]="true">
 
-        <div *ngFor="let station of stations" ngbAccordionItem>
+        <div *ngFor="let station of stations" ngbAccordionItem="S_{{station.uniqueId}}">
             <div ngbAccordionHeader>
 
-                <button ngbAccordionButton class="row m-0">
-                    <div class="col">{{ station.displayName }}</div>
+                <button *ngIf="station.devices?.length !== 1" ngbAccordionButton class="row m-0">
+                    <div class="col-8" [style.text-decoration]="station.ignored ? 'line-through' : 'none'">{{
+                        station.displayName
+                        }}</div>
                     <div class="col">
-                        <button type="button" class="btn text-muted m-0 float-right"
-                            routerLink="/stationConfig/{{station.uniqueId}}">
-                            <fa-icon [icon]="settingsIcon" size="lg"></fa-icon>
-                        </button>
+                        <span class="float-right">
+                            <button type="button" class="btn text-muted my-0 mx-1"
+                                routerLink="/stationConfig/{{station.uniqueId}}">
+                                <fa-icon [icon]="shieldIcon" size="lg"></fa-icon>
+                            </button>
+                        </span>
                     </div>
                 </button>
 
+                <div *ngIf="station.devices?.length === 1" ngbAccordionButton class="row m-0 accordion-button2"
+                    routerLink="/cameraConfig/{{station.uniqueId}}">
+                    <div class="col-8"
+                        [style.text-decoration]="station.devices && station.devices[0].ignored ? 'line-through' : 'none'">
+                        {{ station.displayName }}</div>
+                    <div class="col">
+                        <span class="float-right">
+                            <button type="button" class="btn text-muted my-0 mx-1"
+                                routerLink="/stationConfig/{{station.uniqueId}}">
+                                <fa-icon [icon]="shieldIcon" size="lg"></fa-icon>
+                            </button>
+                        </span>
+                    </div>
+                </div>
+
             </div>
             <div ngbAccordionCollapse>
-                <div ngbAccordionBody>
+                <div ngbAccordionBody *ngIf="station && (station.devices ?? []).length >= 2">
                     <ng-template>
 
                         <div class="row">
