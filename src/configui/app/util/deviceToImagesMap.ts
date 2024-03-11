@@ -112,8 +112,9 @@ export function getImageForDeviceType(deviceType: number): string {
     case 143: // SMART_SAFE_7403
       return 'smartsafe_s10_t7400_large.jpg';
     case 151: // WALL_LIGHT_CAM
-    case 10005: // WALL_LIGHT_CAM_81A0
       return 'walllight_s100_large.jpg';
+    case 10005: // WALL_LIGHT_CAM_81A0
+      return 'walllight_s120_large.jpg';
     case 157: // SMART_TRACK_LINK
       return 'smarttrack_link_t87B0_large.jpg';
     case 159: // SMART_TRACK_CARD
