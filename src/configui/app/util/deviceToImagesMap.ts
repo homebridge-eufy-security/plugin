@@ -56,7 +56,7 @@ export const DeviceImage = new Map<DeviceType, { image: string; padding: string 
   [DeviceType.WALL_LIGHT_CAM, { image: 'walllight_s100_large.jpg', padding: '20px' }],
   [DeviceType.SMART_TRACK_LINK, { image: 'unknown.png', padding: '20px' }],
   [DeviceType.SMART_TRACK_CARD, { image: 'unknown.png', padding: '20px' }],
-  [DeviceType.LOCK_8502, { image: 'unknown.png', padding: '20px' }],
+  [DeviceType.LOCK_8502, { image: 'smartlock_8502_large.jpg', padding: '0px' }],
   [DeviceType.LOCK_8506, { image: 'unknown.png', padding: '20px' }],
   [DeviceType.WALL_LIGHT_CAM_81A0, { image: 'walllight_s100_large', padding: '20px' }],
   [DeviceType.CAMERA_GARAGE_T8452, { image: 'garage_camera_t8452_small.jpg', padding: '20px' }],
