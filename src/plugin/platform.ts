@@ -601,6 +601,9 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
       case DeviceType.LOCK_WIFI_NO_FINGER:
         new LockAccessory(this, accessory, device as Lock);
         break;
+      case DeviceType.LOCK_8502:
+        new LockAccessory(this, accessory, device as Lock);
+        break;
       default:
         this.log.warn('This accessory is not compatible with HomeBridge Eufy Security plugin:', accessory.displayName, 'Type:', type);
         return;
