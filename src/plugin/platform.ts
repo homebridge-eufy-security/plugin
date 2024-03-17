@@ -21,6 +21,7 @@ import { EntrySensorAccessory } from './accessories/EntrySensorAccessory';
 import { MotionSensorAccessory } from './accessories/MotionSensorAccessory';
 import { CameraAccessory } from './accessories/CameraAccessory';
 import { LockAccessory } from './accessories/LockAccessory';
+import { AutoSyncStationAccessory } from './accessories/AutoSyncStationAccessory';
 
 import {
   EufySecurity,
@@ -34,6 +35,7 @@ import {
   UserType,
   Lock,
   libVersion,
+  LogLevel,
   // eslint-disable-next-line @typescript-eslint/ban-ts-comment
   // @ts-ignore 
 } from 'eufy-security-client';
@@ -277,6 +279,9 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
       p2pConnectionSetup: 0,
       pollingIntervalMinutes: this.config.pollingIntervalMinutes ?? 10,
       eventDurationSeconds: 10,
+      logging: {
+        level: (this.config.enableDetailedLogging) ? LogLevel.Debug : LogLevel.Info,
+      },
     } as EufySecurityConfig;
 
     this.config.ignoreStations = this.config.ignoreStations ??= [];
@@ -643,7 +648,11 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
       }
     }
 
-    new StationAccessory(this, accessory, station as Station);
+    if (this.config.autoSyncStation) {
+      new AutoSyncStationAccessory(this, accessory, station as Station);
+    } else {
+      new StationAccessory(this, accessory, station as Station);
+    }
   }
 
   private register_device(

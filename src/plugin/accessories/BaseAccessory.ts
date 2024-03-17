@@ -84,11 +84,11 @@ export abstract class BaseAccessory extends EventEmitter {
     if (this.platform.config.enableDetailedLogging) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       this.device.on('raw property changed', (device: any, type: number, value: string) =>
-        this.handleRawPropertyChange(device, type, value),
+        this.handleRawPropertyChange(type, value),
       );
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       this.device.on('property changed', (device: any, name: string, value: PropertyValue) =>
-        this.handlePropertyChange(device, name, value),
+        this.handlePropertyChange(name, value),
       );
     }
 
@@ -101,13 +101,13 @@ export abstract class BaseAccessory extends EventEmitter {
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  protected handleRawPropertyChange(device: any, type: number, value: string): void {
-    this.log.debug(`${this.name} Raw Property Changes: ${type} ${value}`);
+  protected handleRawPropertyChange(type: number, value: string): void {
+    this.log.trace(`${this.name} Raw Property Changes: ${type} ${JSON.stringify(value)}`);
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  protected handlePropertyChange(device: any, name: string, value: PropertyValue): void {
-    this.log.debug(`${this.name} Property Changes: ${name} ${value}`);
+  protected handlePropertyChange(name: string, value: PropertyValue): void {
+    this.log.trace(`${this.name} Property Changes: ${name} ${JSON.stringify(value)}`);
   }
 
   /**
@@ -221,7 +221,7 @@ export abstract class BaseAccessory extends EventEmitter {
    * @returns {Service} Returns the existing or newly created service.
    * @throws Will throw an error if there are overlapping services.
    */
-  protected getService(
+  public getService(
     serviceType: ServiceType,
     name = this.name,
     subType?: string,

@@ -16,6 +16,7 @@ export const DEFAULT_CONFIG_VALUES = {
   unbridge: true,
   ignoreMultipleDevicesWarning: false,
   syncStationModes: false,
+  autoSyncStation: false,
 };
 
 export const DEFAULT_CAMERACONFIG_VALUES:CameraConfig = {

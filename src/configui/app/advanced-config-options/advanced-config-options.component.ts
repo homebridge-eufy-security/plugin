@@ -1,4 +1,5 @@
 import { Component } from '@angular/core';
+import { RouterLink } from '@angular/router';
 import { ResetPluginComponent } from '../config-options/reset-plugin/reset-plugin.component';
 import { DownloadLogsComponent } from '../config-options/download-logs/download-logs.component';
 import { GuardModesMappingComponent } from '../config-options/guard-modes-mapping/guard-modes-mapping.component';
@@ -10,7 +11,7 @@ import { EnableDetailedLoggingComponent } from '../config-options/enable-detaile
 import { LivestreamDurationSecondsComponent } from '../config-options/livestream-duration-seconds/livestream-duration-seconds.component';
 import { PollingIntervalMinutesComponent } from '../config-options/polling-interval-minutes/polling-interval-minutes.component';
 import { EditCredentialsComponent } from '../config-options/edit-credentials/edit-credentials.component';
-import { RouterLink } from '@angular/router';
+import { AutoSyncStationComponent } from '../config-options/auto-sync-station/auto-sync-station.component';
 
 @Component({
     selector: 'app-advanced-config-options',
@@ -29,6 +30,7 @@ import { RouterLink } from '@angular/router';
         GuardModesMappingComponent,
         DownloadLogsComponent,
         ResetPluginComponent,
+        AutoSyncStationComponent,
     ],
 })
 export class AdvancedConfigOptionsComponent {

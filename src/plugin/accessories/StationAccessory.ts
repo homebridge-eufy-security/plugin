@@ -84,10 +84,10 @@ export class StationAccessory extends BaseAccessory {
       getValue: () => this.handleSecuritySystemCurrentStateGet(),
       onValue: (service, characteristic) => {
         this.device.on('current mode', (station: Station, currentMode: number) => {
-          this.onStationCurrentModePushNotification(characteristic, station, currentMode);
+          this.onStationCurrentModePushNotification(characteristic, currentMode);
         });
         this.device.on('alarm event', (station: Station, alarmEvent: AlarmEvent) =>
-          this.onStationAlarmEventPushNotification(characteristic, station, alarmEvent),
+          this.onStationAlarmEventPushNotification(characteristic, alarmEvent),
         );
       },
     });
@@ -197,7 +197,6 @@ export class StationAccessory extends BaseAccessory {
 
   private onStationCurrentModePushNotification(
     characteristic: Characteristic,
-    station: Station,
     currentMode: number,
   ): void {
     if (this.guardModeChangeTimeout.timeout) {
@@ -209,9 +208,8 @@ export class StationAccessory extends BaseAccessory {
     characteristic.updateValue(homekitCurrentMode);
   }
 
-  private onStationAlarmEventPushNotification(
+  public onStationAlarmEventPushNotification(
     characteristic: Characteristic,
-    station: Station,
     alarmEvent: AlarmEvent,
   ): void {
     let currentValue = this.device.getPropertyValue(PropertyName.StationCurrentMode);
@@ -275,7 +273,7 @@ export class StationAccessory extends BaseAccessory {
    * @returns {number} The corresponding Eufy mode
    * @throws {Error} If a matching mode is not found
    */
-  convertHKtoEufy(hkMode: number): number {
+  public convertHKtoEufy(hkMode: number): number {
     const modeObj = this.modes.find((m) => m.hk === hkMode);
     if (!modeObj) {
       throw new Error(`${this.accessory.displayName} No matching Eufy mode found for HomeKit mode ${hkMode}`);
@@ -414,7 +412,7 @@ export class StationAccessory extends BaseAccessory {
     }
   }
 
-  private onStationAlarmDelayedEvent(station: Station, armDelay: number) {
+  public onStationAlarmDelayedEvent(station: Station, armDelay: number) {
     this.log.debug(`${this.accessory.displayName} alarm for this station will be delayed by ${armDelay} seconds.`);
     this.alarm_delayed = true;
 
@@ -428,7 +426,7 @@ export class StationAccessory extends BaseAccessory {
     }, (armDelay + 1) * 1000);
   }
 
-  private onStationAlarmArmedEvent() {
+  public onStationAlarmArmedEvent() {
     this.log.debug(`${this.accessory.displayName} alarm for this station is armed now.`);
     this.alarm_delayed = false;
 
@@ -437,7 +435,7 @@ export class StationAccessory extends BaseAccessory {
     }
   }
 
-  private getGuardModeName(value: CharacteristicValue): string {
+  public getGuardModeName(value: CharacteristicValue): string {
     try {
       return `${HKGuardMode[value as number]}(${value})`;
     } catch (error) {
