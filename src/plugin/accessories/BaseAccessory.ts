@@ -102,12 +102,12 @@ export abstract class BaseAccessory extends EventEmitter {
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   protected handleRawPropertyChange(type: number, value: string): void {
-    this.log.trace(`${this.name} Raw Property Changes: ${type} ${JSON.stringify(value)}`);
+    this.log.debug(`${this.name} Raw Property Changes: ${type} ${JSON.stringify(value)}`);
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   protected handlePropertyChange(name: string, value: PropertyValue): void {
-    this.log.trace(`${this.name} Property Changes: ${name} ${JSON.stringify(value)}`);
+    this.log.debug(`${this.name} Property Changes: ${name} ${JSON.stringify(value)}`);
   }
 
   /**
