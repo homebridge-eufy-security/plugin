@@ -5,6 +5,7 @@ import { DeviceAccessory } from './Device';
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore  
 import { MotionSensor, PropertyName } from 'eufy-security-client';
+import { log } from '../utils/utils';
 
 /**
  * MotionSensorAccessory Class
@@ -34,7 +35,7 @@ export class MotionSensorAccessory extends DeviceAccessory {
     super(platform, accessory, device);
 
     // Log a debug message indicating the construction of the Motion Sensor.
-    this.log.debug(`${this.accessory.displayName} Constructed Motion Sensor`);
+    log.debug(`${this.accessory.displayName} Constructed Motion Sensor`);
 
     // Check if the device has the 'motionDetected' property.
     if (this.device.hasProperty('motionDetected')) {
@@ -52,7 +53,7 @@ export class MotionSensorAccessory extends DeviceAccessory {
 
     } else {
       // Log an error if the 'motionDetected' property is not available for this device.
-      this.log.error(`${this.accessory.displayName} has no motionDetected`);
+      log.error(`${this.accessory.displayName} has no motionDetected`);
     }
 
     // Remove any unused services.

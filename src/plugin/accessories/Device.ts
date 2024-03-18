@@ -8,6 +8,7 @@ import {
 import { EufySecurityPlatform } from '../platform';
 import { BaseAccessory } from './BaseAccessory';
 import { Device, PropertyName } from 'eufy-security-client';
+import { log } from '../utils/utils';
 
 export type CharacteristicType = WithUUID<{ new(): Characteristic }>;
 export type ServiceType = WithUUID<typeof Service> | Service;
@@ -28,10 +29,10 @@ export abstract class DeviceAccessory extends BaseAccessory {
   public getPropertyValue(characteristic: string, propertyName: PropertyName): CharacteristicValue {
     try {
       const value = this.device.getPropertyValue(propertyName);
-      this.log.debug(`${this.accessory.displayName} GET '${characteristic}' ${propertyName}: ${value}`);
+      log.debug(`${this.accessory.displayName} GET '${characteristic}' ${propertyName}: ${value}`);
       return value as CharacteristicValue;
     } catch (error) {
-      this.log.debug(`${this.accessory.displayName} Error getting '${characteristic}' ${propertyName}: ${error}`);
+      log.debug(`${this.accessory.displayName} Error getting '${characteristic}' ${propertyName}: ${error}`);
       return false;
     }
   }
@@ -45,7 +46,7 @@ export abstract class DeviceAccessory extends BaseAccessory {
     serviceType: ServiceType,
     value: CharacteristicValue,
   ): void {
-    this.log.debug(`${this.accessory.displayName} ON '${serviceType.name}': ${value}`);
+    log.debug(`${this.accessory.displayName} ON '${serviceType.name}': ${value}`);
     this.getService(serviceType)
       .getCharacteristic(characteristicType)
       .updateValue(value);

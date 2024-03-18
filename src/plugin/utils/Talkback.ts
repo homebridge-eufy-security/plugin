@@ -2,6 +2,7 @@ import { Duplex, Writable } from 'stream';
 
 import { EufySecurityPlatform } from '../platform';
 import { Device, Station } from 'eufy-security-client';
+import { log } from './utils';
 
 export class TalkbackStream extends Duplex {
 
@@ -29,7 +30,7 @@ export class TalkbackStream extends Duplex {
       return;
     }
 
-    this.platform.log.debug(this.camera.getName(), 'talkback started event from station ' + station.getName());
+    log.debug(this.camera.getName(), 'talkback started event from station ' + station.getName());
 
     if (this.targetStream) {
       this.unpipe(this.targetStream);
@@ -44,7 +45,7 @@ export class TalkbackStream extends Duplex {
       return;
     }
 
-    this.platform.log.debug(this.camera.getName(), 'talkback stopped event from station ' + station.getName());
+    log.debug(this.camera.getName(), 'talkback stopped event from station ' + station.getName());
 
     if (this.targetStream) {
       this.unpipe(this.targetStream);
@@ -88,10 +89,10 @@ export class TalkbackStream extends Duplex {
   private startTalkback() {
     if (!this.talkbackStarted) {
       this.talkbackStarted = true;
-      this.platform.log.debug(this.camera.getName(), 'starting talkback');
+      log.debug(this.camera.getName(), 'starting talkback');
       this.platform.eufyClient.startStationTalkback(this.camera.getSerial())
         .catch(err => {
-          this.platform.log.error(this.camera.getName(), 'talkback could not be started: ' + err);
+          log.error(this.camera.getName(), 'talkback could not be started: ' + err);
         });
     }
   }
@@ -99,10 +100,10 @@ export class TalkbackStream extends Duplex {
   private stopTalkback() {
     if (this.talkbackStarted) {
       this.talkbackStarted = false;
-      this.platform.log.debug(this.camera.getName(), 'stopping talkback');
+      log.debug(this.camera.getName(), 'stopping talkback');
       this.platform.eufyClient.stopStationTalkback(this.camera.getSerial())
         .catch(err => {
-          this.platform.log.error(this.camera.getName(), 'talkback could not be stopped: ' + err);
+          log.error(this.camera.getName(), 'talkback could not be stopped: ' + err);
         });
     }
   }

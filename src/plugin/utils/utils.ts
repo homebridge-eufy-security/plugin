@@ -8,7 +8,17 @@ import path from 'path';
 import { tmpdir } from 'os';
 import fse from 'fs-extra';
 
-export const is_rtsp_ready = function (device: Camera, cameraConfig: CameraConfig, log: TsLogger<ILogObj>): boolean {
+export let log: TsLogger<ILogObj> = {} as TsLogger<ILogObj>;
+export let tsLogger: TsLogger<ILogObj> = {} as TsLogger<ILogObj>;
+export let ffmpegLogger: TsLogger<ILogObj> = {} as TsLogger<ILogObj>;
+
+export function init_log(logOptions: ILogObj) {
+  log = new TsLogger(logOptions);
+  tsLogger = new TsLogger({ ...logOptions, type: 'hidden' });
+  ffmpegLogger = new TsLogger({ ...logOptions, type: 'hidden' });
+}
+
+export const is_rtsp_ready = function (device: Camera, cameraConfig: CameraConfig): boolean {
 
   log.debug(device.getName(), 'RTSP rtspStream:' + device.hasProperty('rtspStream'));
   if (!device.hasProperty('rtspStream')) {

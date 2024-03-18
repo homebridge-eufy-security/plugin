@@ -2,7 +2,7 @@ import { PlatformAccessory } from 'homebridge';
 import { EufySecurityPlatform } from '../platform';
 import { AlarmEvent, GuardMode, Station } from 'eufy-security-client';
 import { StationAccessory } from './StationAccessory';
-import { Logger as TsLogger, ILogObj } from 'tslog';
+import { log } from '../utils/utils';
 
 /**
  * Platform Auto Accessory
@@ -17,7 +17,6 @@ export class AutoSyncStationAccessory {
   private static first_station: StationAccessory = {} as StationAccessory;
 
   public readonly name: string;
-  public readonly log: TsLogger<ILogObj>;
 
   protected guardModeChangeTimeout: {
     timeout: NodeJS.Timeout | null;
@@ -43,12 +42,11 @@ export class AutoSyncStationAccessory {
     }
 
     this.name = this.device.getName();
-    this.log = this.platform.log;
 
     // if it's the first we do create a full station accessory and then store it
     // if not we need to fire event from Eufy to push to HK and vice versa
     if (first) {
-      this.log.debug(`${this.accessory.displayName} Constructed First Station`);
+      log.debug(`${this.accessory.displayName} Constructed First Station`);
 
       // Create the Station accessory
       AutoSyncStationAccessory.first_station = new StationAccessory(platform, accessory, device);
@@ -57,7 +55,7 @@ export class AutoSyncStationAccessory {
       this.device.on('alarm event', this.fireAlarmToAllChilds.bind(this));
 
     } else {
-      this.log.debug(`${this.accessory.displayName} Constructed Child Station`);
+      log.debug(`${this.accessory.displayName} Constructed Child Station`);
 
       // Register to Eufy event of all childs
       this.initChildEventRegister();
@@ -72,7 +70,7 @@ export class AutoSyncStationAccessory {
     const first_station = AutoSyncStationAccessory.first_station;
 
     this.device.on('current mode', (station: Station, currentMode: number) => {
-      this.log.debug(`FWD ${this.name} 'current mode' TO clearTimeout (${currentMode})`);
+      log.debug(`FWD ${this.name} 'current mode' TO clearTimeout (${currentMode})`);
       if (this.guardModeChangeTimeout.timeout) {
         // If there's an existing timeout, clear it
         clearTimeout(this.guardModeChangeTimeout.timeout);
@@ -80,12 +78,12 @@ export class AutoSyncStationAccessory {
     });
 
     this.device.on('alarm arm delay event', (station: Station, armDelay: number) => {
-      this.log.debug(`FWD ${this.name} 'alarm arm delay event' TO ${first_station.name}`);
+      log.debug(`FWD ${this.name} 'alarm arm delay event' TO ${first_station.name}`);
       first_station.onStationAlarmDelayedEvent(station, armDelay);
     });
 
     this.device.on('alarm armed event', () => {
-      this.log.debug(`FWD ${this.name} 'alarm armed event' TO ${first_station.name}`);
+      log.debug(`FWD ${this.name} 'alarm armed event' TO ${first_station.name}`);
       first_station.onStationAlarmArmedEvent();
     });
 
@@ -97,7 +95,7 @@ export class AutoSyncStationAccessory {
    * Handle requests to set the 'Security System Target State' to all childs
    */
   private changeModeToAllChilds(station: Station, guardMode: number) {
-    this.log.info(`FWD ${this.name} 'guard mode (${GuardMode[guardMode]})' TO all the childs`);
+    log.info(`FWD ${this.name} 'guard mode (${GuardMode[guardMode]})' TO all the childs`);
     AutoSyncStationAccessory.childs.forEach((child, index) => {
       if (index === 0) { return; } // Already changed so do nothing for him
       child.handleSecuritySystemTargetStateSet(guardMode);
@@ -114,7 +112,7 @@ export class AutoSyncStationAccessory {
     const manualAlarmSeconds = first_station.stationConfig.manualAlarmSeconds;
 
     // Log the received alarm event
-    this.log.debug(`RECEIVED ${this.name} 'alarm event' REASON ${AlarmEvent[alarmEvent]}`);
+    log.debug(`RECEIVED ${this.name} 'alarm event' REASON ${AlarmEvent[alarmEvent]}`);
 
     // Prevent looping with multiple received events
     // Reinit after manualAlarmSeconds * 4 / 5
@@ -122,10 +120,10 @@ export class AutoSyncStationAccessory {
       return;
     } else {
       AutoSyncStationAccessory.alarmFired = true;
-      this.log.debug(`SET TIMEOUT ${this.name} 'alarm event' REASON ${AlarmEvent[alarmEvent]} FOR ${manualAlarmSeconds * 4 / 5}sec`);
+      log.debug(`SET TIMEOUT ${this.name} 'alarm event' REASON ${AlarmEvent[alarmEvent]} FOR ${manualAlarmSeconds * 4 / 5}sec`);
       AutoSyncStationAccessory.alarmFiredTimeout.timeout = setTimeout(() => {
         AutoSyncStationAccessory.alarmFired = false;
-        this.log.debug(`TIMEOUT ${this.name} 'alarm event' REASON ${AlarmEvent[alarmEvent]}`);
+        log.debug(`TIMEOUT ${this.name} 'alarm event' REASON ${AlarmEvent[alarmEvent]}`);
       }, manualAlarmSeconds * 4 / 5 * 1000);
     }
 
@@ -155,7 +153,7 @@ export class AutoSyncStationAccessory {
       }
 
       // Log the forwarded alarm event along with the reason and duration
-      this.log.debug(`FWD ${this.name} 'alarm event' TO ${child.name} REASON ${AlarmEvent[alarmEvent]} FOR ${manualAlarmSeconds}sec`);
+      log.debug(`FWD ${this.name} 'alarm event' TO ${child.name} REASON ${AlarmEvent[alarmEvent]} FOR ${manualAlarmSeconds}sec`);
       // Trigger the alarm sound on the child station with the specified duration
       child.device.triggerStationAlarmSound(manualAlarmSeconds);
 
@@ -169,7 +167,7 @@ export class AutoSyncStationAccessory {
   protected handleSecuritySystemTargetStateSet(mode: number) {
     try {
 
-      this.log.debug(`${this.name} SET StationGuardMode Eufy: ${GuardMode[mode]}(${mode})`);
+      log.debug(`${this.name} SET StationGuardMode Eufy: ${GuardMode[mode]}(${mode})`);
 
       // Call the device's setGuardMode method to initiate the action
       this.device.setGuardMode(mode);
@@ -178,7 +176,7 @@ export class AutoSyncStationAccessory {
       this.guardModeChangeTimeout.timeout = setTimeout(() => {
         // This code is executed when the timeout elapses, indicating that the action may not have completed yet.
         // You can include a message indicating that the action is being retried.
-        this.log.warn(`${this.accessory.displayName} Changing guard mode to ${GuardMode[mode]} did not complete. Retry...'`);
+        log.warn(`${this.accessory.displayName} Changing guard mode to ${GuardMode[mode]} did not complete. Retry...'`);
 
         // Call the device's setGuardMode method to initiate the action
         this.device.setGuardMode(mode);
@@ -186,7 +184,7 @@ export class AutoSyncStationAccessory {
         // Set a secondary timeout for retry, if needed
         const retryTimeout = setTimeout(() => {
           // This code is executed if the retry also times out, indicating a failure.
-          this.log.error(`${this.accessory.displayName} Changing guard mode to ${GuardMode[mode]} timed out!`);
+          log.error(`${this.accessory.displayName} Changing guard mode to ${GuardMode[mode]} timed out!`);
         }, this.guardModeChangeTimeout.delay);
 
         // Store the retry timeout as part of guardModeChangeTimeout
@@ -194,7 +192,7 @@ export class AutoSyncStationAccessory {
       }, this.guardModeChangeTimeout.delay);
 
     } catch (error) {
-      this.log.error(`${this.name} Error Setting security mode! ${error}`);
+      log.error(`${this.name} Error Setting security mode! ${error}`);
     }
   }
 

@@ -3,8 +3,8 @@ import { EventEmitter, Readable } from 'stream';
 import { Station, Device, StreamMetadata, Camera } from 'eufy-security-client';
 
 import { EufySecurityPlatform } from '../platform';
-import { Logger as TsLogger, ILogObj } from 'tslog';
 import { StreamingDelegate } from './streamingDelegate';
+import { log } from '../utils/utils';
 
 export type StationStream = {
   station: Station;
@@ -24,7 +24,6 @@ export class LocalLivestreamManager extends EventEmitter {
 
   private readonly platform: EufySecurityPlatform;
   private readonly device: Camera;
-  private log: TsLogger<ILogObj>;
 
   constructor(
     private streamingDelegate: StreamingDelegate,
@@ -33,7 +32,6 @@ export class LocalLivestreamManager extends EventEmitter {
 
     this.platform = this.streamingDelegate.platform;
     this.device = this.streamingDelegate.device;
-    this.log = this.platform.log;
 
     this.stationStream = null;
     this.livestreamStartedAt = null;
@@ -62,10 +60,10 @@ export class LocalLivestreamManager extends EventEmitter {
   }
 
   public async getLocalLivestream(): Promise<StationStream> {
-    this.log.debug(this.streamingDelegate.cameraName, 'New instance requests livestream.');
+    log.debug(this.streamingDelegate.cameraName, 'New instance requests livestream.');
     if (this.stationStream) {
       const runtime = (Date.now() - this.livestreamStartedAt!) / 1000;
-      this.log.debug(this.streamingDelegate.cameraName, 'Using livestream that was started ' + runtime + ' seconds ago.');
+      log.debug(this.streamingDelegate.cameraName, 'Using livestream that was started ' + runtime + ' seconds ago.');
       return this.stationStream;
     } else {
       return await this.startAndGetLocalLiveStream();
@@ -74,17 +72,17 @@ export class LocalLivestreamManager extends EventEmitter {
 
   private async startAndGetLocalLiveStream(): Promise<StationStream> {
     return new Promise((resolve, reject) => {
-      this.log.debug(this.streamingDelegate.cameraName, 'Start new station livestream...');
+      log.debug(this.streamingDelegate.cameraName, 'Start new station livestream...');
       if (!this.livestreamIsStarting) { // prevent multiple stream starts from eufy station
         this.livestreamIsStarting = true;
         this.platform.eufyClient.startStationLivestream(this.device.getSerial());
       } else {
-        this.log.debug(this.streamingDelegate.cameraName, 'stream is already starting. waiting...');
+        log.debug(this.streamingDelegate.cameraName, 'stream is already starting. waiting...');
       }
 
       this.once('livestream start', async () => {
         if (this.stationStream !== null) {
-          this.log.debug(this.streamingDelegate.cameraName, 'New livestream started.');
+          log.debug(this.streamingDelegate.cameraName, 'New livestream started.');
           this.livestreamIsStarting = false;
           resolve(this.stationStream);
         } else {
@@ -95,14 +93,14 @@ export class LocalLivestreamManager extends EventEmitter {
   }
 
   public stopLocalLiveStream(): void {
-    this.log.debug(this.streamingDelegate.cameraName, 'Stopping station livestream.');
+    log.debug(this.streamingDelegate.cameraName, 'Stopping station livestream.');
     this.platform.eufyClient.stopStationLivestream(this.device.getSerial());
     this.initialize();
   }
 
   private onStationLivestreamStop(station: Station, device: Device) {
     if (device.getSerial() === this.device.getSerial()) {
-      this.log.debug(station.getName() + ' station livestream for ' + device.getName() + ' has stopped.');
+      log.debug(station.getName() + ' station livestream for ' + device.getName() + ' has stopped.');
       this.initialize();
     }
   }
@@ -118,17 +116,17 @@ export class LocalLivestreamManager extends EventEmitter {
       if (this.stationStream) {
         const diff = (Date.now() - this.stationStream.createdAt) / 1000;
         if (diff < 5) {
-          this.log.warn(this.streamingDelegate.cameraName, 'Second livestream was started from station. Ignore.');
+          log.warn(this.streamingDelegate.cameraName, 'Second livestream was started from station. Ignore.');
           return;
         }
       }
       this.initialize(); // important to prevent unwanted behaviour when the eufy station emits the 'livestream start' event multiple times
 
-      this.log.debug(station.getName() + ' station livestream (P2P session) for ' + device.getName() + ' has started.');
+      log.debug(station.getName() + ' station livestream (P2P session) for ' + device.getName() + ' has started.');
       this.livestreamStartedAt = Date.now();
       const createdAt = Date.now();
       this.stationStream = { station, device, metadata, videostream, audiostream, createdAt };
-      this.log.debug(this.streamingDelegate.cameraName, 'Stream metadata: ' + JSON.stringify(this.stationStream.metadata));
+      log.debug(this.streamingDelegate.cameraName, 'Stream metadata: ' + JSON.stringify(this.stationStream.metadata));
 
       this.emit('livestream start');
     }

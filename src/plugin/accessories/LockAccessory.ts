@@ -4,6 +4,7 @@ import { CharacteristicValue, PlatformAccessory } from 'homebridge';
 import { EufySecurityPlatform } from '../platform';
 import { DeviceAccessory } from './Device';
 import { Lock, PropertyName } from 'eufy-security-client';
+import { log } from '../utils/utils';
 
 /**
  * LockAccessory Class
@@ -33,7 +34,7 @@ export class LockAccessory extends DeviceAccessory {
     super(platform, accessory, device);
 
     // Log that the LockAccessory is constructed.
-    this.platform.log.debug(`${this.accessory.displayName} Constructed Lock`);
+    log.debug(`${this.accessory.displayName} Constructed Lock`);
 
     // Check if the device has the 'locked' property.
     if (this.device.hasProperty('locked')) {
@@ -44,7 +45,7 @@ export class LockAccessory extends DeviceAccessory {
       this.initLockMechanismService();
     } else {
       // Log an error if the device has no lock.
-      this.platform.log.error(`${this.accessory.displayName} has no lock`);
+      log.error(`${this.accessory.displayName} has no lock`);
     }
 
     // Prune any unused services.
@@ -109,7 +110,7 @@ export class LockAccessory extends DeviceAccessory {
         try {
           await this.setLockTargetState(value);
         } catch (error) {
-          this.platform.log.error(`${this.accessory.displayName} Lock target state could not be set: ${error}`);
+          log.error(`${this.accessory.displayName} Lock target state could not be set: ${error}`);
         }
       },
       onValue: (service, characteristic) => {
@@ -128,7 +129,7 @@ export class LockAccessory extends DeviceAccessory {
    */
   private getLockStatus(): CharacteristicValue {
     const lockStatus = this.device.getPropertyValue(PropertyName.DeviceLocked);
-    this.platform.log.debug(`${this.accessory.displayName} getLockStatus: ${lockStatus}`);
+    log.debug(`${this.accessory.displayName} getLockStatus: ${lockStatus}`);
     return this.convertLockStatusCode(lockStatus);
   }
 
@@ -138,9 +139,9 @@ export class LockAccessory extends DeviceAccessory {
   private async setLockTargetState(state: CharacteristicValue) {
     try {
       await this.setPropertyValue(PropertyName.DeviceLocked, !!state);
-      this.platform.log.info(`${this.accessory.displayName} Lock target state set to: ${state}`);
+      log.info(`${this.accessory.displayName} Lock target state set to: ${state}`);
     } catch (error) {
-      this.platform.log.error(`${this.accessory.displayName} Error setting lock target state: ${error}`);
+      log.error(`${this.accessory.displayName} Error setting lock target state: ${error}`);
     }
   }
 
@@ -159,10 +160,10 @@ export class LockAccessory extends DeviceAccessory {
     const mappedState = lockStatusMap[lockStatus];
 
     if (mappedState !== undefined) {
-      this.platform.log.debug(`${this.accessory.displayName} LockStatus: ${lockStatus}`);
+      log.debug(`${this.accessory.displayName} LockStatus: ${lockStatus}`);
       return mappedState;
     } else {
-      this.platform.log.warn(`${this.accessory.displayName} Unknown lock status feedback`);
+      log.warn(`${this.accessory.displayName} Unknown lock status feedback`);
       return this.platform.Characteristic.LockCurrentState.UNKNOWN;
     }
   }

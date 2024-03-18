@@ -3,16 +3,15 @@
  * This module is heavily inspired by the homebridge, homebridge-camera-ffmpeg and homebridge-unifi-protect source code. Thank you for your contributions to the HomeKit world.
  */
 import { H264Level, H264Profile } from 'homebridge';
-import { Logger as TsLogger, ILogObj } from 'tslog';
-import { PROTECT_HOMEKIT_STREAMING_HEADROOM, PROTECT_RPI_GPU_MINIMUM } from '../settings.js';
+import { PROTECT_HOMEKIT_STREAMING_HEADROOM, PROTECT_RPI_GPU_MINIMUM } from '../settings';
 
-import { CameraAccessory } from '../accessories/CameraAccessory.js';
-import { EufySecurityPlatform } from '../platform.js';
+import { CameraAccessory } from '../accessories/CameraAccessory';
+import { EufySecurityPlatform } from '../platform';
+import { ffmpegLogger } from './utils';
 
 export class FfmpegOptions {
 
   private readonly platform: EufySecurityPlatform;
-  private readonly log: TsLogger<ILogObj>;
 
   private readonly hwPixelFormat: string[];
 
@@ -20,10 +19,8 @@ export class FfmpegOptions {
   constructor(private readonly camera: CameraAccessory) {
 
     this.hwPixelFormat = [];
-    this.log = camera.log;
     this.camera = camera;
     this.platform = this.camera.platform;
-    this.log = this.platform.log;
 
     // Configure our hardware acceleration support.
     this.configureHwAccel();
@@ -61,7 +58,7 @@ export class FfmpegOptions {
 
         if (!this.platform.codecSupport.hasDecoder('h264', codec)) {
 
-          this.log.error('Unable to enable hardware-accelerated decoding. Your video processor does not have support for the ' + codec + ' decoder. ' +
+          ffmpegLogger.error('Unable to enable hardware-accelerated decoding. Your video processor does not have support for the ' + codec + ' decoder. ' +
             'Using software decoding instead.');
 
           this.camera.hardwareDecoding = false;
@@ -78,7 +75,7 @@ export class FfmpegOptions {
 
         if (!this.platform.codecSupport.hasHwAccel(accel)) {
 
-          this.log.error('Unable to enable hardware-accelerated decoding. Your video processor does not have support for the ' + accel + ' hardware accelerator. ' +
+          ffmpegLogger.error('Unable to enable hardware-accelerated decoding. Your video processor does not have support for the ' + accel + ' hardware accelerator. ' +
             'Using software decoding instead.');
 
           this.camera.hardwareDecoding = false;
@@ -105,7 +102,7 @@ export class FfmpegOptions {
           // If it's less than the minimum hardware GPU memory we need on an Raspberry Pi, we revert back to our default decoder.
           if (this.platform.codecSupport.gpuMem < PROTECT_RPI_GPU_MINIMUM) {
 
-            this.log.info(`Disabling hardware-accelerated ${accelCategories()}. 
+            ffmpegLogger.info(`Disabling hardware-accelerated ${accelCategories()}. 
             Adjust the GPU memory configuration on your Raspberry Pi to at least ${PROTECT_RPI_GPU_MINIMUM} MB to enable it.`);
 
             this.camera.hardwareDecoding = false;
@@ -138,7 +135,7 @@ export class FfmpegOptions {
 
         if (!this.platform.codecSupport.hasEncoder('h264', codec)) {
 
-          this.log.error('Unable to enable hardware-accelerated transcoding. Your video processor does not have support for the ' + codec + ' encoder. ' +
+          ffmpegLogger.error('Unable to enable hardware-accelerated transcoding. Your video processor does not have support for the ' + codec + ' encoder. ' +
             'Using software transcoding instead.');
 
           this.camera.hardwareTranscoding = false;
@@ -160,7 +157,7 @@ export class FfmpegOptions {
           // Validate that we have access to the AudioToolbox AAC encoder.
           if (!this.platform.codecSupport.hasEncoder('aac', 'aac_at')) {
 
-            this.log.error('Your video processor does not have support for the native macOS AAC encoder, aac_at. Will attempt to use libfdk_aac instead.');
+            ffmpegLogger.error('Your video processor does not have support for the native macOS AAC encoder, aac_at. Will attempt to use libfdk_aac instead.');
           }
 
           break;
@@ -204,7 +201,7 @@ export class FfmpegOptions {
     // Inform the user.
     if (this.camera.hardwareDecoding || this.camera.hardwareTranscoding) {
 
-      this.log.info(`Hardware-accelerated ${accelCategories()} enabled${logMessage.length ? ': ' + logMessage : ''}.`);
+      ffmpegLogger.info(`Hardware-accelerated ${accelCategories()} enabled${logMessage.length ? ': ' + logMessage : ''}.`);
     }
 
     return this.camera.hardwareTranscoding;

@@ -5,6 +5,7 @@ import { DeviceAccessory } from './Device';
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore  
 import { EntrySensor, PropertyName } from 'eufy-security-client';
+import { log } from '../utils/utils';
 
 /**
  * EntrySensorAccessory Class
@@ -34,7 +35,7 @@ export class EntrySensorAccessory extends DeviceAccessory {
     super(platform, accessory, device);
 
     // Log a debug message indicating the construction of the Entry Sensor.
-    this.log.debug(`${this.accessory.displayName} Constructed Entry Sensor`);
+    log.debug(`${this.accessory.displayName} Constructed Entry Sensor`);
 
     // Check if the device has the 'sensorOpen' property.
     if (this.device.hasProperty('sensorOpen')) {
@@ -52,7 +53,7 @@ export class EntrySensorAccessory extends DeviceAccessory {
 
     } else {
       // Log an error if the 'sensorOpen' property is not available for this device.
-      this.log.error(`${this.accessory.displayName} has no sensorOpen`);
+      log.error(`${this.accessory.displayName} has no sensorOpen`);
     }
 
     // Remove any unused services.

@@ -40,7 +40,7 @@ import {
   // @ts-ignore 
 } from 'eufy-security-client';
 
-import { Logger as TsLogger, ILogObj, ILogObjMeta } from 'tslog';
+import { ILogObjMeta } from 'tslog';
 import { createStream } from 'rotating-file-stream';
 
 import fs from 'fs';
@@ -51,6 +51,7 @@ import { readFileSync } from 'node:fs';
 
 import ffmpegPath from 'ffmpeg-for-homebridge';
 import { FfmpegCodecs } from './utils/ffmpeg-codecs';
+import { init_log, log, tsLogger, ffmpegLogger } from './utils/utils';
 
 export class EufySecurityPlatform implements DynamicPlatformPlugin {
   public readonly Service: typeof Service;
@@ -63,9 +64,6 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
   public config: EufySecurityPlatformConfig;
   private eufyConfig: EufySecurityConfig = {} as EufySecurityConfig;
 
-  public log: TsLogger<ILogObj> = {} as TsLogger<ILogObj>;
-  private tsLogger: TsLogger<ILogObj> = {} as TsLogger<ILogObj>;
-  public ffmpegLogger: TsLogger<ILogObj> = {} as TsLogger<ILogObj>;
   private already_shutdown: boolean = false;
 
   public codecSupport!: FfmpegCodecs;
@@ -155,22 +153,20 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
       ],
     };
 
-    this.log = new TsLogger(logOptions);
-    this.tsLogger = new TsLogger({ ...logOptions, type: 'hidden' });
-    this.ffmpegLogger = new TsLogger({ ...logOptions, type: 'hidden' });
+    init_log(logOptions);
 
     const omitLogFiles = this.config.omitLogFiles ?? false;
 
     if (omitLogFiles) {
-      this.log.info('log file storage will be omitted.');
+      log.info('log file storage will be omitted.');
     }
 
     if (!omitLogFiles) {
       // Log streams configuration
       const logStreams = [
-        { name: 'eufy-security.log', logger: this.log },
-        { name: 'ffmpeg.log', logger: this.ffmpegLogger },
-        { name: 'eufy-log.log', logger: this.tsLogger },
+        { name: 'eufy-security.log', logger: log },
+        { name: 'ffmpeg.log', logger: ffmpegLogger },
+        { name: 'eufy-log.log', logger: tsLogger },
       ];
 
       for (const { name, logger } of logStreams) {
@@ -256,18 +252,18 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
 
   private initSetup() {
 
-    this.log.warn('warning: planned changes, see https://github.com/homebridge-eufy-security/plugin/issues/1');
+    log.warn('warning: planned changes, see https://github.com/homebridge-eufy-security/plugin/issues/1');
 
-    this.log.debug('plugin data store: ' + this.eufyPath);
-    this.log.debug('OS is', this.hostSystem);
-    this.log.debug('Using bropats @homebridge-eufy-security/eufy-security-client library in version ' + libVersion);
+    log.debug('plugin data store: ' + this.eufyPath);
+    log.debug('OS is', this.hostSystem);
+    log.debug('Using bropats @homebridge-eufy-security/eufy-security-client library in version ' + libVersion);
 
     this.videoProcessor = ffmpegPath ?? 'ffmpeg';
-    this.log.info(`ffmpegPath set: ${this.videoProcessor}`);
+    log.info(`ffmpegPath set: ${this.videoProcessor}`);
 
     this.clean_config();
 
-    this.log.debug('The config is:', this.config);
+    log.debug('The config is:', this.config);
 
     this.eufyConfig = {
       username: this.config.username,
@@ -291,17 +287,17 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
 
     this.codecSupport = new FfmpegCodecs(this);
 
-    this.log.info(`Country set: ${this.eufyConfig.country}`);
-    // this.log.info(`Codec set: ${JSON.stringify(this.codecSupport)}`);
+    log.info(`Country set: ${this.eufyConfig.country}`);
+    // log.info(`Codec set: ${JSON.stringify(this.codecSupport)}`);
 
     // This function is here to avoid any break while moving from 1.0.x to 1.1.x
     // moving persistent into our dedicated folder (this need to be removed after few release of 1.1.x)
     if (fs.existsSync(this.api.user.storagePath() + '/persistent.json')) {
-      this.log.debug('An old persistent file have been found');
+      log.debug('An old persistent file have been found');
       if (!fs.existsSync(this.eufyPath + '/persistent.json')) {
         fs.copyFileSync(this.api.user.storagePath() + '/persistent.json', this.eufyPath + '/persistent.json', fs.constants.COPYFILE_EXCL);
       } else {
-        this.log.debug('but the new one is already present');
+        log.debug('but the new one is already present');
       }
       fs.unlinkSync(this.api.user.storagePath() + '/persistent.json');
     }
@@ -315,7 +311,7 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
       await this.pluginShutdown();
     });
 
-    this.log.info('Finished initializing!');
+    log.info('Finished initializing!');
   }
 
   private async pluginSetup() {
@@ -327,7 +323,7 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
 
     try {
       this.eufyClient = (this.config.enableDetailedLogging)
-        ? await EufySecurity.initialize(this.eufyConfig, this.tsLogger)
+        ? await EufySecurity.initialize(this.eufyConfig, tsLogger)
         : await EufySecurity.initialize(this.eufyConfig);
 
       this.eufyClient.on('station added', this.stationAdded.bind(this));
@@ -335,23 +331,23 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
       this.eufyClient.on('device removed', this.deviceRemoved.bind(this));
 
       this.eufyClient.on('push connect', () => {
-        this.log.debug('Push Connected!');
+        log.debug('Push Connected!');
       });
       this.eufyClient.on('push close', () => {
-        this.log.debug('Push Closed!');
+        log.debug('Push Closed!');
       });
       this.eufyClient.on('connect', () => {
-        this.log.debug('Connected!');
+        log.debug('Connected!');
       });
       this.eufyClient.on('close', () => {
-        this.log.debug('Closed!');
+        log.debug('Closed!');
       });
       this.eufyClient.on('connection error', async (error: Error) => {
-        this.log.debug(`Error: ${error}`);
+        log.debug(`Error: ${error}`);
         await this.pluginShutdown();
       });
       this.eufyClient.once('captcha request', async () => {
-        this.log.error(`
+        log.error(`
         ***************************
         ***** WARNING MESSAGE *****
         ***************************
@@ -366,7 +362,7 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
         await this.pluginShutdown();
       });
       this.eufyClient.on('tfa request', async () => {
-        this.log.error(`
+        log.error(`
         ***************************
         ***** WARNING MESSAGE *****
         ***************************
@@ -382,20 +378,20 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
       });
 
     } catch (e) {
-      this.log.error(`Error while setup : ${e}`);
-      this.log.error('Not connected can\'t continue!');
+      log.error(`Error while setup : ${e}`);
+      log.error('Not connected can\'t continue!');
       return;
     }
 
     try {
       await this.eufyClient.connect();
-      this.log.debug('EufyClient connected ' + this.eufyClient.isConnected());
+      log.debug('EufyClient connected ' + this.eufyClient.isConnected());
     } catch (e) {
-      this.log.error(`Error authenticating Eufy: ${e}`);
+      log.error(`Error authenticating Eufy: ${e}`);
     }
 
     if (!this.eufyClient.isConnected()) {
-      this.log.error('Not connected can\'t continue!');
+      log.error('Not connected can\'t continue!');
       return;
     }
 
@@ -409,11 +405,11 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
     if (cameraMaxLivestreamDuration > 86400) {
       cameraMaxLivestreamDuration = 86400;
       // eslint-disable-next-line max-len
-      this.log.warn('Your maximum livestream duration value is too large. Since this can cause problems it was reset to 86400 seconds (1 day maximum).');
+      log.warn('Your maximum livestream duration value is too large. Since this can cause problems it was reset to 86400 seconds (1 day maximum).');
     }
 
     this.eufyClient.setCameraMaxLivestreamDuration(cameraMaxLivestreamDuration);
-    this.log.debug(`CameraMaxLivestreamDuration: ${this.eufyClient.getCameraMaxLivestreamDuration()}`);
+    log.debug(`CameraMaxLivestreamDuration: ${this.eufyClient.getCameraMaxLivestreamDuration()}`);
   }
 
   private generateUUID(identifier: string, type: DeviceType): string {
@@ -450,31 +446,31 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
         if (!unbridge) {
           // Rule: if a device exists and it's not a camera
           this.api.updatePlatformAccessories([accessory]);
-          this.log.info(`Updating existing accessory: ${accessory.displayName}`);
+          log.info(`Updating existing accessory: ${accessory.displayName}`);
         } else if (this.config.unbridge) {
           // Rule: if a device exists, it's a camera, and unbridge is true
           this.api.unregisterPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [accessory]);
-          this.log.info(`Unregistering unbridged accessory: ${accessory.displayName}`);
+          log.info(`Unregistering unbridged accessory: ${accessory.displayName}`);
         }
       } else {
         if (!unbridge) {
           // Rule: if a device doesn't exist and it's not a camera
           this.api.registerPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [accessory]);
-          this.log.info(`Registering new accessory: ${accessory.displayName}`);
+          log.info(`Registering new accessory: ${accessory.displayName}`);
         } else {
           if (this.config.unbridge) {
             // Rule: if a device doesn't exist, it's a camera, and unbridge is true
             this.api.publishExternalAccessories(PLUGIN_NAME, [accessory]);
-            this.log.info(`Publishing unbridged accessory externally: ${accessory.displayName}`);
+            log.info(`Publishing unbridged accessory externally: ${accessory.displayName}`);
           } else {
             // Rule: if a device doesn't exist, it's a camera, and unbridge is false
             this.api.registerPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [accessory]);
-            this.log.info(`Registering new accessory: ${accessory.displayName}`);
+            log.info(`Registering new accessory: ${accessory.displayName}`);
           }
         }
       }
     } catch (error) {
-      this.log.error(`Error in ${isStation ? 'stationAdded' : 'deviceAdded'}: ${error}`);
+      log.error(`Error in ${isStation ? 'stationAdded' : 'deviceAdded'}: ${error}`);
     }
   }
 
@@ -482,14 +478,14 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
     try {
 
       if (this.config.ignoreStations.includes(station.getSerial())) {
-        this.log.debug(`${station.getName()}: Station ignored`);
+        log.debug(`${station.getName()}: Station ignored`);
         return;
       }
 
       const rawStation = station.getRawStation();
       if (rawStation.member.member_type !== UserType.ADMIN) {
         await this.pluginShutdown();
-        this.log.error(`
+        log.error(`
           #########################
           ######### ERROR #########
           #########################
@@ -511,18 +507,18 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
       };
 
       await this.delay(this.STATION_INIT_DELAY);
-      this.log.debug(`${deviceContainer.deviceIdentifier.displayName} pre-caching complete`);
+      log.debug(`${deviceContainer.deviceIdentifier.displayName} pre-caching complete`);
 
       this.addOrUpdateAccessory(deviceContainer, true);
     } catch (error) {
-      this.log.error(`Error in stationAdded:, ${error}`);
+      log.error(`Error in stationAdded:, ${error}`);
     }
   }
 
   private async deviceAdded(device: Device) {
     try {
       if (this.config.ignoreDevices.includes(device.getSerial())) {
-        this.log.debug(`${device.getName()}: Device ignored`);
+        log.debug(`${device.getName()}: Device ignored`);
         return;
       }
 
@@ -536,21 +532,21 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
       };
 
       await this.delay(this.DEVICE_INIT_DELAY);
-      this.log.debug(`${deviceContainer.deviceIdentifier.displayName} pre-caching complete`);
+      log.debug(`${deviceContainer.deviceIdentifier.displayName} pre-caching complete`);
 
       this.addOrUpdateAccessory(deviceContainer, false);
     } catch (error) {
-      this.log.error(`Error in deviceAdded: ${error}`);
+      log.error(`Error in deviceAdded: ${error}`);
     }
   }
 
   private async deviceRemoved(device: Device) {
     const serial = device.getSerial();
 
-    this.log.debug(`A device has been removed: ${serial}`);
+    log.debug(`A device has been removed: ${serial}`);
 
     if (this.config.ignoreDevices.indexOf(device.getSerial()) !== -1) {
-      this.log.debug('Device ignored');
+      log.debug('Device ignored');
       return;
     }
 
@@ -582,9 +578,9 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
 
     try {
       this.eufyClient.close();
-      this.log.info('Finished shutdown!');
+      log.info('Finished shutdown!');
     } catch (e) {
-      this.log.error(`Error while shutdown: ${e}`);
+      log.error(`Error while shutdown: ${e}`);
     }
   }
 
@@ -593,7 +589,7 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
    * It should be used to setup event handlers for characteristics and update respective values.
    */
   configureAccessory(accessory: PlatformAccessory) {
-    this.log.debug(`Loading accessory from cache: ${accessory.displayName}`);
+    log.debug(`Loading accessory from cache: ${accessory.displayName}`);
 
     // add the restored accessory to the accessories cache so we can track if it has already been registered
     this.accessories.push(accessory);
@@ -601,7 +597,7 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
 
   private cleanCachedAccessories() {
     if (this.config.cleanCache) {
-      this.log.info('Looking for old cached accessories that seem to be outdated...');
+      log.info('Looking for old cached accessories that seem to be outdated...');
       let num = 0;
 
       const staleAccessories = this.accessories.filter((item) => {
@@ -609,15 +605,15 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
       });
 
       staleAccessories.forEach((staleAccessory) => {
-        this.log.info(`Removing cached accessory ${staleAccessory.UUID} ${staleAccessory.displayName}`);
+        log.info(`Removing cached accessory ${staleAccessory.UUID} ${staleAccessory.displayName}`);
         num++;
         this.api.unregisterPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [staleAccessory]);
       });
 
       if (num > 0) {
-        this.log.info('Removed ' + num + ' cached accessories');
+        log.info('Removed ' + num + ' cached accessories');
       } else {
-        this.log.info('No outdated cached accessories found.');
+        log.info('No outdated cached accessories found.');
       }
     }
   }
@@ -627,7 +623,7 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
     container: StationContainer,
   ) {
 
-    this.log.debug(accessory.displayName + ' UUID:' + accessory.UUID);
+    log.debug(accessory.displayName + ' UUID:' + accessory.UUID);
 
     const type = container.deviceIdentifier.type;
     const station = container.eufyDevice;
@@ -643,7 +639,7 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
         || type === DeviceType.BATTERY_DOORBELL_2
         || type === DeviceType.BATTERY_DOORBELL_PLUS
         || type === DeviceType.DOORBELL_SOLO)) {
-        this.log.warn(`${accessory.displayName} looks station but it's not could imply some errors! Type: ${type}`);
+        log.warn(`${accessory.displayName} looks station but it's not could imply some errors! Type: ${type}`);
         return;
       }
     }
@@ -660,26 +656,26 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
     container: DeviceContainer,
   ): boolean {
 
-    this.log.debug(accessory.displayName + ' UUID:' + accessory.UUID);
+    log.debug(accessory.displayName + ' UUID:' + accessory.UUID);
     const device = container.eufyDevice;
 
     if (device.isMotionSensor()) {
-      this.log.debug(accessory.displayName + ' isMotionSensor!');
+      log.debug(accessory.displayName + ' isMotionSensor!');
       new MotionSensorAccessory(this, accessory, device as MotionSensor);
     }
 
     if (device.isEntrySensor()) {
-      this.log.debug(accessory.displayName + ' isEntrySensor!');
+      log.debug(accessory.displayName + ' isEntrySensor!');
       new EntrySensorAccessory(this, accessory, device as EntrySensor);
     }
 
     if (device.isLock()) {
-      this.log.debug(accessory.displayName + ' isLock!');
+      log.debug(accessory.displayName + ' isLock!');
       new LockAccessory(this, accessory, device as Lock);
     }
 
     if (device.isCamera()) {
-      this.log.debug(accessory.displayName + ' isCamera!');
+      log.debug(accessory.displayName + ' isCamera!');
       new CameraAccessory(this, accessory, device as Camera);
       return true;
     }
@@ -723,7 +719,7 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
       fs.writeFileSync(this.api.user.configPath(), JSON.stringify(currentConfig, null, 4));
 
     } catch (e) {
-      this.log.error('Error cleaning config: ' + e);
+      log.error('Error cleaning config: ' + e);
     }
   }
 
@@ -753,12 +749,12 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
           const cachedAccessory = this.accessories.find((acc) => camera.serialNumber === acc.context['device'].uniqueId);
           if (cachedAccessory && Device.isDoorbell(cachedAccessory.context['device'].type) && !camera.enableCamera) {
             // eslint-disable-next-line max-len
-            this.log.warn('Found camera ' + cachedAccessory.context['device'].displayName + ' (' + cachedAccessory.context['device'].uniqueId + ') with invalid camera configuration option enableCamera. Attempt to repair. This should only happen once per device...');
+            log.warn('Found camera ' + cachedAccessory.context['device'].displayName + ' (' + cachedAccessory.context['device'].uniqueId + ') with invalid camera configuration option enableCamera. Attempt to repair. This should only happen once per device...');
             pluginConfig.cameras[i]['enableCamera'] = true;
 
             // if (camera.unbridge) {
             // eslint-disable-next-line max-len
-            //   this.log.warn('Camera ' + cachedAccessory.context['device'].displayName + ' (' + cachedAccessory.context['device'].uniqueId + ') had camera configuration option \'unbridge\' set to true. This will be set to false to maintain functionality. See https://github.com/homebridge-eufy-security/plugin/issues/79 for more information.');
+            //   log.warn('Camera ' + cachedAccessory.context['device'].displayName + ' (' + cachedAccessory.context['device'].uniqueId + ') had camera configuration option \'unbridge\' set to true. This will be set to false to maintain functionality. See https://github.com/homebridge-eufy-security/plugin/issues/79 for more information.');
             //   pluginConfig.cameras[i]['unbridge'] = false;
             // }
           }
@@ -777,7 +773,7 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
       fs.writeFileSync(this.api.user.configPath(), JSON.stringify(currentConfig, null, 4));
 
     } catch (e) {
-      this.log.error('Error cleaning config: ' + e);
+      log.error('Error cleaning config: ' + e);
     }
   }
 

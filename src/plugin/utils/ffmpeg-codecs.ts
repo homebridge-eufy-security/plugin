@@ -2,19 +2,18 @@
 /* 
  * This module is heavily inspired by the homebridge, homebridge-camera-ffmpeg and homebridge-unifi-protect source code. Thank you for your contributions to the HomeKit world.
  */
-import { Logger as TsLogger, ILogObj } from 'tslog';
 import { execFile } from 'node:child_process';
 import os from 'node:os';
 import process from 'node:process';
 import util from 'node:util';
 
-import { EufySecurityPlatform } from '../platform.js';
+import { EufySecurityPlatform } from '../platform';
+import { ffmpegLogger } from './utils';
 
 export class FfmpegCodecs {
 
   private _gpuMem: number;
   private _ffmpegVersion: string;
-  private readonly log: TsLogger<ILogObj>;
   private readonly videoProcessor: string;
   private readonly videoProcessorCodecs: { [index: string]: { decoders: string[]; encoders: string[] } };
   private readonly videoProcessorHwAccels: { [index: string]: boolean };
@@ -22,7 +21,6 @@ export class FfmpegCodecs {
   constructor(private readonly platform: EufySecurityPlatform) {
     this._gpuMem = 0;
     this._ffmpegVersion = '';
-    this.log = this.platform.log;
     this.videoProcessor = this.platform.videoProcessor;
     this.videoProcessorCodecs = {};
     this.videoProcessorHwAccels = {};
@@ -102,7 +100,7 @@ export class FfmpegCodecs {
       // If we have a version string, let's save it. Otherwise, we're blind.
       this._ffmpegVersion = versionMatch ? versionMatch[1] : 'unknown';
 
-      this.log.debug(`Using FFmpeg version: ${this.ffmpegVersion}`);
+      ffmpegLogger.debug(`Using FFmpeg version: ${this.ffmpegVersion}`);
     });
   }
 
@@ -141,7 +139,7 @@ export class FfmpegCodecs {
       ], () => { }, true))) {
 
         delete this.videoProcessorHwAccels[accel];
-        this.log.error(`Hardware-accelerated decoding and encoding using ${accel} will be unavailable: unable to successfully validate capabilities.`);
+        ffmpegLogger.error(`Hardware-accelerated decoding and encoding using ${accel} will be unavailable: unable to successfully validate capabilities.`);
       }
     }
 
@@ -251,17 +249,17 @@ export class FfmpegCodecs {
 
         if (execError.code === 'ENOENT') {
 
-          this.log.error(`Unable to find '${command}' in path: '${process.env['PATH']}'.`);
+          ffmpegLogger.error(`Unable to find '${command}' in path: '${process.env['PATH']}'.`);
         } else if (quietRunErrors) {
 
           return false;
         } else {
 
-          this.log.error(`Error running ${command}: ${error.message}`);
+          ffmpegLogger.error(`Error running ${command}: ${error.message}`);
         }
       }
 
-      this.log.error(`Unable to probe the capabilities of your Homebridge host without access to '${command}'.
+      ffmpegLogger.error(`Unable to probe the capabilities of your Homebridge host without access to '${command}'.
       Ensure that it is available in your path and correctly working.`);
 
       return false;

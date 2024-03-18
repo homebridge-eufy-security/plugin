@@ -31,6 +31,7 @@ import { RecordingDelegate } from '../controller/recordingDelegate';
 
 import { CameraConfig, DEFAULT_CAMERACONFIG_VALUES } from '../utils/configTypes';
 import { PROTECT_HKSV_SEGMENT_LENGTH, PROTECT_HKSV_TIMESHIFT_BUFFER_MAXLENGTH } from '../settings';
+import { log } from '../utils/utils';
 
 // A semi-complete description of the UniFi Protect camera channel JSON.
 export interface ProtectCameraChannelConfig {
@@ -123,17 +124,17 @@ export class CameraAccessory extends DeviceAccessory {
 
     this.cameraStatus = { isEnabled: false, timestamp: 0 }; // Initialize the cameraStatus object
 
-    this.log.debug(`${this.accessory.displayName} Constructed Camera`);
+    log.debug(`${this.accessory.displayName} Constructed Camera`);
 
     this.cameraConfig = this.getCameraConfig();
 
     if (this.cameraConfig.enableCamera || this.device.isDoorbell()) {
-      this.log.debug(`${this.accessory.displayName} has a camera`);
+      log.debug(`${this.accessory.displayName} has a camera`);
       this.setupCamera();
       this.setupChimeButton();
       this.initSensorService(this.platform.Service.Battery);
     } else {
-      this.log.debug(`${this.accessory.displayName} has a motion sensor`);
+      log.debug(`${this.accessory.displayName} has a motion sensor`);
       this.setupMotionFunction();
       this.initSensorService(this.platform.Service.MotionSensor);
     }
@@ -149,7 +150,7 @@ export class CameraAccessory extends DeviceAccessory {
     try {
       this.cameraFunction();
     } catch (error) {
-      this.log.error(`${this.accessory.displayName} while happending CameraFunction ${error}`);
+      log.error(`${this.accessory.displayName} while happending CameraFunction ${error}`);
     }
 
     try {
@@ -157,7 +158,7 @@ export class CameraAccessory extends DeviceAccessory {
       this.configureVideoStream();
 
     } catch (error) {
-      this.log.error(`${this.accessory.displayName} while happending Delegate ${error}`);
+      log.error(`${this.accessory.displayName} while happending Delegate ${error}`);
     }
   }
 
@@ -252,17 +253,17 @@ export class CameraAccessory extends DeviceAccessory {
     serviceType: 'switch' | 'lightbulb',
   ) {
     try {
-      this.log.debug(`${this.accessory.displayName} ${serviceName} config:`, configValue);
+      log.debug(`${this.accessory.displayName} ${serviceName} config:`, configValue);
       if (configValue && this.device.hasProperty(PropertyName)) {
         // eslint-disable-next-line max-len
-        this.log.debug(`${this.accessory.displayName} has a ${PropertyName}, so append ${serviceType}${serviceName} characteristic to it.`);
+        log.debug(`${this.accessory.displayName} has a ${PropertyName}, so append ${serviceType}${serviceName} characteristic to it.`);
         this.setupSwitchService(serviceName, serviceType, PropertyName);
       } else {
         // eslint-disable-next-line max-len
-        this.log.debug(`${this.accessory.displayName} Looks like not compatible with ${PropertyName} or this has been disabled within configuration`);
+        log.debug(`${this.accessory.displayName} Looks like not compatible with ${PropertyName} or this has been disabled within configuration`);
       }
     } catch (error) {
-      this.log.error(`${this.accessory.displayName} raise error to check and attach ${serviceType}${serviceName}.`, error);
+      log.error(`${this.accessory.displayName} raise error to check and attach ${serviceType}${serviceName}.`, error);
       throw Error;
     }
   }
@@ -337,17 +338,17 @@ export class CameraAccessory extends DeviceAccessory {
 
     // Validate talkback setting
     if (config.talkback && !this.device.hasCommand(CommandName.DeviceStartTalkback)) {
-      this.log.warn(this.accessory.displayName, 'Talkback for this device is not supported!');
+      log.warn(this.accessory.displayName, 'Talkback for this device is not supported!');
       config.talkback = false;
     }
 
     // Validate talkback with rtsp setting
     if (config.talkback && config.rtsp) {
-      this.log.warn(this.accessory.displayName, 'Talkback cannot be used with rtsp option. Ignoring talkback setting.');
+      log.warn(this.accessory.displayName, 'Talkback cannot be used with rtsp option. Ignoring talkback setting.');
       config.talkback = false;
     }
 
-    this.log.debug(`${this.accessory.displayName} config is`, config);
+    log.debug(`${this.accessory.displayName} config is`, config);
 
     return config as CameraConfig;
   }
@@ -426,7 +427,7 @@ export class CameraAccessory extends DeviceAccessory {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           this.device.on(eventType as keyof any, (device: any, state: any) => {
             // eslint-disable-next-line max-len
-            this.log.info(`${this.accessory.displayName} MOTION DETECTED (${eventType})': ${state}`);
+            log.info(`${this.accessory.displayName} MOTION DETECTED (${eventType})': ${state}`);
             characteristic.updateValue(state);
           });
         });
@@ -500,7 +501,7 @@ export class CameraAccessory extends DeviceAccessory {
       characteristicType: this.platform.Characteristic.StatusTampered,
       getValue: () => {
         const tampered = this.device.getPropertyValue(PropertyName.DeviceEnabled);
-        this.log.debug(`${this.accessory.displayName} TAMPERED? ${!tampered}`);
+        log.debug(`${this.accessory.displayName} TAMPERED? ${!tampered}`);
         return tampered
           ? this.platform.Characteristic.StatusTampered.NOT_TAMPERED
           : this.platform.Characteristic.StatusTampered.TAMPERED;
@@ -513,7 +514,7 @@ export class CameraAccessory extends DeviceAccessory {
     try {
       let value = this.device.getPropertyValue(propertyName);
 
-      this.log.debug(`${this.accessory.displayName} GET '${characteristic.displayName}' ${propertyName}: ${value}`);
+      log.debug(`${this.accessory.displayName} GET '${characteristic.displayName}' ${propertyName}: ${value}`);
 
       if (propertyName === PropertyName.DeviceNightvision) {
         return value === 1;
@@ -525,13 +526,13 @@ export class CameraAccessory extends DeviceAccessory {
         Date.now() - this.cameraStatus.timestamp <= 60000
       ) {
         // eslint-disable-next-line max-len
-        this.log.debug(`${this.accessory.displayName} CACHED for (1 min) '${characteristic.displayName}' ${propertyName}: ${this.cameraStatus.isEnabled}`);
+        log.debug(`${this.accessory.displayName} CACHED for (1 min) '${characteristic.displayName}' ${propertyName}: ${this.cameraStatus.isEnabled}`);
         value = this.cameraStatus.isEnabled;
       }
 
       if (characteristic.displayName === 'Manually Disabled') {
         value = !value;
-        this.log.debug(`${this.accessory.displayName} INVERSED '${characteristic.displayName}' ${propertyName}: ${value}`);
+        log.debug(`${this.accessory.displayName} INVERSED '${characteristic.displayName}' ${propertyName}: ${value}`);
       }
 
       if (value === undefined) {
@@ -540,7 +541,7 @@ export class CameraAccessory extends DeviceAccessory {
 
       return value as CharacteristicValue;
     } catch (error) {
-      this.log.debug(`${this.accessory.displayName} Error getting '${characteristic.displayName}' ${propertyName}: ${error}`);
+      log.debug(`${this.accessory.displayName} Error getting '${characteristic.displayName}' ${propertyName}: ${error}`);
       return false;
     }
   }
@@ -548,7 +549,7 @@ export class CameraAccessory extends DeviceAccessory {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   protected async setCameraPropertyValue(characteristic: any, propertyName: PropertyName, value: CharacteristicValue) {
     try {
-      this.log.debug(`${this.accessory.displayName} SET '${characteristic.displayName}' ${propertyName}: ${value}`);
+      log.debug(`${this.accessory.displayName} SET '${characteristic.displayName}' ${propertyName}: ${value}`);
       await this.setPropertyValue(propertyName, value);
 
       if (
@@ -561,13 +562,13 @@ export class CameraAccessory extends DeviceAccessory {
         characteristic = this.getService(this.platform.Service.CameraOperatingMode)
           .getCharacteristic(this.platform.Characteristic.ManuallyDisabled);
 
-        this.log.debug(`${this.accessory.displayName} INVERSED '${characteristic.displayName}' ${propertyName}: ${!value}`);
+        log.debug(`${this.accessory.displayName} INVERSED '${characteristic.displayName}' ${propertyName}: ${!value}`);
         value = !value as boolean;
       }
 
       characteristic.updateValue(value);
     } catch (error) {
-      this.log.debug(`${this.accessory.displayName} Error setting '${characteristic.displayName}' ${propertyName}: ${error}`);
+      log.debug(`${this.accessory.displayName} Error setting '${characteristic.displayName}' ${propertyName}: ${error}`);
     }
   }
 
@@ -578,7 +579,7 @@ export class CameraAccessory extends DeviceAccessory {
    */
   private onDeviceRingsPushNotification(characteristic: Characteristic): void {
     if (!this.notificationTimeout) {
-      this.log.debug(`${this.accessory.displayName} DoorBell ringing`);
+      log.debug(`${this.accessory.displayName} DoorBell ringing`);
       characteristic.updateValue(this.platform.Characteristic.ProgrammableSwitchEvent.SINGLE_PRESS);
       // Set a new timeout for muting subsequent notifications
       this.notificationTimeout = setTimeout(() => {
@@ -600,7 +601,7 @@ export class CameraAccessory extends DeviceAccessory {
 
   // Configure a camera accessory for HomeKit.
   private configureVideoStream(): boolean {
-    this.platform.log.debug(`${this.accessory.displayName} StreamingDelegate`);
+    log.debug(`${this.accessory.displayName} StreamingDelegate`);
     this.streamingDelegate = new StreamingDelegate(this);
 
     this.recordingDelegate = {} as RecordingDelegate;
@@ -609,26 +610,26 @@ export class CameraAccessory extends DeviceAccessory {
 
       // If we have smart motion events enabled, let's warn the user that things will not work quite the way they expect.
       if (this.accessory.getService(this.hap.Service.MotionSensor)) {
-        this.log.info('WARNING: Motion detection and HomeKit Secure Video provide overlapping functionality. ' +
+        log.info('WARNING: Motion detection and HomeKit Secure Video provide overlapping functionality. ' +
           'Only HomeKit Secure Video, when event recording is enabled in the Home app, will be used to trigger motion event notifications for this camera.');
       }
 
-      this.platform.log.debug(`${this.accessory.displayName} RecordingDelegate`);
+      log.debug(`${this.accessory.displayName} RecordingDelegate`);
       this.recordingDelegate = new RecordingDelegate(this.streamingDelegate, this.accessory);
     }
 
-    this.platform.log.debug(`${this.accessory.displayName} Controller`);
+    log.debug(`${this.accessory.displayName} Controller`);
     const controller = new this.hap.CameraController(this.getCameraControllerOptions());
 
-    this.platform.log.debug(`${this.accessory.displayName} streamingDelegate.setController`);
+    log.debug(`${this.accessory.displayName} streamingDelegate.setController`);
     this.streamingDelegate.setController(controller);
 
     if (this.cameraConfig.hsv) {
-      this.platform.log.debug(`${this.accessory.displayName} recordingDelegate.setController`);
+      log.debug(`${this.accessory.displayName} recordingDelegate.setController`);
       this.recordingDelegate.setController(controller);
     }
 
-    this.platform.log.debug(`${this.accessory.displayName} configureController`);
+    log.debug(`${this.accessory.displayName} configureController`);
     this.accessory.configureController(controller);
 
     this.isVideoConfigured = true;

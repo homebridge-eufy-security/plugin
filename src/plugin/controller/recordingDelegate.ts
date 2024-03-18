@@ -12,8 +12,7 @@ import { EufySecurityPlatform } from '../platform';
 import { CameraConfig } from '../utils/configTypes';
 import { FFmpegRecord } from '../utils/ffmpeg-record';
 import { FFmpegParameters } from '../utils/ffmpeg-params';
-import { Logger as TsLogger, ILogObj } from 'tslog';
-import { is_rtsp_ready } from '../utils/utils';
+import { is_rtsp_ready, log } from '../utils/utils';
 import { LocalLivestreamManager, StationStream } from './LocalLivestreamManager';
 import { StreamingDelegate } from './streamingDelegate';
 import { Writable } from 'stream';
@@ -46,7 +45,6 @@ export class RecordingDelegate implements CameraRecordingDelegate {
   private cameraName: string;
   private cameraConfig: CameraConfig;
   private localLivestreamManager: LocalLivestreamManager;
-  private log: TsLogger<ILogObj>;
 
   private controller?: CameraController;
 
@@ -61,7 +59,6 @@ export class RecordingDelegate implements CameraRecordingDelegate {
     this.cameraName = this.streamingDelegate.cameraName;
     this.cameraConfig = this.streamingDelegate.cameraConfig;
     this.localLivestreamManager = this.streamingDelegate.getLivestreamManager();
-    this.log = this.platform.log;
   }
 
   public setController(controller: CameraController) {
@@ -74,15 +71,15 @@ export class RecordingDelegate implements CameraRecordingDelegate {
 
   async * handleRecordingStreamRequest(streamId: number): AsyncGenerator<RecordingPacket> {
     this.handlingStreamingRequest = true;
-    this.log.info(`${this.cameraName} requesting recording for HomeKit Secure Video. ID: ${streamId}`);
+    log.info(`${this.cameraName} requesting recording for HomeKit Secure Video. ID: ${streamId}`);
 
     try {
       // eslint-disable-next-line max-len
       const audioEnabled = this.controller?.recordingManagement?.recordingManagementService.getCharacteristic(this.platform.Characteristic.RecordingAudioActive).value;
       if (audioEnabled) {
-        this.log.debug('HKSV and plugin are set to record audio.');
+        log.debug('HKSV and plugin are set to record audio.');
       } else {
-        this.log.debug('HKSV and plugin are set to omit audio recording.');
+        log.debug('HKSV and plugin are set to omit audio recording.');
       }
 
       const videoParams = await FFmpegParameters.create({ type: 'videoRecording', debug: true });
@@ -91,13 +88,13 @@ export class RecordingDelegate implements CameraRecordingDelegate {
       videoParams.setupForRecording(this.cameraConfig.videoConfig || {}, this.configuration!);
       audioParams.setupForRecording(this.cameraConfig.videoConfig || {}, this.configuration!);
 
-      const rtsp = is_rtsp_ready(this.camera, this.cameraConfig, this.log);
+      const rtsp = is_rtsp_ready(this.camera, this.cameraConfig);
 
       let streamData: StationStream | null = null;
 
       if (rtsp) {
         const url = this.camera.getPropertyValue(PropertyName.DeviceRTSPStreamUrl);
-        this.platform.log.debug(this.cameraName, 'RTSP URL: ' + url);
+        log.debug(this.cameraName, 'RTSP URL: ' + url);
         videoParams.setInputSource(url as string);
         audioParams?.setInputSource(url as string);
       } else {
@@ -114,24 +111,23 @@ export class RecordingDelegate implements CameraRecordingDelegate {
 
       }
 
-      this.log.debug(this.cameraName, 'FFMPEG Process definition!');
+      log.debug(this.cameraName, 'FFMPEG Process definition!');
 
       this.session = new FFmpegRecord(
         `[${this.cameraName}] [HSV Recording Process]`,
         audioEnabled ? [videoParams, audioParams] : [videoParams],
-        this.platform.ffmpegLogger,
       );
 
-      this.log.debug(this.cameraName, 'startFragmentedMP4Session Start!');
+      log.debug(this.cameraName, 'startFragmentedMP4Session Start!');
       await this.session.start();
-      this.log.debug(this.cameraName, 'startFragmentedMP4Session Finish!');
+      log.debug(this.cameraName, 'startFragmentedMP4Session Finish!');
 
       if (this.session.process && this.session.process.stdio) {
         // stdio is defined and can be used
-        this.log.debug(this.cameraName, 'stdio is defined and can be used!');
+        log.debug(this.cameraName, 'stdio is defined and can be used!');
 
         if (streamData !== null) {
-          this.log.debug(this.cameraName, 'Stream Data!');
+          log.debug(this.cameraName, 'Stream Data!');
           streamData.videostream.pipe(this.session.process.stdio[3] as Writable);
           if (audioEnabled) {
             streamData.audiostream.pipe(this.session.process.stdio[4] as Writable);
@@ -146,7 +142,7 @@ export class RecordingDelegate implements CameraRecordingDelegate {
 
       if (timer > 0) {
         this.forceStopTimeout = setTimeout(() => {
-          this.log.warn(
+          log.warn(
             this.cameraName,
             `The recording process has been running for ${timer} seconds and is now being forced closed!`,
           );
@@ -160,23 +156,23 @@ export class RecordingDelegate implements CameraRecordingDelegate {
       let isMotionActive = true;
       setTimeout(() => {
         isMotionActive = false;
-        this.log.debug(this.cameraName, 'Ending recording session due to motion stopped!');
+        log.debug(this.cameraName, 'Ending recording session due to motion stopped!');
       }, 60 * 1000); // Set the flag to false after 15 seconds
 
 
-      this.log.debug(this.cameraName, 'Generator Start!');
+      log.debug(this.cameraName, 'Generator Start!');
 
       for await (const segment of this.session.segmentGenerator()) {
 
         if (!this.isRecording()) {
-          this.log.debug(this.cameraName, 'Recording was ended prematurely.');
+          log.debug(this.cameraName, 'Recording was ended prematurely.');
           break;
         }
 
         if (!segment) {
           continue;
         }
-        this.log.debug(`${this.cameraName} Yeah a good segment!`);
+        log.debug(`${this.cameraName} Yeah a good segment!`);
 
         // const motionDetected = this.accessory
         //   .getService(this.platform.Service.MotionSensor)?.getCharacteristic(this.platform.Characteristic.MotionDetected).value;
@@ -187,30 +183,30 @@ export class RecordingDelegate implements CameraRecordingDelegate {
         };
 
         if (!isMotionActive) {
-          this.log.debug(this.cameraName, 'Ending recording session due to motion stopped!');
+          log.debug(this.cameraName, 'Ending recording session due to motion stopped!');
           break;
         }
 
       }
     } catch (error) {
       if (!this.handlingStreamingRequest && this.closeReason && this.closeReason === HDSProtocolSpecificErrorReason.CANCELLED) {
-        this.log.debug(this.cameraName,
+        log.debug(this.cameraName,
           'Recording encountered an error but that is expected, as the recording was canceled beforehand. Error: ' + error);
       } else {
-        this.log.error(this.cameraName, 'Error while recording: ' + error);
+        log.error(this.cameraName, 'Error while recording: ' + error);
       }
     } finally {
       if (this.closeReason &&
         this.closeReason !== HDSProtocolSpecificErrorReason.NORMAL && this.closeReason !== HDSProtocolSpecificErrorReason.CANCELLED) {
 
-        this.log.warn(
+        log.warn(
           this.cameraName,
           `The recording process was aborted by HSV with reason "${HKSVQuitReason[this.closeReason]}"`,
         );
       }
       if (this.closeReason && this.closeReason === HDSProtocolSpecificErrorReason.CANCELLED) {
 
-        this.log.debug(
+        log.debug(
           this.cameraName,
           'The recording process was canceled by the HomeKit Controller."',
         );
@@ -230,13 +226,13 @@ export class RecordingDelegate implements CameraRecordingDelegate {
           .updateValue(false);
       }
 
-      this.log.debug(this.cameraName, 'Streaming STOP! Recording!');
+      log.debug(this.cameraName, 'Streaming STOP! Recording!');
       this.localLivestreamManager.stopLocalLiveStream();
     }
   }
 
   updateRecordingActive(active: boolean): void {
-    this.log.debug(`Recording: ${active}`, this.accessory.displayName);
+    log.debug(`Recording: ${active}`, this.accessory.displayName);
   }
 
   updateRecordingConfiguration(configuration: CameraRecordingConfiguration | undefined): void {
@@ -244,14 +240,14 @@ export class RecordingDelegate implements CameraRecordingDelegate {
   }
 
   closeRecordingStream(streamId: number, reason: HDSProtocolSpecificErrorReason | undefined): void {
-    this.log.info(this.cameraName, 'Closing recording process');
+    log.info(this.cameraName, 'Closing recording process');
 
     if (this.session) {
-      this.log.debug(this.cameraName, 'Stopping recording session.');
+      log.debug(this.cameraName, 'Stopping recording session.');
       this.session.process?.kill('SIGKILL');
       this.session = undefined;
     } else {
-      this.log.warn('Recording session could not be closed gracefully.');
+      log.warn('Recording session could not be closed gracefully.');
     }
 
     if (this.forceStopTimeout) {
@@ -273,7 +269,7 @@ export class RecordingDelegate implements CameraRecordingDelegate {
   }
 
   acknowledgeStream(streamId) {
-    this.log.debug('end of recording acknowledged!');
+    log.debug('end of recording acknowledged!');
     this.closeRecordingStream(streamId, undefined);
   }
 }

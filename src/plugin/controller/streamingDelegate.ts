@@ -22,14 +22,13 @@ import {
 import { CameraConfig, VideoConfig } from '../utils/configTypes';
 import { FFmpeg } from '../utils/ffmpeg';
 import { FFmpegParameters } from '../utils/ffmpeg-params';
-import { Logger as TsLogger, ILogObj } from 'tslog';
 
 import { Camera, PropertyName } from 'eufy-security-client';
 import { EufySecurityPlatform } from '../platform';
 
 import { SnapshotManager } from './SnapshotManager';
 import { TalkbackStream } from '../utils/Talkback';
-import { is_rtsp_ready } from '../utils/utils';
+import { is_rtsp_ready, log } from '../utils/utils';
 import { CameraAccessory } from '../accessories/CameraAccessory';
 import { LocalLivestreamManager, StationStream } from './LocalLivestreamManager';
 import { Writable } from 'stream';
@@ -66,7 +65,6 @@ export class StreamingDelegate implements CameraStreamingDelegate {
 
   private readonly hap: HAP;
   private readonly api: API;
-  private readonly log: TsLogger<ILogObj>;
   public readonly cameraName: string;
 
   private readonly videoConfig: VideoConfig;
@@ -91,16 +89,15 @@ export class StreamingDelegate implements CameraStreamingDelegate {
 
     this.hap = this.platform.api.hap;
     this.api = this.platform.api;
-    this.log = this.platform.log;
     this.cameraName = this.device.getName()!;
-  
+
     this.videoConfig = this.cameraConfig.videoConfig!;
 
     this.api.on(APIEvent.SHUTDOWN, () => {
       for (const session in this.ongoingSessions) {
         this.stopStream(session);
       }
-      this.log.debug(this.cameraName, 'Streaming STOP! API shutdown!');
+      log.debug(this.cameraName, 'Streaming STOP! API shutdown!');
       this.localLivestreamManager.stopLocalLiveStream();
     });
   }
@@ -114,18 +111,18 @@ export class StreamingDelegate implements CameraStreamingDelegate {
   }
 
   async handleSnapshotRequest(request: SnapshotRequest, callback: SnapshotRequestCallback): Promise<void> {
-    this.log.debug(this.cameraName, 'handleSnapshotRequest');
+    log.debug(this.cameraName, 'handleSnapshotRequest');
 
     try {
-      this.log.debug(this.cameraName, 'Snapshot requested: ' + request.width + ' x ' + request.height, this.videoConfig.debug);
+      log.debug(this.cameraName, 'Snapshot requested: ' + request.width + ' x ' + request.height, this.videoConfig.debug);
 
       const snapshot = await this.snapshotManager.getSnapshotBuffer(request);
 
-      this.log.debug(this.cameraName, 'snapshot byte lenght: ' + snapshot?.byteLength);
+      log.debug(this.cameraName, 'snapshot byte lenght: ' + snapshot?.byteLength);
 
       callback(undefined, snapshot);
     } catch (err) {
-      this.log.error(this.cameraName, err as string);
+      log.error(this.cameraName, err as string);
       callback();
     }
   }
@@ -176,16 +173,16 @@ export class StreamingDelegate implements CameraStreamingDelegate {
   }
 
   private async startStream(request: StartStreamRequest, callback: StreamRequestCallback): Promise<void> {
-    this.log.debug(this.cameraName, 'Starting session with id: ' + request.sessionID);
+    log.debug(this.cameraName, 'Starting session with id: ' + request.sessionID);
 
     const sessionInfo = this.pendingSessions.get(request.sessionID);
 
     if (!sessionInfo) {
-      this.log.error(this.cameraName, 'Error finding session information.');
+      log.error(this.cameraName, 'Error finding session information.');
       callback(new Error('Error finding session information'));
     }
 
-    this.log.debug(this.cameraName, 'VIDEOCONFIG: ' + JSON.stringify(this.videoConfig));
+    log.debug(this.cameraName, 'VIDEOCONFIG: ' + JSON.stringify(this.videoConfig));
 
     try {
       const activeSession: ActiveSession = {};
@@ -200,7 +197,7 @@ export class StreamingDelegate implements CameraStreamingDelegate {
         && this.videoConfig.audio;
 
       if (!useAudio && this.videoConfig.audio) {
-        this.log.warn(this.cameraName, `An unsupported audio codec (type: ${request.audio.codec}) was requested. Audio streaming will be omitted.`);
+        log.warn(this.cameraName, `An unsupported audio codec (type: ${request.audio.codec}) was requested. Audio streaming will be omitted.`);
       }
 
       let audioParams: FFmpegParameters | undefined = undefined;
@@ -210,13 +207,13 @@ export class StreamingDelegate implements CameraStreamingDelegate {
         audioParams.setRTPTarget(sessionInfo!, request);
       }
 
-      const rtsp = is_rtsp_ready(this.device, this.cameraConfig, this.log);
+      const rtsp = is_rtsp_ready(this.device, this.cameraConfig);
 
       let streamData: StationStream | null = null;
 
       if (rtsp) {
         const url = this.device.getPropertyValue(PropertyName.DeviceRTSPStreamUrl);
-        this.platform.log.debug(this.cameraName, 'RTSP URL: ' + url);
+        log.debug(this.cameraName, 'RTSP URL: ' + url);
         videoParams.setInputSource(url as string);
         audioParams?.setInputSource(url as string);
       } else {
@@ -236,7 +233,6 @@ export class StreamingDelegate implements CameraStreamingDelegate {
       const videoProcess = new FFmpeg(
         `[${this.cameraName}] [Video Process]`,
         audioParams ? [videoParams, audioParams] : [videoParams],
-        this.platform.ffmpegLogger,
       );
 
       videoProcess.on('started', () => {
@@ -244,12 +240,12 @@ export class StreamingDelegate implements CameraStreamingDelegate {
       });
 
       videoProcess.on('error', (err) => {
-        this.log.error(this.cameraName, 'Video process ended with error: ' + err);
+        log.error(this.cameraName, 'Video process ended with error: ' + err);
         this.stopStream(request.sessionID);
       });
 
       videoProcess.on('exit', () => {
-        this.log.info(this.cameraName, 'Video process ended');
+        log.info(this.cameraName, 'Video process ended');
         this.stopStream(request.sessionID);
       });
 
@@ -272,14 +268,13 @@ export class StreamingDelegate implements CameraStreamingDelegate {
         activeSession.returnProcess = new FFmpeg(
           `[${this.cameraName}] [Talkback Process]`,
           [talkbackParameters],
-          this.platform.ffmpegLogger,
         );
         activeSession.returnProcess.on('error', (err) => {
-          this.log.error(this.cameraName, 'Talkback process ended with error: ' + err);
+          log.error(this.cameraName, 'Talkback process ended with error: ' + err);
           this.stopStream(request.sessionID);
         });
         activeSession.returnProcess.on('exit', () => {
-          this.log.info(this.cameraName, 'Talkback process ended');
+          log.info(this.cameraName, 'Talkback process ended');
           this.stopStream(request.sessionID);
         });
         activeSession.returnProcess.start();
@@ -294,12 +289,12 @@ export class StreamingDelegate implements CameraStreamingDelegate {
         this.pendingSessions.delete(request.sessionID);
       } else { // pendingSession has been deleted. Add it to ongoingSession and end it immediately.
         this.ongoingSessions.set(request.sessionID, activeSession);
-        this.log.info(this.cameraName, 'pendingSession has been deleted. Add it to ongoingSession and end it immediately.');
+        log.info(this.cameraName, 'pendingSession has been deleted. Add it to ongoingSession and end it immediately.');
         this.stopStream(request.sessionID);
       }
 
     } catch (err) {
-      this.log.error(this.cameraName, 'Stream could not be started: ' + err);
+      log.error(this.cameraName, 'Stream could not be started: ' + err);
       callback(err as Error);
       this.pendingSessions.delete(request.sessionID);
     }
@@ -316,7 +311,7 @@ export class StreamingDelegate implements CameraStreamingDelegate {
    * @param {StreamRequestCallback} callback - The callback to be invoked after handling the request.
    */
   handleStreamRequest(request: StreamingRequest, callback: StreamRequestCallback): void {
-    this.log.debug(this.cameraName, 'Receive Apple HK stream request' + JSON.stringify(request));
+    log.debug(this.cameraName, 'Receive Apple HK stream request' + JSON.stringify(request));
     switch (request.type) {
       case StreamRequestTypes.START:
         this.startStream(request, callback);
@@ -345,7 +340,7 @@ export class StreamingDelegate implements CameraStreamingDelegate {
     try {
       stopAction();
     } catch (err) {
-      this.log.error(this.cameraName, `Error occurred terminating ${resourceName}: ${err}`);
+      log.error(this.cameraName, `Error occurred terminating ${resourceName}: ${err}`);
     }
   }
 
@@ -362,7 +357,7 @@ export class StreamingDelegate implements CameraStreamingDelegate {
    * @param {string} sessionId - The unique identifier of the streaming session to be stopped.
    */
   public stopStream(sessionId: string): void {
-    this.log.debug('Stopping session with id: ' + sessionId);
+    log.debug('Stopping session with id: ' + sessionId);
 
     const pendingSession = this.pendingSessions.get(sessionId);
     if (pendingSession) {
@@ -379,15 +374,15 @@ export class StreamingDelegate implements CameraStreamingDelegate {
       this.safelyStopResource('video FFmpeg process', () => session.videoProcess?.stop());
       this.safelyStopResource('audio FFmpeg process', () => session.audioProcess?.stop());
 
-      if (!is_rtsp_ready(this.device, this.cameraConfig, this.log)) {
-        this.log.debug(this.cameraName, 'Streaming STOP! Stream!');
+      if (!is_rtsp_ready(this.device, this.cameraConfig)) {
+        log.debug(this.cameraName, 'Streaming STOP! Stream!');
         this.safelyStopResource('Eufy Station livestream', () => this.localLivestreamManager.stopLocalLiveStream());
       }
 
       this.ongoingSessions.delete(sessionId);
-      this.log.info(this.cameraName, 'Stopped video stream.');
+      log.info(this.cameraName, 'Stopped video stream.');
     } else {
-      this.log.debug(this.cameraName, 'No session to stop.');
+      log.debug(this.cameraName, 'No session to stop.');
     }
   }
 }

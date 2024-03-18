@@ -1,10 +1,10 @@
 import { spawn } from 'child_process';
 
-import { Logger as TsLogger, ILogObj } from 'tslog';
 import { FFmpegProgress } from './ffmpeg-progress';
 import { FFmpegParameters } from './ffmpeg-params';
 import { FFmpeg } from './ffmpeg';
 import { once } from 'node:events';
+import { ffmpegLogger } from './utils';
 
 export class FFmpegRecord extends FFmpeg {
 
@@ -23,9 +23,8 @@ export class FFmpegRecord extends FFmpeg {
   constructor(
     name: string,
     parameters: FFmpegParameters[],
-    log: TsLogger<ILogObj>,
   ) {
-    super(name, parameters, log);
+    super(name, parameters);
   }
 
   public override start() {
@@ -37,7 +36,7 @@ export class FFmpegRecord extends FFmpeg {
 
     const processArgs = FFmpegParameters.getRecordingArguments(this.parameters);
 
-    this.log.debug(`${this.name} Stream command: ${this.ffmpegExec} ${processArgs.join(' ')}`);
+    ffmpegLogger.debug(`${this.name} Stream command: ${this.ffmpegExec} ${processArgs.join(' ')}`);
 
     this.process = spawn(
       this.ffmpegExec,
@@ -57,7 +56,7 @@ export class FFmpegRecord extends FFmpeg {
   private setupStderrHandler() {
     this.stderr?.on('data', (chunk) => {
       if (this.parameters[0].debug) {
-        this.log.debug(`${this.name} ffmpeg log message:\n ${chunk.toString()}`);
+        ffmpegLogger.debug(`${this.name} ffmpeg log message:\n ${chunk.toString()}`);
       }
     });
   }
@@ -77,7 +76,7 @@ export class FFmpegRecord extends FFmpeg {
   }
 
   private cleanupOnExit() {
-    this.log.debug(`${this.name} cleanupOnExit`);
+    ffmpegLogger.debug(`${this.name} cleanupOnExit`);
     this.emit('mp4box');
     this.isEnded = true;
 
@@ -185,7 +184,7 @@ export class FFmpegRecord extends FFmpeg {
         continue;
       }
 
-      this.log.debug(`${this.name} Yeah a Segment!`);
+      ffmpegLogger.debug(`${this.name} Yeah a Segment!`);
       segment.push(box.header, box.data);
 
       // What we want to send are two types of complete segments, made up of multiple MP4 boxes:

@@ -8,9 +8,8 @@ import { Camera, Device, Picture, PropertyName } from 'eufy-security-client';
 import { CameraConfig } from '../utils/configTypes';
 import { EufySecurityPlatform } from '../platform';
 import { LocalLivestreamManager } from './LocalLivestreamManager';
-import { Logger as TsLogger, ILogObj } from 'tslog';
 
-import { is_rtsp_ready } from '../utils/utils';
+import { is_rtsp_ready, log } from '../utils/utils';
 import { SnapshotRequest } from 'homebridge';
 import { FFmpeg } from '../utils/ffmpeg';
 import { StreamingDelegate } from './streamingDelegate';
@@ -63,7 +62,6 @@ export class SnapshotManager extends EventEmitter {
   private cameraConfig: CameraConfig;
   private cameraName: string;
 
-  private log: TsLogger<ILogObj>;
   private livestreamManager: LocalLivestreamManager;
 
   private lastCloudSnapshot?: Snapshot;
@@ -90,7 +88,6 @@ export class SnapshotManager extends EventEmitter {
     this.cameraConfig = this.streamingDelegate.cameraConfig;
     this.cameraName = this.device.getName();
 
-    this.log = this.platform.log;
     this.livestreamManager = this.streamingDelegate.localLivestreamManager;
 
     this.refreshSnapshotIntervalMinutes = this.cameraConfig.refreshSnapshotIntervalMinutes ?? 0;
@@ -105,11 +102,11 @@ export class SnapshotManager extends EventEmitter {
 
     if (this.refreshSnapshotIntervalMinutes) {
       if (this.refreshSnapshotIntervalMinutes < 5) {
-        this.log.warn(this.cameraName, 'The interval to automatically refresh snapshots is set too low. Minimum is one minute.');
+        log.warn(this.cameraName, 'The interval to automatically refresh snapshots is set too low. Minimum is one minute.');
         this.refreshSnapshotIntervalMinutes = 5;
       }
       // eslint-disable-next-line max-len
-      this.log.info(this.cameraName, 'Setting up automatic snapshot refresh every ' + this.refreshSnapshotIntervalMinutes + ' minutes. This may decrease battery life dramatically. The refresh process for ' + this.cameraName + ' should begin in ' + MINUTES_TO_WAIT_FOR_AUTOMATIC_REFRESH_TO_BEGIN + ' minutes.');
+      log.info(this.cameraName, 'Setting up automatic snapshot refresh every ' + this.refreshSnapshotIntervalMinutes + ' minutes. This may decrease battery life dramatically. The refresh process for ' + this.cameraName + ' should begin in ' + MINUTES_TO_WAIT_FOR_AUTOMATIC_REFRESH_TO_BEGIN + ' minutes.');
       setTimeout(() => { // give homebridge some time to start up
         this.automaticSnapshotRefresh();
       }, MINUTES_TO_WAIT_FOR_AUTOMATIC_REFRESH_TO_BEGIN * MILLISECONDS_PER_MINUTE);
@@ -118,42 +115,42 @@ export class SnapshotManager extends EventEmitter {
 
     if (this.cameraConfig.snapshotHandlingMethod === 1) {
       // eslint-disable-next-line max-len
-      this.log.info(this.cameraName, 'is set to generate new snapshots on events every time. This might reduce homebridge performance and increase power consumption.');
+      log.info(this.cameraName, 'is set to generate new snapshots on events every time. This might reduce homebridge performance and increase power consumption.');
       if (this.refreshSnapshotIntervalMinutes) {
         // eslint-disable-next-line max-len
-        this.log.warn(this.cameraName, 'You have enabled automatic snapshot refreshing. It is recommened not to use this setting with forced snapshot refreshing.');
+        log.warn(this.cameraName, 'You have enabled automatic snapshot refreshing. It is recommened not to use this setting with forced snapshot refreshing.');
       }
     } else if (this.cameraConfig.snapshotHandlingMethod === 2) {
-      this.log.info(this.cameraName, 'is set to balanced snapshot handling.');
+      log.info(this.cameraName, 'is set to balanced snapshot handling.');
     } else if (this.cameraConfig.snapshotHandlingMethod === 3) {
-      this.log.info(this.cameraName, 'is set to handle snapshots with cloud images. Snapshots might be older than they appear.');
+      log.info(this.cameraName, 'is set to handle snapshots with cloud images. Snapshots might be older than they appear.');
     } else {
-      this.log.warn(this.cameraName, 'unknown snapshot handling method. SNapshots will not be generated.');
+      log.warn(this.cameraName, 'unknown snapshot handling method. SNapshots will not be generated.');
     }
 
     try {
       if (this.cameraConfig.immediateRingNotificationWithoutSnapshot) {
-        this.log.info(this.cameraName, 'Empty snapshot will be sent on ring events immediately to speed up homekit notifications.');
+        log.info(this.cameraName, 'Empty snapshot will be sent on ring events immediately to speed up homekit notifications.');
       }
     } catch (err) {
-      this.log.error(this.cameraName, 'could not cache black snapshot file for further use: ' + err);
+      log.error(this.cameraName, 'could not cache black snapshot file for further use: ' + err);
     }
 
     this.fetchSnapshotFromCloud() // get current cloud snapshot for balanced mode scenarios -> first snapshot can be resolved
-      .catch((err) => this.log.warn(this.cameraName,
+      .catch((err) => log.warn(this.cameraName,
         'snapshot handler is initialized without cloud snapshot. Maybe no snapshot will displayed the first times.' + err));
   }
 
   private onRingEvent(device: Device, state: boolean) {
     if (state) {
-      this.log.debug(this.cameraName, 'Snapshot handler detected ring event.');
+      log.debug(this.cameraName, 'Snapshot handler detected ring event.');
       this.lastRingEvent = Date.now();
     }
   }
 
   private async onMotionEvent(device: Device, state: boolean) {
     if (state) {
-      this.log.debug(this.cameraName, 'Snapshot handler detected event.');
+      log.debug(this.cameraName, 'Snapshot handler detected event.');
       this.lastEvent = Date.now();
     }
   }
@@ -161,7 +158,7 @@ export class SnapshotManager extends EventEmitter {
   private async onPropertyValueChanged(device: Device, name: string): Promise<void> {
     if (name === 'picture') {
       this.lastImageEvent = Date.now();
-      this.log.debug(this.cameraName, 'New picture event');
+      log.debug(this.cameraName, 'New picture event');
       this.fetchSnapshotFromCloud();
     }
   }
@@ -176,38 +173,38 @@ export class SnapshotManager extends EventEmitter {
       // Return a recent snapshot if available
       if (this.currentSnapshot && Math.abs((now - this.currentSnapshot.timestamp) / 1000) <= 15) {
 
-        this.log.debug('Returning recent cached snapshot.');
+        log.debug('Returning recent cached snapshot.');
         snapshot = this.currentSnapshot.image;
 
       } else if (this.cameraConfig.immediateRingNotificationWithoutSnapshot && (now - this.lastRingEvent) / 1000 < 5) {
 
-        this.log.debug('Sending black snapshot to prioritize ring notification.');
+        log.debug('Sending black snapshot to prioritize ring notification.');
         snapshot = SnapshotBlack;
 
       } else {
 
         switch (this.cameraConfig.snapshotHandlingMethod) {
           case 1:
-            this.log.debug('Fetching the newest snapshot buffer.');
+            log.debug('Fetching the newest snapshot buffer.');
             snapshot = await this.getNewestSnapshotBuffer();
             break;
           case 2:
-            this.log.debug('Fetching a balanced snapshot.');
+            log.debug('Fetching a balanced snapshot.');
             snapshot = await this.getBalancedSnapshot();
             break;
           case 3:
-            this.log.debug('Fetching the newest cloud snapshot.');
+            log.debug('Fetching the newest cloud snapshot.');
             snapshot = await this.getNewestCloudSnapshot();
             break;
           default:
-            this.log.debug('No suitable snapshot handling method defined.');
+            log.debug('No suitable snapshot handling method defined.');
             return Promise.reject('No suitable handling method for snapshots defined');
 
         }
       }
 
     } catch (err) {
-      this.log.error('Error fetching snapshot:', err);
+      log.error('Error fetching snapshot:', err);
       snapshot = SnapshotUnavailable;
     }
 
@@ -319,11 +316,11 @@ export class SnapshotManager extends EventEmitter {
    * If an error occurs during snapshot fetching, it logs a warning.
    */
   private automaticSnapshotRefresh() {
-    this.log.debug(this.cameraName, 'Automatic snapshot refresh triggered.');
+    log.debug(this.cameraName, 'Automatic snapshot refresh triggered.');
 
     this.fetchCurrentCameraSnapshot().catch((err) => {
       // Enhanced error logging
-      this.log.warn(this.cameraName, 'Snapshot fetch error:', err);
+      log.warn(this.cameraName, 'Snapshot fetch error:', err);
     });
 
     // Clear existing timer if it exists
@@ -348,19 +345,19 @@ export class SnapshotManager extends EventEmitter {
   private async fetchSnapshotFromCloud(): Promise<void> {
     try {
       const image = this.device.getPropertyValue(PropertyName.DevicePicture) as Picture;
-      this.log.debug(this.cameraName, 'trying to download latest cloud snapshot for future use');
+      log.debug(this.cameraName, 'trying to download latest cloud snapshot for future use');
       if (!this.lastCloudSnapshot && !this.currentSnapshot) {
         this.lastCloudSnapshot = {
           timestamp: Date.now() - 60 * MILLISECONDS_PER_MINUTE, // An hour earlier
           image: image.data,
         };
         this.currentSnapshot = this.lastCloudSnapshot;
-        this.log.debug(this.cameraName, 'Stored cloud snapshot for future use.');
+        log.debug(this.cameraName, 'Stored cloud snapshot for future use.');
         this.emit('new snapshot');
       }
       return Promise.resolve();
     } catch (err) {
-      this.log.warn(this.cameraName, 'Couldt not get cloud snapshot: ' + err);
+      log.warn(this.cameraName, 'Couldt not get cloud snapshot: ' + err);
       return Promise.reject(err);
     }
   }
@@ -376,24 +373,24 @@ export class SnapshotManager extends EventEmitter {
     }
 
     this.refreshProcessRunning = true;
-    this.log.debug(`${this.cameraName} Locked refresh process.`);
-    this.log.debug(`${this.cameraName} Fetching new snapshot from camera.`);
+    log.debug(`${this.cameraName} Locked refresh process.`);
+    log.debug(`${this.cameraName} Fetching new snapshot from camera.`);
 
     try {
       const snapshotBuffer = await this.getCurrentCameraSnapshot();
 
-      this.log.debug(`${this.cameraName} Store new snapshot from camera in memory for future use.`);
+      log.debug(`${this.cameraName} Store new snapshot from camera in memory for future use.`);
       this.currentSnapshot = {
         timestamp: Date.now(),
         image: snapshotBuffer,
       };
       this.emit('new snapshot');
     } catch (err) {
-      this.log.warn(`${this.cameraName} Error fetching snapshot: ${err}`);
+      log.warn(`${this.cameraName} Error fetching snapshot: ${err}`);
       throw err;
     } finally {
       this.refreshProcessRunning = false;
-      this.log.debug(`${this.cameraName} Unlocked refresh process.`);
+      log.debug(`${this.cameraName} Unlocked refresh process.`);
     }
   }
 
@@ -408,9 +405,9 @@ export class SnapshotManager extends EventEmitter {
    * @throws Throws an error if the camera source cannot be determined or retrieved.
    */
   private async getCameraSource(): Promise<StreamSource> {
-    if (is_rtsp_ready(this.device, this.cameraConfig, this.log)) {
+    if (is_rtsp_ready(this.device, this.cameraConfig)) {
       const url = this.device.getPropertyValue(PropertyName.DeviceRTSPStreamUrl);
-      this.log.debug(`${this.cameraName} RTSP URL: ${url}`);
+      log.debug(`${this.cameraName} RTSP URL: ${url}`);
       return { url: url as string };
     } else {
       const streamData = await this.livestreamManager.getLocalLivestream();
@@ -447,11 +444,11 @@ export class SnapshotManager extends EventEmitter {
     }
 
     try {
-      const ffmpeg = new FFmpeg(`[${this.cameraName}] [Snapshot Process]`, [parameters], this.platform.ffmpegLogger);
+      const ffmpeg = new FFmpeg(`[${this.cameraName}] [Snapshot Process]`, [parameters]);
       return await ffmpeg.getResult();
     } finally {
       if (source.livestreamId) {
-        this.log.debug('STOP! Snapshot');
+        log.debug('STOP! Snapshot');
         this.livestreamManager.stopLocalLiveStream();
       }
     }
@@ -478,7 +475,7 @@ export class SnapshotManager extends EventEmitter {
 
       return resizedImage;
     } catch (error) {
-      this.log.error('Error resizing snapshot:', error);
+      log.error('Error resizing snapshot:', error);
       throw error;
     }
   }
