@@ -57,7 +57,7 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
   public readonly Service: typeof Service;
   public readonly Characteristic: typeof Characteristic;
 
-  public eufyClient!: EufySecurity;
+  public eufyClient: EufySecurity = {} as EufySecurity;
 
   // this is used to track restored cached accessories
   public readonly accessories: PlatformAccessory[] = [];
