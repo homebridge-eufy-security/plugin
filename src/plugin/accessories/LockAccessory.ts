@@ -99,6 +99,9 @@ export class LockAccessory extends DeviceAccessory {
         this.device.on('locked', () => {
           characteristic.updateValue(this.getLockStatus());
         });
+        this.device.on('jammed', () => {
+          characteristic.updateValue(CHAR.LockCurrentState.JAMMED);
+        });
       },
     });
 
@@ -128,7 +131,7 @@ export class LockAccessory extends DeviceAccessory {
    * Gets the lock status and maps it to HomeKit lock states.
    */
   private getLockStatus(): CharacteristicValue {
-    const lockStatus = this.device.getPropertyValue(PropertyName.DeviceLocked);
+    const lockStatus = this.device.isLocked();
     log.debug(`${this.accessory.displayName} getLockStatus: ${lockStatus}`);
     return this.convertLockStatusCode(lockStatus);
   }
@@ -139,32 +142,20 @@ export class LockAccessory extends DeviceAccessory {
   private async setLockTargetState(state: CharacteristicValue) {
     try {
       await this.setPropertyValue(PropertyName.DeviceLocked, !!state);
-      log.info(`${this.accessory.displayName} Lock target state set to: ${state}`);
+      log.info(`${this.name} Lock target state set to: ${state}`);
     } catch (error) {
-      log.error(`${this.accessory.displayName} Error setting lock target state: ${error}`);
+      log.error(`${this.name} Error setting lock target state: ${error}`);
     }
   }
 
   /**
    * Converts lock status codes to corresponding HomeKit lock states.
    */
-  private convertLockStatusCode(lockStatus: number): CharacteristicValue {
-    // Define a mapping object for lock status codes to HomeKit states
-    const lockStatusMap: Record<number, CharacteristicValue> = {
-      4: CHAR.LockCurrentState.SECURED,
-      3: CHAR.LockCurrentState.UNSECURED,
-      5: CHAR.LockCurrentState.JAMMED,
-    };
-
-    // Check if the lock status code is in the mapping, otherwise, return UNKNOWN
-    const mappedState = lockStatusMap[lockStatus];
-
-    if (mappedState !== undefined) {
-      log.debug(`${this.accessory.displayName} LockStatus: ${lockStatus}`);
-      return mappedState;
+  private convertLockStatusCode(lockStatus: boolean): CharacteristicValue {
+    if (lockStatus) {
+      return CHAR.LockCurrentState.SECURED;
     } else {
-      log.warn(`${this.accessory.displayName} Unknown lock status feedback`);
-      return CHAR.LockCurrentState.UNKNOWN;
+      return CHAR.LockCurrentState.UNSECURED;
     }
   }
 }
