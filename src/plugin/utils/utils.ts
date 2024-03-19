@@ -8,6 +8,18 @@ import path from 'path';
 import { tmpdir } from 'os';
 import fse from 'fs-extra';
 
+import { Characteristic, HAP as HAPHB, Service } from 'homebridge'
+
+export let HAP: HAPHB;
+export let SERV: typeof Service;
+export let CHAR: typeof Characteristic;
+
+export function setHap(hapInstance: HAPHB) {
+  HAP = hapInstance;
+  SERV = hapInstance.Service;
+  CHAR = hapInstance.Characteristic;
+}
+
 export let log: TsLogger<ILogObj> = {} as TsLogger<ILogObj>;
 export let tsLogger: TsLogger<ILogObj> = {} as TsLogger<ILogObj>;
 export let ffmpegLogger: TsLogger<ILogObj> = {} as TsLogger<ILogObj>;

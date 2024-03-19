@@ -4,12 +4,11 @@ import {
   CharacteristicValue,
   Service,
   WithUUID,
-  HAP,
 } from 'homebridge';
 import { EufySecurityPlatform } from '../platform';
 import { DeviceType, DeviceEvents, PropertyValue, Device, Station, StationEvents } from 'eufy-security-client';
 import { EventEmitter } from 'events';
-import { log } from '../utils/utils';
+import { CHAR, SERV, log } from '../utils/utils';
 
 /**
  * Determine if the serviceType is an instance of Service.
@@ -32,7 +31,6 @@ export abstract class BaseAccessory extends EventEmitter {
   protected servicesInUse: Service[] = [];
   public readonly SN: string;
   public readonly name: string;
-  public readonly hap: HAP;
 
   constructor(
     public readonly platform: EufySecurityPlatform,
@@ -42,40 +40,39 @@ export abstract class BaseAccessory extends EventEmitter {
   ) {
     super();
 
-    this.hap = this.platform.api.hap;
     this.device = device as Device | Station;
 
     this.SN = this.device.getSerial();
     this.name = this.device.getName();
 
     this.registerCharacteristic({
-      serviceType: this.platform.Service.AccessoryInformation,
-      characteristicType: this.platform.Characteristic.Manufacturer,
+      serviceType: SERV.AccessoryInformation,
+      characteristicType: CHAR.Manufacturer,
       getValue: () => 'Eufy',
     });
     this.registerCharacteristic({
-      serviceType: this.platform.Service.AccessoryInformation,
-      characteristicType: this.platform.Characteristic.Name,
+      serviceType: SERV.AccessoryInformation,
+      characteristicType: CHAR.Name,
       getValue: () => this.name || 'Unknowm',
     });
     this.registerCharacteristic({
-      serviceType: this.platform.Service.AccessoryInformation,
-      characteristicType: this.platform.Characteristic.Model,
+      serviceType: SERV.AccessoryInformation,
+      characteristicType: CHAR.Model,
       getValue: () => DeviceType[this.device.getDeviceType()] || 'Unknowm',
     });
     this.registerCharacteristic({
-      serviceType: this.platform.Service.AccessoryInformation,
-      characteristicType: this.platform.Characteristic.SerialNumber,
+      serviceType: SERV.AccessoryInformation,
+      characteristicType: CHAR.SerialNumber,
       getValue: () => this.SN || 'Unknowm',
     });
     this.registerCharacteristic({
-      serviceType: this.platform.Service.AccessoryInformation,
-      characteristicType: this.platform.Characteristic.FirmwareRevision,
+      serviceType: SERV.AccessoryInformation,
+      characteristicType: CHAR.FirmwareRevision,
       getValue: () => this.device.getSoftwareVersion() || 'Unknowm',
     });
     this.registerCharacteristic({
-      serviceType: this.platform.Service.AccessoryInformation,
-      characteristicType: this.platform.Characteristic.HardwareRevision,
+      serviceType: SERV.AccessoryInformation,
+      characteristicType: CHAR.HardwareRevision,
       getValue: () => this.device.getHardwareVersion() || 'Unknowm',
     });
 
@@ -253,7 +250,7 @@ export abstract class BaseAccessory extends EventEmitter {
 
   protected pruneUnusedServices() {
     const safeServiceUUIDs = [
-      this.platform.Service.CameraRTPStreamManagement.UUID,
+      SERV.CameraRTPStreamManagement.UUID,
     ];
 
     this.accessory.services.forEach((service) => {
@@ -270,8 +267,8 @@ export abstract class BaseAccessory extends EventEmitter {
 
   protected handleDummyEventGet(serviceName: string): Promise<CharacteristicValue> {
     const characteristicValues: Record<string, CharacteristicValue> = {
-      'EventSnapshotsActive': this.platform.Characteristic.EventSnapshotsActive.DISABLE,
-      'HomeKitCameraActive': this.platform.Characteristic.HomeKitCameraActive.OFF,
+      'EventSnapshotsActive': CHAR.EventSnapshotsActive.DISABLE,
+      'HomeKitCameraActive': CHAR.HomeKitCameraActive.OFF,
     };
 
     const currentValue = characteristicValues[serviceName];

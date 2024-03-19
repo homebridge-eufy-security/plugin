@@ -5,7 +5,7 @@ import { DeviceAccessory } from './Device';
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore  
 import { MotionSensor, PropertyName } from 'eufy-security-client';
-import { log } from '../utils/utils';
+import { CHAR, SERV, log } from '../utils/utils';
 
 /**
  * MotionSensorAccessory Class
@@ -42,14 +42,14 @@ export class MotionSensorAccessory extends DeviceAccessory {
 
       // Register the Motion Detected characteristic.
       this.registerCharacteristic({
-        serviceType: this.platform.Service.MotionSensor,
-        characteristicType: this.platform.Characteristic.MotionDetected,
+        serviceType: SERV.MotionSensor,
+        characteristicType: CHAR.MotionDetected,
         getValue: () => this.device.getPropertyValue(PropertyName.DeviceMotionDetected),
         onSimpleValue: 'motion detected',
       });
 
       // Initialize the sensor service.
-      this.initSensorService(this.platform.Service.MotionSensor);
+      this.initSensorService(SERV.MotionSensor);
 
     } else {
       // Log an error if the 'motionDetected' property is not available for this device.

@@ -8,7 +8,7 @@ import {
 import { EufySecurityPlatform } from '../platform';
 import { BaseAccessory } from './BaseAccessory';
 import { Device, PropertyName } from 'eufy-security-client';
-import { log } from '../utils/utils';
+import { CHAR, log } from '../utils/utils';
 
 export type CharacteristicType = WithUUID<{ new(): Characteristic }>;
 export type ServiceType = WithUUID<typeof Service> | Service;
@@ -56,19 +56,19 @@ export abstract class DeviceAccessory extends BaseAccessory {
     const propertiesToRegister = [
       {
         property: 'battery',
-        characteristicType: this.platform.Characteristic.BatteryLevel,
+        characteristicType: CHAR.BatteryLevel,
         propertyName: PropertyName.DeviceBattery,
         onSimpleValue: null,
       },
       {
         property: 'batteryLow',
-        characteristicType: this.platform.Characteristic.StatusLowBattery,
+        characteristicType: CHAR.StatusLowBattery,
         propertyName: PropertyName.DeviceBatteryLow,
         onSimpleValue: 'low battery',
       },
       {
         property: 'batteryIsCharging',
-        characteristicType: this.platform.Characteristic.ChargingState,
+        characteristicType: CHAR.ChargingState,
         propertyName: PropertyName.DeviceBatteryIsCharging,
         onSimpleValue: null,
       },

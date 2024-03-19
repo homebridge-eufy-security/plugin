@@ -12,7 +12,7 @@ import { EufySecurityPlatform } from '../platform';
 import { CameraConfig } from '../utils/configTypes';
 import { FFmpegRecord } from '../utils/ffmpeg-record';
 import { FFmpegParameters } from '../utils/ffmpeg-params';
-import { is_rtsp_ready, log } from '../utils/utils';
+import { CHAR, SERV, is_rtsp_ready, log } from '../utils/utils';
 import { LocalLivestreamManager, StationStream } from './LocalLivestreamManager';
 import { StreamingDelegate } from './streamingDelegate';
 import { Writable } from 'stream';
@@ -75,7 +75,7 @@ export class RecordingDelegate implements CameraRecordingDelegate {
 
     try {
       // eslint-disable-next-line max-len
-      const audioEnabled = this.controller?.recordingManagement?.recordingManagementService.getCharacteristic(this.platform.Characteristic.RecordingAudioActive).value;
+      const audioEnabled = this.controller?.recordingManagement?.recordingManagementService.getCharacteristic(CHAR.RecordingAudioActive).value;
       if (audioEnabled) {
         log.debug('HKSV and plugin are set to record audio.');
       } else {
@@ -148,7 +148,7 @@ export class RecordingDelegate implements CameraRecordingDelegate {
           );
 
           this.accessory
-            .getService(this.platform.Service.MotionSensor)?.getCharacteristic(this.platform.Characteristic.MotionDetected)
+            .getService(SERV.MotionSensor)?.getCharacteristic(CHAR.MotionDetected)
             .updateValue(false);
         }, timer * 1000);
       }
@@ -219,10 +219,10 @@ export class RecordingDelegate implements CameraRecordingDelegate {
 
       // check whether motion is still in progress
       const motionDetected = this.accessory
-        .getService(this.platform.Service.MotionSensor)?.getCharacteristic(this.platform.Characteristic.MotionDetected).value;
+        .getService(SERV.MotionSensor)?.getCharacteristic(CHAR.MotionDetected).value;
       if (motionDetected) {
         this.accessory
-          .getService(this.platform.Service.MotionSensor)?.getCharacteristic(this.platform.Characteristic.MotionDetected)
+          .getService(SERV.MotionSensor)?.getCharacteristic(CHAR.MotionDetected)
           .updateValue(false);
       }
 
@@ -257,10 +257,10 @@ export class RecordingDelegate implements CameraRecordingDelegate {
 
     // check whether motion is still in progress
     const motionDetected = this.accessory
-      .getService(this.platform.Service.MotionSensor)?.getCharacteristic(this.platform.Characteristic.MotionDetected).value;
+      .getService(SERV.MotionSensor)?.getCharacteristic(CHAR.MotionDetected).value;
     if (motionDetected) {
       this.accessory
-        .getService(this.platform.Service.MotionSensor)?.getCharacteristic(this.platform.Characteristic.MotionDetected)
+        .getService(SERV.MotionSensor)?.getCharacteristic(CHAR.MotionDetected)
         .updateValue(false);
     }
 

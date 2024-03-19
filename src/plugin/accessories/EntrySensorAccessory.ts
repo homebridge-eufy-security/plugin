@@ -5,7 +5,7 @@ import { DeviceAccessory } from './Device';
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore  
 import { EntrySensor, PropertyName } from 'eufy-security-client';
-import { log } from '../utils/utils';
+import { CHAR, SERV, log } from '../utils/utils';
 
 /**
  * EntrySensorAccessory Class
@@ -42,14 +42,14 @@ export class EntrySensorAccessory extends DeviceAccessory {
 
       // Register the Contact Sensor characteristic.
       this.registerCharacteristic({
-        serviceType: this.platform.Service.ContactSensor,
-        characteristicType: this.platform.Characteristic.ContactSensorState,
+        serviceType: SERV.ContactSensor,
+        characteristicType: CHAR.ContactSensorState,
         getValue: () => this.device.getPropertyValue(PropertyName.DeviceSensorOpen),
         onSimpleValue: 'open',
       });
 
       // Initialize the sensor service.
-      this.initSensorService(this.platform.Service.ContactSensor);
+      this.initSensorService(SERV.ContactSensor);
 
     } else {
       // Log an error if the 'sensorOpen' property is not available for this device.

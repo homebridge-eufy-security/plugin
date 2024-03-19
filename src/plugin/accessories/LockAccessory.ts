@@ -4,7 +4,7 @@ import { CharacteristicValue, PlatformAccessory } from 'homebridge';
 import { EufySecurityPlatform } from '../platform';
 import { DeviceAccessory } from './Device';
 import { Lock, PropertyName } from 'eufy-security-client';
-import { log } from '../utils/utils';
+import { CHAR, SERV, log } from '../utils/utils';
 
 /**
  * LockAccessory Class
@@ -59,29 +59,29 @@ export class LockAccessory extends DeviceAccessory {
     // Register Lock Management Service characteristics.
     // Version characteristic (always returns '1.0').
     this.registerCharacteristic({
-      serviceType: this.platform.Service.LockManagement,
-      characteristicType: this.platform.Characteristic.Version,
+      serviceType: SERV.LockManagement,
+      characteristicType: CHAR.Version,
       getValue: () => '1.0',
     });
 
     // LockManagementAutoSecurityTimeout characteristic (always returns 3 seconds).
     this.registerCharacteristic({
-      serviceType: this.platform.Service.LockManagement,
-      characteristicType: this.platform.Characteristic.LockManagementAutoSecurityTimeout,
+      serviceType: SERV.LockManagement,
+      characteristicType: CHAR.LockManagementAutoSecurityTimeout,
       getValue: () => 3,
     });
 
     // AdministratorOnlyAccess characteristic (always returns true).
     this.registerCharacteristic({
-      serviceType: this.platform.Service.LockManagement,
-      characteristicType: this.platform.Characteristic.AdministratorOnlyAccess,
+      serviceType: SERV.LockManagement,
+      characteristicType: CHAR.AdministratorOnlyAccess,
       getValue: () => true,
     });
 
     // LockControlPoint characteristic (no initial value).
     this.registerCharacteristic({
-      serviceType: this.platform.Service.LockManagement,
-      characteristicType: this.platform.Characteristic.LockControlPoint,
+      serviceType: SERV.LockManagement,
+      characteristicType: CHAR.LockControlPoint,
     });
   }
 
@@ -92,8 +92,8 @@ export class LockAccessory extends DeviceAccessory {
     // Register Lock Mechanism Service characteristics.
     // LockCurrentState and LockTargetState characteristics.
     this.registerCharacteristic({
-      serviceType: this.platform.Service.LockMechanism,
-      characteristicType: this.platform.Characteristic.LockCurrentState,
+      serviceType: SERV.LockMechanism,
+      characteristicType: CHAR.LockCurrentState,
       getValue: () => this.getLockStatus(),
       onValue: (service, characteristic) => {
         this.device.on('locked', () => {
@@ -103,8 +103,8 @@ export class LockAccessory extends DeviceAccessory {
     });
 
     this.registerCharacteristic({
-      serviceType: this.platform.Service.LockMechanism,
-      characteristicType: this.platform.Characteristic.LockTargetState,
+      serviceType: SERV.LockMechanism,
+      characteristicType: CHAR.LockTargetState,
       getValue: () => this.getLockStatus(),
       setValue: async (value) => {
         try {
@@ -121,7 +121,7 @@ export class LockAccessory extends DeviceAccessory {
     });
 
     // Initialize the sensor service.
-    this.initSensorService(this.platform.Service.LockMechanism);
+    this.initSensorService(SERV.LockMechanism);
   }
 
   /**
@@ -151,9 +151,9 @@ export class LockAccessory extends DeviceAccessory {
   private convertLockStatusCode(lockStatus: number): CharacteristicValue {
     // Define a mapping object for lock status codes to HomeKit states
     const lockStatusMap: Record<number, CharacteristicValue> = {
-      4: this.platform.Characteristic.LockCurrentState.SECURED,
-      3: this.platform.Characteristic.LockCurrentState.UNSECURED,
-      5: this.platform.Characteristic.LockCurrentState.JAMMED,
+      4: CHAR.LockCurrentState.SECURED,
+      3: CHAR.LockCurrentState.UNSECURED,
+      5: CHAR.LockCurrentState.JAMMED,
     };
 
     // Check if the lock status code is in the mapping, otherwise, return UNKNOWN
@@ -164,7 +164,7 @@ export class LockAccessory extends DeviceAccessory {
       return mappedState;
     } else {
       log.warn(`${this.accessory.displayName} Unknown lock status feedback`);
-      return this.platform.Characteristic.LockCurrentState.UNKNOWN;
+      return CHAR.LockCurrentState.UNKNOWN;
     }
   }
 }

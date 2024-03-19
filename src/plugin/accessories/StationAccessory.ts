@@ -6,7 +6,7 @@ import { BaseAccessory } from './BaseAccessory';
 // @ts-ignore  
 import { Station, DeviceType, PropertyName, PropertyValue, AlarmEvent, GuardMode } from 'eufy-security-client';
 import { StationConfig } from '../utils/configTypes';
-import { log } from '../utils/utils';
+import { CHAR, SERV, log } from '../utils/utils';
 
 export enum HKGuardMode {
   STAY_ARM = 0,
@@ -55,9 +55,9 @@ export class StationAccessory extends BaseAccessory {
     this.alarm_delayed = false;
 
     const validValues = [
-      this.platform.Characteristic.SecuritySystemTargetState.AWAY_ARM,
-      this.platform.Characteristic.SecuritySystemTargetState.STAY_ARM,
-      this.platform.Characteristic.SecuritySystemTargetState.DISARM,
+      CHAR.SecuritySystemTargetState.AWAY_ARM,
+      CHAR.SecuritySystemTargetState.STAY_ARM,
+      CHAR.SecuritySystemTargetState.DISARM,
     ];
 
     const SecuritySettings = [
@@ -76,12 +76,12 @@ export class StationAccessory extends BaseAccessory {
     });
 
     // if (this.stationConfig.hkNight) {
-    validValues.push(this.platform.Characteristic.SecuritySystemTargetState.NIGHT_ARM);
+    validValues.push(CHAR.SecuritySystemTargetState.NIGHT_ARM);
     // }
 
     this.registerCharacteristic({
-      serviceType: this.platform.Service.SecuritySystem,
-      characteristicType: this.platform.Characteristic.SecuritySystemCurrentState,
+      serviceType: SERV.SecuritySystem,
+      characteristicType: CHAR.SecuritySystemCurrentState,
       getValue: () => this.handleSecuritySystemCurrentStateGet(),
       onValue: (service, characteristic) => {
         this.device.on('current mode', (station: Station, currentMode: number) => {
@@ -94,8 +94,8 @@ export class StationAccessory extends BaseAccessory {
     });
 
     this.registerCharacteristic({
-      serviceType: this.platform.Service.SecuritySystem,
-      characteristicType: this.platform.Characteristic.SecuritySystemTargetState,
+      serviceType: SERV.SecuritySystem,
+      characteristicType: CHAR.SecuritySystemTargetState,
       getValue: () => this.handleSecuritySystemTargetStateGet(),
       setValue: (value) => this.handleSecuritySystemTargetStateSet(value),
       onValue: (service, characteristic) => {
@@ -108,13 +108,13 @@ export class StationAccessory extends BaseAccessory {
       },
     });
 
-    this.getService(this.platform.Service.SecuritySystem)
-      .getCharacteristic(this.platform.Characteristic.SecuritySystemTargetState)
+    this.getService(SERV.SecuritySystem)
+      .getCharacteristic(CHAR.SecuritySystemTargetState)
       .setProps({ validValues });
 
     this.registerCharacteristic({
-      serviceType: this.platform.Service.Switch,
-      characteristicType: this.platform.Characteristic.On,
+      serviceType: SERV.Switch,
+      characteristicType: CHAR.On,
       name: this.accessory.displayName + '_Siren',
       getValue: () => this.handleManualTriggerSwitchStateGet(),
       setValue: (value) => this.handleManualTriggerSwitchStateSet(value),
@@ -231,7 +231,7 @@ export class StationAccessory extends BaseAccessory {
       case 9: // Alarm triggered by CAMERA_GSENSOR
         log.warn('ON StationAlarmEvent - ALARM TRIGGERED - alarmEvent:', AlarmEvent[alarmEvent]);
         this.alarm_triggered = true;
-        characteristic.updateValue(this.platform.Characteristic.SecuritySystemCurrentState.ALARM_TRIGGERED); // Alarm !!!
+        characteristic.updateValue(CHAR.SecuritySystemCurrentState.ALARM_TRIGGERED); // Alarm !!!
         break;
       case 0:  // Alarm off by Hub
       case 15: // Alarm off by Keypad
@@ -245,7 +245,7 @@ export class StationAccessory extends BaseAccessory {
         break;
       default:
         log.warn('ON StationAlarmEvent - ALARM UNKNOWN - alarmEvent:', AlarmEvent[alarmEvent]);
-        characteristic.updateValue(this.platform.Characteristic.StatusFault.GENERAL_FAULT);
+        characteristic.updateValue(CHAR.StatusFault.GENERAL_FAULT);
         break;
     }
 
@@ -305,7 +305,7 @@ export class StationAccessory extends BaseAccessory {
    */
   protected handleSecuritySystemCurrentStateGet(): CharacteristicValue {
     if (this.alarm_triggered) {
-      return this.platform.Characteristic.SecuritySystemCurrentState.ALARM_TRIGGERED;
+      return CHAR.SecuritySystemCurrentState.ALARM_TRIGGERED;
     }
     return this.handleSecuritySystemTargetStateGet('handleSecuritySystemCurrentStateGets');
   }
@@ -445,8 +445,8 @@ export class StationAccessory extends BaseAccessory {
   }
 
   private updateManuelTriggerButton(state: boolean) {
-    this.getService(this.platform.Service.Switch, this.accessory.displayName + '_Siren')
-      .getCharacteristic(this.platform.Characteristic.On)
+    this.getService(SERV.Switch, this.accessory.displayName + '_Siren')
+      .getCharacteristic(CHAR.On)
       .updateValue(state);
   }
 

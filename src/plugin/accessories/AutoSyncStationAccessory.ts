@@ -2,7 +2,7 @@ import { PlatformAccessory } from 'homebridge';
 import { EufySecurityPlatform } from '../platform';
 import { AlarmEvent, GuardMode, Station } from 'eufy-security-client';
 import { StationAccessory } from './StationAccessory';
-import { log } from '../utils/utils';
+import { CHAR, SERV, log } from '../utils/utils';
 
 /**
  * Platform Auto Accessory
@@ -139,8 +139,8 @@ export class AutoSyncStationAccessory {
     // Check if the alarm event is a plugin-fired alarm stop event
     if (pluginFiredAlarmStopEvents.includes(alarmEvent)) { return; }
 
-    const characteristic = first_station.getService(first_station.platform.Service.SecuritySystem)
-      .getCharacteristic(first_station.platform.Characteristic.SecuritySystemCurrentState);
+    const characteristic = first_station.getService(SERV.SecuritySystem)
+      .getCharacteristic(CHAR.SecuritySystemCurrentState);
 
     first_station.onStationAlarmEventPushNotification(characteristic, alarmEvent);
 

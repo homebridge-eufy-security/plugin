@@ -6,7 +6,6 @@ import {
   AudioStreamingCodecType,
   CameraController,
   CameraStreamingDelegate,
-  HAP,
   PrepareStreamCallback,
   PrepareStreamRequest,
   PrepareStreamResponse,
@@ -28,7 +27,7 @@ import { EufySecurityPlatform } from '../platform';
 
 import { SnapshotManager } from './SnapshotManager';
 import { TalkbackStream } from '../utils/Talkback';
-import { is_rtsp_ready, log } from '../utils/utils';
+import { HAP, is_rtsp_ready, log } from '../utils/utils';
 import { CameraAccessory } from '../accessories/CameraAccessory';
 import { LocalLivestreamManager, StationStream } from './LocalLivestreamManager';
 import { Writable } from 'stream';
@@ -63,16 +62,15 @@ export class StreamingDelegate implements CameraStreamingDelegate {
   public readonly device: Camera;
   public readonly cameraConfig: CameraConfig;
 
-  private readonly hap: HAP;
   private readonly api: API;
   public readonly cameraName: string;
 
   private readonly videoConfig: VideoConfig;
   private controller?: CameraController;
 
-  public readonly localLivestreamManager: LocalLivestreamManager = new LocalLivestreamManager(this);
+  public readonly localLivestreamManager: LocalLivestreamManager = {} as LocalLivestreamManager;
 
-  private snapshotManager: SnapshotManager = new SnapshotManager(this);
+  private snapshotManager: SnapshotManager = {} as SnapshotManager;
 
   // keep track of sessions
   pendingSessions: Map<string, SessionInfo> = new Map();
@@ -87,11 +85,12 @@ export class StreamingDelegate implements CameraStreamingDelegate {
     this.device = this.camera.device;
     this.cameraConfig = this.camera.cameraConfig;
 
-    this.hap = this.platform.api.hap;
     this.api = this.platform.api;
     this.cameraName = this.device.getName()!;
 
     this.videoConfig = this.cameraConfig.videoConfig!;
+    this.localLivestreamManager = new LocalLivestreamManager(this);
+    this.snapshotManager = new SnapshotManager(this);
 
     this.api.on(APIEvent.SHUTDOWN, () => {
       for (const session in this.ongoingSessions) {
@@ -130,9 +129,9 @@ export class StreamingDelegate implements CameraStreamingDelegate {
   async prepareStream(request: PrepareStreamRequest, callback: PrepareStreamCallback): Promise<void> {
 
     const videoReturnPort = await FFmpegParameters.allocateUDPPort();
-    const videoSSRC = this.hap.CameraController.generateSynchronisationSource();
+    const videoSSRC = HAP.CameraController.generateSynchronisationSource();
     const audioReturnPort = await FFmpegParameters.allocateUDPPort();
-    const audioSSRC = this.hap.CameraController.generateSynchronisationSource();
+    const audioSSRC = HAP.CameraController.generateSynchronisationSource();
 
     const sessionInfo: SessionInfo = {
       address: request.targetAddress,

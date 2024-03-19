@@ -5,8 +5,6 @@ import {
   Logger,
   PlatformAccessory,
   PlatformConfig,
-  Service,
-  Characteristic,
   APIEvent,
 } from 'homebridge';
 
@@ -51,12 +49,9 @@ import { readFileSync } from 'node:fs';
 
 import ffmpegPath from 'ffmpeg-for-homebridge';
 import { FfmpegCodecs } from './utils/ffmpeg-codecs';
-import { init_log, log, tsLogger, ffmpegLogger } from './utils/utils';
+import { init_log, log, tsLogger, ffmpegLogger, setHap } from './utils/utils';
 
 export class EufySecurityPlatform implements DynamicPlatformPlugin {
-  public readonly Service: typeof Service;
-  public readonly Characteristic: typeof Characteristic;
-
   public eufyClient: EufySecurity = {} as EufySecurity;
 
   // this is used to track restored cached accessories
@@ -89,8 +84,8 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
     public readonly api: API,
   ) {
     this.config = config as EufySecurityPlatformConfig;
-    this.Service = this.api.hap.Service;
-    this.Characteristic = this.api.hap.Characteristic;
+
+    setHap(this.api.hap);
 
     this.eufyPath = this.api.user.storagePath() + '/eufysecurity';
 

@@ -31,7 +31,7 @@ import { RecordingDelegate } from '../controller/recordingDelegate';
 
 import { CameraConfig, DEFAULT_CAMERACONFIG_VALUES } from '../utils/configTypes';
 import { PROTECT_HKSV_SEGMENT_LENGTH, PROTECT_HKSV_TIMESHIFT_BUFFER_MAXLENGTH } from '../settings';
-import { log } from '../utils/utils';
+import { CHAR, HAP, SERV, log } from '../utils/utils';
 
 // A semi-complete description of the UniFi Protect camera channel JSON.
 export interface ProtectCameraChannelConfig {
@@ -132,11 +132,11 @@ export class CameraAccessory extends DeviceAccessory {
       log.debug(`${this.accessory.displayName} has a camera`);
       this.setupCamera();
       this.setupChimeButton();
-      this.initSensorService(this.platform.Service.Battery);
+      this.initSensorService(SERV.Battery);
     } else {
       log.debug(`${this.accessory.displayName} has a motion sensor`);
       this.setupMotionFunction();
-      this.initSensorService(this.platform.Service.MotionSensor);
+      this.initSensorService(SERV.MotionSensor);
     }
 
     this.setupEnableButton();
@@ -207,7 +207,7 @@ export class CameraAccessory extends DeviceAccessory {
         },
       ],
       video: {
-        type: this.hap.VideoCodecType.H264,
+        type: HAP.VideoCodecType.H264,
         parameters: {
           profiles: [H264Profile.BASELINE, H264Profile.MAIN, H264Profile.HIGH],
           levels: [H264Level.LEVEL3_1, H264Level.LEVEL3_2, H264Level.LEVEL4_0],
@@ -237,7 +237,7 @@ export class CameraAccessory extends DeviceAccessory {
         : undefined,
       sensors: this.cameraConfig.hsv
         ? {
-          motion: this.getService(this.platform.Service.MotionSensor),
+          motion: this.getService(SERV.MotionSensor),
           occupancy: undefined,
         }
         : undefined,
@@ -274,14 +274,14 @@ export class CameraAccessory extends DeviceAccessory {
     propertyName: PropertyName,
   ) {
     const platformServiceMapping = {
-      switch: this.platform.Service.Switch,
-      lightbulb: this.platform.Service.Lightbulb,
-      outlet: this.platform.Service.Outlet,
+      switch: SERV.Switch,
+      lightbulb: SERV.Lightbulb,
+      outlet: SERV.Outlet,
     };
 
     this.registerCharacteristic({
-      serviceType: platformServiceMapping[serviceType] || this.platform.Service.Switch,
-      characteristicType: this.platform.Characteristic.On,
+      serviceType: platformServiceMapping[serviceType] || SERV.Switch,
+      characteristicType: CHAR.On,
       name: this.accessory.displayName + '_' + serviceName,
       serviceSubType: serviceName,
       getValue: (data, characteristic) => this.getCameraPropertyValue(characteristic, propertyName),
@@ -357,15 +357,15 @@ export class CameraAccessory extends DeviceAccessory {
 
     if (!this.cameraConfig.hsv) {
       this.registerCharacteristic({
-        serviceType: this.platform.Service.CameraOperatingMode,
-        characteristicType: this.platform.Characteristic.EventSnapshotsActive,
+        serviceType: SERV.CameraOperatingMode,
+        characteristicType: CHAR.EventSnapshotsActive,
         getValue: () => this.handleDummyEventGet('EventSnapshotsActive'),
         setValue: (value) => this.handleDummyEventSet('EventSnapshotsActive', value),
       });
 
       this.registerCharacteristic({
-        serviceType: this.platform.Service.CameraOperatingMode,
-        characteristicType: this.platform.Characteristic.HomeKitCameraActive,
+        serviceType: SERV.CameraOperatingMode,
+        characteristicType: CHAR.HomeKitCameraActive,
         getValue: (data, characteristic) =>
           this.getCameraPropertyValue(characteristic, PropertyName.DeviceEnabled),
         setValue: (value, characteristic) =>
@@ -374,8 +374,8 @@ export class CameraAccessory extends DeviceAccessory {
 
       if (this.device.hasProperty('enabled')) {
         this.registerCharacteristic({
-          serviceType: this.platform.Service.CameraOperatingMode,
-          characteristicType: this.platform.Characteristic.ManuallyDisabled,
+          serviceType: SERV.CameraOperatingMode,
+          characteristicType: CHAR.ManuallyDisabled,
           getValue: (data, characteristic) =>
             this.getCameraPropertyValue(characteristic, PropertyName.DeviceEnabled),
         });
@@ -383,8 +383,8 @@ export class CameraAccessory extends DeviceAccessory {
 
       if (this.device.hasProperty('statusLed')) {
         this.registerCharacteristic({
-          serviceType: this.platform.Service.CameraOperatingMode,
-          characteristicType: this.platform.Characteristic.CameraOperatingModeIndicator,
+          serviceType: SERV.CameraOperatingMode,
+          characteristicType: CHAR.CameraOperatingModeIndicator,
           getValue: (data, characteristic) =>
             this.getCameraPropertyValue(characteristic, PropertyName.DeviceStatusLed),
           setValue: (value, characteristic) =>
@@ -394,8 +394,8 @@ export class CameraAccessory extends DeviceAccessory {
 
       if (this.device.hasProperty('nightvision')) {
         this.registerCharacteristic({
-          serviceType: this.platform.Service.CameraOperatingMode,
-          characteristicType: this.platform.Characteristic.NightVision,
+          serviceType: SERV.CameraOperatingMode,
+          characteristicType: CHAR.NightVision,
           getValue: (data, characteristic) =>
             this.getCameraPropertyValue(characteristic, PropertyName.DeviceNightvision),
           setValue: (value, characteristic) =>
@@ -405,8 +405,8 @@ export class CameraAccessory extends DeviceAccessory {
 
       if (this.device.hasProperty('autoNightvision')) {
         this.registerCharacteristic({
-          serviceType: this.platform.Service.CameraOperatingMode,
-          characteristicType: this.platform.Characteristic.NightVision,
+          serviceType: SERV.CameraOperatingMode,
+          characteristicType: CHAR.NightVision,
           getValue: (data, characteristic) =>
             this.getCameraPropertyValue(characteristic, PropertyName.DeviceAutoNightvision),
           setValue: (value, characteristic) =>
@@ -414,13 +414,13 @@ export class CameraAccessory extends DeviceAccessory {
         });
       }
 
-      this.getService(this.platform.Service.CameraOperatingMode).setPrimaryService(true);
+      this.getService(SERV.CameraOperatingMode).setPrimaryService(true);
     }
 
     // Fire snapshot when motion detected
     this.registerCharacteristic({
-      serviceType: this.platform.Service.MotionSensor,
-      characteristicType: this.platform.Characteristic.MotionDetected,
+      serviceType: SERV.MotionSensor,
+      characteristicType: CHAR.MotionDetected,
       getValue: () => this.device.getPropertyValue(PropertyName.DeviceMotionDetected),
       onValue: (service, characteristic) => {
         this.eventTypesToHandle.forEach(eventType => {
@@ -436,8 +436,8 @@ export class CameraAccessory extends DeviceAccessory {
 
     // if (this.device.hasProperty('speaker')) {
     //   this.registerCharacteristic({
-    //     serviceType: this.platform.Service.Speaker,
-    //     characteristicType: this.platform.Characteristic.Mute,
+    //     serviceType: SERV.Speaker,
+    //     characteristicType: CHAR.Mute,
     //     serviceSubType: 'speaker_mute',
     //     getValue: (data, characteristic) =>
     //       this.getCameraPropertyValue(characteristic, PropertyName.DeviceSpeaker),
@@ -448,8 +448,8 @@ export class CameraAccessory extends DeviceAccessory {
 
     // if (this.device.hasProperty('speakerVolume')) {
     //   this.registerCharacteristic({
-    //     serviceType: this.platform.Service.Speaker,
-    //     characteristicType: this.platform.Characteristic.Volume,
+    //     serviceType: SERV.Speaker,
+    //     characteristicType: CHAR.Volume,
     //     serviceSubType: 'speaker_volume',
     //     getValue: (data, characteristic) =>
     //       this.getCameraPropertyValue(characteristic, PropertyName.DeviceSpeakerVolume),
@@ -460,8 +460,8 @@ export class CameraAccessory extends DeviceAccessory {
 
     // if (this.device.hasProperty('microphone')) {
     //   this.registerCharacteristic({
-    //     serviceType: this.platform.Service.Microphone,
-    //     characteristicType: this.platform.Characteristic.Mute,
+    //     serviceType: SERV.Microphone,
+    //     characteristicType: CHAR.Mute,
     //     serviceSubType: 'mic_mute',
     //     getValue: (data, characteristic) =>
     //       this.getCameraPropertyValue(characteristic, PropertyName.DeviceMicrophone),
@@ -472,8 +472,8 @@ export class CameraAccessory extends DeviceAccessory {
 
     if (this.device.isDoorbell()) {
       this.registerCharacteristic({
-        serviceType: this.platform.Service.Doorbell,
-        characteristicType: this.platform.Characteristic.ProgrammableSwitchEvent,
+        serviceType: SERV.Doorbell,
+        characteristicType: CHAR.ProgrammableSwitchEvent,
         getValue: () => this.handleDummyEventGet('EventSnapshotsActive'),
         onValue: (service, characteristic) => {
           this.device.on('rings', () => this.onDeviceRingsPushNotification(characteristic),
@@ -488,8 +488,8 @@ export class CameraAccessory extends DeviceAccessory {
   private setupMotionFunction() {
     // Register the motion sensor characteristic for detecting motion.
     this.registerCharacteristic({
-      serviceType: this.platform.Service.MotionSensor,
-      characteristicType: this.platform.Characteristic.MotionDetected,
+      serviceType: SERV.MotionSensor,
+      characteristicType: CHAR.MotionDetected,
       getValue: () => this.device.getPropertyValue(PropertyName.DeviceMotionDetected),
       onMultipleValue: this.eventTypesToHandle,
     });
@@ -497,14 +497,14 @@ export class CameraAccessory extends DeviceAccessory {
     // If the camera is disabled, flag the motion sensor as tampered.
     // This is done because the motion sensor won't work until the camera is enabled again.
     this.registerCharacteristic({
-      serviceType: this.platform.Service.MotionSensor,
-      characteristicType: this.platform.Characteristic.StatusTampered,
+      serviceType: SERV.MotionSensor,
+      characteristicType: CHAR.StatusTampered,
       getValue: () => {
         const tampered = this.device.getPropertyValue(PropertyName.DeviceEnabled);
         log.debug(`${this.accessory.displayName} TAMPERED? ${!tampered}`);
         return tampered
-          ? this.platform.Characteristic.StatusTampered.NOT_TAMPERED
-          : this.platform.Characteristic.StatusTampered.TAMPERED;
+          ? CHAR.StatusTampered.NOT_TAMPERED
+          : CHAR.StatusTampered.TAMPERED;
       },
     });
   }
@@ -559,8 +559,8 @@ export class CameraAccessory extends DeviceAccessory {
         characteristic.updateValue(value);
 
         this.cameraStatus = { isEnabled: value as boolean, timestamp: Date.now() };
-        characteristic = this.getService(this.platform.Service.CameraOperatingMode)
-          .getCharacteristic(this.platform.Characteristic.ManuallyDisabled);
+        characteristic = this.getService(SERV.CameraOperatingMode)
+          .getCharacteristic(CHAR.ManuallyDisabled);
 
         log.debug(`${this.accessory.displayName} INVERSED '${characteristic.displayName}' ${propertyName}: ${!value}`);
         value = !value as boolean;
@@ -580,7 +580,7 @@ export class CameraAccessory extends DeviceAccessory {
   private onDeviceRingsPushNotification(characteristic: Characteristic): void {
     if (!this.notificationTimeout) {
       log.debug(`${this.accessory.displayName} DoorBell ringing`);
-      characteristic.updateValue(this.platform.Characteristic.ProgrammableSwitchEvent.SINGLE_PRESS);
+      characteristic.updateValue(CHAR.ProgrammableSwitchEvent.SINGLE_PRESS);
       // Set a new timeout for muting subsequent notifications
       this.notificationTimeout = setTimeout(() => {
         this.notificationTimeout = null;
@@ -609,7 +609,7 @@ export class CameraAccessory extends DeviceAccessory {
     if (this.cameraConfig.hsv) {
 
       // If we have smart motion events enabled, let's warn the user that things will not work quite the way they expect.
-      if (this.accessory.getService(this.hap.Service.MotionSensor)) {
+      if (this.accessory.getService(SERV.MotionSensor)) {
         log.info('WARNING: Motion detection and HomeKit Secure Video provide overlapping functionality. ' +
           'Only HomeKit Secure Video, when event recording is enabled in the Home app, will be used to trigger motion event notifications for this camera.');
       }
@@ -619,7 +619,7 @@ export class CameraAccessory extends DeviceAccessory {
     }
 
     log.debug(`${this.accessory.displayName} Controller`);
-    const controller = new this.hap.CameraController(this.getCameraControllerOptions());
+    const controller = new HAP.CameraController(this.getCameraControllerOptions());
 
     log.debug(`${this.accessory.displayName} streamingDelegate.setController`);
     this.streamingDelegate.setController(controller);
