@@ -474,7 +474,17 @@ export class CameraAccessory extends DeviceAccessory {
       this.registerCharacteristic({
         serviceType: SERV.Doorbell,
         characteristicType: CHAR.ProgrammableSwitchEvent,
-        getValue: () => this.handleDummyEventGet('EventSnapshotsActive'),
+        onValue: (service, characteristic) => {
+          this.device.on('rings', () => this.onDeviceRingsPushNotification(characteristic),
+          );
+        },
+      });
+
+      // ProgrammableSwitchEvent from Doorbell Service isn't not exposed create another one
+      this.registerCharacteristic({
+        serviceType: SERV.StatelessProgrammableSwitch,
+        characteristicType: CHAR.ProgrammableSwitchEvent,
+        name: this.accessory.displayName + '_Doorbell Button',
         onValue: (service, characteristic) => {
           this.device.on('rings', () => this.onDeviceRingsPushNotification(characteristic),
           );
