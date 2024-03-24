@@ -59,6 +59,7 @@ export abstract class DeviceAccessory extends BaseAccessory {
         characteristicType: CHAR.BatteryLevel,
         propertyName: PropertyName.DeviceBattery,
         onSimpleValue: null,
+        fallback: 100
       },
       {
         property: 'batteryLow',
@@ -79,7 +80,7 @@ export abstract class DeviceAccessory extends BaseAccessory {
         this.registerCharacteristic({
           serviceType: serviceType,
           characteristicType: propertyConfig.characteristicType,
-          getValue: () => this.device.getPropertyValue(propertyConfig.propertyName),
+          getValue: () => this.device.getPropertyValue(propertyConfig.propertyName) || propertyConfig.fallback,
           onSimpleValue: propertyConfig.onSimpleValue,
         });
       }
