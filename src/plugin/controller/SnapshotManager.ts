@@ -93,7 +93,7 @@ export class SnapshotManager extends EventEmitter {
     this.refreshSnapshotIntervalMinutes = this.cameraConfig.refreshSnapshotIntervalMinutes ?? 0;
 
     this.device.on('property changed', this.onPropertyValueChanged.bind(this));
-    this.device.on('rings', (device, state) => this.onRingEvent(device, state));
+    this.device.on('rings', this.onRingEvent.bind(this));
 
     this.accessory.eventTypesToHandle.forEach(eventType => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
