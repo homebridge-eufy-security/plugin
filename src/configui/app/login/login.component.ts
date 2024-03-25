@@ -2,10 +2,13 @@
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 
-import { Credentials, LoginResult, LoginFailReason } from '../util/types';
+import { Credentials, LoginResult, LoginFailReason, Country } from '../util/types';
 import { LoginService } from '../login.service';
 
-import { Country, COUNTRIES } from '../countries';
+import { COUNTRIES } from '../countries';
+import { FormsModule } from '@angular/forms';
+import { NgbAlert, NgbPopover, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { NgIf, NgFor } from '@angular/common';
 
 enum LoginStep {
   LOGIN = 1,
@@ -14,8 +17,17 @@ enum LoginStep {
 }
 
 @Component({
-  selector: 'app-login',
-  templateUrl: './login.component.html',
+    selector: 'app-login',
+    templateUrl: './login.component.html',
+    standalone: true,
+    imports: [
+        NgIf,
+        NgbAlert,
+        NgbPopover,
+        FormsModule,
+        NgbTooltip,
+        NgFor,
+    ],
 })
 export class LoginComponent implements OnInit {
   countries: Country[] = [];

@@ -1,12 +1,14 @@
 import { Component, OnInit } from '@angular/core';
 import { PluginService } from '../../plugin.service';
 import { ConfigOptionsInterpreter } from '../config-options-interpreter';
+import { FormsModule } from '@angular/forms';
 
 @Component({
-  selector: 'app-omit-log-files',
-  templateUrl: './omit-log-files.component.html',
-  styles: [
-  ],
+    selector: 'app-omit-log-files',
+    templateUrl: './omit-log-files.component.html',
+    styles: [],
+    standalone: true,
+    imports: [FormsModule],
 })
 export class OmitLogFilesComponent extends ConfigOptionsInterpreter implements OnInit {
 

@@ -7,16 +7,24 @@ on:
         description: 'premajor/prerelease/prepatch/major/minor/patch'
         required: true
         default: 'patch'
+        type: choice
+        options:
+        - major
+        - minor
+        - patch
+        - premajor
+        - prerelease
+        - prepatch
       tag:
-        description: 'latest/rc/beta'
+        description: 'tag: latest/rc/beta'
         required: true
         default: 'latest'
       preid:
-        description: 'rc/beta'
+        description: 'preid: rc/beta'
         required: false
         default: ''
       branch:
-        description: 'master/next/beta'
+        description: 'branch: master/next/beta'
         required: true
         default: 'master'
         
@@ -26,12 +34,12 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        node-version: [18]
+        node-version: [18, 20]
     steps:
       - uses: actions/checkout@v4
         with:
           ref: ${{ github.event.inputs.branch }}
-      - uses: actions/setup-node@v3
+      - uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
 
@@ -63,9 +71,9 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: ${{ github.event.inputs.branch }}
-      - uses: actions/setup-node@v3
+      - uses: actions/setup-node@v4
         with:
-          node-version: 18
+          node-version: 20
           registry-url: https://registry.npmjs.org/
       - run: npm ci
       - run: npm publish --access public --tag ${{ github.event.inputs.tag }}

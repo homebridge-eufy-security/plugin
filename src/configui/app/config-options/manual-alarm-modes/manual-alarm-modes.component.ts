@@ -1,13 +1,13 @@
 import { Component, Input, OnInit } from '@angular/core';
-import { Accessory } from '../../accessory';
+import { L_Station } from '../../util/types';
 import { PluginService } from '../../plugin.service';
 import { ConfigOptionsInterpreter } from '../config-options-interpreter';
 
 @Component({
-  selector: 'app-manual-alarm-modes',
-  templateUrl: './manual-alarm-modes.component.html',
-  styles: [
-  ],
+    selector: 'app-manual-alarm-modes',
+    templateUrl: './manual-alarm-modes.component.html',
+    styles: [],
+    standalone: true,
 })
 export class ManualAlarmModesComponent extends ConfigOptionsInterpreter implements OnInit {
 
@@ -26,11 +26,11 @@ export class ManualAlarmModesComponent extends ConfigOptionsInterpreter implemen
 
   /** updateConfig() takes an optional second parameter to specify the accessoriy for which the setting is changed */
 
-  @Input() accessory?: Accessory;
+  @Input() station?: L_Station;
   value: number[] = [];
 
   async readValue() {
-    const config = await this.getStationConfig(this.accessory?.uniqueId || '');
+    const config = await this.getStationConfig(this.station?.uniqueId || '');
 
     if (config && Array.isArray(config['manualTriggerModes'])) {
       this.value = config['manualTriggerModes'];
@@ -46,11 +46,11 @@ export class ManualAlarmModesComponent extends ConfigOptionsInterpreter implemen
   }
 
   update() {
-    this.updateConfig(
+    this.updateStationConfig(
       {
         manualTriggerModes: this.value,
       },
-      this.accessory,
+      this.station!,
     );
   }
 

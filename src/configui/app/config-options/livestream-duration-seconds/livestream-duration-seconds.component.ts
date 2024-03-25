@@ -1,10 +1,13 @@
 import { Component, OnInit } from '@angular/core';
 import { PluginService } from '../../../app/plugin.service';
 import { ConfigOptionsInterpreter } from '../config-options-interpreter';
+import { FormsModule } from '@angular/forms';
 
 @Component({
-  selector: 'app-livestream-duration-seconds',
-  templateUrl: './livestream-duration-seconds.component.html',
+    selector: 'app-livestream-duration-seconds',
+    templateUrl: './livestream-duration-seconds.component.html',
+    standalone: true,
+    imports: [FormsModule],
 })
 export class LivestreamDurationSecondsComponent extends ConfigOptionsInterpreter implements OnInit {
   constructor(pluginService: PluginService) {

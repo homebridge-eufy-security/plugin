@@ -2,6 +2,7 @@ import { Duplex, Writable } from 'stream';
 
 import { EufySecurityPlatform } from '../platform';
 import { Device, Station } from 'eufy-security-client';
+import { log } from './utils';
 
 export class TalkbackStream extends Duplex {
 
@@ -14,22 +15,14 @@ export class TalkbackStream extends Duplex {
 
   private targetStream?: Writable;
 
-  private talkbackStartedHandle = (station: Station, device: Device, stream: Writable) => {
-    this.onTalkbackStarted(station, device, stream);
-  };
-
-  private talkbackStoppedHandle = (station: Station, device: Device) => {
-    this.onTalkbackStopped(station, device);
-  };
-
   constructor(platform: EufySecurityPlatform, camera: Device) {
     super();
 
     this.platform = platform;
     this.camera = camera;
 
-    this.platform.eufyClient.on('station talkback start', this.talkbackStartedHandle);
-    this.platform.eufyClient.on('station talkback stop', this.talkbackStoppedHandle);
+    this.platform.eufyClient.on('station talkback start', this.onTalkbackStarted.bind(this));
+    this.platform.eufyClient.on('station talkback stop', this.onTalkbackStopped.bind(this));
   }
 
   private onTalkbackStarted(station: Station, device: Device, stream: Writable) {
@@ -37,7 +30,7 @@ export class TalkbackStream extends Duplex {
       return;
     }
 
-    this.platform.log.debug(this.camera.getName(), 'talkback started event from station ' + station.getName());
+    log.debug(this.camera.getName(), 'talkback started event from station ' + station.getName());
 
     if (this.targetStream) {
       this.unpipe(this.targetStream);
@@ -52,7 +45,7 @@ export class TalkbackStream extends Duplex {
       return;
     }
 
-    this.platform.log.debug(this.camera.getName(), 'talkback stopped event from station ' + station.getName());
+    log.debug(this.camera.getName(), 'talkback stopped event from station ' + station.getName());
 
     if (this.targetStream) {
       this.unpipe(this.targetStream);
@@ -61,16 +54,12 @@ export class TalkbackStream extends Duplex {
   }
 
   public stopTalkbackStream(): void {
-    // remove event listeners
-    this.platform.eufyClient.removeListener('station talkback start', this.talkbackStartedHandle);
-    this.platform.eufyClient.removeListener('station talkback stop', this.talkbackStoppedHandle);
-
     this.stopTalkback();
     this.unpipe();
     this.destroy();
   }
 
-  override _read(size: number): void {
+  override _read(): void {
     let pushReturn = true;
     while (this.cacheData.length > 0 && pushReturn) {
       const data = this.cacheData.shift();
@@ -100,10 +89,10 @@ export class TalkbackStream extends Duplex {
   private startTalkback() {
     if (!this.talkbackStarted) {
       this.talkbackStarted = true;
-      this.platform.log.debug(this.camera.getName(), 'starting talkback');
+      log.debug(this.camera.getName(), 'starting talkback');
       this.platform.eufyClient.startStationTalkback(this.camera.getSerial())
         .catch(err => {
-          this.platform.log.error(this.camera.getName(), 'talkback could not be started: ' + err);
+          log.error(this.camera.getName(), 'talkback could not be started: ' + err);
         });
     }
   }
@@ -111,10 +100,10 @@ export class TalkbackStream extends Duplex {
   private stopTalkback() {
     if (this.talkbackStarted) {
       this.talkbackStarted = false;
-      this.platform.log.debug(this.camera.getName(), 'stopping talkback');
+      log.debug(this.camera.getName(), 'stopping talkback');
       this.platform.eufyClient.stopStationTalkback(this.camera.getSerial())
         .catch(err => {
-          this.platform.log.error(this.camera.getName(), 'talkback could not be stopped: ' + err);
+          log.error(this.camera.getName(), 'talkback could not be stopped: ' + err);
         });
     }
   }

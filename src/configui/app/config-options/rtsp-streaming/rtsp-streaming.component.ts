@@ -1,11 +1,15 @@
 import { Component, Input, OnInit } from '@angular/core';
-import { Accessory } from '../../../app/accessory';
+import { L_Device } from '../../../app/util/types';
 import { PluginService } from '../../../app/plugin.service';
 import { ConfigOptionsInterpreter } from '../config-options-interpreter';
+import { NgIf } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 
 @Component({
-  selector: 'app-rtsp-streaming',
-  templateUrl: './rtsp-streaming.component.html',
+    selector: 'app-rtsp-streaming',
+    templateUrl: './rtsp-streaming.component.html',
+    standalone: true,
+    imports: [FormsModule, NgIf],
 })
 export class RtspStreamingComponent extends ConfigOptionsInterpreter implements OnInit {
   constructor(pluginService: PluginService) {
@@ -25,13 +29,13 @@ export class RtspStreamingComponent extends ConfigOptionsInterpreter implements 
 
   /** updateConfig() takes an optional second parameter to specify the accessoriy for which the setting is changed */
 
-  @Input() accessory?: Accessory;
+  @Input() device?: L_Device;
   value = false;
 
   talkbackIsEnabled = false;
 
   async readValue() {
-    const config = await this.getCameraConfig(this.accessory?.uniqueId || '');
+    const config = await this.getCameraConfig(this.device?.uniqueId || '');
 
     if (config && Object.prototype.hasOwnProperty.call(config, 'rtsp')) {
       this.value = config['rtsp'];
@@ -43,11 +47,11 @@ export class RtspStreamingComponent extends ConfigOptionsInterpreter implements 
   }
 
   update() {
-    this.updateConfig(
+    this.updateDeviceConfig(
       {
         rtsp: this.value,
       },
-      this.accessory,
+      this.device!,
     );
   }
 }

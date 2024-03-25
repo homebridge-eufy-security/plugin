@@ -1,10 +1,13 @@
 import { Component, OnInit } from '@angular/core';
 import { PluginService } from '../../../app/plugin.service';
 import { ConfigOptionsInterpreter } from '../config-options-interpreter';
+import { FormsModule } from '@angular/forms';
 
 @Component({
-  selector: 'app-clean-cache',
-  templateUrl: './clean-cache.component.html',
+    selector: 'app-clean-cache',
+    templateUrl: './clean-cache.component.html',
+    standalone: true,
+    imports: [FormsModule],
 })
 export class CleanCacheComponent extends ConfigOptionsInterpreter implements OnInit {
   constructor(pluginService: PluginService) {

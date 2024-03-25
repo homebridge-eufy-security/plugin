@@ -1,23 +1,39 @@
+/* eslint-disable max-len */
+
 import { Component, Input, OnInit } from '@angular/core';
-import { Accessory } from '../../../app/accessory';
+import { L_Device } from '../../../app/util/types';
 import { PluginService } from '../../../app/plugin.service';
 import { ConfigOptionsInterpreter } from '../config-options-interpreter';
-import { Device } from '../../util/eufy-security-client.utils';
 import { DEFAULT_CAMERACONFIG_VALUES } from '../../util/default-config-values';
+import { FormsModule } from '@angular/forms';
+import { NgFor } from '@angular/common';
 
-interface UpdatedConfig {
-  enableButton: boolean;
-  motionButton: boolean;
-  indoorChimeButton?: boolean;
+interface ButtonConfig {
+  name: string;
+  description: string;
+  value: boolean;
+  propertyName: keyof L_Device;
 }
 
 @Component({
   selector: 'app-camera-buttons',
   templateUrl: './camera-buttons.component.html',
+  standalone: true,
+  imports: [NgFor, FormsModule],
 })
 export class CameraButtonsComponent extends ConfigOptionsInterpreter implements OnInit {
+  @Input() device?: L_Device;
 
-  constructor(pluginService: PluginService) {
+  buttonConfigs: ButtonConfig[] = [
+    { name: 'Enable', description: 'camera', value: DEFAULT_CAMERACONFIG_VALUES.enableButton, propertyName: 'DeviceEnabled' },
+    { name: 'Motion', description: 'detection', value: DEFAULT_CAMERACONFIG_VALUES.motionButton, propertyName: 'DeviceMotionDetection' },
+    { name: 'Light', description: 'light', value: DEFAULT_CAMERACONFIG_VALUES.lightButton, propertyName: 'DeviceLight' },
+    { name: 'IndoorChime', description: 'indoor chime', value: DEFAULT_CAMERACONFIG_VALUES.indoorChimeButton!, propertyName: 'DeviceChimeIndoor' },
+  ];
+
+  constructor(
+    pluginService: PluginService
+  ) {
     super(pluginService);
   }
 
@@ -25,43 +41,28 @@ export class CameraButtonsComponent extends ConfigOptionsInterpreter implements 
     this.readValue();
   }
 
-  @Input() accessory?: Accessory;
-
-  enableCameraButton = true;
-  enableMotionButton = true;
-  showIndoorChimeButtonSetting = false;
-  indoorChimeButton = DEFAULT_CAMERACONFIG_VALUES.indoorChimeButton;
-
   async readValue(): Promise<void> {
-    const config = await this.getCameraConfig(this.accessory?.uniqueId ?? '');
+    const uniqueId = this.device?.uniqueId ?? '';
+    const config = await this.getCameraConfig(uniqueId);
 
-    if (this.accessory && this.accessory.type !== undefined) {
-      this.showIndoorChimeButtonSetting = Device.isBatteryDoorbell(this.accessory.type) || Device.isWiredDoorbell(this.accessory.type);
-    }
-
-    if ('enableButton' in config) {
-      this.enableCameraButton = config.enableButton;
-    }
-
-    if ('motionButton' in config) {
-      this.enableMotionButton = config.motionButton;
-    }
-
-    if ('indoorChimeButton' in config) {
-      this.indoorChimeButton = config.indoorChimeButton;
-    }
+    this.buttonConfigs = this.buttonConfigs.filter((buttonConfig) => {
+      if (this.device && this.device[buttonConfig.propertyName]) {
+        if (buttonConfig.name in config) {
+          buttonConfig.value = config[buttonConfig.name] ?? buttonConfig.value;
+        }
+        return true; // Keep the buttonConfig
+      } else {
+        return false; // Remove the buttonConfig
+      }
+    });
   }
 
   update(): void {
-    const updated: UpdatedConfig = {
-      enableButton: this.enableCameraButton,
-      motionButton: this.enableMotionButton,
-    };
+    const updated: Record<string, boolean> = {};
+    this.buttonConfigs.forEach(buttonConfig => {
+      updated[buttonConfig.name.toLowerCase()] = buttonConfig.value;
+    });
 
-    if (this.showIndoorChimeButtonSetting) {
-      updated.indoorChimeButton = this.indoorChimeButton;
-    }
-
-    this.updateConfig(updated, this.accessory);
+    this.updateDeviceConfig(updated, this.device!);
   }
 }

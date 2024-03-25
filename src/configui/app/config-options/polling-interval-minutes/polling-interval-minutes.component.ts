@@ -1,10 +1,13 @@
 import { Component, OnInit } from '@angular/core';
 import { PluginService } from '../../../app/plugin.service';
 import { ConfigOptionsInterpreter } from '../config-options-interpreter';
+import { FormsModule } from '@angular/forms';
 
 @Component({
-  selector: 'app-polling-interval-minutes',
-  templateUrl: './polling-interval-minutes.component.html',
+    selector: 'app-polling-interval-minutes',
+    templateUrl: './polling-interval-minutes.component.html',
+    standalone: true,
+    imports: [FormsModule],
 })
 export class PollingIntervalMinutesComponent extends ConfigOptionsInterpreter implements OnInit {
   constructor(pluginService: PluginService) {
