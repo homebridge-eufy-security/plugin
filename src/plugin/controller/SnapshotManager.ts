@@ -14,7 +14,6 @@ import { SnapshotRequest } from 'homebridge';
 import { FFmpeg } from '../utils/ffmpeg';
 import { StreamingDelegate } from './streamingDelegate';
 import { CameraAccessory } from '../accessories/CameraAccessory';
-import sharp from 'sharp';
 import { FFmpegParameters } from '../utils/ffmpeg-params';
 
 const EXTENDED_WAIT_MS = 15000;
@@ -455,28 +454,23 @@ export class SnapshotManager extends EventEmitter {
   }
 
   /**
-   * Resizes a given snapshot image buffer to the specified dimensions.
+   * Resize Snapshot Function
    * 
-   * This function utilizes the Sharp library to resize an image buffer. The image is resized
-   * to the width and height specified in the SnapshotRequest object. Sharp provides a more
-   * efficient and Node.js-native way of handling image processing compared to FFmpeg.
+   * This function asynchronously resizes a snapshot image using FFmpeg.
    * 
-   * @param {Buffer} snapshot - The image buffer to be resized.
-   * @param {SnapshotRequest} request - The object containing the desired dimensions.
-   * @returns {Promise<Buffer>} A Promise that resolves to the resized image buffer.
-   * @throws Will throw an error if the resizing process fails.
+   * @param snapshot A Buffer containing the original snapshot image.
+   * @param request The SnapshotRequest object specifying any additional parameters for resizing.
+   * @returns A Promise resolving to a Buffer containing the resized snapshot image.
    */
   private async resizeSnapshot(snapshot: Buffer, request: SnapshotRequest): Promise<Buffer> {
-    try {
-      // Using Sharp to resize the image
-      const resizedImage = await sharp(snapshot)
-        .resize(request.width, request.height)
-        .toBuffer();
 
-      return resizedImage;
-    } catch (error) {
-      log.error('Error resizing snapshot:', error);
-      throw error;
-    }
+    const parameters = await FFmpegParameters.create({ type: 'snapshot' });
+    parameters.setup(this.cameraConfig, request);
+
+    const ffmpeg = new FFmpeg(
+      `[${this.device.getName()}] [Snapshot Resize Process]`,
+      [parameters],
+    );
+    return ffmpeg.getResult(snapshot);
   }
 }
