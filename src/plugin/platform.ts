@@ -33,7 +33,6 @@ import {
   UserType,
   Lock,
   libVersion,
-  LogLevel,
   // eslint-disable-next-line @typescript-eslint/ban-ts-comment
   // @ts-ignore 
 } from 'eufy-security-client';
@@ -112,7 +111,7 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
         : '[{{mm}}/{{dd}}/{{yyyy}}, {{hh}}:{{MM}}:{{ss}}]\t{{name}}\t{{logLevelName}}\t',
       prettyErrorTemplate: '\n{{errorName}} {{errorMessage}}\nerror stack:\n{{errorStack}}',
       prettyErrorStackTemplate: '  • {{fileName}}\t{{method}}\n\t{{fileNameWithLine}}',
-      prettyErrorParentNamesSeparator: ':',
+      prettyErrorParentNamesSeparator: '',
       prettyErrorLoggerNameDelimiter: '\t',
       stylePrettyLogs: true,
       minLevel: (this.config.enableDetailedLogging) ? 2 : 3,
@@ -270,9 +269,6 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
       p2pConnectionSetup: 0,
       pollingIntervalMinutes: this.config.pollingIntervalMinutes ?? 10,
       eventDurationSeconds: 10,
-      logging: {
-        level: (this.config.enableDetailedLogging) ? LogLevel.Debug : LogLevel.Info,
-      },
     } as EufySecurityConfig;
 
     this.config.ignoreStations = this.config.ignoreStations ??= [];

@@ -1,7 +1,7 @@
 import { Camera, PropertyName } from 'eufy-security-client';
 
 import { CameraConfig } from './configTypes';
-import { Logger as TsLogger, ILogObj } from 'tslog';
+import { Logger, ILogObj } from 'tslog';
 
 import net from 'net';
 import path from 'path';
@@ -20,14 +20,14 @@ export function setHap(hapInstance: HAPHB) {
   CHAR = hapInstance.Characteristic;
 }
 
-export let log: TsLogger<ILogObj> = {} as TsLogger<ILogObj>;
-export let tsLogger: TsLogger<ILogObj> = {} as TsLogger<ILogObj>;
-export let ffmpegLogger: TsLogger<ILogObj> = {} as TsLogger<ILogObj>;
+export let log: Logger<ILogObj> = {} as Logger<ILogObj>;
+export let tsLogger: Logger<ILogObj> = {} as Logger<ILogObj>;
+export let ffmpegLogger: Logger<ILogObj> = {} as Logger<ILogObj>;
 
 export function init_log(logOptions: ILogObj) {
-  log = new TsLogger(logOptions);
-  tsLogger = new TsLogger({ ...logOptions, type: 'hidden' });
-  ffmpegLogger = new TsLogger({ ...logOptions, type: 'hidden' });
+  log = new Logger(logOptions);
+  tsLogger = new Logger({ ...logOptions, type: 'hidden' });
+  ffmpegLogger = new Logger({ ...logOptions, type: 'hidden' });
 }
 
 export const is_rtsp_ready = function (device: Camera, cameraConfig: CameraConfig): boolean {
@@ -89,7 +89,7 @@ export class UniversalStream {
   private constructor(
     namespace: string,
     onSocket: ((socket: net.Socket) => void) | undefined,
-    private readonly log: TsLogger<ILogObj>,
+    private readonly log: Logger<ILogObj>,
   ) {
     this.isWin32 = process.platform === 'win32'; // Cache platform check
 
@@ -160,11 +160,11 @@ export class UniversalStream {
     }
   }
 
-  public static StreamInput(namespace: string, stream: NodeJS.ReadableStream, log: TsLogger<ILogObj>): UniversalStream {
+  public static StreamInput(namespace: string, stream: NodeJS.ReadableStream, log: Logger<ILogObj>): UniversalStream {
     return new UniversalStream(namespace, (socket: net.Socket) => stream.pipe(socket, { end: true }), log);
   }
 
-  public static StreamOutput(namespace: string, stream: NodeJS.WritableStream, log: TsLogger<ILogObj>): UniversalStream {
+  public static StreamOutput(namespace: string, stream: NodeJS.WritableStream, log: Logger<ILogObj>): UniversalStream {
     return new UniversalStream(namespace, (socket: net.Socket) => socket.pipe(stream, { end: true }), log);
   }
 }

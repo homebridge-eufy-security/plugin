@@ -29,7 +29,7 @@ export class AutoSyncStationAccessory {
   } = { timeout: null, delay: 5000 };
 
   constructor(
-    private platform: EufySecurityPlatform,
+    platform: EufySecurityPlatform,
     private accessory: PlatformAccessory,
     private device: Station,
   ) {

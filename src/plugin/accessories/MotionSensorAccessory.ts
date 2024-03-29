@@ -35,7 +35,7 @@ export class MotionSensorAccessory extends DeviceAccessory {
     super(platform, accessory, device);
 
     // Log a debug message indicating the construction of the Motion Sensor.
-    log.debug(`${this.accessory.displayName} Constructed Motion Sensor`);
+    this.log.debug(`Constructed Motion Sensor`);
 
     // Check if the device has the 'motionDetected' property.
     if (this.device.hasProperty('motionDetected')) {
@@ -53,7 +53,7 @@ export class MotionSensorAccessory extends DeviceAccessory {
 
     } else {
       // Log an error if the 'motionDetected' property is not available for this device.
-      log.error(`${this.accessory.displayName} has no motionDetected`);
+      this.log.error(`has no motionDetected`);
     }
 
     // Remove any unused services.

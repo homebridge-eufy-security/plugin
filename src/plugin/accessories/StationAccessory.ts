@@ -43,7 +43,7 @@ export class StationAccessory extends BaseAccessory {
   ) {
     super(platform, accessory, device);
 
-    log.debug(`${this.accessory.displayName} Constructed Station`);
+    this.log.debug(`Constructed Station`);
 
     this.stationConfig = this.getStationConfig();
 
@@ -71,7 +71,7 @@ export class StationAccessory extends BaseAccessory {
 
     SecuritySettings.forEach(item => {
       if (this.device.hasPropertyValue(item) && this.getPropertyValue(item) !== '') {
-        log.debug(`${this.accessory.displayName} - ${item} :`, this.getPropertyValue(item));
+        this.log.debug(`- ${item} :`, this.getPropertyValue(item));
       }
     });
 
@@ -157,7 +157,7 @@ export class StationAccessory extends BaseAccessory {
     const stationConfig = this.platform.config.stations?.find((station) => station.serialNumber === this.SN);
 
     // Debug log to show the retrieved station configuration
-    log.debug(`${this.accessory.displayName} Config:`, stationConfig);
+    this.log.debug(`Config:`, stationConfig);
 
     // Initialize the config object with prioritized values
     const config: StationConfig = {
@@ -177,9 +177,7 @@ export class StationAccessory extends BaseAccessory {
     };
 
     // Log the manual trigger modes for debugging purposes
-    log.debug(`${this.accessory.displayName} 
-    manual alarm will be triggered only in these hk modes:
-     ${config.manualTriggerModes}`);
+    this.log.debug(`manual alarm will be triggered only in these hk modes:\r${config.manualTriggerModes}`);
 
     // Return the final configuration object
     return config;
@@ -191,7 +189,7 @@ export class StationAccessory extends BaseAccessory {
     station: Station,
     guardMode: number,
   ): void {
-    log.debug(`${this.accessory.displayName} ON SecurityGuardMode: ${guardMode}`);
+    this.log.debug(`ON SecurityGuardMode: ${guardMode}`);
     const homekitCurrentMode = this.convertEufytoHK(guardMode);
     characteristic.updateValue(homekitCurrentMode);
   }
@@ -204,7 +202,7 @@ export class StationAccessory extends BaseAccessory {
       // If there's an existing timeout, clear it
       clearTimeout(this.guardModeChangeTimeout.timeout);
     }
-    log.debug(`${this.accessory.displayName} ON SecuritySystemCurrentState: ${currentMode}`);
+    this.log.debug(`ON SecuritySystemCurrentState: ${currentMode}`);
     const homekitCurrentMode = this.convertEufytoHK(currentMode);
     characteristic.updateValue(homekitCurrentMode);
   }
@@ -262,7 +260,7 @@ export class StationAccessory extends BaseAccessory {
     ];
 
     // Log the mapping for station modes for debugging purposes
-    log.debug(`${this.accessory.displayName} Mapping for station modes:`, this.modes);
+    this.log.debug(`Mapping for station modes:`, this.modes);
   }
 
   /**
@@ -319,10 +317,10 @@ export class StationAccessory extends BaseAccessory {
       if (currentValue === -1) {
         throw 'Something wrong with this device';
       }
-      log.debug(`${this.accessory.displayName} GET StationCurrentMode: ${currentValue}`);
+      this.log.debug(`GET StationCurrentMode: ${currentValue}`);
       return this.convertEufytoHK(currentValue);
     } catch {
-      log.error(`${this.accessory.displayName} ${stateCharacteristic}: Wrong return value`);
+      this.log.error(`${stateCharacteristic}: Wrong return value`);
       return false;
     }
   }
@@ -334,7 +332,7 @@ export class StationAccessory extends BaseAccessory {
     try {
       this.alarm_triggered = false;
       const NameMode = this.getGuardModeName(value);
-      log.debug(`${this.accessory.displayName} SET StationGuardMode HomeKit: ${NameMode}`);
+      this.log.debug(`SET StationGuardMode HomeKit: ${NameMode}`);
       const mode = this.convertHKtoEufy(value as number);
 
       if (isNaN(mode)) {
@@ -342,8 +340,8 @@ export class StationAccessory extends BaseAccessory {
         Could not convert guard mode value to valid number. Aborting guard mode change...'`);
       }
 
-      log.debug(`${this.accessory.displayName} SET StationGuardMode Eufy: ${GuardMode[mode]}(${mode})`);
-      log.info(`${this.accessory.displayName} Request to change station guard mode to: ${NameMode}`);
+      this.log.debug(`SET StationGuardMode Eufy: ${GuardMode[mode]}(${mode})`);
+      this.log.info(`Request to change station guard mode to: ${NameMode}`);
 
       // Call the device's setGuardMode method to initiate the action
       this.device.setGuardMode(mode);
@@ -352,7 +350,7 @@ export class StationAccessory extends BaseAccessory {
       this.guardModeChangeTimeout.timeout = setTimeout(() => {
         // This code is executed when the timeout elapses, indicating that the action may not have completed yet.
         // You can include a message indicating that the action is being retried.
-        log.warn(`${this.accessory.displayName} Changing guard mode to ${NameMode} did not complete. Retry...'`);
+        this.log.warn(`Changing guard mode to ${NameMode} did not complete. Retry...'`);
 
         // Call the device's setGuardMode method to initiate the action
         this.device.setGuardMode(mode);
@@ -360,7 +358,7 @@ export class StationAccessory extends BaseAccessory {
         // Set a secondary timeout for retry, if needed
         const retryTimeout = setTimeout(() => {
           // This code is executed if the retry also times out, indicating a failure.
-          log.error(`${this.accessory.displayName} Changing guard mode to ${NameMode} timed out!`);
+          this.log.error(`Changing guard mode to ${NameMode} timed out!`);
         }, this.guardModeChangeTimeout.delay);
 
         // Store the retry timeout as part of guardModeChangeTimeout
@@ -370,7 +368,7 @@ export class StationAccessory extends BaseAccessory {
       this.updateManuelTriggerButton(false);
 
     } catch (error) {
-      log.error(`${this.accessory.displayName} Error Setting security mode! ${error}`);
+      this.log.error(`Error Setting security mode! ${error}`);
     }
   }
 
@@ -391,30 +389,30 @@ export class StationAccessory extends BaseAccessory {
           this.device.triggerStationAlarmSound(this.stationConfig.manualAlarmSeconds)
             .then(() => log.debug(
               this.accessory.displayName, 'alarm manually triggered for ' + this.stationConfig.manualAlarmSeconds + ' seconds.'))
-            .catch(err => log.error(`${this.accessory.displayName} alarm could not be manually triggered: ${err}`));
+            .catch(err => this.log.error(`alarm could not be manually triggered: ${err}`));
         } else {
           const message = this.alarm_delayed ?
             'tried to trigger alarm, but the alarm delayed event was triggered beforehand.' :
             'tried to trigger alarm, but the current station mode prevents the alarm from being triggered. ' +
             'Please look in in the configuration if you want to change this behaviour.';
           setTimeout(() => {
-            log.info(`${this.accessory.displayName} ${message}`);
+            this.log.info(`${message}`);
             this.updateManuelTriggerButton(false);
           }, 1000);
         }
       } catch {
-        log.error(`${this.accessory.displayName} handleSecuritySystemTargetStateGet: ${value}`);
+        this.log.error(`handleSecuritySystemTargetStateGet: ${value}`);
         return;
       }
     } else { // reset alarm
       this.device.resetStationAlarmSound()
-        .then(() => log.debug(`${this.accessory.displayName} alarm manually reset`))
-        .catch(err => log.error(`${this.accessory.displayName} alarm could not be reset: ${err}`));
+        .then(() => this.log.debug(`alarm manually reset`))
+        .catch(err => this.log.error(`alarm could not be reset: ${err}`));
     }
   }
 
   public onStationAlarmDelayedEvent(station: Station, armDelay: number) {
-    log.debug(`${this.accessory.displayName} alarm for this station will be delayed by ${armDelay} seconds.`);
+    this.log.debug(`alarm for this station will be delayed by ${armDelay} seconds.`);
     this.alarm_delayed = true;
 
     if (this.alarm_delay_timeout) {
@@ -422,13 +420,13 @@ export class StationAccessory extends BaseAccessory {
     }
 
     this.alarm_delay_timeout = setTimeout(() => {
-      log.debug(`${this.accessory.displayName} alarm for this station is armed now (due to timeout).`);
+      this.log.debug(`alarm for this station is armed now (due to timeout).`);
       this.alarm_delayed = false;
     }, (armDelay + 1) * 1000);
   }
 
   public onStationAlarmArmedEvent() {
-    log.debug(`${this.accessory.displayName} alarm for this station is armed now.`);
+    this.log.debug(`alarm for this station is armed now.`);
     this.alarm_delayed = false;
 
     if (this.alarm_delay_timeout) {

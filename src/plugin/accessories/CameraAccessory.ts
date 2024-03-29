@@ -124,17 +124,17 @@ export class CameraAccessory extends DeviceAccessory {
 
     this.cameraStatus = { isEnabled: false, timestamp: 0 }; // Initialize the cameraStatus object
 
-    log.debug(`${this.accessory.displayName} Constructed Camera`);
+    this.log.debug(`Constructed Camera`);
 
     this.cameraConfig = this.getCameraConfig();
 
     if (this.cameraConfig.enableCamera || this.device.isDoorbell()) {
-      log.debug(`${this.accessory.displayName} has a camera`);
+      this.log.debug(`has a camera`);
       this.setupCamera();
       this.setupChimeButton();
       this.initSensorService(SERV.Battery);
     } else {
-      log.debug(`${this.accessory.displayName} has a motion sensor`);
+      this.log.debug(`has a motion sensor`);
       this.setupMotionFunction();
       this.initSensorService(SERV.MotionSensor);
     }
@@ -150,7 +150,7 @@ export class CameraAccessory extends DeviceAccessory {
     try {
       this.cameraFunction();
     } catch (error) {
-      log.error(`${this.accessory.displayName} while happending CameraFunction ${error}`);
+      this.log.error(`while happending CameraFunction ${error}`);
     }
 
     try {
@@ -158,7 +158,7 @@ export class CameraAccessory extends DeviceAccessory {
       this.configureVideoStream();
 
     } catch (error) {
-      log.error(`${this.accessory.displayName} while happending Delegate ${error}`);
+      this.log.error(`while happending Delegate ${error}`);
     }
   }
 
@@ -253,17 +253,17 @@ export class CameraAccessory extends DeviceAccessory {
     serviceType: 'switch' | 'lightbulb',
   ) {
     try {
-      log.debug(`${this.accessory.displayName} ${serviceName} config:`, configValue);
+      this.log.debug(`${serviceName} config:`, configValue);
       if (configValue && this.device.hasProperty(PropertyName)) {
         // eslint-disable-next-line max-len
-        log.debug(`${this.accessory.displayName} has a ${PropertyName}, so append ${serviceType}${serviceName} characteristic to it.`);
+        this.log.debug(`has a ${PropertyName}, so append ${serviceType}${serviceName} characteristic to it.`);
         this.setupSwitchService(serviceName, serviceType, PropertyName);
       } else {
         // eslint-disable-next-line max-len
-        log.debug(`${this.accessory.displayName} Looks like not compatible with ${PropertyName} or this has been disabled within configuration`);
+        this.log.debug(`Looks like not compatible with ${PropertyName} or this has been disabled within configuration`);
       }
     } catch (error) {
-      log.error(`${this.accessory.displayName} raise error to check and attach ${serviceType}${serviceName}.`, error);
+      this.log.error(`raise error to check and attach ${serviceType}${serviceName}.`, error);
       throw Error;
     }
   }
@@ -338,17 +338,17 @@ export class CameraAccessory extends DeviceAccessory {
 
     // Validate talkback setting
     if (config.talkback && !this.device.hasCommand(CommandName.DeviceStartTalkback)) {
-      log.warn(this.accessory.displayName, 'Talkback for this device is not supported!');
+      this.log.warn('Talkback for this device is not supported!');
       config.talkback = false;
     }
 
     // Validate talkback with rtsp setting
     if (config.talkback && config.rtsp) {
-      log.warn(this.accessory.displayName, 'Talkback cannot be used with rtsp option. Ignoring talkback setting.');
+      this.log.warn('Talkback cannot be used with rtsp option. Ignoring talkback setting.');
       config.talkback = false;
     }
 
-    log.debug(`${this.accessory.displayName} config is`, config);
+    this.log.debug(`config is`, config);
 
     return config as CameraConfig;
   }
@@ -427,7 +427,7 @@ export class CameraAccessory extends DeviceAccessory {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           this.device.on(eventType as keyof any, (device: any, state: any) => {
             // eslint-disable-next-line max-len
-            log.info(`${this.accessory.displayName} MOTION DETECTED (${eventType})': ${state}`);
+            this.log.info(`MOTION DETECTED (${eventType})': ${state}`);
             characteristic.updateValue(state);
           });
         });
@@ -511,7 +511,7 @@ export class CameraAccessory extends DeviceAccessory {
       characteristicType: CHAR.StatusTampered,
       getValue: () => {
         const tampered = this.device.getPropertyValue(PropertyName.DeviceEnabled);
-        log.debug(`${this.accessory.displayName} TAMPERED? ${!tampered}`);
+        this.log.debug(`TAMPERED? ${!tampered}`);
         return tampered
           ? CHAR.StatusTampered.NOT_TAMPERED
           : CHAR.StatusTampered.TAMPERED;
@@ -524,7 +524,7 @@ export class CameraAccessory extends DeviceAccessory {
     try {
       let value = this.device.getPropertyValue(propertyName);
 
-      log.debug(`${this.accessory.displayName} GET '${characteristic.displayName}' ${propertyName}: ${value}`);
+      this.log.debug(`GET '${characteristic.displayName}' ${propertyName}: ${value}`);
 
       if (propertyName === PropertyName.DeviceNightvision) {
         return value === 1;
@@ -536,13 +536,13 @@ export class CameraAccessory extends DeviceAccessory {
         Date.now() - this.cameraStatus.timestamp <= 60000
       ) {
         // eslint-disable-next-line max-len
-        log.debug(`${this.accessory.displayName} CACHED for (1 min) '${characteristic.displayName}' ${propertyName}: ${this.cameraStatus.isEnabled}`);
+        this.log.debug(`CACHED for (1 min) '${characteristic.displayName}' ${propertyName}: ${this.cameraStatus.isEnabled}`);
         value = this.cameraStatus.isEnabled;
       }
 
       if (characteristic.displayName === 'Manually Disabled') {
         value = !value;
-        log.debug(`${this.accessory.displayName} INVERSED '${characteristic.displayName}' ${propertyName}: ${value}`);
+        this.log.debug(`INVERSED '${characteristic.displayName}' ${propertyName}: ${value}`);
       }
 
       if (value === undefined) {
@@ -551,7 +551,7 @@ export class CameraAccessory extends DeviceAccessory {
 
       return value as CharacteristicValue;
     } catch (error) {
-      log.debug(`${this.accessory.displayName} Error getting '${characteristic.displayName}' ${propertyName}: ${error}`);
+      this.log.debug(`Error getting '${characteristic.displayName}' ${propertyName}: ${error}`);
       return false;
     }
   }
@@ -559,7 +559,7 @@ export class CameraAccessory extends DeviceAccessory {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   protected async setCameraPropertyValue(characteristic: any, propertyName: PropertyName, value: CharacteristicValue) {
     try {
-      log.debug(`${this.accessory.displayName} SET '${characteristic.displayName}' ${propertyName}: ${value}`);
+      this.log.debug(`SET '${characteristic.displayName}' ${propertyName}: ${value}`);
       await this.setPropertyValue(propertyName, value);
 
       if (
@@ -572,13 +572,13 @@ export class CameraAccessory extends DeviceAccessory {
         characteristic = this.getService(SERV.CameraOperatingMode)
           .getCharacteristic(CHAR.ManuallyDisabled);
 
-        log.debug(`${this.accessory.displayName} INVERSED '${characteristic.displayName}' ${propertyName}: ${!value}`);
+        this.log.debug(`INVERSED '${characteristic.displayName}' ${propertyName}: ${!value}`);
         value = !value as boolean;
       }
 
       characteristic.updateValue(value);
     } catch (error) {
-      log.debug(`${this.accessory.displayName} Error setting '${characteristic.displayName}' ${propertyName}: ${error}`);
+      this.log.debug(`Error setting '${characteristic.displayName}' ${propertyName}: ${error}`);
     }
   }
 
@@ -589,7 +589,7 @@ export class CameraAccessory extends DeviceAccessory {
    */
   private onDeviceRingsPushNotification(characteristic: Characteristic): void {
     if (!this.notificationTimeout) {
-      log.debug(`${this.accessory.displayName} DoorBell ringing`);
+      this.log.debug(`DoorBell ringing`);
       characteristic.updateValue(CHAR.ProgrammableSwitchEvent.SINGLE_PRESS);
       // Set a new timeout for muting subsequent notifications
       this.notificationTimeout = setTimeout(() => {
@@ -611,7 +611,7 @@ export class CameraAccessory extends DeviceAccessory {
 
   // Configure a camera accessory for HomeKit.
   private configureVideoStream(): boolean {
-    log.debug(`${this.accessory.displayName} StreamingDelegate`);
+    this.log.debug(`StreamingDelegate`);
     this.streamingDelegate = new StreamingDelegate(this);
 
     this.recordingDelegate = {} as RecordingDelegate;
@@ -620,26 +620,26 @@ export class CameraAccessory extends DeviceAccessory {
 
       // If we have smart motion events enabled, let's warn the user that things will not work quite the way they expect.
       if (this.accessory.getService(SERV.MotionSensor)) {
-        log.info('WARNING: Motion detection and HomeKit Secure Video provide overlapping functionality. ' +
+        this.log.info('WARNING: Motion detection and HomeKit Secure Video provide overlapping functionality. ' +
           'Only HomeKit Secure Video, when event recording is enabled in the Home app, will be used to trigger motion event notifications for this camera.');
       }
 
-      log.debug(`${this.accessory.displayName} RecordingDelegate`);
+      this.log.debug(`RecordingDelegate`);
       this.recordingDelegate = new RecordingDelegate(this.streamingDelegate, this.accessory);
     }
 
-    log.debug(`${this.accessory.displayName} Controller`);
+    this.log.debug(`Controller`);
     const controller = new HAP.CameraController(this.getCameraControllerOptions());
 
-    log.debug(`${this.accessory.displayName} streamingDelegate.setController`);
+    this.log.debug(`streamingDelegate.setController`);
     this.streamingDelegate.setController(controller);
 
     if (this.cameraConfig.hsv) {
-      log.debug(`${this.accessory.displayName} recordingDelegate.setController`);
+      this.log.debug(`recordingDelegate.setController`);
       this.recordingDelegate.setController(controller);
     }
 
-    log.debug(`${this.accessory.displayName} configureController`);
+    this.log.debug(`configureController`);
     this.accessory.configureController(controller);
 
     this.isVideoConfigured = true;

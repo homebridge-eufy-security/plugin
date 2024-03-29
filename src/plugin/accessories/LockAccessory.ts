@@ -34,7 +34,7 @@ export class LockAccessory extends DeviceAccessory {
     super(platform, accessory, device);
 
     // Log that the LockAccessory is constructed.
-    log.debug(`${this.accessory.displayName} Constructed Lock`);
+    this.log.debug(`Constructed Lock`);
 
     // Check if the device has the 'locked' property.
     if (this.device.hasProperty('locked')) {
@@ -45,7 +45,7 @@ export class LockAccessory extends DeviceAccessory {
       this.initLockMechanismService();
     } else {
       // Log an error if the device has no lock.
-      log.error(`${this.accessory.displayName} has no lock`);
+      this.log.error(`has no lock`);
     }
 
     // Prune any unused services.
@@ -113,7 +113,7 @@ export class LockAccessory extends DeviceAccessory {
         try {
           await this.setLockTargetState(value);
         } catch (error) {
-          log.error(`${this.accessory.displayName} Lock target state could not be set: ${error}`);
+          this.log.error(`Lock target state could not be set: ${error}`);
         }
       },
       onValue: (service, characteristic) => {
@@ -132,7 +132,7 @@ export class LockAccessory extends DeviceAccessory {
    */
   private getLockStatus(): CharacteristicValue {
     const lockStatus = this.device.isLocked();
-    log.debug(`${this.accessory.displayName} getLockStatus: ${lockStatus}`);
+    this.log.debug(`getLockStatus: ${lockStatus}`);
     return this.convertLockStatusCode(lockStatus);
   }
 
@@ -142,9 +142,9 @@ export class LockAccessory extends DeviceAccessory {
   private async setLockTargetState(state: CharacteristicValue) {
     try {
       await this.setPropertyValue(PropertyName.DeviceLocked, !!state);
-      log.info(`${this.name} Lock target state set to: ${state}`);
+      this.log.info(`Lock target state set to: ${state}`);
     } catch (error) {
-      log.error(`${this.name} Error setting lock target state: ${error}`);
+      this.log.error(`Error setting lock target state: ${error}`);
     }
   }
 
