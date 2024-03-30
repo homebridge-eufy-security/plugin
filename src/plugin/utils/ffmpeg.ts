@@ -10,16 +10,14 @@ import { CameraConfig } from './configTypes';
 import { AudioStreamingCodecType, ReconfigureStreamRequest, SnapshotRequest, StartStreamRequest } from 'homebridge';
 import { SessionInfo } from '../controller/streamingDelegate';
 import { reservePorts } from '@homebridge/camera-utils';
-import { log } from './utils';
+import { ffmpegLogger } from './utils';
 
 class FFmpegProgress extends EventEmitter {
-    private port: number;
     private server: net.Server;
     private started = false;
 
     constructor(port: number) {
         super();
-        this.port = port;
         let killTimeout: NodeJS.Timeout | undefined = undefined;
         this.server = net.createServer((socket) => {
             if (killTimeout) {
@@ -34,7 +32,7 @@ class FFmpegProgress extends EventEmitter {
 
         killTimeout = setTimeout(() => {
             this.server.close();
-        }, 30 * 1000);
+        }, 30 * 1000); // TBC for variable
 
         this.server.on('close', () => {
             this.emit('progress stopped');
@@ -42,7 +40,7 @@ class FFmpegProgress extends EventEmitter {
 
         this.server.on('error', () => { }); // ignore since this is handled elsewhere
 
-        this.server.listen(this.port);
+        this.server.listen(port);
     }
 
     private analyzeProgress(progressData: Buffer) {
@@ -559,9 +557,9 @@ export class FFmpeg extends EventEmitter {
 
         const processArgs = FFmpegParameters.getCombinedArguments(this.parameters);
 
-        log.debug(this.name, 'Stream command: ' + this.ffmpegExec + ' ' + processArgs.join(' '));
+        ffmpegLogger.debug(this.name, 'Stream command: ' + this.ffmpegExec + ' ' + processArgs.join(' '));
         this.parameters.forEach((p) => {
-            log.info(this.name, p.getStreamStartText());
+            ffmpegLogger.info(this.name, p.getStreamStartText());
         });
 
         this.process = spawn(this.ffmpegExec, processArgs.join(' ').split(/\s+/), { env: process.env });
@@ -570,7 +568,7 @@ export class FFmpeg extends EventEmitter {
 
         this.process.stderr.on('data', (chunk) => {
             if (this.parameters[0].debug) {
-                log.debug(this.name, 'ffmpeg log message:\n' + chunk.toString());
+                ffmpegLogger.debug(this.name, 'ffmpeg log message:\n' + chunk.toString());
             }
         });
 
@@ -585,14 +583,14 @@ export class FFmpeg extends EventEmitter {
         this.progress.on('progress started', this.onProgressStarted.bind(this));
 
         const processArgs = FFmpegParameters.getCombinedArguments(this.parameters);
-        log.debug(this.name, 'Process command: ' + this.ffmpegExec + ' ' + processArgs.join(' '));
+        ffmpegLogger.debug(this.name, 'Process command: ' + this.ffmpegExec + ' ' + processArgs.join(' '));
 
         return new Promise((resolve, reject) => {
             this.process = spawn(this.ffmpegExec, processArgs.join(' ').split(/\s+/), { env: process.env });
 
             this.process.stderr.on('data', (chunk) => {
                 if (this.parameters[0].debug) {
-                    log.debug(this.name, 'ffmpeg log message:\n' + chunk.toString());
+                    ffmpegLogger.debug(this.name, 'ffmpeg log message:\n' + chunk.toString());
                 }
             });
 
@@ -650,7 +648,7 @@ export class FFmpeg extends EventEmitter {
     private onProgressStarted() {
         this.emit('started');
         const runtime = this.starttime ? (Date.now() - this.starttime) / 1000 : undefined;
-        log.debug(this.name, `process started. Getting the first response took ${runtime} seconds.`);
+        ffmpegLogger.debug(this.name, `process started. Getting the first response took ${runtime} seconds.`);
     }
 
     private onProcessError(error: Error) {
@@ -666,15 +664,15 @@ export class FFmpeg extends EventEmitter {
 
         const message = 'FFmpeg exited with code: ' + code + ' and signal: ' + signal;
         if (this.killTimeout && code === 0) {
-            log.info(this.name, message + ' (Expected)');
+            ffmpegLogger.info(this.name, message + ' (Expected)');
         } else if (code === null || code === 255) {
             if (this.process?.killed) {
-                log.info(this.name, message + ' (Forced)');
+                ffmpegLogger.info(this.name, message + ' (Forced)');
             } else {
-                log.error(this.name, message + ' (Unexpected)');
+                ffmpegLogger.error(this.name, message + ' (Unexpected)');
             }
         } else {
-            log.error(this.name, message + ' (Error)');
+            ffmpegLogger.error(this.name, message + ' (Error)');
         }
     }
 }

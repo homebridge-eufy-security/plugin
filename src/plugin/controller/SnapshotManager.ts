@@ -119,6 +119,15 @@ export class SnapshotManager extends EventEmitter {
     } catch (err) {
       log.error(this.device.getName(), 'could not cache black snapshot file for further use: ' + err);
     }
+
+    // Cache the first picture
+    const picture = device.getPropertyValue(PropertyName.DevicePicture) as Picture;
+    if (picture && picture.type) {
+      this.storeImage(`${device.getSerial()}.${picture.type.ext}`, picture.data);
+      this.currentSnapshot = { timestamp: Date.now(), image: picture.data };
+      this.emit('new snapshot');
+    }
+
   }
 
   private onRingEvent(device: Device, state: boolean) {
@@ -296,8 +305,8 @@ export class SnapshotManager extends EventEmitter {
     }
   }
 
-  private async onPropertyValueChanged(device: Device, name: string): Promise<void> {
-    if (name === 'picture') {
+  private onPropertyValueChanged(device: Device, name: string): void {
+    if (name === 'picture' || name === 'hidden-pictureUrl') {
       const picture = device.getPropertyValue(PropertyName.DevicePicture) as Picture;
       if (picture && picture.type) {
         this.storeImage(`${device.getSerial()}.${picture.type.ext}`, picture.data);

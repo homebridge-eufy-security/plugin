@@ -51,7 +51,6 @@
     "fs-extra": "^11.2.0",
     "rotating-file-stream": "^3.2.1",
     "tslog": "^4.9.2",
-    "werift": "^0.19.1",
     "zip-lib": "^1.0.3"
   },
   "devDependencies": {
