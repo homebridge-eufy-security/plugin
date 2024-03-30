@@ -8,7 +8,7 @@ import {
 import { EufySecurityPlatform } from '../platform';
 import { BaseAccessory } from './BaseAccessory';
 import { Device, PropertyName } from 'eufy-security-client';
-import { CHAR, log } from '../utils/utils';
+import { CHAR } from '../utils/utils';
 
 export type CharacteristicType = WithUUID<{ new(): Characteristic }>;
 export type ServiceType = WithUUID<typeof Service> | Service;

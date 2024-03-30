@@ -4,7 +4,7 @@ import { CharacteristicValue, PlatformAccessory } from 'homebridge';
 import { EufySecurityPlatform } from '../platform';
 import { DeviceAccessory } from './Device';
 import { Lock, PropertyName } from 'eufy-security-client';
-import { CHAR, SERV, log } from '../utils/utils';
+import { CHAR, SERV } from '../utils/utils';
 
 /**
  * LockAccessory Class

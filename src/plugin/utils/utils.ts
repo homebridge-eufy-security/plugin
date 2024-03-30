@@ -1,6 +1,3 @@
-import { Camera, PropertyName } from 'eufy-security-client';
-
-import { CameraConfig } from './configTypes';
 import { Logger, ILogObj } from 'tslog';
 
 import net from 'net';
@@ -8,7 +5,9 @@ import path from 'path';
 import { tmpdir } from 'os';
 import fse from 'fs-extra';
 
-import { Characteristic, HAP as HAPHB, Service } from 'homebridge'
+import { Characteristic, HAP as HAPHB, Service } from 'homebridge';
+import { CameraConfig } from './configTypes';
+import { Camera, PropertyName } from 'eufy-security-client';
 
 export let HAP: HAPHB;
 export let SERV: typeof Service;
@@ -29,35 +28,6 @@ export function init_log(logOptions: ILogObj) {
   tsLogger = new Logger({ ...logOptions, type: 'hidden' });
   ffmpegLogger = new Logger({ ...logOptions, type: 'hidden' });
 }
-
-export const is_rtsp_ready = function (device: Camera, cameraConfig: CameraConfig): boolean {
-
-  log.debug(device.getName(), 'RTSP rtspStream:' + device.hasProperty('rtspStream'));
-  if (!device.hasProperty('rtspStream')) {
-    log.debug(device.getName(), 'Looks like not compatible with RTSP');
-    return false;
-  }
-
-  log.debug(device.getName(), 'RTSP cameraConfig: ' + cameraConfig.rtsp);
-  if (!cameraConfig.rtsp) {
-    log.debug(device.getName(), 'Looks like RTSP is not enabled on camera config');
-    return false;
-  }
-
-  log.debug(device.getName(), 'RTSP ' + device.getPropertyValue(PropertyName.DeviceRTSPStream));
-  if (!device.getPropertyValue(PropertyName.DeviceRTSPStream)) {
-    log.debug(device.getName(), ': RTSP capabilities not enabled. You will need to do it manually!');
-    return false;
-  }
-
-  log.debug(device.getName(), 'RTSP ' + device.getPropertyValue(PropertyName.DeviceRTSPStreamUrl));
-  if (device.getPropertyValue(PropertyName.DeviceRTSPStreamUrl) === '') {
-    log.debug(device.getName(), ': RTSP URL is unknow');
-    return false;
-  }
-
-  return true;
-};
 
 export class Deferred<T> {
   finished = false;
@@ -89,7 +59,6 @@ export class UniversalStream {
   private constructor(
     namespace: string,
     onSocket: ((socket: net.Socket) => void) | undefined,
-    private readonly log: Logger<ILogObj>,
   ) {
     this.isWin32 = process.platform === 'win32'; // Cache platform check
 
@@ -103,11 +72,11 @@ export class UniversalStream {
     this.server = net.createServer(onSocket)
       .on('error', (err) => {
         // More robust error handling
-        this.log.debug('Server error:', err);
+        ffmpegLogger.debug('Server error:', err);
         this.close();
       })
       .listen(sockpath, () => {
-        this.log.debug('Server is listening');
+        ffmpegLogger.debug('Server is listening');
       });
   }
 
@@ -131,7 +100,7 @@ export class UniversalStream {
 
     const stepEndTime = Date.now(); // End time for this step
     // eslint-disable-next-line max-len
-    this.log.debug(`Time taken for generateSockPath: ${stepEndTime - stepStartTime}ms (Total time from start: ${stepEndTime - this.startTime}ms)`);
+    ffmpegLogger.debug(`Time taken for generateSockPath: ${stepEndTime - stepStartTime}ms (Total time from start: ${stepEndTime - this.startTime}ms)`);
 
     return sockpath;
   }
@@ -146,25 +115,54 @@ export class UniversalStream {
         this.server.close();
       }
     } catch (error) {
-      this.log.debug(`An error occurred while closing the server: ${error}`);
+      ffmpegLogger.debug(`An error occurred while closing the server: ${error}`);
     } finally {
       if (!this.isWin32 && this.url) {
         try {
           fse.unlinkSync(this.url.replace('unix:', ''));
         } catch (error) {
-          this.log.debug(`An error occurred while unlinking the file: ${error}`);
+          ffmpegLogger.debug(`An error occurred while unlinking the file: ${error}`);
         }
       }
       UniversalStream.socks.delete(this.sock_id);
-      this.log.debug('Resources cleaned up.');
+      ffmpegLogger.debug('Resources cleaned up.');
     }
   }
 
-  public static StreamInput(namespace: string, stream: NodeJS.ReadableStream, log: Logger<ILogObj>): UniversalStream {
-    return new UniversalStream(namespace, (socket: net.Socket) => stream.pipe(socket, { end: true }), log);
+  public static StreamInput(namespace: string, stream: NodeJS.ReadableStream): UniversalStream {
+    return new UniversalStream(namespace, (socket: net.Socket) => stream.pipe(socket, { end: true }));
   }
 
-  public static StreamOutput(namespace: string, stream: NodeJS.WritableStream, log: Logger<ILogObj>): UniversalStream {
-    return new UniversalStream(namespace, (socket: net.Socket) => socket.pipe(stream, { end: true }), log);
+  public static StreamOutput(namespace: string, stream: NodeJS.WritableStream): UniversalStream {
+    return new UniversalStream(namespace, (socket: net.Socket) => socket.pipe(stream, { end: true }));
   }
 }
+
+export const is_rtsp_ready = function (device: Camera, cameraConfig: CameraConfig): boolean {
+
+  log.debug(device.getName(), 'RTSP rtspStream:' + JSON.stringify(device.hasProperty('rtspStream')));
+  if (!device.hasProperty('rtspStream')) {
+    log.debug(device.getName(), 'Looks like not compatible with RTSP');
+    return false;
+  }
+
+  log.debug(device.getName(), 'RTSP cameraConfig: ' + JSON.stringify(cameraConfig.rtsp));
+  if (!cameraConfig.rtsp) {
+    log.debug(device.getName(), 'Looks like RTSP is not enabled on camera config');
+    return false;
+  }
+
+  log.debug(device.getName(), 'RTSP ' + JSON.stringify(device.getPropertyValue(PropertyName.DeviceRTSPStream)));
+  if (!device.getPropertyValue(PropertyName.DeviceRTSPStream)) {
+    log.debug(device.getName(), ': RTSP capabilities not enabled. You will need to do it manually!');
+    return false;
+  }
+
+  log.debug(device.getName(), 'RTSP ' + JSON.stringify(device.getPropertyValue(PropertyName.DeviceRTSPStreamUrl)));
+  if (device.getPropertyValue(PropertyName.DeviceRTSPStreamUrl) === '') {
+    log.debug(device.getName(), ': RTSP URL is unknow');
+    return false;
+  }
+
+  return true;
+};

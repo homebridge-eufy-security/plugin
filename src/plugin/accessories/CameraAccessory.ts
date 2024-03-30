@@ -4,19 +4,6 @@ import {
   Characteristic,
   CharacteristicValue,
   Resolution,
-  CameraControllerOptions,
-  SRTPCryptoSuites,
-  H264Profile,
-  H264Level,
-  AudioStreamingCodecType,
-  AudioStreamingSamplerate,
-  EventTriggerOption,
-  MediaContainerType,
-  AudioRecordingCodecType,
-  AudioRecordingSamplerate,
-  CameraStreamingOptions,
-  CameraRecordingOptions,
-  AudioBitrate,
 } from 'homebridge';
 
 import { EufySecurityPlatform } from '../platform';
@@ -26,12 +13,9 @@ import { DeviceAccessory } from './Device';
 // @ts-ignore  
 import { Camera, DeviceEvents, PropertyName, CommandName, StreamMetadata } from 'eufy-security-client';
 
-import { StreamingDelegate } from '../controller/streamingDelegate';
-import { RecordingDelegate } from '../controller/recordingDelegate';
-
 import { CameraConfig, DEFAULT_CAMERACONFIG_VALUES } from '../utils/configTypes';
-import { PROTECT_HKSV_SEGMENT_LENGTH, PROTECT_HKSV_TIMESHIFT_BUFFER_MAXLENGTH } from '../settings';
-import { CHAR, HAP, SERV, log } from '../utils/utils';
+import { CHAR, SERV, log } from '../utils/utils';
+import { StreamingDelegate } from '../controller/streamingDelegate';
 
 // A semi-complete description of the UniFi Protect camera channel JSON.
 export interface ProtectCameraChannelConfig {
@@ -77,9 +61,6 @@ export class CameraAccessory extends DeviceAccessory {
 
   public isOnline: boolean = true;
 
-  private rtspEntries: RtspEntry[] = [];
-  private rtspQuality: { [index: string]: string } = {};
-  private isVideoConfigured: boolean = false;
   public rtsp_url: string = '';
 
   public metadata!: StreamMetadata;
@@ -97,9 +78,8 @@ export class CameraAccessory extends DeviceAccessory {
   ];
 
   public streamingDelegate: StreamingDelegate | null = null;
-  public recordingDelegate?: RecordingDelegate | null = null;
 
-  private resolutions: Resolution[] = [
+  public resolutions: Resolution[] = [
     [320, 180, 30],
     [320, 240, 15], // Apple Watch requires this configuration
     [320, 240, 30],
@@ -154,96 +134,10 @@ export class CameraAccessory extends DeviceAccessory {
     }
 
     try {
-
       this.configureVideoStream();
-
     } catch (error) {
       this.log.error(`while happending Delegate ${error}`);
     }
-  }
-
-  private getCameraStreamingOptions(): CameraStreamingOptions {
-    return {
-      supportedCryptoSuites: [SRTPCryptoSuites.AES_CM_128_HMAC_SHA1_80],
-      video: {
-        resolutions: this.resolutions,
-        codec: {
-          profiles: [H264Profile.BASELINE, H264Profile.MAIN, H264Profile.HIGH],
-          levels: [H264Level.LEVEL3_1, H264Level.LEVEL3_2, H264Level.LEVEL4_0],
-        },
-      },
-      audio: {
-        twoWayAudio: this.cameraConfig.talkback,
-        codecs: [
-          {
-            type: AudioStreamingCodecType.AAC_ELD,
-            samplerate: AudioStreamingSamplerate.KHZ_16,
-            bitrate: AudioBitrate.VARIABLE,
-            audioChannels: 1,
-          },
-        ],
-      },
-    };
-  }
-
-  /**
-   * Get camera recording options based on device capabilities.
-   * @returns CameraRecordingOptions object
-   */
-  private getCameraRecordingOptions(): CameraRecordingOptions {
-    // Determine event trigger options based on device type
-    const eventTriggerOptions = [EventTriggerOption.MOTION];
-    if (this.device.isDoorbell()) {
-      eventTriggerOptions.push(EventTriggerOption.DOORBELL);
-    }
-
-    return {
-      overrideEventTriggerOptions: eventTriggerOptions,
-      prebufferLength: PROTECT_HKSV_TIMESHIFT_BUFFER_MAXLENGTH,
-      mediaContainerConfiguration: [
-        {
-          type: MediaContainerType.FRAGMENTED_MP4,
-          fragmentLength: PROTECT_HKSV_SEGMENT_LENGTH,
-        },
-      ],
-      video: {
-        type: HAP.VideoCodecType.H264,
-        parameters: {
-          profiles: [H264Profile.BASELINE, H264Profile.MAIN, H264Profile.HIGH],
-          levels: [H264Level.LEVEL3_1, H264Level.LEVEL3_2, H264Level.LEVEL4_0],
-        },
-        resolutions: this.resolutions,
-      },
-      audio: {
-        codecs: {
-          type: AudioRecordingCodecType.AAC_LC,
-          samplerate: AudioRecordingSamplerate.KHZ_16,
-        },
-      },
-    };
-  }
-
-  private getCameraControllerOptions(): CameraControllerOptions {
-
-    const option: CameraControllerOptions = {
-      cameraStreamCount: this.cameraConfig.videoConfig?.maxStreams || 2, // HomeKit requires at least 2 streams, but 1 is also just fine
-      delegate: this.streamingDelegate as StreamingDelegate,
-      streamingOptions: this.getCameraStreamingOptions(),
-      recording: this.cameraConfig.hsv
-        ? {
-          options: this.getCameraRecordingOptions(),
-          delegate: this.recordingDelegate as RecordingDelegate,
-        }
-        : undefined,
-      sensors: this.cameraConfig.hsv
-        ? {
-          motion: this.getService(SERV.MotionSensor),
-          occupancy: undefined,
-        }
-        : undefined,
-    };
-
-    return option;
   }
 
   private setupButtonService(
@@ -611,38 +505,10 @@ export class CameraAccessory extends DeviceAccessory {
 
   // Configure a camera accessory for HomeKit.
   private configureVideoStream(): boolean {
-    this.log.debug(`StreamingDelegate`);
-    this.streamingDelegate = new StreamingDelegate(this);
+    log.debug(`${this.accessory.displayName} StreamingDelegate`);
 
-    this.recordingDelegate = {} as RecordingDelegate;
-
-    if (this.cameraConfig.hsv) {
-
-      // If we have smart motion events enabled, let's warn the user that things will not work quite the way they expect.
-      if (this.accessory.getService(SERV.MotionSensor)) {
-        this.log.info('WARNING: Motion detection and HomeKit Secure Video provide overlapping functionality. ' +
-          'Only HomeKit Secure Video, when event recording is enabled in the Home app, will be used to trigger motion event notifications for this camera.');
-      }
-
-      this.log.debug(`RecordingDelegate`);
-      this.recordingDelegate = new RecordingDelegate(this.streamingDelegate, this.accessory);
-    }
-
-    this.log.debug(`Controller`);
-    const controller = new HAP.CameraController(this.getCameraControllerOptions());
-
-    this.log.debug(`streamingDelegate.setController`);
-    this.streamingDelegate.setController(controller);
-
-    if (this.cameraConfig.hsv) {
-      this.log.debug(`recordingDelegate.setController`);
-      this.recordingDelegate.setController(controller);
-    }
-
-    this.log.debug(`configureController`);
-    this.accessory.configureController(controller);
-
-    this.isVideoConfigured = true;
+    this.streamingDelegate = new StreamingDelegate(this.platform, this.device, this.cameraConfig, this.platform.api, this.platform.api.hap);
+    this.accessory.configureController(this.streamingDelegate.controller);
 
     return true;
   }

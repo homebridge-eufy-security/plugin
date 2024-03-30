@@ -47,7 +47,6 @@ import { platform } from 'node:process';
 import { readFileSync } from 'node:fs';
 
 import ffmpegPath from 'ffmpeg-for-homebridge';
-import { FfmpegCodecs } from './utils/ffmpeg-codecs';
 import { init_log, log, tsLogger, ffmpegLogger, setHap } from './utils/utils';
 
 export class EufySecurityPlatform implements DynamicPlatformPlugin {
@@ -60,7 +59,6 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
 
   private already_shutdown: boolean = false;
 
-  public codecSupport!: FfmpegCodecs;
   public videoProcessor!: string;
 
   public readonly eufyPath: string;
@@ -269,14 +267,15 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
       p2pConnectionSetup: 0,
       pollingIntervalMinutes: this.config.pollingIntervalMinutes ?? 10,
       eventDurationSeconds: 10,
+      logging: {
+        // level: (this.config.enableDetailedLogging) ? LogLevel.Debug : LogLevel.Info,
+      },
     } as EufySecurityConfig;
 
     this.config.ignoreStations = this.config.ignoreStations ??= [];
     this.config.ignoreDevices = this.config.ignoreDevices ??= [];
     this.config.cleanCache = this.config.cleanCache ??= true;
     this.config.unbridge = this.config.unbridge ??= true;
-
-    this.codecSupport = new FfmpegCodecs(this);
 
     log.info(`Country set: ${this.eufyConfig.country}`);
     // log.info(`Codec set: ${JSON.stringify(this.codecSupport)}`);
@@ -306,11 +305,6 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
   }
 
   private async pluginSetup() {
-
-    // First things first - ensure we've got a working video processor before we do anything else.
-    if (!(await this.codecSupport.probe())) {
-      return;
-    }
 
     try {
       this.eufyClient = (this.config.enableDetailedLogging)
