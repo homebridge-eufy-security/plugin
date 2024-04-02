@@ -136,9 +136,7 @@ export class StreamingDelegate implements CameraStreamingDelegate {
 
     log.debug(this.cameraName, `stream prepare request with session id ${request.sessionID} was received.`);
 
-    const ports: number[] = await reservePorts({ type: 'udp', count: 2 });
-    const videoReturnPort = ports[0];
-    const audioReturnPort = ports[1];
+    const [videoReturnPort, audioReturnPort] = await reservePorts({ type: 'udp', count: 2 });
 
     const videoSSRC = this.hap.CameraController.generateSynchronisationSource();
     const audioSSRC = this.hap.CameraController.generateSynchronisationSource();
