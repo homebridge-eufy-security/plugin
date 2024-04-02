@@ -177,13 +177,8 @@ export class LocalLivestreamManager extends EventEmitter {
 
     this.initialize();
 
-    this.platform.eufyClient.on('station livestream stop', (station: Station, device: Device) => {
-      this.onStationLivestreamStop(station, device);
-    });
-    this.platform.eufyClient.on('station livestream start',
-      (station: Station, device: Device, metadata: StreamMetadata, videostream: Readable, audiostream: Readable) => {
-        this.onStationLivestreamStart(station, device, metadata, videostream, audiostream);
-      });
+    this.platform.eufyClient.on('station livestream stop', this.onStationLivestreamStop.bind(this));
+    this.platform.eufyClient.on('station livestream start', this.onStationLivestreamStart.bind(this));
   }
 
   private initialize() {

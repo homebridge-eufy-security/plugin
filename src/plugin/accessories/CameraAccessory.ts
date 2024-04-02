@@ -228,7 +228,7 @@ export class CameraAccessory extends DeviceAccessory {
       config.videoConfig = {};
     }
 
-    config.videoConfig!.debug = config.videoConfig?.debug ?? false;
+    config.videoConfig!.debug = config.videoConfig?.debug ?? true;
 
     // Validate talkback setting
     if (config.talkback && !this.device.hasCommand(CommandName.DeviceStartTalkback)) {

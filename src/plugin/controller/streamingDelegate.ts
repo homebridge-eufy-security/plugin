@@ -29,7 +29,7 @@ import { Camera, PropertyName } from 'eufy-security-client';
 import { EufySecurityPlatform } from '../platform';
 
 import { LocalLivestreamManager } from './LocalLivestreamManager';
-import { SnapshotManager } from './SnapshotManager';
+import { SnapshotManager, SnapshotUnavailable } from './SnapshotManager';
 import { TalkbackStream } from '../utils/Talkback';
 import { is_rtsp_ready, log } from '../utils/utils';
 import { reservePorts } from '@homebridge/camera-utils';
@@ -174,7 +174,7 @@ export class StreamingDelegate implements CameraStreamingDelegate {
       callback(undefined, snapshot);
     } catch (err) {
       log.error(this.cameraName, err as string);
-      callback();
+      callback(undefined, SnapshotUnavailable);
     }
   }
 

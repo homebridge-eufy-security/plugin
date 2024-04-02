@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs';
 import { EventEmitter, Readable } from 'stream';
 
 import { Camera, Device, Picture, PropertyName } from 'eufy-security-client';
@@ -12,8 +13,8 @@ import { SnapshotRequest } from 'homebridge';
 import { FFmpeg, FFmpegParameters } from '../utils/ffmpeg';
 import * as fs from 'fs';
 
-const SnapshotBlackPath = require.resolve('../../media/Snapshot-black.png');
-const SnapshotUnavailable = require.resolve('../../media/Snapshot-Unavailable.png');
+const SnapshotBlack: Buffer = readFileSync(require.resolve('../../media/Snapshot-black.png'));
+export const SnapshotUnavailable: Buffer = readFileSync(require.resolve('../../media/Snapshot-Unavailable.png'));
 
 let MINUTES_TO_WAIT_FOR_AUTOMATIC_REFRESH_TO_BEGIN = 1; // should be incremented by 1 for every device
 
@@ -57,7 +58,6 @@ export class SnapshotManager extends EventEmitter {
   private livestreamManager;
 
   private currentSnapshot?: Snapshot;
-  private blackSnapshot?: Buffer;
 
   private refreshProcessRunning = false;
   private lastEvent = 0;
@@ -112,7 +112,6 @@ export class SnapshotManager extends EventEmitter {
     }
 
     try {
-      this.blackSnapshot = fs.readFileSync(SnapshotBlackPath);
       if (this.cameraConfig.immediateRingNotificationWithoutSnapshot) {
         log.info(this.device.getName(), 'Empty snapshot will be sent on ring events immediately to speed up homekit notifications.');
       }
@@ -120,12 +119,20 @@ export class SnapshotManager extends EventEmitter {
       log.error(this.device.getName(), 'could not cache black snapshot file for further use: ' + err);
     }
 
-    // Cache the first picture
-    const picture = device.getPropertyValue(PropertyName.DevicePicture) as Picture;
-    if (picture && picture.type) {
-      this.storeImage(`${device.getSerial()}.${picture.type.ext}`, picture.data);
-      this.currentSnapshot = { timestamp: Date.now(), image: picture.data };
+    try {
+      // Cache the first picture
+      const picture = device.getPropertyValue(PropertyName.DevicePicture) as Picture;
+      if (picture && picture.type) {
+        this.storeImage(`${device.getSerial()}.${picture.type.ext}`, picture.data);
+        this.currentSnapshot = { timestamp: Date.now(), image: picture.data };
+        log.debug(this.device.getName(), 'Old snapshot as the first snapshot');
+      } else {
+        this.currentSnapshot = { timestamp: Date.now(), image: SnapshotUnavailable };
+        log.debug(this.device.getName(), 'SnapshotUnavailable as the first snapshot');
+      }
       this.emit('new snapshot');
+    } catch (error) {
+      log.error(this.device.getName(), 'could not cache the first snapshot or provide SnapshotUnavailable: ' + error);
     }
 
   }
@@ -156,8 +163,8 @@ export class SnapshotManager extends EventEmitter {
     const diff = (Date.now() - this.lastRingEvent) / 1000;
     if (this.cameraConfig.immediateRingNotificationWithoutSnapshot && diff < 5) {
       log.debug(this.device.getName(), 'Sending empty snapshot to speed up homekit notification for ring event.');
-      if (this.blackSnapshot) {
-        return this.resizeSnapshot(this.blackSnapshot, request);
+      if (SnapshotBlack) {
+        return this.resizeSnapshot(SnapshotBlack, request);
       } else {
         return Promise.reject('Prioritize ring notification over snapshot request. But could not supply empty snapshot.');
       }
@@ -214,7 +221,7 @@ export class SnapshotManager extends EventEmitter {
         if (this.currentSnapshot) {
           resolve(this.currentSnapshot.image);
         } else {
-          resolve(fs.readFileSync(SnapshotUnavailable));
+          resolve(SnapshotUnavailable);
         }
       }, 1000);
 
@@ -231,7 +238,7 @@ export class SnapshotManager extends EventEmitter {
           if (this.currentSnapshot) {
             resolve(this.currentSnapshot.image);
           } else {
-            resolve(fs.readFileSync(SnapshotUnavailable));
+            resolve(SnapshotUnavailable);
           }
         }, 15000);
       }
@@ -244,7 +251,7 @@ export class SnapshotManager extends EventEmitter {
         if (this.currentSnapshot) {
           resolve(this.currentSnapshot.image);
         } else {
-          resolve(fs.readFileSync(SnapshotUnavailable));
+          resolve(SnapshotUnavailable);
         }
       });
     });
@@ -269,14 +276,14 @@ export class SnapshotManager extends EventEmitter {
           if (this.currentSnapshot) {
             resolve(this.currentSnapshot.image);
           } else {
-            resolve(fs.readFileSync(SnapshotUnavailable));
+            resolve(SnapshotUnavailable);
           }
         });
       } else {
         if (this.currentSnapshot) {
           resolve(this.currentSnapshot.image);
         } else {
-          resolve(fs.readFileSync(SnapshotUnavailable));
+          resolve(SnapshotUnavailable);
         }
       }
     });
@@ -381,7 +388,7 @@ export class SnapshotManager extends EventEmitter {
       if (source.livestreamId) {
         this.livestreamManager.stopProxyStream(source.livestreamId);
       }
-      return Promise.reject(err);
+      return Promise.resolve(SnapshotUnavailable);
     }
   }
 
