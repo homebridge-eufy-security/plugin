@@ -10,13 +10,13 @@ import {
   RecordingPacket,
 } from 'homebridge';
 import { EufySecurityPlatform } from '../platform';
-import { CameraConfig } from '../utils/configTypes';
+import { CameraConfig, VideoConfig } from '../utils/configTypes';
 import { FFmpeg, FFmpegParameters } from '../utils/ffmpeg';
 import net from 'net';
 import { CHAR, SERV, is_rtsp_ready, log } from '../utils/utils';
 import { LocalLivestreamManager } from './LocalLivestreamManager';
 
-const MAX_RECORDING_MINUTES = 3;
+const MAX_RECORDING_MINUTES = 1; // should never be used
 
 const HKSVQuitReason = [
   'Normal',
@@ -33,18 +33,12 @@ const HKSVQuitReason = [
 
 export class RecordingDelegate implements CameraRecordingDelegate {
 
-  private platform: EufySecurityPlatform;
-  private camera: Camera;
-  private cameraConfig: CameraConfig;
-  private accessory: PlatformAccessory;
-
   private configuration?: CameraRecordingConfiguration;
 
   private forceStopTimeout?: NodeJS.Timeout;
   private closeReason?: number;
   private handlingStreamingRequest = false;
 
-  private localLivestreamManager: LocalLivestreamManager;
   private controller?: CameraController;
 
   private session?: {
@@ -59,16 +53,13 @@ export class RecordingDelegate implements CameraRecordingDelegate {
   };
 
   constructor(
-    platform: EufySecurityPlatform,
-    accessory: PlatformAccessory,
-    device: Camera, cameraConfig:
-      CameraConfig, livestreamManager: LocalLivestreamManager,
+    private platform: EufySecurityPlatform,
+    private accessory: PlatformAccessory,
+    private camera: Camera,
+    private cameraConfig: CameraConfig,
+    private localLivestreamManager: LocalLivestreamManager,
   ) {
-    this.platform = platform;
-    this.accessory = accessory;
-    this.camera = device;
-    this.cameraConfig = cameraConfig;
-    this.localLivestreamManager = livestreamManager;
+
   }
 
   public setController(controller: CameraController) {
@@ -100,8 +91,14 @@ export class RecordingDelegate implements CameraRecordingDelegate {
       const videoParams = await FFmpegParameters.forVideoRecording();
       const audioParams = await FFmpegParameters.forAudioRecording();
 
-      videoParams.setupForRecording(this.cameraConfig.videoConfig || {}, this.configuration!);
-      audioParams.setupForRecording(this.cameraConfig.videoConfig || {}, this.configuration!);
+      const hsvConfig: VideoConfig = this.cameraConfig.hsvConfig ?? {};
+
+      if (this.cameraConfig.videoConfig && this.cameraConfig.videoConfig.videoProcessor) {
+        hsvConfig.videoProcessor = this.cameraConfig.videoConfig.videoProcessor;
+      }
+
+      videoParams.setupForRecording(hsvConfig, this.configuration!);
+      audioParams.setupForRecording(hsvConfig, this.configuration!);
 
       const rtsp = is_rtsp_ready(this.camera, this.cameraConfig);
 
@@ -126,7 +123,7 @@ export class RecordingDelegate implements CameraRecordingDelegate {
 
       this.session = await ffmpeg.startFragmentedMP4Session();
 
-      let timer = MAX_RECORDING_MINUTES * 60;
+      let timer = this.cameraConfig.hsvRecordingDuration ?? MAX_RECORDING_MINUTES * 60;
       if (this.platform.config.CameraMaxLivestreamDuration < timer) {
         timer = this.platform.config.CameraMaxLivestreamDuration;
       }
