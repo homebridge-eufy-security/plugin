@@ -1,6 +1,6 @@
 import { EventEmitter, Readable } from 'stream';
 
-import { Camera, Device, Picture, PropertyName, PropertyValue } from 'eufy-security-client';
+import { Camera, Device, Picture, PropertyName } from 'eufy-security-client';
 import ffmpegPath from 'ffmpeg-for-homebridge';
 
 import { CameraConfig } from '../utils/configTypes';
@@ -74,8 +74,8 @@ export class SnapshotManager extends EventEmitter {
     this.cameraConfig = cameraConfig;
     this.livestreamManager = livestreamManager;
 
-    this.device.on('property changed', (device: Device, name: string, value: PropertyValue) =>
-      this.onPropertyValueChanged(device, name, value),
+    this.device.on('property changed', (device: Device, name: string) =>
+      this.onPropertyValueChanged(device, name),
     );
 
     this.device.on('crying detected', (device, state) => this.onEvent(device, state));
@@ -298,7 +298,7 @@ export class SnapshotManager extends EventEmitter {
     }
   }
 
-  private async onPropertyValueChanged(device: Device, name: string, value: PropertyValue): Promise<void> {
+  private async onPropertyValueChanged(device: Device, name: string): Promise<void> {
     if (name === 'picture') {
       const picture = device.getPropertyValue(PropertyName.DevicePicture) as Picture;
       if (picture && picture.type) {
