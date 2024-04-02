@@ -1,7 +1,6 @@
-import { readFileSync } from 'node:fs';
 import { EventEmitter, Readable } from 'stream';
 
-import { Camera, Device, Picture, PropertyName } from 'eufy-security-client';
+import { Camera, Device, Picture, PropertyName, PropertyValue } from 'eufy-security-client';
 import ffmpegPath from 'ffmpeg-for-homebridge';
 
 import { CameraConfig } from '../utils/configTypes';
@@ -13,8 +12,8 @@ import { SnapshotRequest } from 'homebridge';
 import { FFmpeg, FFmpegParameters } from '../utils/ffmpeg';
 import * as fs from 'fs';
 
-const SnapshotBlack: Buffer = readFileSync(require.resolve('../../media/Snapshot-black.png'));
-export const SnapshotUnavailable: Buffer = readFileSync(require.resolve('../../media/Snapshot-Unavailable.png'));
+const SnapshotBlackPath = require.resolve('../../media/Snapshot-black.png');
+const SnapshotUnavailable = require.resolve('../../media/Snapshot-Unavailable.png');
 
 let MINUTES_TO_WAIT_FOR_AUTOMATIC_REFRESH_TO_BEGIN = 1; // should be incremented by 1 for every device
 
@@ -58,6 +57,7 @@ export class SnapshotManager extends EventEmitter {
   private livestreamManager;
 
   private currentSnapshot?: Snapshot;
+  private blackSnapshot?: Buffer;
 
   private refreshProcessRunning = false;
   private lastEvent = 0;
@@ -74,7 +74,9 @@ export class SnapshotManager extends EventEmitter {
     this.cameraConfig = cameraConfig;
     this.livestreamManager = livestreamManager;
 
-    this.device.on('property changed', this.onPropertyValueChanged.bind(this));
+    this.device.on('property changed', (device: Device, name: string, value: PropertyValue) =>
+      this.onPropertyValueChanged(device, name, value),
+    );
 
     this.device.on('crying detected', (device, state) => this.onEvent(device, state));
     this.device.on('motion detected', (device, state) => this.onEvent(device, state));
@@ -112,29 +114,13 @@ export class SnapshotManager extends EventEmitter {
     }
 
     try {
+      this.blackSnapshot = fs.readFileSync(SnapshotBlackPath);
       if (this.cameraConfig.immediateRingNotificationWithoutSnapshot) {
         log.info(this.device.getName(), 'Empty snapshot will be sent on ring events immediately to speed up homekit notifications.');
       }
     } catch (err) {
       log.error(this.device.getName(), 'could not cache black snapshot file for further use: ' + err);
     }
-
-    try {
-      // Cache the first picture
-      const picture = device.getPropertyValue(PropertyName.DevicePicture) as Picture;
-      if (picture && picture.type) {
-        this.storeImage(`${device.getSerial()}.${picture.type.ext}`, picture.data);
-        this.currentSnapshot = { timestamp: Date.now(), image: picture.data };
-        log.debug(this.device.getName(), 'Old snapshot as the first snapshot');
-      } else {
-        this.currentSnapshot = { timestamp: Date.now(), image: SnapshotUnavailable };
-        log.debug(this.device.getName(), 'SnapshotUnavailable as the first snapshot');
-      }
-      this.emit('new snapshot');
-    } catch (error) {
-      log.error(this.device.getName(), 'could not cache the first snapshot or provide SnapshotUnavailable: ' + error);
-    }
-
   }
 
   private onRingEvent(device: Device, state: boolean) {
@@ -163,8 +149,8 @@ export class SnapshotManager extends EventEmitter {
     const diff = (Date.now() - this.lastRingEvent) / 1000;
     if (this.cameraConfig.immediateRingNotificationWithoutSnapshot && diff < 5) {
       log.debug(this.device.getName(), 'Sending empty snapshot to speed up homekit notification for ring event.');
-      if (SnapshotBlack) {
-        return this.resizeSnapshot(SnapshotBlack, request);
+      if (this.blackSnapshot) {
+        return this.resizeSnapshot(this.blackSnapshot, request);
       } else {
         return Promise.reject('Prioritize ring notification over snapshot request. But could not supply empty snapshot.');
       }
@@ -221,7 +207,7 @@ export class SnapshotManager extends EventEmitter {
         if (this.currentSnapshot) {
           resolve(this.currentSnapshot.image);
         } else {
-          resolve(SnapshotUnavailable);
+          resolve(fs.readFileSync(SnapshotUnavailable));
         }
       }, 1000);
 
@@ -238,7 +224,7 @@ export class SnapshotManager extends EventEmitter {
           if (this.currentSnapshot) {
             resolve(this.currentSnapshot.image);
           } else {
-            resolve(SnapshotUnavailable);
+            resolve(fs.readFileSync(SnapshotUnavailable));
           }
         }, 15000);
       }
@@ -251,7 +237,7 @@ export class SnapshotManager extends EventEmitter {
         if (this.currentSnapshot) {
           resolve(this.currentSnapshot.image);
         } else {
-          resolve(SnapshotUnavailable);
+          resolve(fs.readFileSync(SnapshotUnavailable));
         }
       });
     });
@@ -276,14 +262,14 @@ export class SnapshotManager extends EventEmitter {
           if (this.currentSnapshot) {
             resolve(this.currentSnapshot.image);
           } else {
-            resolve(SnapshotUnavailable);
+            resolve(fs.readFileSync(SnapshotUnavailable));
           }
         });
       } else {
         if (this.currentSnapshot) {
           resolve(this.currentSnapshot.image);
         } else {
-          resolve(SnapshotUnavailable);
+          resolve(fs.readFileSync(SnapshotUnavailable));
         }
       }
     });
@@ -312,8 +298,8 @@ export class SnapshotManager extends EventEmitter {
     }
   }
 
-  private onPropertyValueChanged(device: Device, name: string): void {
-    if (name === 'picture' || name === 'hidden-pictureUrl') {
+  private async onPropertyValueChanged(device: Device, name: string, value: PropertyValue): Promise<void> {
+    if (name === 'picture') {
       const picture = device.getPropertyValue(PropertyName.DevicePicture) as Picture;
       if (picture && picture.type) {
         this.storeImage(`${device.getSerial()}.${picture.type.ext}`, picture.data);
@@ -388,7 +374,7 @@ export class SnapshotManager extends EventEmitter {
       if (source.livestreamId) {
         this.livestreamManager.stopProxyStream(source.livestreamId);
       }
-      return Promise.resolve(SnapshotUnavailable);
+      return Promise.reject(err);
     }
   }
 

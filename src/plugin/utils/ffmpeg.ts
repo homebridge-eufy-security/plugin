@@ -78,6 +78,7 @@ export class FFmpegParameters {
     public debug: boolean;
 
     // default parameters
+    processor?: string;
     private hideBanner = true;
     private useWallclockAsTimestamp = true;
 
@@ -116,6 +117,7 @@ export class FFmpegParameters {
     private height?: number;
     private bufsize?: number;
     private maxrate?: number;
+    private crop = false;
 
     // audio options
     private sampleRate?: number;
@@ -130,6 +132,7 @@ export class FFmpegParameters {
     private movflags?: string;
     private maxMuxingQueueSize?: number;
     private iFrameInterval?: number;
+    private processAudio = true;
 
     private constructor(port: number, isVideo: boolean, isAudio: boolean, isSnapshot: boolean, debug = false) {
         this.progressPort = port;
@@ -184,7 +187,6 @@ export class FFmpegParameters {
     }
 
     public setInputSource(value: string) {
-        // TODO: check for errors
         this.inputSoure = `-i ${value}`;
     }
 
@@ -222,6 +224,9 @@ export class FFmpegParameters {
     ) {
 
         const videoConfig = cameraConfig.videoConfig ??= {};
+        if (videoConfig.videoProcessor && videoConfig.videoProcessor !== '') {
+            this.processor = videoConfig.videoProcessor;
+        }
         if (videoConfig.readRate) {
             this.readrate = videoConfig.readRate;
         }
@@ -250,7 +255,7 @@ export class FFmpegParameters {
                 this.bufsize = bitrate * 2;
                 this.maxrate = bitrate;
                 let encoderOptions = codec === 'libx264' ? '-preset ultrafast -tune zerolatency' : '';
-                if (videoConfig.encoderOptions && videoConfig.encoderOptions !== '') {
+                if (videoConfig.encoderOptions) {
                     encoderOptions = videoConfig.encoderOptions;
                 }
                 this.codecOptions = encoderOptions;
@@ -269,29 +274,46 @@ export class FFmpegParameters {
                 if (videoConfig.videoFilter && videoConfig.videoFilter !== '') {
                     this.filters = videoConfig.videoFilter;
                 }
+                if (videoConfig.crop) {
+                    this.crop = videoConfig.crop;
+                }
             }
         }
         if (this.isAudio) {
             const req = request as StartStreamRequest;
-            let codec = req.audio.codec === AudioStreamingCodecType.OPUS ? 'libopus' : 'libfdk_aac';
-            let codecOptions = req.audio.codec === AudioStreamingCodecType.OPUS ? '-application lowdelay' : '-profile:a aac_eld';
+            let codec = 'libfdk_aac';
+            let codecOptions = '-profile:a aac_eld';
+            switch (req.audio.codec) {
+                case AudioStreamingCodecType.OPUS:
+                    codec = 'libopus';
+                    codecOptions = '-application lowdelay';
+                    break;
+                default:
+                    codec = 'libfdk_aac';
+                    codecOptions = '-profile:a aac_eld';
+                    break;
+            }
+
             if (videoConfig.acodec && videoConfig.acodec !== '') {
                 codec = videoConfig.acodec;
                 codecOptions = '';
             }
+            if (videoConfig.acodecOptions !== undefined) {
+                codecOptions = videoConfig.acodecOptions;
+            }
             if (this.flagsGlobalHeader) {
-                codecOptions += ' -flags +global_header';
+                if (codecOptions !== '') {
+                    codecOptions += ' ';
+                }
+                codecOptions += '-flags +global_header';
             }
             this.codec = codec;
             this.codecOptions = codecOptions;
-            let samplerate = req.audio.sample_rate;
-            if (videoConfig.audioSampleRate &&
-                (videoConfig.audioSampleRate === 8 || videoConfig.audioSampleRate === 16 || videoConfig.audioSampleRate === 24)) {
-                samplerate = videoConfig.audioSampleRate;
+            if (this.codec !== ' copy') {
+                this.sampleRate = req.audio.sample_rate;
+                this.channels = req.audio.channel;
+                this.bitrate = videoConfig.audioBitrate ? videoConfig.audioBitrate : req.audio.max_bit_rate;
             }
-            this.sampleRate = samplerate;
-            this.channels = req.audio.channel;
-            this.bitrate = req.audio.max_bit_rate;
         }
         if (this.isSnapshot) {
             const req = request as SnapshotRequest;
@@ -307,6 +329,9 @@ export class FFmpegParameters {
             this.height = height;
             if (videoConfig.videoFilter && videoConfig.videoFilter !== '') {
                 this.filters = videoConfig.videoFilter;
+            }
+            if (videoConfig.crop) {
+                this.crop = videoConfig.crop;
             }
         }
     }
@@ -339,8 +364,11 @@ export class FFmpegParameters {
         this.movflags = 'frag_keyframe+empty_moov+default_base_moof';
         this.maxMuxingQueueSize = 1024;
 
-        if (this.isVideo) {
+        if (videoConfig.videoProcessor && videoConfig.videoProcessor !== '') {
+            this.processor = videoConfig.videoProcessor;
+        }
 
+        if (this.isVideo) {
             if (videoConfig.vcodec && videoConfig.vcodec !== '') {
                 this.codec = videoConfig.vcodec;
             } else {
@@ -364,16 +392,21 @@ export class FFmpegParameters {
                 this.codecOptions = `-profile:v ${profile} -level:v ${level}`;
             }
             if (this.codec !== 'copy') {
-                this.bitrate = configuration.videoCodec.parameters.bitRate;
+                this.bitrate = videoConfig.maxBitrate ?? configuration.videoCodec.parameters.bitRate;
                 this.width = configuration.videoCodec.resolution[0];
                 this.height = configuration.videoCodec.resolution[1];
-                this.fps = configuration.videoCodec.resolution[2];
+                this.fps = videoConfig.maxFPS ?? configuration.videoCodec.resolution[2];
+                this.crop = (videoConfig.crop !== false); // only false if 'crop: false' was specifically set
             }
 
             this.iFrameInterval = configuration.videoCodec.parameters.iFrameInterval;
         }
 
         if (this.isAudio) {
+
+            if (videoConfig.audio === false) {
+                this.processAudio = false;
+            }
 
             if (videoConfig.acodec && videoConfig.acodec !== '') {
                 this.codec = videoConfig.acodec;
@@ -469,6 +502,10 @@ export class FFmpegParameters {
         this.setInputSource(`tcp://127.0.0.1:${port}`);
     }
 
+    public setTalkbackChannels(channels: number) {
+        this.channels = channels;
+    }
+
     private buildGenericParameters(): string[] {
         const params: string[] = [];
 
@@ -513,13 +550,20 @@ export class FFmpegParameters {
                 filters.splice(noneFilter, 1);
             }
             if (noneFilter < 0 && this.width && this.height) {
-                const resizeFilter = 'scale=' +
-                    '\'min(' + this.width + ',iw)\'' +
-                    ':' +
-                    '\'min(' + this.height + ',iw)\'' +
-                    ':force_original_aspect_ratio=decrease';
-                filters.push(resizeFilter);
-                filters.push('scale=\'trunc(iw/2)*2:trunc(ih/2)*2\''); // Force to fit encoder restrictions
+                if (this.crop) {
+                    const resizeFilter = `scale=${this.width}:${this.height}:force_original_aspect_ratio=increase`;
+                    filters.push(resizeFilter);
+                    filters.push(`crop=${this.width}:${this.height}`);
+                    filters.push(`scale='trunc(${this.width}/2)*2:trunc(${this.height}/2)*2'`); // Force to fit encoder restrictions
+                } else {
+                    const resizeFilter = 'scale=' +
+                        '\'min(' + this.width + ',iw)\'' +
+                        ':' +
+                        '\'min(' + this.height + ',ih)\'' +
+                        ':force_original_aspect_ratio=decrease';
+                    filters.push(resizeFilter);
+                    filters.push('scale=\'trunc(iw/2)*2:trunc(ih/2)*2\''); // Force to fit encoder restrictions
+                }
             }
             if (filters.length > 0) {
                 params.push('-filter:v ' + filters.join(','));
@@ -530,7 +574,7 @@ export class FFmpegParameters {
             params.push(this.maxrate ? `-maxrate ${this.maxrate}k` : '');
         }
 
-        if (this.isAudio) {
+        if (this.isAudio && this.processAudio) {
             // audio parameters
             params.push('-acodec ' + this.codec);
             params.push(this.codecOptions ? this.codecOptions : '');
@@ -548,13 +592,20 @@ export class FFmpegParameters {
                 filters.splice(noneFilter, 1);
             }
             if (noneFilter < 0 && this.width && this.height) {
-                const resizeFilter = 'scale=' +
-                    '\'min(' + this.width + ',iw)\'' +
-                    ':' +
-                    '\'min(' + this.height + ',iw)\'' +
-                    ':force_original_aspect_ratio=decrease';
-                filters.push(resizeFilter);
-                filters.push('scale=\'trunc(iw/2)*2:trunc(ih/2)*2\''); // Force to fit encoder restrictions
+                if (this.crop) {
+                    const resizeFilter = `scale=${this.width}:${this.height}:force_original_aspect_ratio=increase`;
+                    filters.push(resizeFilter);
+                    filters.push(`crop=${this.width}:${this.height}`);
+                    filters.push(`scale='trunc(${this.width}/2)*2:trunc(${this.height}/2)*2'`); // Force to fit encoder restrictions
+                } else {
+                    const resizeFilter = 'scale=' +
+                        '\'min(' + this.width + ',iw)\'' +
+                        ':' +
+                        '\'min(' + this.height + ',ih)\'' +
+                        ':force_original_aspect_ratio=decrease';
+                    filters.push(resizeFilter);
+                    filters.push('scale=\'trunc(iw/2)*2:trunc(ih/2)*2\''); // Force to fit encoder restrictions
+                }
             }
             if (filters.length > 0) {
                 params.push('-filter:v ' + filters.join(','));
@@ -605,7 +656,11 @@ export class FFmpegParameters {
         // input
         params.push(parameters[0].inputSoure);
         if (parameters.length > 1 && parameters[0].inputSoure !== parameters[1].inputSoure) { // don't include extra audio source for rtsp
-            params.push(parameters[1].inputSoure);
+            if (parameters[1].processAudio) {
+                params.push(parameters[1].inputSoure);
+            } else {
+                params.push('-f lavfi -i anullsrc -shortest');
+            }
         }
         if (parameters.length === 1) {
             params.push('-an');
@@ -618,7 +673,9 @@ export class FFmpegParameters {
 
         // audio encoding
         if (parameters.length > 1) {
-            params.push('-bsf:a aac_adtstoasc');
+            if (parameters[1].processAudio) {
+                params.push('-bsf:a aac_adtstoasc');
+            }
             params = params.concat(parameters[1].buildEncodingParameters());
         }
 
@@ -665,6 +722,14 @@ export class FFmpegParameters {
         }
         return 'Starting unknown stream';
     }
+
+    public hasCustomFfmpeg(): boolean {
+        return (this.processor !== undefined);
+    }
+
+    public getCustomFfmpeg(): string {
+        return (this.hasCustomFfmpeg()) ? this.processor! : '';
+    }
 }
 
 export class FFmpeg extends EventEmitter {
@@ -694,6 +759,10 @@ export class FFmpeg extends EventEmitter {
         } else {
             this.parameters = [parameters];
         }
+
+        if (this.parameters[0].hasCustomFfmpeg()) {
+            this.ffmpegExec = this.parameters[0].getCustomFfmpeg();
+        }
     }
 
     public start() {
@@ -715,8 +784,14 @@ export class FFmpeg extends EventEmitter {
         this.stdout = this.process.stdout;
 
         this.process.stderr.on('data', (chunk) => {
-            if (this.parameters[0].debug) {
+            const isError = chunk.toString().indexOf('[panic]') !== -1 ||
+                chunk.toString().indexOf('[error]') !== -1 ||
+                chunk.toString().indexOf('[fatal]') !== -1;
+
+            if (this.parameters[0].debug && !isError) {
                 ffmpegLogger.debug(this.name, 'ffmpeg log message:\n' + chunk.toString());
+            } else if (isError) {
+                ffmpegLogger.error(this.name, 'ffmpeg log message:\n' + chunk.toString());
             }
         });
 
@@ -737,8 +812,14 @@ export class FFmpeg extends EventEmitter {
             this.process = spawn(this.ffmpegExec, processArgs.join(' ').split(/\s+/), { env: process.env });
 
             this.process.stderr.on('data', (chunk) => {
-                if (this.parameters[0].debug) {
+                const isError = chunk.toString().indexOf('[panic]') !== -1 ||
+                    chunk.toString().indexOf('[error]') !== -1 ||
+                    chunk.toString().indexOf('[fatal]') !== -1;
+
+                if (this.parameters[0].debug && !isError) {
                     ffmpegLogger.debug(this.name, 'ffmpeg log message:\n' + chunk.toString());
+                } else if (isError) {
+                    ffmpegLogger.error(this.name, 'ffmpeg log message:\n' + chunk.toString());
                 }
             });
 
@@ -814,11 +895,17 @@ export class FFmpeg extends EventEmitter {
                 this.stdin = this.process.stdin;
                 this.stdout = this.process.stdout;
 
-                if (this.parameters[0].debug) {
-                    this.process.stderr.on('data', (chunk) => {
+                this.process.stderr.on('data', (chunk) => {
+                    const isError = chunk.toString().indexOf('[panic]') !== -1 ||
+                        chunk.toString().indexOf('[error]') !== -1 ||
+                        chunk.toString().indexOf('[fatal]') !== -1;
+
+                    if (this.parameters[0].debug && !isError) {
                         ffmpegLogger.debug(this.name, 'ffmpeg log message:\n' + chunk.toString());
-                    });
-                }
+                    } else if (isError) {
+                        ffmpegLogger.error(this.name, 'ffmpeg log message:\n' + chunk.toString());
+                    }
+                });
 
                 this.process.on('error', this.onProcessError.bind(this));
                 this.process.on('exit', this.onProcessExit.bind(this));

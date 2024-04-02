@@ -4,6 +4,16 @@ import {
   Characteristic,
   CharacteristicValue,
   Resolution,
+  CameraControllerOptions,
+  SRTPCryptoSuites,
+  H264Profile,
+  H264Level,
+  EventTriggerOption,
+  AudioStreamingCodecType,
+  AudioStreamingSamplerate,
+  MediaContainerType,
+  AudioRecordingCodecType,
+  AudioRecordingSamplerate,
 } from 'homebridge';
 
 import { EufySecurityPlatform } from '../platform';
@@ -16,6 +26,7 @@ import { Camera, DeviceEvents, PropertyName, CommandName, StreamMetadata } from 
 import { CameraConfig, DEFAULT_CAMERACONFIG_VALUES } from '../utils/configTypes';
 import { CHAR, SERV, log } from '../utils/utils';
 import { StreamingDelegate } from '../controller/streamingDelegate';
+import { RecordingDelegate } from '../controller/recordingDelegate';
 
 // A semi-complete description of the UniFi Protect camera channel JSON.
 export interface ProtectCameraChannelConfig {
@@ -77,7 +88,8 @@ export class CameraAccessory extends DeviceAccessory {
     'stranger person detected',
   ];
 
-  public streamingDelegate: StreamingDelegate | null = null;
+  protected streamingDelegate: StreamingDelegate | null = null;
+  protected recordingDelegate?: RecordingDelegate | null = null;
 
   public resolutions: Resolution[] = [
     [320, 180, 30],
@@ -507,10 +519,112 @@ export class CameraAccessory extends DeviceAccessory {
   private configureVideoStream(): boolean {
     log.debug(`${this.accessory.displayName} StreamingDelegate`);
 
-    this.streamingDelegate = new StreamingDelegate(this.platform, this.device, this.cameraConfig, this.platform.api, this.platform.api.hap);
-    this.accessory.configureController(this.streamingDelegate.controller);
+    try {
+      log.debug(`${this.accessory.displayName} StreamingDelegate`);
+      this.streamingDelegate = new StreamingDelegate(
+        this.platform,
+        this.device,
+        this.cameraConfig,
+        this.platform.api,
+        this.platform.api.hap,
+      );
 
+      log.debug(`${this.accessory.displayName} RecordingDelegate`);
+      this.recordingDelegate = new RecordingDelegate(
+        this.platform,
+        this.accessory,
+        this.device,
+        this.cameraConfig,
+        this.streamingDelegate.getLivestreamManager(),
+      );
+
+      log.debug(`${this.accessory.displayName} Controller`);
+      const controller = new this.platform.api.hap.CameraController(this.getCameraControllerOptions());
+
+      log.debug(`${this.accessory.displayName} streamingDelegate.setController`);
+      this.streamingDelegate.setController(controller);
+
+      if (this.cameraConfig.hsv) {
+        log.debug(`${this.accessory.displayName} recordingDelegate.setController`);
+        this.recordingDelegate.setController(controller);
+      }
+
+      log.debug(`${this.accessory.displayName} configureController`);
+      this.accessory.configureController(controller);
+
+    } catch (error) {
+      log.error(`${this.accessory.displayName} while happending Delegate ${error}`);
+    }
     return true;
+  }
+
+  private getCameraControllerOptions(): CameraControllerOptions {
+
+    const option: CameraControllerOptions = {
+      cameraStreamCount: this.cameraConfig.videoConfig?.maxStreams || 2, // HomeKit requires at least 2 streams, but 1 is also just fine
+      delegate: this.streamingDelegate as StreamingDelegate,
+      streamingOptions: {
+        supportedCryptoSuites: [SRTPCryptoSuites.AES_CM_128_HMAC_SHA1_80],
+        video: {
+          resolutions: this.resolutions,
+          codec: {
+            profiles: [H264Profile.BASELINE, H264Profile.MAIN, H264Profile.HIGH],
+            levels: [H264Level.LEVEL3_1, H264Level.LEVEL3_2, H264Level.LEVEL4_0],
+          },
+        },
+        audio: {
+          twoWayAudio: this.cameraConfig.talkback,
+          codecs: [
+            {
+              type: AudioStreamingCodecType.AAC_ELD,
+              samplerate: AudioStreamingSamplerate.KHZ_16,
+            },
+          ],
+        },
+      },
+      recording: this.cameraConfig.hsv
+        ? {
+          options: {
+            overrideEventTriggerOptions: [
+              EventTriggerOption.MOTION,
+              EventTriggerOption.DOORBELL,
+            ],
+            prebufferLength: 0, // prebufferLength always remains 4s ?
+            mediaContainerConfiguration: [
+              {
+                type: MediaContainerType.FRAGMENTED_MP4,
+                fragmentLength: 4000,
+              },
+            ],
+            video: {
+              type: this.platform.api.hap.VideoCodecType.H264,
+              parameters: {
+                profiles: [H264Profile.BASELINE, H264Profile.MAIN, H264Profile.HIGH],
+                levels: [H264Level.LEVEL3_1, H264Level.LEVEL3_2, H264Level.LEVEL4_0],
+              },
+              resolutions: this.resolutions,
+            },
+            audio: {
+              codecs: {
+                type: AudioRecordingCodecType.AAC_ELD,
+                samplerate: AudioRecordingSamplerate.KHZ_24,
+                bitrateMode: 0,
+                audioChannels: 1,
+              },
+            },
+          },
+          delegate: this.recordingDelegate as RecordingDelegate,
+        }
+        : undefined,
+      sensors: this.cameraConfig.hsv
+        ? {
+          motion: this.getService(SERV.MotionSensor),
+          occupancy: undefined,
+        }
+        : undefined,
+    };
+
+    return option;
   }
 
 }

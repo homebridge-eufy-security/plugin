@@ -1,41 +1,24 @@
 {
   "compilerOptions": {
-    "target": "ES2022",
+    "target": "ES2018", // ~node10
     "module": "commonjs",
     "lib": [
       "es2022",
-      "dom"
+      "es2018"
     ],
     "declaration": true,
     "declarationMap": true,
     "sourceMap": true,
-    "forceConsistentCasingInFileNames": true,
+    "outDir": "./dist",
+    "rootDir": "./src/plugin",
     "strict": true,
     "esModuleInterop": true,
-    "noImplicitAny": false,
-    "noImplicitOverride": true,
-    "noPropertyAccessFromIndexSignature": true,
-    "noImplicitReturns": true,
-    "noFallthroughCasesInSwitch": true,
-    "downlevelIteration": true,
-    "experimentalDecorators": true,
-    "moduleResolution": "node",
-    "importHelpers": true,
-    "types": [
-      "node"
-    ]
-  },
-  "angularCompilerOptions": {
-    "enableI18nLegacyMessageIdFormat": false,
-    "strictInjectionParameters": true,
-    "strictInputAccessModifiers": true,
-    "strictTemplates": true
+    "noImplicitAny": false
   },
   "include": [
-    "src/**/*.ts",
-],
+    "src/plugin/"
+  ],
   "exclude": [
-    "build/**",
-    "node_modules/**"
-]
+    "**/*.spec.ts"
+  ]
 }

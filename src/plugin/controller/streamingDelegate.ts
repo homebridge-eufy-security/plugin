@@ -4,15 +4,12 @@ import {
   API,
   APIEvent,
   AudioStreamingCodecType,
-  AudioStreamingSamplerate,
   CameraController,
-  CameraControllerOptions,
   CameraStreamingDelegate,
   HAP,
   PrepareStreamCallback,
   PrepareStreamRequest,
   PrepareStreamResponse,
-  Resolution,
   SnapshotRequest,
   SnapshotRequestCallback,
   SRTPCryptoSuites,
@@ -29,7 +26,7 @@ import { Camera, PropertyName } from 'eufy-security-client';
 import { EufySecurityPlatform } from '../platform';
 
 import { LocalLivestreamManager } from './LocalLivestreamManager';
-import { SnapshotManager, SnapshotUnavailable } from './SnapshotManager';
+import { SnapshotManager } from './SnapshotManager';
 import { TalkbackStream } from '../utils/Talkback';
 import { is_rtsp_ready, log } from '../utils/utils';
 import { reservePorts } from '@homebridge/camera-utils';
@@ -67,27 +64,13 @@ export class StreamingDelegate implements CameraStreamingDelegate {
   private readonly cameraName: string;
   private cameraConfig: CameraConfig;
   private videoConfig: VideoConfig;
-  readonly controller: CameraController;
+  private controller?: CameraController;
 
   private readonly platform: EufySecurityPlatform;
   private readonly device: Camera;
 
   private localLivestreamManager: LocalLivestreamManager;
   private snapshotManager: SnapshotManager;
-
-  private resolutions: Resolution[] = [
-    [320, 180, 30],
-    [320, 240, 15], // Apple Watch requires this configuration
-    [320, 240, 30],
-    [480, 270, 30],
-    [480, 360, 30],
-    [640, 360, 30],
-    [640, 480, 30],
-    [1280, 720, 30],
-    [1280, 960, 30],
-    [1600, 1200, 30],
-    [1920, 1080, 30],
-  ];
 
   // keep track of sessions
   pendingSessions: Map<string, SessionInfo> = new Map();
@@ -111,7 +94,6 @@ export class StreamingDelegate implements CameraStreamingDelegate {
     this.localLivestreamManager = new LocalLivestreamManager(
       this.platform,
       this.device,
-      true,
     );
 
     this.snapshotManager = new SnapshotManager(this.platform, this.device, this.cameraConfig, this.localLivestreamManager);
@@ -122,50 +104,21 @@ export class StreamingDelegate implements CameraStreamingDelegate {
       }
       this.localLivestreamManager.stopLocalLiveStream();
     });
+  }
 
-    let samplerate = AudioStreamingSamplerate.KHZ_16;
-    if (this.videoConfig.audioSampleRate === 8) {
-      samplerate = AudioStreamingSamplerate.KHZ_8;
-    } else if (this.videoConfig.audioSampleRate === 24) {
-      samplerate = AudioStreamingSamplerate.KHZ_24;
-    }
+  public setController(controller: CameraController) {
+    this.controller = controller;
+  }
 
-    log.debug(this.cameraName, `Audio sample rate set to ${samplerate} kHz.`);
-
-    const options: CameraControllerOptions = {
-      cameraStreamCount: this.videoConfig.maxStreams || 2, // HomeKit requires at least 2 streams, but 1 is also just fine
-      delegate: this,
-      streamingOptions: {
-        supportedCryptoSuites: [hap.SRTPCryptoSuites.AES_CM_128_HMAC_SHA1_80],
-        video: {
-          resolutions: this.resolutions,
-          codec: {
-            profiles: [hap.H264Profile.BASELINE, hap.H264Profile.MAIN, hap.H264Profile.HIGH],
-            levels: [hap.H264Level.LEVEL3_1, hap.H264Level.LEVEL3_2, hap.H264Level.LEVEL4_0],
-          },
-        },
-        audio: {
-          twoWayAudio: this.cameraConfig.talkback,
-          codecs: [
-            {
-              type: AudioStreamingCodecType.AAC_ELD,
-              samplerate: samplerate,
-              /*type: AudioStreamingCodecType.OPUS,
-                            samplerate: AudioStreamingSamplerate.KHZ_24*/
-            },
-          ],
-        },
-      },
-    };
-
-    this.controller = new hap.CameraController(options);
+  public getLivestreamManager(): LocalLivestreamManager {
+    return this.localLivestreamManager;
   }
 
   async handleSnapshotRequest(request: SnapshotRequest, callback: SnapshotRequestCallback): Promise<void> {
     log.debug('handleSnapshotRequest');
 
     try {
-      log.debug('Snapshot requested: ' + request.width + ' x ' + request.height, this.cameraName, this.videoConfig.debug);
+      log.debug('Snapshot requested: ' + request.width + ' x ' + request.height, this.cameraName, this.videoConfig.debug!);
 
       const snapshot = await this.snapshotManager.getSnapshotBuffer(request);
 
@@ -174,12 +127,14 @@ export class StreamingDelegate implements CameraStreamingDelegate {
       callback(undefined, snapshot);
     } catch (err) {
       log.error(this.cameraName, err as string);
-      callback(undefined, SnapshotUnavailable);
+      callback();
     }
   }
 
   async prepareStream(request: PrepareStreamRequest, callback: PrepareStreamCallback): Promise<void> {
     const ipv6 = request.addressVersion === 'ipv6';
+
+    log.debug(this.cameraName, `stream prepare request with session id ${request.sessionID} was received.`);
 
     const ports: number[] = await reservePorts({ type: 'udp', count: 2 });
     const videoReturnPort = ports[0];
@@ -226,13 +181,6 @@ export class StreamingDelegate implements CameraStreamingDelegate {
     callback(undefined, response);
   }
 
-  public async prepareCachedStream(): Promise<void> {
-    if (!is_rtsp_ready(this.device, this.cameraConfig)) {
-      const proxyStream = await this.localLivestreamManager.getLocalLivestream();
-      this.localLivestreamManager.stopProxyStream(proxyStream.id);
-    }
-  }
-
   private async startStream(request: StartStreamRequest, callback: StreamRequestCallback): Promise<void> {
     const sessionInfo = this.pendingSessions.get(request.sessionID);
 
@@ -256,7 +204,7 @@ export class StreamingDelegate implements CameraStreamingDelegate {
         }
         activeSession.timeout = setTimeout(() => {
           log.debug(this.cameraName, 'Device appears to be inactive. Stopping video stream.');
-          this.controller.forceStopStreamingSession(request.sessionID);
+          this.controller?.forceStopStreamingSession(request.sessionID);
           this.stopStream(request.sessionID);
         }, request.video.rtcp_interval * 5 * 1000);
       });
@@ -337,6 +285,9 @@ export class StreamingDelegate implements CameraStreamingDelegate {
       if (this.cameraConfig.talkback) {
         const talkbackParameters = await FFmpegParameters.forAudio(this.videoConfig.debug);
         await talkbackParameters.setTalkbackInput(sessionInfo!);
+        if (this.cameraConfig.talkbackChannels) {
+          talkbackParameters.setTalkbackChannels(this.cameraConfig.talkbackChannels);
+        }
         activeSession.talkbackStream = new TalkbackStream(this.platform, this.device);
         activeSession.returnProcess = new FFmpeg(
           `[${this.cameraName}] [Talkback Process]`,
@@ -371,6 +322,8 @@ export class StreamingDelegate implements CameraStreamingDelegate {
   handleStreamRequest(request: StreamingRequest, callback: StreamRequestCallback): void {
     switch (request.type) {
       case StreamRequestTypes.START:
+        log.debug(this.cameraName, `Received request to start stream with id ${request.sessionID}`);
+        log.debug(this.cameraName, `request data: ${JSON.stringify(request)}`);
         this.startStream(request, callback);
         break;
       case StreamRequestTypes.RECONFIGURE:
