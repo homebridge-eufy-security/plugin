@@ -521,13 +521,7 @@ export class CameraAccessory extends DeviceAccessory {
 
     try {
       log.debug(`${this.accessory.displayName} StreamingDelegate`);
-      this.streamingDelegate = new StreamingDelegate(
-        this.platform,
-        this.device,
-        this.cameraConfig,
-        this.platform.api,
-        this.platform.api.hap,
-      );
+      this.streamingDelegate = new StreamingDelegate(this);
 
       log.debug(`${this.accessory.displayName} RecordingDelegate`);
       this.recordingDelegate = new RecordingDelegate(
