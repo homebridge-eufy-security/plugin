@@ -50,17 +50,19 @@
 </div>
 
 <div *ngIf="stations.length !== 0" class="container">
-    <div class="row">
-        <div class="col-6">
-            <button type="button" class="btn btn-success" (click)="openReloadModal(reloadModal)"
-                (keydown.enter)="openReloadModal(reloadModal)">
-                <fa-icon [icon]="reloadIcon" size="lg"></fa-icon>
-                Reload
-            </button>
-        </div>
-        <div class="col-6 text-end">
-            <a routerLink="/advancedConfig" class="btn btn-secondary">Global Settings</a>
-        </div>
+    <div class="text-end">
+        <button type="button" class="btn btn-success" (click)="openReloadModal(reloadModal)"
+            (keydown.enter)="openReloadModal(reloadModal)" placement="top" ngbTooltip="Re Sync">
+            <fa-icon [icon]="reloadIcon" size="lg"></fa-icon>
+        </button>
+        <button type="button" class="btn btn-warning" placement="top" ngbTooltip="Download Logs"
+            routerLink="/downloadLogs">
+            <fa-icon [icon]="downloadIcon" size="lg"></fa-icon>
+        </button>
+        <button type="button" class="btn btn-danger" placement="top" ngbTooltip="Global Settings"
+            routerLink="/advancedConfig">
+            <fa-icon [icon]="settingsIcon" size="lg"></fa-icon>
+        </button>
     </div>
 
     <div *ngIf="versionUnmatched">
@@ -90,8 +92,8 @@
                             }}</div>
                         <div class="col">
                             <span class="float-right">
-                                <button type="button" class="btn text-muted my-0 mx-1"
-                                    routerLink="/stationConfig/{{station.uniqueId}}">
+                                <button type="button" class="btn text-muted my-0 mx-1" placement="top"
+                                    ngbTooltip="Alarm configuration" routerLink="/stationConfig/{{station.uniqueId}}">
                                     <fa-icon [icon]="shieldIcon" size="lg"></fa-icon>
                                 </button>
                             </span>
@@ -105,8 +107,8 @@
                             {{ station.displayName }}</div>
                         <div class="col">
                             <span class="float-right">
-                                <button type="button" class="btn text-muted my-0 mx-1"
-                                    routerLink="/stationConfig/{{station.uniqueId}}">
+                                <button type="button" class="btn text-muted my-0 mx-1" placement="top"
+                                    ngbTooltip="Alarm configuration" routerLink="/stationConfig/{{station.uniqueId}}">
                                     <fa-icon [icon]="shieldIcon" size="lg"></fa-icon>
                                 </button>
                             </span>
