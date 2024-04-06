@@ -124,7 +124,7 @@ export class LockAccessory extends DeviceAccessory {
     });
 
     // Initialize the sensor service.
-    this.initSensorService(SERV.LockMechanism);
+    this.initSensorService();
   }
 
   /**

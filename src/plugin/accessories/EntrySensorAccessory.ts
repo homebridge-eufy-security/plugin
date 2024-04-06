@@ -49,7 +49,7 @@ export class EntrySensorAccessory extends DeviceAccessory {
       });
 
       // Initialize the sensor service.
-      this.initSensorService(SERV.ContactSensor);
+      this.initSensorService();
 
     } else {
       // Log an error if the 'sensorOpen' property is not available for this device.

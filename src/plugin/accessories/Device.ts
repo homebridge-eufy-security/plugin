@@ -8,7 +8,7 @@ import {
 import { EufySecurityPlatform } from '../platform';
 import { BaseAccessory } from './BaseAccessory';
 import { Device, PropertyName } from 'eufy-security-client';
-import { CHAR } from '../utils/utils';
+import { CHAR, SERV } from '../utils/utils';
 
 export type CharacteristicType = WithUUID<{ new(): Characteristic }>;
 export type ServiceType = WithUUID<typeof Service> | Service;
@@ -52,33 +52,35 @@ export abstract class DeviceAccessory extends BaseAccessory {
       .updateValue(value);
   }
 
-  initSensorService(serviceType: ServiceType) {
+  initSensorService() {
     const propertiesToRegister = [
       {
         property: 'battery',
         characteristicType: CHAR.BatteryLevel,
         propertyName: PropertyName.DeviceBattery,
         onSimpleValue: null,
-        fallback: 100
+        fallback: 100,
       },
       {
         property: 'batteryLow',
         characteristicType: CHAR.StatusLowBattery,
         propertyName: PropertyName.DeviceBatteryLow,
         onSimpleValue: 'low battery',
+        fallback: false,
       },
       {
         property: 'batteryIsCharging',
         characteristicType: CHAR.ChargingState,
         propertyName: PropertyName.DeviceBatteryIsCharging,
         onSimpleValue: null,
+        fallback: false,
       },
     ];
 
     propertiesToRegister.forEach((propertyConfig) => {
       if (this.device.hasProperty(propertyConfig.property)) {
         this.registerCharacteristic({
-          serviceType: serviceType,
+          serviceType: SERV.Battery,
           characteristicType: propertyConfig.characteristicType,
           getValue: () => this.device.getPropertyValue(propertyConfig.propertyName) || propertyConfig.fallback,
           onSimpleValue: propertyConfig.onSimpleValue,

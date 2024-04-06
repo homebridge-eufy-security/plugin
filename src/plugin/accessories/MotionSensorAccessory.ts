@@ -49,7 +49,7 @@ export class MotionSensorAccessory extends DeviceAccessory {
       });
 
       // Initialize the sensor service.
-      this.initSensorService(SERV.MotionSensor);
+      this.initSensorService();
 
     } else {
       // Log an error if the 'motionDetected' property is not available for this device.

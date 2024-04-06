@@ -124,12 +124,12 @@ export class CameraAccessory extends DeviceAccessory {
       this.log.debug(`has a camera`);
       this.setupCamera();
       this.setupChimeButton();
-      this.initSensorService(SERV.Battery);
     } else {
       this.log.debug(`has a motion sensor`);
       this.setupMotionFunction();
-      this.initSensorService(SERV.MotionSensor);
     }
+
+    this.initSensorService();
 
     this.setupEnableButton();
     this.setupMotionButton();
