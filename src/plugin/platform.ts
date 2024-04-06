@@ -275,7 +275,6 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
     this.config.ignoreStations = this.config.ignoreStations ??= [];
     this.config.ignoreDevices = this.config.ignoreDevices ??= [];
     this.config.cleanCache = this.config.cleanCache ??= true;
-    this.config.unbridge = this.config.unbridge ??= true;
 
     log.info(`Country set: ${this.eufyConfig.country}`);
     // log.info(`Codec set: ${JSON.stringify(this.codecSupport)}`);
@@ -411,8 +410,6 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
       const uuid = this.generateUUID(deviceContainer.deviceIdentifier.uniqueId, deviceContainer.deviceIdentifier.type);
       const cachedAccessory = this.accessories.find((accessory) => accessory.UUID === uuid);
 
-      let unbridge = false;
-
       if (cachedAccessory) {
         this.accessories.splice(this.accessories.indexOf(cachedAccessory), 1); // Remove from the accessories array
       }
@@ -424,35 +421,15 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
       if (isStation) {
         this.register_station(accessory, deviceContainer as StationContainer);
       } else {
-        unbridge = this.register_device(accessory, deviceContainer as DeviceContainer);
+        this.register_device(accessory, deviceContainer as DeviceContainer);
       }
 
       if (cachedAccessory) {
-        if (!unbridge) {
-          // Rule: if a device exists and it's not a camera
-          this.api.updatePlatformAccessories([accessory]);
-          log.info(`Updating existing accessory: ${accessory.displayName}`);
-        } else if (this.config.unbridge) {
-          // Rule: if a device exists, it's a camera, and unbridge is true
-          this.api.unregisterPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [accessory]);
-          log.info(`Unregistering unbridged accessory: ${accessory.displayName}`);
-        }
+        this.api.updatePlatformAccessories([accessory]);
+        log.info(`Updating existing accessory: ${accessory.displayName}`);
       } else {
-        if (!unbridge) {
-          // Rule: if a device doesn't exist and it's not a camera
-          this.api.registerPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [accessory]);
-          log.info(`Registering new accessory: ${accessory.displayName}`);
-        } else {
-          if (this.config.unbridge) {
-            // Rule: if a device doesn't exist, it's a camera, and unbridge is true
-            this.api.publishExternalAccessories(PLUGIN_NAME, [accessory]);
-            log.info(`Publishing unbridged accessory externally: ${accessory.displayName}`);
-          } else {
-            // Rule: if a device doesn't exist, it's a camera, and unbridge is false
-            this.api.registerPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [accessory]);
-            log.info(`Registering new accessory: ${accessory.displayName}`);
-          }
-        }
+        this.api.registerPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [accessory]);
+        log.info(`Registering new accessory: ${accessory.displayName}`);
       }
     } catch (error) {
       log.error(`Error in ${isStation ? 'stationAdded' : 'deviceAdded'}: ${error}`);
@@ -606,7 +583,7 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
   private register_station(
     accessory: PlatformAccessory,
     container: StationContainer,
-  ) {
+  ): void {
 
     log.debug(accessory.displayName + ' UUID:' + accessory.UUID);
 
@@ -639,7 +616,7 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
   private register_device(
     accessory: PlatformAccessory,
     container: DeviceContainer,
-  ): boolean {
+  ): void {
 
     log.debug(accessory.displayName + ' UUID:' + accessory.UUID);
     const device = container.eufyDevice;
@@ -662,10 +639,8 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
     if (device.isCamera()) {
       log.debug(accessory.displayName + ' isCamera!');
       new CameraAccessory(this, accessory, device as Camera);
-      return true;
     }
 
-    return false;
   }
 
   public getStationById(id: string) {
@@ -736,12 +711,6 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
             // eslint-disable-next-line max-len
             log.warn('Found camera ' + cachedAccessory.context['device'].displayName + ' (' + cachedAccessory.context['device'].uniqueId + ') with invalid camera configuration option enableCamera. Attempt to repair. This should only happen once per device...');
             pluginConfig.cameras[i]['enableCamera'] = true;
-
-            // if (camera.unbridge) {
-            // eslint-disable-next-line max-len
-            //   log.warn('Camera ' + cachedAccessory.context['device'].displayName + ' (' + cachedAccessory.context['device'].uniqueId + ') had camera configuration option \'unbridge\' set to true. This will be set to false to maintain functionality. See https://github.com/homebridge-eufy-security/plugin/issues/79 for more information.');
-            //   pluginConfig.cameras[i]['unbridge'] = false;
-            // }
           }
         }
       }

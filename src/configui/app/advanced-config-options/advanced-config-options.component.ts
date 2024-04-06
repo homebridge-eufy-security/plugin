@@ -3,7 +3,6 @@ import { RouterLink } from '@angular/router';
 import { ResetPluginComponent } from '../config-options/reset-plugin/reset-plugin.component';
 import { DownloadLogsComponent } from '../config-options/download-logs/download-logs.component';
 import { GuardModesMappingComponent } from '../config-options/guard-modes-mapping/guard-modes-mapping.component';
-import { UnbridgeAccessoryComponent } from '../config-options/unbridge-accessory/unbridge-accessory.component';
 import { CleanCacheComponent } from '../config-options/clean-cache/clean-cache.component';
 import { OmitLogFilesComponent } from '../config-options/omit-log-files/omit-log-files.component';
 import { IgnoreMultipleDevicesWarningComponent } from '../config-options/ignore-multiple-devices-warning/ignore-multiple-devices-warning.component';
@@ -26,7 +25,6 @@ import { AutoSyncStationComponent } from '../config-options/auto-sync-station/au
         IgnoreMultipleDevicesWarningComponent,
         OmitLogFilesComponent,
         CleanCacheComponent,
-        UnbridgeAccessoryComponent,
         GuardModesMappingComponent,
         DownloadLogsComponent,
         ResetPluginComponent,

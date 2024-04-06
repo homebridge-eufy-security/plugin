@@ -25,7 +25,6 @@ export interface EufySecurityPlatformConfig extends PlatformConfig {
   cameras: CameraConfig[];
   stations: StationConfig[];
   cleanCache: boolean;
-  unbridge: boolean;
   verboseFfmpeg: boolean;
   videoProcessor: string;
   videoEncoder: string;
@@ -45,7 +44,6 @@ export const DEFAULT_CONFIG_VALUES = {
   country: 'US',
   cameras: [],
   cleanCache: true,
-  unbridge: true,
   ignoreMultipleDevicesWarning: false,
   syncStationModes: false,
   verboseFfmpeg: false,
