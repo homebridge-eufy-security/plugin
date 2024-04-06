@@ -7,7 +7,7 @@ import { CameraConfig } from '../utils/configTypes';
 import { EufySecurityPlatform } from '../platform';
 import { LocalLivestreamManager } from './LocalLivestreamManager';
 
-import { is_rtsp_ready, log } from '../utils/utils';
+import { is_rtsp_ready } from '../utils/utils';
 import { SnapshotRequest } from 'homebridge';
 import { FFmpeg, FFmpegParameters } from '../utils/ffmpeg';
 import * as fs from 'fs';

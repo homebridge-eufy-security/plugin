@@ -26,7 +26,7 @@ import { EufySecurityPlatform } from '../platform';
 import { LocalLivestreamManager } from './LocalLivestreamManager';
 import { SnapshotManager } from './SnapshotManager';
 import { TalkbackStream } from '../utils/Talkback';
-import { HAP, is_rtsp_ready, log } from '../utils/utils';
+import { HAP, is_rtsp_ready } from '../utils/utils';
 import { reservePorts } from '@homebridge/camera-utils';
 import { CameraAccessory } from '../accessories/CameraAccessory';
 import { Logger, ILogObj } from 'tslog';
