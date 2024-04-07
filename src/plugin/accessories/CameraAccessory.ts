@@ -24,7 +24,7 @@ import { DeviceAccessory } from './Device';
 import { Camera, DeviceEvents, PropertyName, CommandName, StreamMetadata } from 'eufy-security-client';
 
 import { CameraConfig, DEFAULT_CAMERACONFIG_VALUES } from '../utils/configTypes';
-import { CHAR, SERV, log } from '../utils/utils';
+import { CHAR, SERV } from '../utils/utils';
 import { StreamingDelegate } from '../controller/streamingDelegate';
 import { RecordingDelegate } from '../controller/recordingDelegate';
 
