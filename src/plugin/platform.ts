@@ -8,6 +8,8 @@ import {
   APIEvent,
 } from 'homebridge';
 
+import { version } from 'process';
+
 import { PLATFORM_NAME, PLUGIN_NAME, SnapshotBlackPath, SnapshotUnavailablePath } from './settings';
 
 import { EufySecurityPlatformConfig } from './config';
@@ -48,7 +50,7 @@ import { platform } from 'node:process';
 import { readFileSync } from 'node:fs';
 
 import ffmpegPath from 'ffmpeg-for-homebridge';
-import { init_log, log, tsLogger, ffmpegLogger, setHap } from './utils/utils';
+import { init_log, log, tsLogger, ffmpegLogger } from './utils/utils';
 
 export class EufySecurityPlatform implements DynamicPlatformPlugin {
   public eufyClient: EufySecurity = {} as EufySecurity;
@@ -82,8 +84,6 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
     public readonly api: API,
   ) {
     this.config = config as EufySecurityPlatformConfig;
-
-    setHap(this.api.hap);
 
     this.eufyPath = this.api.user.storagePath() + '/eufysecurity';
 
@@ -245,11 +245,26 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
 
   private initSetup() {
 
-    log.warn('warning: planned changes, see https://github.com/homebridge-eufy-security/plugin/issues/1');
+    log.debug('warning: planned changes, see https://github.com/homebridge-eufy-security/plugin/issues/1');
 
     log.debug('plugin data store: ' + this.eufyPath);
     log.debug('OS is', this.hostSystem);
     log.debug('Using bropats @homebridge-eufy-security/eufy-security-client library in version ' + libVersion);
+
+    if (!this.checkNodeVersion()) {
+      log.error(`
+      ***************************
+      ****** ERROR MESSAGE ******
+      ***************************
+      Error: Your current Node.js version (${version}) is incompatible with the RSA_PKCS1_PADDING used by the plugin. 
+      Please downgrade to a compatible version by running the command likes: sudo hb-service update-node 20.11.0.
+      Refer to https://github.com/homebridge/homebridge/wiki/How-To-Update-Node.js for upgrading/downgrading Node.js
+      Refer to https://nodejs.org/en/blog/vulnerability/february-2024-security-releases#nodejs-is-vulnerable-to-the-marvin-attack-timing-variant-of-the-bleichenbacher-attack-against-pkcs1-v15-padding-cve-2023-46809---medium for more information.
+      ***************************
+      `);
+      this.api.registerPlatform
+      return;
+    }
 
     this.videoProcessor = ffmpegPath ?? 'ffmpeg';
     log.info(`ffmpegPath set: ${this.videoProcessor}`);
@@ -737,4 +752,44 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
       throw new Error(`We could not cache ${filepath} file for further use: ${error}`);
     }
   }
+
+  private compareVersions(versionA: string, versionB: string): number {
+    const partsA = versionA.split('.').map(Number);
+    const partsB = versionB.split('.').map(Number);
+
+    log.warn(`${JSON.stringify(partsA)}`);
+    log.warn(`${JSON.stringify(partsB)}`);
+
+    // Compare major versions
+    if (
+      partsA[0] !== partsB[0]
+    ) {
+      return -1;
+    }
+
+    // Compare patch version
+    return partsA[2] - partsB[2];
+  }
+
+  private checkNodeVersion(): boolean {
+    const nodeVersion = version.slice(1); // Removing 'v' from the version string
+
+    log.warn(`${nodeVersion}`);
+
+    // Versions known to break compatibility with RSA_PKCS1_PADDING
+    const incompatibleVersions = [
+      '18.19.1',
+      '20.11.1',
+      '21.6.2'
+    ];
+
+    for (const incompatibleVersion of incompatibleVersions) {
+      if (this.compareVersions(nodeVersion, incompatibleVersion) >= 0) {
+        return false;
+      }
+    }
+
+    return true;
+  }
+
 }
