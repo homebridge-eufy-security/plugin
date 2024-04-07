@@ -506,13 +506,13 @@ export class CameraAccessory extends DeviceAccessory {
 
   // Configure a camera accessory for HomeKit.
   private configureVideoStream(): boolean {
-    log.debug(`${this.accessory.displayName} StreamingDelegate`);
+    this.log.debug(`StreamingDelegate`);
 
     try {
-      log.debug(`${this.accessory.displayName} StreamingDelegate`);
+      this.log.debug(`StreamingDelegate`);
       this.streamingDelegate = new StreamingDelegate(this);
 
-      log.debug(`${this.accessory.displayName} RecordingDelegate`);
+      this.log.debug(`RecordingDelegate`);
       this.recordingDelegate = new RecordingDelegate(
         this.platform,
         this.accessory,
@@ -521,22 +521,22 @@ export class CameraAccessory extends DeviceAccessory {
         this.streamingDelegate.getLivestreamManager(),
       );
 
-      log.debug(`${this.accessory.displayName} Controller`);
+      this.log.debug(`Controller`);
       const controller = new this.platform.api.hap.CameraController(this.getCameraControllerOptions());
 
-      log.debug(`${this.accessory.displayName} streamingDelegate.setController`);
+      this.log.debug(`streamingDelegate.setController`);
       this.streamingDelegate.setController(controller);
 
       if (this.cameraConfig.hsv) {
-        log.debug(`${this.accessory.displayName} recordingDelegate.setController`);
+        this.log.debug(`recordingDelegate.setController`);
         this.recordingDelegate.setController(controller);
       }
 
-      log.debug(`${this.accessory.displayName} configureController`);
+      this.log.debug(`configureController`);
       this.accessory.configureController(controller);
 
     } catch (error) {
-      log.error(`${this.accessory.displayName} while happending Delegate ${error}`);
+      this.log.error(`while happending Delegate ${error}`);
     }
     return true;
   }

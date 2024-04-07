@@ -33,6 +33,7 @@ import {
   UserType,
   Lock,
   libVersion,
+  LogLevel,
   // eslint-disable-next-line @typescript-eslint/ban-ts-comment
   // @ts-ignore 
 } from 'eufy-security-client';
@@ -158,7 +159,7 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
       const logStreams = [
         { name: 'eufy-security.log', logger: log },
         { name: 'ffmpeg.log', logger: ffmpegLogger },
-        { name: 'eufy-log.log', logger: tsLogger },
+        { name: 'eufy-lib.log', logger: tsLogger },
       ];
 
       for (const { name, logger } of logStreams) {
@@ -268,7 +269,7 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
       pollingIntervalMinutes: this.config.pollingIntervalMinutes ?? 10,
       eventDurationSeconds: 10,
       logging: {
-        // level: (this.config.enableDetailedLogging) ? LogLevel.Debug : LogLevel.Info,
+        level: (this.config.enableDetailedLogging) ? LogLevel.Debug : LogLevel.Info,
       },
     } as EufySecurityConfig;
 
@@ -277,7 +278,6 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
     this.config.cleanCache = this.config.cleanCache ??= true;
 
     log.info(`Country set: ${this.eufyConfig.country}`);
-    // log.info(`Codec set: ${JSON.stringify(this.codecSupport)}`);
 
     // This function is here to avoid any break while moving from 1.0.x to 1.1.x
     // moving persistent into our dedicated folder (this need to be removed after few release of 1.1.x)
