@@ -757,9 +757,6 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
     const partsA = versionA.split('.').map(Number);
     const partsB = versionB.split('.').map(Number);
 
-    log.warn(`${JSON.stringify(partsA)}`);
-    log.warn(`${JSON.stringify(partsB)}`);
-
     // Compare major versions
     if (
       partsA[0] !== partsB[0]
@@ -773,8 +770,6 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
 
   private checkNodeVersion(): boolean {
     const nodeVersion = version.slice(1); // Removing 'v' from the version string
-
-    log.warn(`${nodeVersion}`);
 
     // Versions known to break compatibility with RSA_PKCS1_PADDING
     const incompatibleVersions = [
