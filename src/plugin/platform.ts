@@ -312,6 +312,7 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
       );
 
       this.eufyClient.on('station added', this.stationAdded.bind(this));
+      this.eufyClient.on('station removed', this.stationRemoved.bind(this));
       this.eufyClient.on('device added', this.deviceAdded.bind(this));
       this.eufyClient.on('device removed', this.deviceRemoved.bind(this));
 
@@ -503,26 +504,14 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
     }
   }
 
+  private async stationRemoved(station: Station) {
+    const serial = station.getSerial();
+    log.debug(`A device has been removed: ${serial}`);
+  }
+
   private async deviceRemoved(device: Device) {
     const serial = device.getSerial();
-
     log.debug(`A device has been removed: ${serial}`);
-
-    if (this.config.ignoreDevices.indexOf(device.getSerial()) !== -1) {
-      log.debug('Device ignored');
-      return;
-    }
-
-    // const deviceContainer: DeviceContainer = {
-    //   deviceIdentifier: {
-    //     uniqueId: device.getSerial(),
-    //     displayName: device.getName(),
-    //     type: device.getDeviceType(),
-    //   } as DeviceIdentifier,
-    //   eufyDevice: device,
-    // };
-
-    // this.processAccessory(deviceContainer);
   }
 
   private async pluginShutdown() {
