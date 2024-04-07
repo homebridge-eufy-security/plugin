@@ -267,7 +267,7 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
     }
 
     this.videoProcessor = ffmpegPath ?? 'ffmpeg';
-    log.info(`ffmpegPath set: ${this.videoProcessor}`);
+    log.debug(`ffmpegPath set: ${this.videoProcessor}`);
 
     this.clean_config();
 
@@ -292,7 +292,7 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
     this.config.ignoreDevices = this.config.ignoreDevices ??= [];
     this.config.cleanCache = this.config.cleanCache ??= true;
 
-    log.info(`Country set: ${this.eufyConfig.country}`);
+    log.debug(`Country set: ${this.eufyConfig.country}`);
 
     // This function is here to avoid any break while moving from 1.0.x to 1.1.x
     // moving persistent into our dedicated folder (this need to be removed after few release of 1.1.x)
@@ -315,7 +315,7 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
       await this.pluginShutdown();
     });
 
-    log.info('Finished initializing!');
+    log.debug('Finished booting!');
   }
 
   private async pluginSetup() {
@@ -564,7 +564,7 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
 
   private cleanCachedAccessories() {
     if (this.config.cleanCache) {
-      log.info('Looking for old cached accessories that seem to be outdated...');
+      log.debug('Looking for old cached accessories that seem to be outdated...');
       let num = 0;
 
       const staleAccessories = this.accessories.filter((item) => {
