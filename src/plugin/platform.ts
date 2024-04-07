@@ -306,9 +306,10 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
   private async pluginSetup() {
 
     try {
-      this.eufyClient = (this.config.enableDetailedLogging)
-        ? await EufySecurity.initialize(this.eufyConfig, tsLogger)
-        : await EufySecurity.initialize(this.eufyConfig);
+      this.eufyClient = await EufySecurity.initialize(
+        this.eufyConfig,
+        (this.config.enableDetailedLogging) ? tsLogger : undefined
+      );
 
       this.eufyClient.on('station added', this.stationAdded.bind(this));
       this.eufyClient.on('device added', this.deviceAdded.bind(this));
