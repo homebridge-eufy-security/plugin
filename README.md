@@ -33,7 +33,7 @@ Homebridge plugin to control certain Eufy Security devices
 * [Installation](https://github.com/homebridge-eufy-security/plugin/wiki/Installation-and-Configuration#installation)
 * [Configuration](https://github.com/homebridge-eufy-security/plugin/wiki/Installation-and-Configuration#configuration)
 * [Bridged and Unbridged Mode](https://github.com/homebridge-eufy-security/plugin/wiki/Bridged-and-Unbridged-Mode-and-Problems)
-* [Beta Version](https://github.com/homebridge-eufy-security/plugin/wiki/Beta-Version)
+* [Beta Version](https://github.com/homebridge-eufy-security/plugin/wiki/Special-Version-(BETA---RC---HKSV))
 * [Uninstallation](https://github.com/homebridge-eufy-security/plugin/wiki/Uninstallation)
 
 #### Features
