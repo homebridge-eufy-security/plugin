@@ -14,6 +14,8 @@ import * as fs from 'fs';
 import { CameraAccessory } from '../accessories/CameraAccessory';
 import { ILogObj, Logger } from 'tslog';
 
+const CameraOffline = require.resolve('../../media/camera-offline.png');
+const CameraDisabled = require.resolve('../../media/camera-disabled.png');
 const SnapshotBlackPath = require.resolve('../../media/Snapshot-black.png');
 const SnapshotUnavailable = require.resolve('../../media/Snapshot-Unavailable.png');
 
@@ -58,6 +60,8 @@ export class SnapshotManager extends EventEmitter {
 
   private currentSnapshot?: Snapshot;
   private blackSnapshot?: Buffer;
+  private cameraOffline?: Buffer;
+  private cameraDisabled?: Buffer;
 
   private refreshProcessRunning = false;
   private lastEvent = 0;
@@ -138,6 +142,36 @@ export class SnapshotManager extends EventEmitter {
     } catch (err) {
       this.log.error('could not cache black snapshot file for further use: ' + err);
     }
+
+    try {
+      this.cameraOffline = fs.readFileSync(CameraOffline);
+      if (this.cameraConfig.immediateRingNotificationWithoutSnapshot) {
+        this.log.info('Empty snapshot will be sent on ring events immediately to speed up homekit notifications.');
+      }
+    } catch (err) {
+      this.log.error('could not cache CameraOffline file for further use: ' + err);
+    }
+
+    try {
+      this.cameraDisabled = fs.readFileSync(CameraDisabled);
+      if (this.cameraConfig.immediateRingNotificationWithoutSnapshot) {
+        this.log.info('Empty snapshot will be sent on ring events immediately to speed up homekit notifications.');
+      }
+    } catch (err) {
+      this.log.error('could not cache CameraDisabled file for further use: ' + err);
+    }
+
+    try {
+      const picture = this.device.getPropertyValue(PropertyName.DevicePicture) as Picture;
+      if (picture && picture.type) {
+        this.currentSnapshot = { timestamp: Date.now(), image: picture.data };
+      } else {
+        throw ('No currentSnapshot');
+      }
+    } catch (err) {
+      this.log.error('could not fetch old snapshot: ' + err);
+    }
+
   }
 
   private onRingEvent(device: Device, state: boolean) {
@@ -160,6 +194,15 @@ export class SnapshotManager extends EventEmitter {
       const diff = Math.abs((Date.now() - this.currentSnapshot.timestamp) / 1000);
       if (diff <= 15) {
         return this.resizeSnapshot(this.currentSnapshot.image, request);
+      }
+    }
+
+    // It should never happend since camera is disabled in HK but in case of...
+    if (!this.device.isEnabled()) {
+      if (this.cameraDisabled) {
+        return this.resizeSnapshot(this.cameraDisabled, request);
+      } else {
+        return Promise.reject('Something wrong with file systems. Looks likes not enought rights!');
       }
     }
 
@@ -190,7 +233,8 @@ export class SnapshotManager extends EventEmitter {
       return this.resizeSnapshot(snapshot, request);
 
     } catch (err) {
-      return Promise.reject(err);
+      this.log.error(err);
+      return Promise.resolve(fs.readFileSync(SnapshotUnavailable));
     }
   }
 
@@ -200,7 +244,7 @@ export class SnapshotManager extends EventEmitter {
       this.fetchCurrentCameraSnapshot().catch((err) => reject(err));
 
       const requestTimeout = setTimeout(() => {
-        reject('snapshot request timed out');
+        throw ('snapshot request timed out');
       }, 15000);
 
       this.once('new snapshot', () => {
@@ -211,7 +255,7 @@ export class SnapshotManager extends EventEmitter {
         if (this.currentSnapshot) {
           resolve(this.currentSnapshot.image);
         } else {
-          reject('Unknown snapshot request error');
+          throw ('Unknown snapshot request error');
         }
       });
     });
@@ -224,7 +268,7 @@ export class SnapshotManager extends EventEmitter {
         if (this.currentSnapshot) {
           resolve(this.currentSnapshot.image);
         } else {
-          resolve(fs.readFileSync(SnapshotUnavailable));
+          throw ('No currentSnapshot');
         }
       }, 1000);
 
@@ -241,7 +285,7 @@ export class SnapshotManager extends EventEmitter {
           if (this.currentSnapshot) {
             resolve(this.currentSnapshot.image);
           } else {
-            resolve(fs.readFileSync(SnapshotUnavailable));
+            throw ('No currentSnapshot');
           }
         }, 15000);
       }
@@ -254,7 +298,7 @@ export class SnapshotManager extends EventEmitter {
         if (this.currentSnapshot) {
           resolve(this.currentSnapshot.image);
         } else {
-          resolve(fs.readFileSync(SnapshotUnavailable));
+          throw ('No currentSnapshot');
         }
       });
     });
@@ -263,32 +307,12 @@ export class SnapshotManager extends EventEmitter {
   private async getNewestCloudSnapshot(): Promise<Buffer> {
     return new Promise((resolve, reject) => {
 
-      const newestEvent = (this.lastRingEvent > this.lastEvent) ? this.lastRingEvent : this.lastEvent;
-      const diff = (Date.now() - newestEvent) / 1000;
-      if (diff < 15) { // wait for cloud snapshot
-        this.log.debug('Waiting on cloud snapshot...');
-        const snapshotTimeout = setTimeout(() => {
-          reject('No snapshot has been retrieved in time from eufy cloud.');
-        }, 15000);
-
-        this.once('new snapshot', () => {
-          if (snapshotTimeout) {
-            clearTimeout(snapshotTimeout);
-          }
-
-          if (this.currentSnapshot) {
-            resolve(this.currentSnapshot.image);
-          } else {
-            resolve(fs.readFileSync(SnapshotUnavailable));
-          }
-        });
+      if (this.currentSnapshot) {
+        resolve(this.currentSnapshot.image);
       } else {
-        if (this.currentSnapshot) {
-          resolve(this.currentSnapshot.image);
-        } else {
-          resolve(fs.readFileSync(SnapshotUnavailable));
-        }
+        throw ('No currentSnapshot');
       }
+
     });
   }
 
