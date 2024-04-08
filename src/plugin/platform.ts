@@ -124,9 +124,6 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
         this.config[key] = (typeof value === 'string') ? parseInt(value as string) : value;
       }
     });
-
-    // Log the final configuration object for debugging purposes
-    log.debug('The config is:', this.config);
   }
 
   /**
@@ -319,6 +316,9 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
       return;
     }
 
+    // Log the final configuration object for debugging purposes
+    log.debug('The config is:', this.config);
+
     const eufyConfig = {
       username: this.config.username,
       password: this.config.password,
@@ -460,6 +460,8 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
       const accessory = cachedAccessory || new this.api.platformAccessory(deviceContainer.deviceIdentifier.displayName, uuid);
       accessory.context['device'] = deviceContainer.deviceIdentifier;
 
+      // add to active accessories (see cleanCache)
+      this.activeAccessoryIds.indexOf(uuid) === -1 ? this.activeAccessoryIds.push(uuid) : null;
 
       if (isStation) {
         this.register_station(accessory, deviceContainer as StationContainer);
@@ -674,27 +676,6 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
       new CameraAccessory(this, accessory, device as Camera);
     }
 
-  }
-
-  public getStationById(id: string) {
-    return this.eufyClient.getStation(id);
-  }
-
-  /**
-   * Reads a file synchronously and returns its buffer.
-   * Also lists the contents of the current directory.
-   * @param filepath - The path to the file to read.
-   * @returns The file buffer.
-   * @throws An error if the file cannot be read.
-   */
-  private readFileSync(filepath: string): Buffer {
-    try {
-      filepath = __dirname + filepath;
-      // Read and return the file buffer
-      return fs.readFileSync(filepath);
-    } catch (error) {
-      throw new Error(`We could not cache ${filepath} file for further use: ${error}`);
-    }
   }
 
   private compareVersions(versionA: string, versionB: string): number {

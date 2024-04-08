@@ -45,5 +45,5 @@ export const DEFAULT_CONFIG_VALUES = {
   ignoreMultipleDevicesWarning: false,
   syncStationModes: false,
   autoSyncStation: false,
-  omitLogFiles: true,
+  omitLogFiles: false,
 };
