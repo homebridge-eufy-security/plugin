@@ -543,7 +543,9 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
     }
 
     try {
-      this.eufyClient.close();
+      if (this.eufyClient.isConnected()) {
+        this.eufyClient.close();
+      }
       log.info('Finished shutdown!');
     } catch (e) {
       log.error(`Error while shutdown: ${e}`);
