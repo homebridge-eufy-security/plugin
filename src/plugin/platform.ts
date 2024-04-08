@@ -262,7 +262,6 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
       Refer to https://nodejs.org/en/blog/vulnerability/february-2024-security-releases#nodejs-is-vulnerable-to-the-marvin-attack-timing-variant-of-the-bleichenbacher-attack-against-pkcs1-v15-padding-cve-2023-46809---medium for more information.
       ***************************
       `);
-      this.api.registerPlatform
       return;
     }
 
