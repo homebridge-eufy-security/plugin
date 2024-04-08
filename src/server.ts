@@ -250,7 +250,7 @@ class UiServer extends HomebridgePluginUiServer {
     return new Promise((resolve, reject) => {
       const zip = new Zip();
       let numberOfFiles = 0;
-      ['log-lib.log', 'eufy-log.log', 'configui-server.log'].forEach(logFile => {
+      ['eufy-lib.log', 'eufy-security.log', 'ffmpeg.log', 'configui-lib.log', 'configui-server.log'].forEach(logFile => {
         for (let i = 0; i < 3; i++) {
           const fileName = i === 0 ? logFile : `${logFile}.${i}`;
           const filePath = `${this.storagePath}/${fileName}`;
