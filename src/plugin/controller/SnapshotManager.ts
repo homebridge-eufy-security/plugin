@@ -305,7 +305,7 @@ export class SnapshotManager extends EventEmitter {
   }
 
   private async getNewestCloudSnapshot(): Promise<Buffer> {
-    return new Promise((resolve, reject) => {
+    return new Promise((resolve) => {
 
       if (this.currentSnapshot) {
         resolve(this.currentSnapshot.image);
