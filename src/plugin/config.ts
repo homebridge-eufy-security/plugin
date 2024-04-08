@@ -25,15 +25,13 @@ export interface EufySecurityPlatformConfig extends PlatformConfig {
   cameras: CameraConfig[];
   stations: StationConfig[];
   cleanCache: boolean;
-  verboseFfmpeg: boolean;
-  videoProcessor: string;
-  videoEncoder: string;
   autoSyncStation: boolean;
 }
 
 export const DEFAULT_CONFIG_VALUES = {
+  deviceName: 'MyPhone',
   enableDetailedLogging: false,
-  CameraMaxLivestreamDuration: 30,
+  CameraMaxLivestreamDuration: 60,
   pollingIntervalMinutes: 10,
   hkHome: 1,
   hkAway: 0,
@@ -46,8 +44,6 @@ export const DEFAULT_CONFIG_VALUES = {
   cleanCache: true,
   ignoreMultipleDevicesWarning: false,
   syncStationModes: false,
-  verboseFfmpeg: false,
-  videoEncoder: 'libx264',
-  videoProcessor: 'ffmpeg',
   autoSyncStation: false,
+  omitLogFiles: true,
 };

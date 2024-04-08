@@ -10,6 +10,9 @@ export const PLATFORM_NAME = 'EufySecurity';
  */
 export const PLUGIN_NAME = 'homebridge-eufy-security';
 
+export const STATION_INIT_DELAY = 5 * 1000; // 5 seconds
+export const DEVICE_INIT_DELAY = 7 * 1000; // 7 seconds;
+
 // HomeKit Secure Video segment length, in milliseconds. HomeKit only supports this value currently.
 export const PROTECT_HKSV_SEGMENT_LENGTH = 4000;
 

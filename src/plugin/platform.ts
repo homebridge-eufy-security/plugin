@@ -10,9 +10,9 @@ import {
 
 import { version } from 'process';
 
-import { PLATFORM_NAME, PLUGIN_NAME, SnapshotBlackPath, SnapshotUnavailablePath } from './settings';
+import { DEVICE_INIT_DELAY, PLATFORM_NAME, PLUGIN_NAME, STATION_INIT_DELAY } from './settings';
 
-import { EufySecurityPlatformConfig } from './config';
+import { DEFAULT_CONFIG_VALUES, EufySecurityPlatformConfig } from './config';
 
 import { DeviceIdentifier, StationContainer, DeviceContainer } from './interfaces';
 
@@ -49,41 +49,29 @@ import os from 'node:os';
 import { platform } from 'node:process';
 import { readFileSync } from 'node:fs';
 
-import ffmpegPath from 'ffmpeg-for-homebridge';
-import { init_log, log, tsLogger, ffmpegLogger } from './utils/utils';
+import { init_log, log, tsLogger, ffmpegLogger, HAP } from './utils/utils';
 
 export class EufySecurityPlatform implements DynamicPlatformPlugin {
   public eufyClient: EufySecurity = {} as EufySecurity;
 
   // this is used to track restored cached accessories
   public readonly accessories: PlatformAccessory[] = [];
-  public config: EufySecurityPlatformConfig;
-  private eufyConfig: EufySecurityConfig = {} as EufySecurityConfig;
+  public config: EufySecurityPlatformConfig = {} as EufySecurityPlatformConfig;
 
   private already_shutdown: boolean = false;
-
-  public videoProcessor!: string;
 
   public readonly eufyPath: string;
 
   private activeAccessoryIds: string[] = [];
   private cleanCachedAccessoriesTimeout?: NodeJS.Timeout;
 
-  private readonly STATION_INIT_DELAY = 5 * 1000; // 5 seconds
-  private readonly DEVICE_INIT_DELAY = 7 * 1000; // 7 seconds;
-
   private _hostSystem: string = '';
-  public verboseFfmpeg: boolean = true;
-
-  public blackSnapshot: Buffer = this.readFileSync(SnapshotBlackPath);
-  public SnapshotUnavailable: Buffer = this.readFileSync(SnapshotUnavailablePath);
 
   constructor(
-    public readonly hblog: Logger,
+    hblog: Logger,
     config: PlatformConfig,
     public readonly api: API,
   ) {
-    this.config = config as EufySecurityPlatformConfig;
 
     this.eufyPath = this.api.user.storagePath() + '/eufysecurity';
 
@@ -94,47 +82,91 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
     // Identify what we're running on so we can take advantage of hardware-specific features.
     this.probeHwOs();
 
+    this.initConfig(config);
+
     this.configureLogger();
 
     this.initSetup();
   }
 
+  /**
+   * Initializes the configuration object with default values where properties are not provided.
+   * If a property is provided in the config object, it overrides the default value.
+   * Additionally, certain numeric properties are parsed to ensure they are of the correct type.
+   * @param config - Partial configuration object with user-provided values.
+   */
+  private initConfig(config: Partial<EufySecurityPlatformConfig>): void {
+    // Assigns the provided config object to this.config, casting it to the EufySecurityPlatformConfig type.
+    this.config = config as EufySecurityPlatformConfig;
+
+    // Iterates over each key in the DEFAULT_CONFIG_VALUES object.
+    Object.keys(DEFAULT_CONFIG_VALUES).forEach(key => {
+      // Checks if the corresponding property in the config object is undefined or null.
+      // If it is, assigns the default value from DEFAULT_CONFIG_VALUES to it.
+      this.config[key] ??= DEFAULT_CONFIG_VALUES[key];
+    });
+
+    // List of properties that need to be parsed as numeric values
+    const numericProperties: (keyof EufySecurityPlatformConfig)[] = [
+      'CameraMaxLivestreamDuration',
+      'pollingIntervalMinutes',
+      'hkHome',
+      'hkAway',
+      'hkNight',
+      'hkOff'
+    ];
+
+    // Iterate over each property in the config object
+    Object.entries(this.config).forEach(([key, value]) => {
+      // Check if the property is one of the numeric properties
+      if (numericProperties.includes(key)) {
+        // Parse the value to ensure it is of the correct type (number)
+        this.config[key] = (typeof value === 'string') ? parseInt(value as string) : value;
+      }
+    });
+
+    // Log the final configuration object for debugging purposes
+    log.debug('The config is:', this.config);
+  }
+
+  /**
+   * Configures the logging mechanism for the plugin.
+   */
   private configureLogger() {
+    // Retrieve plugin information from package.json
     const plugin = require('../package.json');
 
+    // Define options for logging
     const logOptions = {
-      name: (this.config.enableDetailedLogging) ? `[EufySecurity-${plugin.version}]` : '[EufySecurity]',
-      prettyLogTemplate: (this.config.enableDetailedLogging)
-        // eslint-disable-next-line max-len
-        ? '[{{mm}}/{{dd}}/{{yyyy}} {{hh}}:{{MM}}:{{ss}}]\t{{name}}\t{{logLevelName}}\t[{{fileNameWithLine}}]\t'
-        : '[{{mm}}/{{dd}}/{{yyyy}}, {{hh}}:{{MM}}:{{ss}}]\t{{name}}\t{{logLevelName}}\t',
-      prettyErrorTemplate: '\n{{errorName}} {{errorMessage}}\nerror stack:\n{{errorStack}}',
-      prettyErrorStackTemplate: '  • {{fileName}}\t{{method}}\n\t{{fileNameWithLine}}',
-      prettyErrorParentNamesSeparator: '',
-      prettyErrorLoggerNameDelimiter: '\t',
-      stylePrettyLogs: true,
-      minLevel: (this.config.enableDetailedLogging) ? 2 : 3,
-      prettyLogTimeZone: 'local' as 'local' | 'local',
-      prettyLogStyles: {
-        logLevelName: {
-          '*': ['bold', 'black', 'bgWhiteBright', 'dim'],
-          SILLY: ['bold', 'white'],
-          TRACE: ['bold', 'whiteBright'],
-          DEBUG: ['bold', 'green'],
-          INFO: ['bold', 'blue'],
-          WARN: ['bold', 'yellow'],
-          ERROR: ['bold', 'red'],
-          FATAL: ['bold', 'redBright'],
+      name: '[EufySecurity]', // Name prefix for log messages
+      prettyLogTemplate: '[{{mm}}/{{dd}}/{{yyyy}}, {{hh}}:{{MM}}:{{ss}}]\t{{name}}\t{{logLevelName}}\t', // Template for pretty log output
+      prettyErrorTemplate: '\n{{errorName}} {{errorMessage}}\nerror stack:\n{{errorStack}}', // Template for pretty error output
+      prettyErrorStackTemplate: '  • {{fileName}}\t{{method}}\n\t{{fileNameWithLine}}', // Template for error stack trace
+      prettyErrorParentNamesSeparator: '', // Separator for parent names in error messages
+      prettyErrorLoggerNameDelimiter: '\t', // Delimiter for logger name in error messages
+      stylePrettyLogs: true, // Enable styling for logs
+      minLevel: 3, // Minimum log level to display (3 corresponds to INFO)
+      prettyLogTimeZone: 'local' as 'local' | 'local', // Time zone for log timestamps
+      prettyLogStyles: { // Styles for different log elements
+        logLevelName: { // Styles for log level names
+          '*': ['bold', 'black', 'bgWhiteBright', 'dim'], // Default style
+          SILLY: ['bold', 'white'], // Style for SILLY level
+          TRACE: ['bold', 'whiteBright'], // Style for TRACE level
+          DEBUG: ['bold', 'green'], // Style for DEBUG level
+          INFO: ['bold', 'blue'], // Style for INFO level
+          WARN: ['bold', 'yellow'], // Style for WARN level
+          ERROR: ['bold', 'red'], // Style for ERROR level
+          FATAL: ['bold', 'redBright'], // Style for FATAL level
         },
-        dateIsoStr: 'gray',
-        filePathWithLine: 'white',
-        name: 'green',
-        nameWithDelimiterPrefix: ['white', 'bold'],
-        nameWithDelimiterSuffix: ['white', 'bold'],
-        errorName: ['bold', 'bgRedBright', 'whiteBright'],
-        fileName: ['yellow'],
+        dateIsoStr: 'gray', // Style for ISO date strings
+        filePathWithLine: 'white', // Style for file paths with line numbers
+        name: 'green', // Style for logger names
+        nameWithDelimiterPrefix: ['white', 'bold'], // Style for logger names with delimiter prefix
+        nameWithDelimiterSuffix: ['white', 'bold'], // Style for logger names with delimiter suffix
+        errorName: ['bold', 'bgRedBright', 'whiteBright'], // Style for error names
+        fileName: ['yellow'], // Style for file names
       },
-      maskValuesOfKeys: [
+      maskValuesOfKeys: [ // Keys whose values should be masked in logs
         'username',
         'password',
         'serialnumber',
@@ -146,55 +178,73 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
       ],
     };
 
-    init_log(logOptions);
-
-    const omitLogFiles = this.config.omitLogFiles ?? false;
-
-    if (omitLogFiles) {
-      log.info('log file storage will be omitted.');
+    // Modify log options if detailed logging is enabled
+    if (this.config.enableDetailedLogging) {
+      logOptions.name = `[EufySecurity-${plugin.version}]`; // Modify logger name with plugin version
+      logOptions.prettyLogTemplate = '[{{mm}}/{{dd}}/{{yyyy}} {{hh}}:{{MM}}:{{ss}}]\t{{name}}\t{{logLevelName}}\t[{{fileNameWithLine}}]\t'; // Modify log template
+      logOptions.minLevel = 2; // Adjust minimum log level
     }
 
-    if (!omitLogFiles) {
-      // Log streams configuration
-      const logStreams = [
-        { name: 'eufy-security.log', logger: log },
-        { name: 'ffmpeg.log', logger: ffmpegLogger },
-        { name: 'eufy-lib.log', logger: tsLogger },
-      ];
+    // Initialize the global logger with the configured options
+    init_log(logOptions);
 
-      for (const { name, logger } of logStreams) {
-        const logStream = createStream(name, {
-          path: this.eufyPath,
-          interval: '1d',
-          rotate: 3,
-          maxSize: '200M',
-        });
+    // Configures log streams for various log files
+    this.configureLogStreams();
+  }
 
-        logger.attachTransport((logObj: ILogObjMeta) => {
-          const meta = logObj['_meta'];
-          const name = meta.name;
-          const level = meta.logLevelName;
-          const date = meta.date.toISOString();
-          const fileNameWithLine = meta.path?.fileNameWithLine || 'UNKNOWN_FILE';
+  /**
+  * Configures log streams for various log files if log file storage is not omitted.
+  */
+  private configureLogStreams() {
 
-          // Initialize the message
-          let message = '';
+    // Log a message if log file storage will be omitted
+    if (this.config.omitLogFiles) {
+      log.info('log file storage will be omitted.');
+      return;
+    }
 
-          // Loop through logObj from index 0 to 5 and append values to the message
-          for (let i = 0; i <= 5; i++) {
-            if (logObj[i]) {
-              message += ' ' + typeof logObj[i] === 'string' ? logObj[i] : JSON.stringify(logObj[i]);
-            }
+    // Log streams configuration
+    const logStreams = [
+      { name: 'eufy-security.log', logger: log },
+      { name: 'ffmpeg.log', logger: ffmpegLogger },
+      { name: 'eufy-lib.log', logger: tsLogger },
+    ];
+
+    // Iterate over log streams
+    for (const { name, logger } of logStreams) {
+      // Create a log stream with specific configurations
+      const logStream = createStream(name, {
+        path: this.eufyPath, // Log file path
+        interval: '1d', // Log rotation interval (1 day)
+        rotate: 3, // Number of rotated log files to keep
+        maxSize: '200M', // Maximum log file size
+      });
+
+      // Attach a transport function to write log messages to the log stream
+      logger.attachTransport((logObj: ILogObjMeta) => {
+        const meta = logObj['_meta'];
+        const name = meta.name;
+        const level = meta.logLevelName;
+        const date = meta.date.toISOString();
+        const fileNameWithLine = meta.path?.fileNameWithLine || 'UNKNOWN_FILE';
+
+        // Initialize the message
+        let message = '';
+
+        // Loop through logObj from index 0 to 5 and append values to the message
+        for (let i = 0; i <= 5; i++) {
+          if (logObj[i]) {
+            message += ' ' + typeof logObj[i] === 'string' ? logObj[i] : JSON.stringify(logObj[i]);
           }
+        }
 
-          logStream.write(date + '\t' + name + '\t' + level + '\t' + fileNameWithLine + '\t' + message + '\n');
-        });
-
-      }
+        // Write formatted log message to the log stream
+        logStream.write(date + '\t' + name + '\t' + level + '\t' + fileNameWithLine + '\t' + message + '\n');
+      });
     }
   }
 
-  // Identify what hardware and operating system environment we're actually running on.
+  // This function is responsible for identifying the hardware and operating system environment the application is running on.
   private probeHwOs(): void {
 
     // Start off with a generic identifier.
@@ -206,6 +256,7 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
       // The beloved macOS.
       case 'darwin':
 
+        // For macOS, we check the CPU model to determine if it's an Apple CPU or an Intel CPU.
         this._hostSystem = 'macOS.' + (os.cpus()[0].model.includes('Apple') ? 'Apple' : 'Intel');
 
         break;
@@ -219,14 +270,16 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
           // As of the 4.9 kernel, Raspberry Pi prefers to be identified using this method and has deprecated cpuinfo.
           const systemId = readFileSync('/sys/firmware/devicetree/base/model', { encoding: 'utf8' });
 
-          // Is it a Pi 4?
+          // Check if it's a Raspberry Pi 4.
           if (/Raspberry Pi (Compute Module )?4/.test(systemId)) {
 
+            // If it's a Pi 4, we identify the system as running Raspbian.
             this._hostSystem = 'raspbian';
           }
         } catch (error) {
 
-          // We aren't especially concerned with errors here, given we're just trying to ascertain the system information through hints.
+          // Errors encountered while attempting to identify the system are ignored.
+          // We prioritize getting system information through hints rather than comprehensive detection.
         }
 
         break;
@@ -234,6 +287,7 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
       default:
 
         // We aren't trying to solve for every system type.
+        // If the platform doesn't match macOS or Linux, we keep the generic identifier.
         break;
     }
   }
@@ -265,51 +319,25 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
       return;
     }
 
-    this.videoProcessor = ffmpegPath ?? 'ffmpeg';
-    log.debug(`ffmpegPath set: ${this.videoProcessor}`);
-
-    this.clean_config();
-
-    log.debug('The config is:', this.config);
-
-    this.eufyConfig = {
+    const eufyConfig = {
       username: this.config.username,
       password: this.config.password,
-      country: this.config.country ?? 'US',
-      trustedDeviceName: this.config.deviceName ?? 'My Phone',
+      country: this.config.country,
+      trustedDeviceName: this.config.deviceName,
       language: 'en',
       persistentDir: this.eufyPath,
       p2pConnectionSetup: 0,
-      pollingIntervalMinutes: this.config.pollingIntervalMinutes ?? 10,
+      pollingIntervalMinutes: this.config.pollingIntervalMinutes,
       eventDurationSeconds: 10,
       logging: {
         level: (this.config.enableDetailedLogging) ? LogLevel.Debug : LogLevel.Info,
       },
     } as EufySecurityConfig;
 
-    this.config.ignoreStations = this.config.ignoreStations ??= [];
-    this.config.ignoreDevices = this.config.ignoreDevices ??= [];
-    this.config.cleanCache = this.config.cleanCache ??= true;
-
-    log.debug(`Country set: ${this.eufyConfig.country}`);
-
-    // This function is here to avoid any break while moving from 1.0.x to 1.1.x
-    // moving persistent into our dedicated folder (this need to be removed after few release of 1.1.x)
-    if (fs.existsSync(this.api.user.storagePath() + '/persistent.json')) {
-      log.debug('An old persistent file have been found');
-      if (!fs.existsSync(this.eufyPath + '/persistent.json')) {
-        fs.copyFileSync(this.api.user.storagePath() + '/persistent.json', this.eufyPath + '/persistent.json', fs.constants.COPYFILE_EXCL);
-      } else {
-        log.debug('but the new one is already present');
-      }
-      fs.unlinkSync(this.api.user.storagePath() + '/persistent.json');
-    }
-    // ********
-
     this.api.on(APIEvent.DID_FINISH_LAUNCHING, async () => {
-      this.clean_config_after_init();
-      await this.pluginSetup();
+      await this.pluginSetup(eufyConfig);
     });
+
     this.api.on(APIEvent.SHUTDOWN, async () => {
       await this.pluginShutdown();
     });
@@ -317,11 +345,11 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
     log.debug('Finished booting!');
   }
 
-  private async pluginSetup() {
+  private async pluginSetup(eufyConfig: EufySecurityConfig) {
 
     try {
       this.eufyClient = await EufySecurity.initialize(
-        this.eufyConfig,
+        eufyConfig,
         (this.config.enableDetailedLogging) ? tsLogger : undefined
       );
 
@@ -401,20 +429,19 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
       this.cleanCachedAccessories();
     }, 45 * 1000);
 
-    let cameraMaxLivestreamDuration = this.config.CameraMaxLivestreamDuration ?? 30;
-    if (cameraMaxLivestreamDuration > 86400) {
-      cameraMaxLivestreamDuration = 86400;
+    if (this.config.CameraMaxLivestreamDuration > 86400) {
+      this.config.CameraMaxLivestreamDuration = 86400;
       // eslint-disable-next-line max-len
       log.warn('Your maximum livestream duration value is too large. Since this can cause problems it was reset to 86400 seconds (1 day maximum).');
     }
 
-    this.eufyClient.setCameraMaxLivestreamDuration(cameraMaxLivestreamDuration);
+    this.eufyClient.setCameraMaxLivestreamDuration(this.config.CameraMaxLivestreamDuration);
     log.debug(`CameraMaxLivestreamDuration: ${this.eufyClient.getCameraMaxLivestreamDuration()}`);
   }
 
   private generateUUID(identifier: string, type: DeviceType): string {
     const prefix = type === DeviceType.STATION ? '' : 's_';
-    return this.api.hap.uuid.generate(prefix + identifier);
+    return HAP.uuid.generate(prefix + identifier);
   }
 
   private async delay(ms: number): Promise<void> {
@@ -484,7 +511,7 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
         eufyDevice: station,
       };
 
-      await this.delay(this.STATION_INIT_DELAY);
+      await this.delay(STATION_INIT_DELAY);
       log.debug(`${deviceContainer.deviceIdentifier.displayName} pre-caching complete`);
 
       this.addOrUpdateAccessory(deviceContainer, true);
@@ -509,7 +536,7 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
         eufyDevice: device,
       };
 
-      await this.delay(this.DEVICE_INIT_DELAY);
+      await this.delay(DEVICE_INIT_DELAY);
       log.debug(`${deviceContainer.deviceIdentifier.displayName} pre-caching complete`);
 
       this.addOrUpdateAccessory(deviceContainer, false);
@@ -651,90 +678,6 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
 
   public getStationById(id: string) {
     return this.eufyClient.getStation(id);
-  }
-
-  private clean_config() {
-    try {
-      const currentConfig = JSON.parse(fs.readFileSync(this.api.user.configPath(), 'utf8'));
-      // check the platforms section is an array before we do array things on it
-      if (!Array.isArray(currentConfig.platforms)) {
-        throw new Error('Cannot find platforms array in config');
-      }
-      // find this plugins current config
-      const pluginConfig = currentConfig.platforms.find((x: { platform: string }) => x.platform === PLATFORM_NAME);
-
-      if (!pluginConfig) {
-        throw new Error(`Cannot find config for ${PLATFORM_NAME} in platforms array`);
-      }
-
-      // Cleaning space
-
-      const i = ['hkHome', 'hkAway', 'hkNight', 'hkOff', 'pollingIntervalMinutes', 'CameraMaxLivestreamDuration'];
-
-      Object.entries(pluginConfig).forEach(([key, value]) => {
-        if (!i.includes(key)) {
-          return;
-        }
-        pluginConfig[key] = (typeof pluginConfig[key] === 'string') ? parseInt(value as string) : value;
-      });
-
-      // End of Cleaning space
-
-      // Applying clean and save it
-      this.config = pluginConfig;
-      fs.writeFileSync(this.api.user.configPath(), JSON.stringify(currentConfig, null, 4));
-
-    } catch (e) {
-      log.error('Error cleaning config: ' + e);
-    }
-  }
-
-  // this needs to be called after api did finished launching so that cached accessories are already loaded
-  private clean_config_after_init() {
-    try {
-      const currentConfig = JSON.parse(fs.readFileSync(this.api.user.configPath(), 'utf8'));
-      // check the platforms section is an array before we do array things on it
-      if (!Array.isArray(currentConfig.platforms)) {
-        throw new Error('Cannot find platforms array in config');
-      }
-      // find this plugins current config
-      const pluginConfig = currentConfig.platforms.find((x: { platform: string }) => x.platform === PLATFORM_NAME);
-
-      if (!pluginConfig) {
-        throw new Error(`Cannot find config for ${PLATFORM_NAME} in platforms array`);
-      }
-
-      // Cleaning space
-      // clean device specific parametes
-
-      const cameras = (Array.isArray(pluginConfig.cameras)) ? pluginConfig.cameras : null;
-
-      if (cameras && this.accessories.length > 0) {
-        for (let i = 0; i < cameras.length; i++) {
-          const camera = cameras[i];
-          const cachedAccessory = this.accessories.find((acc) => camera.serialNumber === acc.context['device'].uniqueId);
-          if (cachedAccessory && Device.isDoorbell(cachedAccessory.context['device'].type) && !camera.enableCamera) {
-            // eslint-disable-next-line max-len
-            log.warn('Found camera ' + cachedAccessory.context['device'].displayName + ' (' + cachedAccessory.context['device'].uniqueId + ') with invalid camera configuration option enableCamera. Attempt to repair. This should only happen once per device...');
-            pluginConfig.cameras[i]['enableCamera'] = true;
-          }
-        }
-      }
-
-      // End of Cleaning space
-
-      // Applying clean and save it
-      this.config = pluginConfig;
-
-      this.config.ignoreStations = this.config.ignoreStations ??= [];
-      this.config.ignoreDevices = this.config.ignoreDevices ??= [];
-      this.config.cleanCache = this.config.cleanCache ??= true;
-
-      fs.writeFileSync(this.api.user.configPath(), JSON.stringify(currentConfig, null, 4));
-
-    } catch (e) {
-      log.error('Error cleaning config: ' + e);
-    }
   }
 
   /**
