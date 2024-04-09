@@ -74,8 +74,6 @@ export class RecordingDelegate implements CameraRecordingDelegate {
     this.handlingStreamingRequest = true;
     log.info(this.camera.getName(), 'requesting recording for HomeKit Secure Video.');
 
-    let cachedStreamId: number | undefined = undefined;
-
     let pending: Buffer[] = [];
     let filebuffer = Buffer.alloc(0);
 
@@ -113,7 +111,6 @@ export class RecordingDelegate implements CameraRecordingDelegate {
         });
         await videoParams.setInputStream(streamData.videostream);
         await audioParams.setInputStream(streamData.audiostream);
-        cachedStreamId = streamData.id;
       }
 
       const ffmpeg = new FFmpeg(
@@ -213,9 +210,7 @@ export class RecordingDelegate implements CameraRecordingDelegate {
           .updateValue(false);
       }
 
-      if (cachedStreamId) {
-        this.localLivestreamManager.stopProxyStream(cachedStreamId);
-      }
+      this.localLivestreamManager.stopLocalLiveStream();
     }
   }
 

@@ -54,7 +54,6 @@ type ActiveSession = {
   returnProcess?: FFmpeg;
   timeout?: NodeJS.Timeout;
   socket?: Socket;
-  cachedStreamId?: number;
   talkbackStream?: TalkbackStream;
 };
 
@@ -234,7 +233,6 @@ export class StreamingDelegate implements CameraStreamingDelegate {
           const streamData = await this.localLivestreamManager.getLocalLivestream().catch((err) => {
             throw err;
           });
-          activeSession.cachedStreamId = streamData.id;
           await videoParams.setInputStream(streamData.videostream);
           await audioParams?.setInputStream(streamData.audiostream);
         } catch (err) {
@@ -377,8 +375,8 @@ export class StreamingDelegate implements CameraStreamingDelegate {
         this.log.error('Error occurred closing socket: ' + err);
       }
       try {
-        if (!is_rtsp_ready(this.device, this.camera.cameraConfig) && session.cachedStreamId) {
-          this.localLivestreamManager.stopProxyStream(session.cachedStreamId);
+        if (!is_rtsp_ready(this.device, this.camera.cameraConfig)) {
+          this.localLivestreamManager.stopLocalLiveStream();
         }
       } catch (err) {
         this.log.error('Error occurred terminating Eufy Station livestream: ' + err);

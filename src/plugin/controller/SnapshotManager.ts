@@ -30,7 +30,6 @@ type Snapshot = {
 type StreamSource = {
   url?: string;
   stream?: Readable;
-  livestreamId?: number;
 };
 
 /**
@@ -260,6 +259,7 @@ export class SnapshotManager extends EventEmitter {
    * @returns A Promise resolving to a Buffer containing the newest snapshot image.
    */
   private getSnapshotFromStream(): Promise<Buffer> {
+    this.log.info(`Begin live streaming to access the most recent snapshot (significant battery drain on the device)`);
     return new Promise((resolve, reject) => {
       // Set a timeout for the snapshot request
       const requestTimeout = setTimeout(() => {
@@ -383,7 +383,7 @@ export class SnapshotManager extends EventEmitter {
 
     if (source.url) {
       parameters.setInputSource(source.url);
-    } else if (source.stream && source.livestreamId) {
+    } else if (source.stream) {
       await parameters.setInputStream(source.stream);
     } else {
       return Promise.reject('No valid camera source detected.');
@@ -400,15 +400,11 @@ export class SnapshotManager extends EventEmitter {
       );
       const buffer = await ffmpeg.getResult();
 
-      if (source.livestreamId) {
-        this.livestreamManager.stopProxyStream(source.livestreamId);
-      }
+      this.livestreamManager.stopLocalLiveStream();
 
       return Promise.resolve(buffer);
     } catch (err) {
-      if (source.livestreamId) {
-        this.livestreamManager.stopProxyStream(source.livestreamId);
-      }
+      this.livestreamManager.stopLocalLiveStream();
       return Promise.reject(err);
     }
   }
@@ -430,7 +426,6 @@ export class SnapshotManager extends EventEmitter {
         const streamData = await this.livestreamManager.getLocalLivestream();
         return {
           stream: streamData.videostream,
-          livestreamId: streamData.id,
         };
       } catch (err) {
         this.log.warn('Could not get snapshot from livestream!');
