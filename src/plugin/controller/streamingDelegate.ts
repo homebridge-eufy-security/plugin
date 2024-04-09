@@ -114,7 +114,7 @@ export class StreamingDelegate implements CameraStreamingDelegate {
     try {
       this.log.debug('Snapshot requested: ' + request.width + ' x ' + request.height, this.videoConfig.debug!);
 
-      const snapshot = await this.snapshotManager.getSnapshotBuffer(request);
+      const snapshot = await this.snapshotManager.getSnapshotBufferResized(request);
 
       this.log.debug('snapshot byte lenght: ' + snapshot?.byteLength);
 

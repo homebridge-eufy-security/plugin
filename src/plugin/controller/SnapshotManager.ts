@@ -62,6 +62,7 @@ export class SnapshotManager extends EventEmitter {
   private blackSnapshot?: Buffer;
   private cameraOffline?: Buffer;
   private cameraDisabled?: Buffer;
+  private unavailableSnapshot?: Buffer;
 
   private refreshProcessRunning = false;
   private lastEvent = 0;
@@ -144,19 +145,19 @@ export class SnapshotManager extends EventEmitter {
     }
 
     try {
+      this.unavailableSnapshot = fs.readFileSync(SnapshotUnavailable);
+    } catch (err) {
+      this.log.error('could not cache SnapshotUnavailable file for further use: ' + err);
+    }
+
+    try {
       this.cameraOffline = fs.readFileSync(CameraOffline);
-      if (this.cameraConfig.immediateRingNotificationWithoutSnapshot) {
-        this.log.info('Empty snapshot will be sent on ring events immediately to speed up homekit notifications.');
-      }
     } catch (err) {
       this.log.error('could not cache CameraOffline file for further use: ' + err);
     }
 
     try {
       this.cameraDisabled = fs.readFileSync(CameraDisabled);
-      if (this.cameraConfig.immediateRingNotificationWithoutSnapshot) {
-        this.log.info('Empty snapshot will be sent on ring events immediately to speed up homekit notifications.');
-      }
     } catch (err) {
       this.log.error('could not cache CameraDisabled file for further use: ' + err);
     }
@@ -164,7 +165,7 @@ export class SnapshotManager extends EventEmitter {
     try {
       const picture = this.device.getPropertyValue(PropertyName.DevicePicture) as Picture;
       if (picture && picture.type) {
-        this.currentSnapshot = { timestamp: Date.now(), image: picture.data };
+        this.storeSnapshotForCache(picture.data, 0);
       } else {
         throw ('No currentSnapshot');
       }
@@ -188,19 +189,27 @@ export class SnapshotManager extends EventEmitter {
     }
   }
 
-  public async getSnapshotBuffer(request: SnapshotRequest): Promise<Buffer> {
+  private storeSnapshotForCache(data: Buffer, time?: number): void {
+    this.currentSnapshot = { timestamp: time ??= Date.now(), image: data };
+  }
+
+  public async getSnapshotBufferResized(request: SnapshotRequest): Promise<Buffer> {
+    return await this.resizeSnapshot(await this.getSnapshotBuffer(), request);
+  }
+
+  private async getSnapshotBuffer(): Promise<Buffer> {
     // return a new snapshot if it is recent enough (not more than 15 seconds)
     if (this.currentSnapshot) {
       const diff = Math.abs((Date.now() - this.currentSnapshot.timestamp) / 1000);
       if (diff <= 15) {
-        return this.resizeSnapshot(this.currentSnapshot.image, request);
+        return this.currentSnapshot.image;
       }
     }
 
     // It should never happend since camera is disabled in HK but in case of...
     if (!this.device.isEnabled()) {
       if (this.cameraDisabled) {
-        return this.resizeSnapshot(this.cameraDisabled, request);
+        return this.cameraDisabled;
       } else {
         return Promise.reject('Something wrong with file systems. Looks likes not enought rights!');
       }
@@ -210,7 +219,7 @@ export class SnapshotManager extends EventEmitter {
     if (this.cameraConfig.immediateRingNotificationWithoutSnapshot && diff < 5) {
       this.log.debug('Sending empty snapshot to speed up homekit notification for ring event.');
       if (this.blackSnapshot) {
-        return this.resizeSnapshot(this.blackSnapshot, request);
+        return this.blackSnapshot;
       } else {
         return Promise.reject('Prioritize ring notification over snapshot request. But could not supply empty snapshot.');
       }
@@ -220,100 +229,89 @@ export class SnapshotManager extends EventEmitter {
     try {
       if (this.cameraConfig.snapshotHandlingMethod === 1) {
         // return a preferablly most recent snapshot every time
-        snapshot = await this.getNewestSnapshotBuffer();
+        snapshot = await this.getSnapshotFromStream();
       } else if (this.cameraConfig.snapshotHandlingMethod === 2) {
         // balanced method
         snapshot = await this.getBalancedSnapshot();
       } else if (this.cameraConfig.snapshotHandlingMethod === 3) {
         // fastest method with potentially old snapshots
-        snapshot = await this.getNewestCloudSnapshot();
+        snapshot = await this.getSnapshotFromCache();
       } else {
         return Promise.reject('No suitable handling method for snapshots defined');
       }
-      return this.resizeSnapshot(snapshot, request);
+      return snapshot;
 
     } catch (err) {
-      this.log.error(err);
-      return Promise.resolve(fs.readFileSync(SnapshotUnavailable));
+      try {
+        return this.getSnapshotFromCache();
+      } catch (error) {
+        this.log.error(err, error);
+        if (this.unavailableSnapshot) {
+          return this.unavailableSnapshot;
+        } else {
+          throw (error);
+        }
+      }
     }
   }
 
-  private async getNewestSnapshotBuffer(): Promise<Buffer> {
+  /**
+   * Retrieves the newest snapshot buffer asynchronously.
+   * @returns A Promise resolving to a Buffer containing the newest snapshot image.
+   */
+  private getSnapshotFromStream(): Promise<Buffer> {
     return new Promise((resolve, reject) => {
-
-      this.fetchCurrentCameraSnapshot().catch((err) => reject(err));
-
+      // Set a timeout for the snapshot request
       const requestTimeout = setTimeout(() => {
-        throw ('snapshot request timed out');
-      }, 15000);
+        reject('getSnapshotFromStream timed out');
+      }, 4 * 1000);
 
-      this.once('new snapshot', () => {
-        if (requestTimeout) {
-          clearTimeout(requestTimeout);
-        }
-
+      // Define a listener for the 'new snapshot' event
+      const snapshotListener = () => {
+        clearTimeout(requestTimeout); // Clear the timeout if the snapshot is received
         if (this.currentSnapshot) {
-          resolve(this.currentSnapshot.image);
+          resolve(this.currentSnapshot.image); // Resolve the promise with the snapshot image
         } else {
-          throw ('Unknown snapshot request error');
+          reject('getSnapshotFromStream error'); // Reject if there's an issue with the snapshot
         }
-      });
+      };
+
+      // Fetch the current camera snapshot and attach the 'new snapshot' listener
+      this.fetchCurrentCameraSnapshot()
+        .then(() => {
+          this.once('new snapshot', snapshotListener); // Listen for the 'new snapshot' event
+        })
+        .catch((err) => {
+          clearTimeout(requestTimeout); // Clear the timeout if an error occurs during fetching
+          reject(err); // Reject the promise with the error
+        });
     });
+  }
+
+  /**
+   * Retrieves the newest cloud snapshot's image data.
+   * @returns Buffer The image data as a Buffer.
+   * @throws Error if there's no currentSnapshot available.
+   */
+  private getSnapshotFromCache(): Buffer {
+    // Check if there's a currentSnapshot available
+    if (this.currentSnapshot) {
+      // If available, return the image data
+      return this.currentSnapshot.image;
+    } else {
+      // If not available, throw an error
+      throw ('No currentSnapshot available');
+    }
   }
 
   private async getBalancedSnapshot(): Promise<Buffer> {
-    return new Promise((resolve) => {
-
-      let snapshotTimeout = setTimeout(() => {
-        if (this.currentSnapshot) {
-          resolve(this.currentSnapshot.image);
-        } else {
-          throw ('No currentSnapshot');
-        }
-      }, 1000);
-
-      this.fetchCurrentCameraSnapshot().catch((err) => this.log.warn(err));
-
-      const newestEvent = (this.lastRingEvent > this.lastEvent) ? this.lastRingEvent : this.lastEvent;
-      const diff = (Date.now() - newestEvent) / 1000;
-      if (diff < 15) { // wait for cloud or camera snapshot
-        this.log.debug('Waiting on cloud snapshot...');
-        if (snapshotTimeout) {
-          clearTimeout(snapshotTimeout);
-        }
-        snapshotTimeout = setTimeout(() => {
-          if (this.currentSnapshot) {
-            resolve(this.currentSnapshot.image);
-          } else {
-            throw ('No currentSnapshot');
-          }
-        }, 15000);
+    if (this.currentSnapshot) {
+      const diff = Math.abs((Date.now() - this.currentSnapshot.timestamp) / 1000);
+      if (diff <= 30) {
+        return this.currentSnapshot.image;
       }
-
-      this.once('new snapshot', () => {
-        if (snapshotTimeout) {
-          clearTimeout(snapshotTimeout);
-        }
-
-        if (this.currentSnapshot) {
-          resolve(this.currentSnapshot.image);
-        } else {
-          throw ('No currentSnapshot');
-        }
-      });
-    });
-  }
-
-  private async getNewestCloudSnapshot(): Promise<Buffer> {
-    return new Promise((resolve) => {
-
-      if (this.currentSnapshot) {
-        resolve(this.currentSnapshot.image);
-      } else {
-        throw ('No currentSnapshot');
-      }
-
-    });
+    }
+    return this.getSnapshotFromStream();
   }
 
   private automaticSnapshotRefresh() {
@@ -344,7 +342,7 @@ export class SnapshotManager extends EventEmitter {
       const picture = device.getPropertyValue(PropertyName.DevicePicture) as Picture;
       if (picture && picture.type) {
         this.storeImage(`${device.getSerial()}.${picture.type.ext}`, picture.data);
-        this.currentSnapshot = { timestamp: Date.now(), image: picture.data };
+        this.storeSnapshotForCache(picture.data);
         this.emit('new snapshot');
       }
     }
@@ -357,17 +355,13 @@ export class SnapshotManager extends EventEmitter {
     this.refreshProcessRunning = true;
     this.log.debug('Locked refresh process.');
     this.log.debug('Fetching new snapshot from camera.');
-    const timestamp = Date.now();
     try {
       const snapshotBuffer = await this.getCurrentCameraSnapshot();
       this.refreshProcessRunning = false;
       this.log.debug('Unlocked refresh process.');
 
       this.log.debug('store new snapshot from camera in memory. Using this for future use.');
-      this.currentSnapshot = {
-        timestamp: timestamp,
-        image: snapshotBuffer,
-      };
+      this.storeSnapshotForCache(snapshotBuffer);
       this.emit('new snapshot');
 
       return Promise.resolve();
