@@ -708,6 +708,8 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
   private checkNodeVersion(): boolean {
     const nodeVersion = version.slice(1); // Removing 'v' from the version string
 
+    log.debug('Node version is', nodeVersion);
+
     // Versions known to break compatibility with RSA_PKCS1_PADDING
     const incompatibleVersions = [
       '18.19.1',
