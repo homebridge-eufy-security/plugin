@@ -39,6 +39,7 @@ body:
       label: Plugin Version
       description: What version of the plugin are you running?
       options:
+        - v2.3.x (Best Effort)
         - v2.0.x (Supported)
         - beta (Best Effort)
         - other (UnSupported)
@@ -51,6 +52,7 @@ body:
       label: HomeBridge Version
       description: What version of homebridge are you running?
       options:
+        - v1.7.x (Supported)
         - v1.6.x (Supported)
         - v1.4.x (UnSupported)
         - v1.3.x (UnSupported)
@@ -64,6 +66,7 @@ body:
       label: NodeJS Version
       description: What NodeJS version used to run homebridge?
       options:
+        - v20 (Supported)
         - v18 (Supported)
         - v16 (UnSupported)
         - other (UnSupported)
@@ -77,8 +80,8 @@ body:
       description: What OS used to run homebridge?
       options:
         - Raspbian 10+ (Supported)
-        - Ubuntu 18.04+ (Supported)
-        - Debian 10+ (Supported)
+        - Ubuntu 22.04+ (Supported)
+        - Debian 11+ (Supported)
         - Windows 10+ (UnSupported)
         - Mac OS X 11+ (UnSupported)
         - Docker (UnSupported)
