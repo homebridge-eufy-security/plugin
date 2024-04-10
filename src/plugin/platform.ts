@@ -314,7 +314,7 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
     log.debug('OS is', this.hostSystem);
     log.debug('Using bropats @homebridge-eufy-security/eufy-security-client library in version ' + libVersion);
 
-    if (!this.checkNodeVersion()) {
+    if (!this.config.nodejs_security && !this.checkNodeVersion()) {
       log.error(`
       ***************************
       ****** ERROR MESSAGE ******

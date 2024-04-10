@@ -11,6 +11,7 @@ import { LivestreamDurationSecondsComponent } from '../config-options/livestream
 import { PollingIntervalMinutesComponent } from '../config-options/polling-interval-minutes/polling-interval-minutes.component';
 import { EditCredentialsComponent } from '../config-options/edit-credentials/edit-credentials.component';
 import { AutoSyncStationComponent } from '../config-options/auto-sync-station/auto-sync-station.component';
+import { NodejsSecurityComponent } from '../config-options/nodejs-security/nodejs-security.component';
 
 @Component({
     selector: 'app-advanced-config-options',
@@ -29,6 +30,7 @@ import { AutoSyncStationComponent } from '../config-options/auto-sync-station/au
         DownloadLogsComponent,
         ResetPluginComponent,
         AutoSyncStationComponent,
+        NodejsSecurityComponent,
     ],
 })
 export class AdvancedConfigOptionsComponent {

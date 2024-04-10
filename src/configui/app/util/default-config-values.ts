@@ -22,6 +22,7 @@ export const DEFAULT_CONFIG_VALUES: EufySecurityPlatformConfig = {
   cleanCache: true,
   ignoreMultipleDevicesWarning: false,
   autoSyncStation: false,
+  nodejs_security: false,
 };
 
 export const DEFAULT_CAMERACONFIG_VALUES: CameraConfig = {
