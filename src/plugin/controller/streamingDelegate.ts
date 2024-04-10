@@ -236,7 +236,7 @@ export class StreamingDelegate implements CameraStreamingDelegate {
           await videoParams.setInputStream(streamData.videostream);
           await audioParams?.setInputStream(streamData.audiostream);
         } catch (err) {
-          this.log.error((' Unable to start the livestream: ' + err) as string);
+          this.log.error(('Unable to start the livestream: ' + err) as string);
           callback(err as Error);
           this.pendingSessions.delete(request.sessionID);
           return;
