@@ -77,9 +77,20 @@ export class LocalLivestreamManager extends EventEmitter {
         this.log.debug('stream is already starting. waiting...');
       }
 
+      // Hard stop
+      const hardStop = setTimeout(
+        () => {
+          this.stopLocalLiveStream();
+          this.livestreamIsStarting = false;
+          reject('No livestream emited... Something wrong between HB and your cam!');
+        },
+        15 * 1000 // After 10sec Apple HK will disconnect so all of this for nothing...
+      );
+
       this.once('livestream start', async () => {
         if (this.stationStream !== null) {
           this.log.debug('New livestream started.');
+          clearTimeout(hardStop);
           this.livestreamIsStarting = false;
           resolve(this.stationStream);
         } else {
