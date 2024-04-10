@@ -9,6 +9,7 @@ import {
 } from 'homebridge';
 
 import { version } from 'process';
+import { clean, satisfies } from 'semver';
 
 import { DEVICE_INIT_DELAY, PLATFORM_NAME, PLUGIN_NAME, STATION_INIT_DELAY } from './settings';
 
@@ -310,20 +311,30 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
 
     log.debug('warning: planned changes, see https://github.com/homebridge-eufy-security/plugin/issues/1');
 
-    log.debug('plugin data store: ' + this.eufyPath);
+    log.debug('plugin data store:', this.eufyPath);
     log.debug('OS is', this.hostSystem);
-    log.debug('Using bropats @homebridge-eufy-security/eufy-security-client library in version ' + libVersion);
+    log.debug('Using bropats @homebridge-eufy-security/eufy-security-client library in version ', libVersion);
 
-    if (!this.config.nodejs_security && !this.checkNodeVersion()) {
+    if (!this.checkNodeJSVersionCompatibility()) {
       log.error(`
       ***************************
       ****** ERROR MESSAGE ******
       ***************************
-      Error: Your current Node.js version (${version}) is incompatible with the RSA_PKCS1_PADDING used by the plugin. 
-      Please downgrade to a compatible version by running the command likes: sudo hb-service update-node 20.11.0.
-      Refer to https://github.com/homebridge/homebridge/wiki/How-To-Update-Node.js for upgrading/downgrading Node.js
-      Refer to https://nodejs.org/en/blog/vulnerability/february-2024-security-releases#nodejs-is-vulnerable-to-the-marvin-attack-timing-variant-of-the-bleichenbacher-attack-against-pkcs1-v15-padding-cve-2023-46809---medium for more information.
-      ***************************
+      Error: Your current Node.js version (${version}) is incompatible with the RSA_PKCS1_PADDING used by the plugin.
+      If you run the plugin with an incompatible version of Node.js, livestream functionality will be disrupted. 
+
+      You can override this warning by configuring a special parameter in the global configuration.
+      To resolve this issue, please consider downgrading to a compatible version using a command similar to: sudo hb-service update-node 20.11.0.
+
+      Versions known to cause compatibility issues with this plugin include those within the following ranges:
+      - Node.js 18.x.x (starting from 18.19.1 up to the next major release)
+      - Node.js 20.x.x (starting from 20.11.1 up to the next major release)
+      - Node.js 21.x.x (starting from 21.6.2 up to the next major release)
+
+      For instructions on how to upgrade or downgrade Node.js, please refer to: https://github.com/homebridge/homebridge/wiki/How-To-Update-Node.js
+      For more information on the security vulnerability affecting Node.js, visit: 
+      https://nodejs.org/en/blog/vulnerability/february-2024-security-releases#nodejs-is-vulnerable-to-the-marvin-attack-timing-variant-of-the-bleichenbacher-attack-against-pkcs1-v15-padding-cve-2023-46809---medium
+      ***************************        
       `);
       return;
     }
@@ -690,40 +701,37 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
 
   }
 
-  private compareVersions(versionA: string, versionB: string): number {
-    const partsA = versionA.split('.').map(Number);
-    const partsB = versionB.split('.').map(Number);
+  /**
+   * Checks compatibility of the current Node.js version with Livestream functionality.
+   * @returns {boolean} Returns true if the Node.js version is compatible, false otherwise.
+   */
+  private checkNodeJSVersionCompatibility(): boolean {
 
-    // Compare major versions
-    if (
-      partsA[0] !== partsB[0]
-    ) {
-      return -1;
+    // Obtain the cleaned version of Node.js
+    const nodeVersion = clean(version);
+
+    // If version cannot be determined, assume compatibility
+    if (!nodeVersion) {
+      return true;
     }
 
-    // Compare patch version
-    return partsA[2] - partsB[2];
-  }
-
-  private checkNodeVersion(): boolean {
-    const nodeVersion = version.slice(1); // Removing 'v' from the version string
-
+    // Log the Node.js version for debugging purposes
     log.debug('Node version is', nodeVersion);
 
-    // Versions known to break compatibility with RSA_PKCS1_PADDING
-    const incompatibleVersions = [
-      '18.19.1',
-      '20.11.1',
-      '21.6.2'
-    ];
+    // Define versions known to break compatibility with RSA_PKCS1_PADDING
+    const incompatible = satisfies(nodeVersion, '^18.19.1 || ^20.11.1 || ^21.6.2');
 
-    for (const incompatibleVersion of incompatibleVersions) {
-      if (this.compareVersions(nodeVersion, incompatibleVersion) >= 0) {
-        return false;
+    // If Node.js bypass is enforced and an incompatible version is detected, log an error
+    if (this.config.nodejs_security) {
+      if (incompatible) {
+        log.error('Livestream functionality may not work as expected due to an incompatible Node.js version being used.');
       }
+      // Regardless of compatibility, return true
+      return true;
     }
 
-    return true;
+    // Return true if the Node.js version is compatible, false otherwise
+    return !incompatible;
   }
 
 }
