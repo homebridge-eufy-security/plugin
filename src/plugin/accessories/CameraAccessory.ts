@@ -506,7 +506,7 @@ export class CameraAccessory extends DeviceAccessory {
 
   // Configure a camera accessory for HomeKit.
   private configureVideoStream(): boolean {
-    this.log.debug(`StreamingDelegate`);
+    this.log.debug(`configureVideoStream`);
 
     try {
       this.log.debug(`StreamingDelegate`);
