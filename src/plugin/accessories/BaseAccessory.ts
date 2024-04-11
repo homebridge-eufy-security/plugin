@@ -37,6 +37,7 @@ export abstract class BaseAccessory extends EventEmitter {
   constructor(
     public readonly platform: EufySecurityPlatform,
     public readonly accessory: PlatformAccessory,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     public device: any,
   ) {
     super();
