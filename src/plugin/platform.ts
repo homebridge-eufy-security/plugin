@@ -462,8 +462,16 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
     log.debug(`CameraMaxLivestreamDuration: ${this.eufyClient.getCameraMaxLivestreamDuration()}`);
   }
 
-  private generateUUID(identifier: string, type: DeviceType): string {
-    const prefix = type === DeviceType.STATION ? '' : 's_';
+  /**
+   * Generates a UUID based on the given identifier and station flag.
+   * @param identifier The unique identifier.
+   * @param isStation Flag indicating whether the identifier belongs to a station.
+   * @returns The generated UUID.
+   */
+  private generateUUID(identifier: string, isStation: boolean): string {
+    // Add prefix 's_' if it's a station identifier, otherwise, no prefix.
+    const prefix = isStation ? 's_' : 'd_';
+    // Generate UUID based on the prefix + identifier.
     return HAP.uuid.generate(prefix + identifier);
   }
 
@@ -473,7 +481,7 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
 
   private async addOrUpdateAccessory(deviceContainer: StationContainer | DeviceContainer, isStation: boolean) {
     try {
-      const uuid = this.generateUUID(deviceContainer.deviceIdentifier.uniqueId, deviceContainer.deviceIdentifier.type);
+      const uuid = this.generateUUID(deviceContainer.deviceIdentifier.uniqueId, isStation);
       const cachedAccessory = this.accessories.find((accessory) => accessory.UUID === uuid);
 
       if (cachedAccessory) {
@@ -530,7 +538,7 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
       const deviceContainer: StationContainer = {
         deviceIdentifier: {
           uniqueId: station.getSerial(),
-          displayName: station.getName(),
+          displayName: 'STATION_' + station.getName(),
           type: station.getDeviceType(),
         } as DeviceIdentifier,
         eufyDevice: station,
@@ -555,7 +563,7 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
       const deviceContainer: DeviceContainer = {
         deviceIdentifier: {
           uniqueId: device.getSerial(),
-          displayName: device.getName(),
+          displayName: 'DEVICE_' + device.getName(),
           type: device.getDeviceType(),
         } as DeviceIdentifier,
         eufyDevice: device,
