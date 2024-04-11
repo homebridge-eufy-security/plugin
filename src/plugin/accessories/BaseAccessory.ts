@@ -37,7 +37,6 @@ export abstract class BaseAccessory extends EventEmitter {
   constructor(
     public readonly platform: EufySecurityPlatform,
     public readonly accessory: PlatformAccessory,
-    // eslint-disable-next-line
     public device: any,
   ) {
     super();
@@ -143,7 +142,7 @@ export abstract class BaseAccessory extends EventEmitter {
   }) {
 
     // eslint-disable-next-line max-len
-    this.log.debug(`REGISTER CHARACTERISTIC ${serviceType.name} / ${characteristicType.name}`);
+    this.log.debug(`REGISTER CHARACTERISTIC ${serviceType.name} / ${characteristicType.name} / ${name}`);
 
     const service = this.getService(serviceType, name, serviceSubType);
     const characteristic = service.getCharacteristic(characteristicType);
@@ -154,7 +153,7 @@ export abstract class BaseAccessory extends EventEmitter {
     if (getValue) {
       characteristic.onGet(async (data) => {
         const value = getValue(data, characteristic, service);
-        this.log.debug(`GET '${serviceType.name} / ${characteristicType.name}': ${value}`);
+        this.log.debug(`GET '${serviceType.name} / ${characteristicType.name}':`, value);
         return value;
       });
     }
@@ -184,7 +183,7 @@ export abstract class BaseAccessory extends EventEmitter {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       this.device.on(onSimpleValue, (device: any, value: any) => {
         // eslint-disable-next-line max-len
-        this.log.info(`ON '${serviceType.name} / ${characteristicType.name} / ${onSimpleValue}': ${value}`);
+        this.log.info(`ON '${serviceType.name} / ${characteristicType.name} / ${onSimpleValue}':`, value);
         characteristic.updateValue(value);
       });
     }
@@ -200,7 +199,7 @@ export abstract class BaseAccessory extends EventEmitter {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         this.device.on(eventType as keyof any, (device: any, value: any) => {
           // eslint-disable-next-line max-len
-          this.log.info(`ON '${serviceType.name} / ${characteristicType.name} / ${eventType}': ${value}`);
+          this.log.info(`ON '${serviceType.name} / ${characteristicType.name} / ${eventType}':`, value);
           characteristic.updateValue(value);
         });
       });
