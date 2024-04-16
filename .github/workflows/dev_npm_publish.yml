@@ -1,9 +1,9 @@
-name: BETA NPM Build Version Publish
+name: AUTO PUBLISH DEV BRANCH
 
 on: 
   push:
     branches:
-    - beta
+    - dev
     paths-ignore:
       - '.github/**'
       - '**.md'

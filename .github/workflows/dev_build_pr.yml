@@ -1,9 +1,9 @@
-name: BETA_Build_PR
+name: Check PR
 
 on: 
   pull_request:
     branches:
-    - beta
+    - dev
     paths-ignore:
       - '.github/**'
       - '**.md'
