@@ -7,11 +7,13 @@ import { CameraConfigOptionsComponent } from './camera-config-options/camera-con
 import { LoginComponent } from './login/login.component';
 import { StationConfigOptionsComponent } from './station-config-options/station-config-options.component';
 import { ResetConfirmationComponent } from './reset-confirmation/reset-confirmation.component';
+import { DownloadLogsComponent } from './config-options/download-logs/download-logs.component';
 
 const routes: Routes = [
   { path: '', redirectTo: '/accessories', pathMatch: 'full' },
   { path: 'accessories', component: AccessoryListComponent },
   { path: 'advancedConfig', component: AdvancedConfigOptionsComponent },
+  { path: 'downloadLogs', component: DownloadLogsComponent },
   { path: 'cameraConfig/:uniqueId', component: CameraConfigOptionsComponent },
   { path: 'stationConfig/:uniqueId', component: StationConfigOptionsComponent },
   { path: 'login', component: LoginComponent },
@@ -26,4 +28,4 @@ const routes: Routes = [
   })],
   exports: [RouterModule],
 })
-export class AppRoutingModule {}
+export class AppRoutingModule { }

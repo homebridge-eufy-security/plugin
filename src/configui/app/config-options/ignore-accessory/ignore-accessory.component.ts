@@ -1,11 +1,14 @@
-import { Component, OnInit, Input } from '@angular/core';
-import { Accessory } from '../../../app/accessory';
+import { Component, OnInit, Input, Output, EventEmitter } from '@angular/core';
+import { L_Device, L_Station } from '../../../app/util/types';
 import { PluginService } from '../../../app/plugin.service';
 import { ConfigOptionsInterpreter } from '../config-options-interpreter';
+import { FormsModule } from '@angular/forms';
 
 @Component({
   selector: 'app-ignore-accessory',
   templateUrl: './ignore-accessory.component.html',
+  standalone: true,
+  imports: [FormsModule],
 })
 export class IgnoreAccessoryComponent extends ConfigOptionsInterpreter implements OnInit {
   constructor(pluginService: PluginService) {
@@ -23,13 +26,15 @@ export class IgnoreAccessoryComponent extends ConfigOptionsInterpreter implement
 
   /** updateConfig() takes an optional second parameter to specify the accessoriy for which the setting is changed */
 
-  @Input() accessory?: Accessory;
+  @Input() accessory?: L_Station | L_Device;
+  @Input() station?: boolean;
+  @Output() ignored = new EventEmitter<boolean>();
   value = false;
 
   async readValue() {
     this.config = await this.pluginService.getConfig();
     if (this.accessory) {
-      const identifier = this.accessory.station ? 'ignoreStations' : 'ignoreDevices';
+      const identifier = this.station ? 'ignoreStations' : 'ignoreDevices';
       if (Array.isArray(this.config[identifier])) {
         this.value = this.config[identifier].find((uId: string) => uId === this.accessory!.uniqueId) !== undefined;
       }
@@ -41,7 +46,9 @@ export class IgnoreAccessoryComponent extends ConfigOptionsInterpreter implement
       return;
     }
 
-    const identifier = this.accessory.station ? 'ignoreStations' : 'ignoreDevices';
+    this.ignored.emit(this.value); // Warn the parent app to show or hide the camera settings menu
+
+    const identifier = this.station ? 'ignoreStations' : 'ignoreDevices';
     this.config = await this.pluginService.getConfig();
     if (this.value) {
       if (Array.isArray(this.config[identifier]) && !this.config[identifier].find((uId: string) => uId === this.accessory!.uniqueId)) {

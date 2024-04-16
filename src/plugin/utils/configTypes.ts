@@ -12,17 +12,43 @@ export type CameraConfig = {
   videoConfig?: VideoConfig;
   enableButton: boolean;
   motionButton: boolean;
+  lightButton: boolean;
   rtsp: boolean;
-  videoConfigEna: boolean;
   enableCamera: boolean;
   forcerefreshsnap: boolean;
-  useCachedLocalLivestream: boolean;
   refreshSnapshotIntervalMinutes?: number;
   snapshotHandlingMethod?: number;
   immediateRingNotificationWithoutSnapshot?: boolean;
-  delayCameraSnapshot?:boolean;
-  talkback: boolean;
-  indoorChimeButton: boolean;
+  delayCameraSnapshot?: boolean;
+  talkback?: boolean;
+  talkbackChannels?: number;
+  hsv?: boolean;
+  hsvRecordingDuration?: number;
+  hsvConfig?: VideoConfig;
+  indoorChimeButton?: boolean;
+};
+
+export const DEFAULT_CAMERACONFIG_VALUES: CameraConfig = {
+  name: '',
+  manufacturer: '',
+  model: '',
+  serialNumber: '',
+  firmwareRevision: '',
+  enableButton: true,
+  motionButton: true,
+  lightButton: true,
+  talkback: false,
+  talkbackChannels: 1,
+  hsv: false,
+  hsvRecordingDuration: 90,
+  rtsp: false,
+  enableCamera: true,
+  forcerefreshsnap: false,
+  refreshSnapshotIntervalMinutes: 0,
+  snapshotHandlingMethod: 3,
+  immediateRingNotificationWithoutSnapshot: false,
+  delayCameraSnapshot: false,
+  indoorChimeButton: false,
 };
 
 export type VideoConfig = {
@@ -45,9 +71,21 @@ export type VideoConfig = {
   encoderOptions?: string;
   audio?: boolean;
   audioSampleRate?: number;
+  audioBitrate?: number;
+  acodecHK?: string;
+  acodecOptions?: string;
   debug?: boolean;
   debugReturn?: boolean;
   useSeparateProcesses?: boolean;
+  crop?: boolean;
+  videoProcessor?: string;
+};
+
+export const DEFAULT_VIDEOCONFIG_VALUES: VideoConfig = {
+  probeSize: 16384,
+  audio: true,
+  vcodec: 'copy',
+  acodec: 'copy',
 };
 
 export type StationConfig = {

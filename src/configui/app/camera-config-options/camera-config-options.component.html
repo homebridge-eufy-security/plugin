@@ -1,67 +1,88 @@
 <a routerLink="/accessories" class="btn btn-secondary mb-3">Back to Devices List</a>
-<div class="card" *ngIf="accessory">
-  <div class="card-header">
-      <b>Camera Settings</b> for <i>{{accessory.displayName}} ({{accessory.uniqueId}})</i>
-  </div>
-  <div class="card-body pt-0 pb-4">
-    
-    <!-- Put config options components here -->
-    <app-ignore-accessory [accessory]="accessory"></app-ignore-accessory>
-    <div *ngIf="isCamera">
-      <hr />
-      <app-enable-camera [accessory]="accessory"></app-enable-camera>
-      <hr />
-      <app-livestream-cache [accessory]="accessory"></app-livestream-cache>
-      <hr *ngIf="supportsRTSP" />
-      <app-rtsp-streaming [accessory]="accessory" *ngIf="supportsRTSP"></app-rtsp-streaming>
-      <hr />
-      <app-enable-audio [accessory]="accessory"></app-enable-audio>
-      <hr *ngIf="supportsTalkback" />
-      <app-talkback [accessory]="accessory" *ngIf="supportsTalkback"></app-talkback>
-    </div>
-  </div>
-</div>
+<div *ngIf="device">
+  <p><i>{{device.displayName}} ({{device.uniqueId}}) ({{device.typename}})</i></p>
 
-<div *ngIf="isCamera">
+  <app-ignore-accessory [accessory]="device" [station]="false" (ignored)="ignoredChanged($event)"></app-ignore-accessory>
   <p></p>
 
-  <div class="card" *ngIf="accessory">
-    <div class="card-header">
-        <b>HomeKit Behaviour</b> for <i>{{accessory.displayName}} ({{accessory.uniqueId}})</i>
-    </div>
-    <div class="card-body pt-0 pb-4">
-      
-      <!-- Put config options components here -->
-      <app-camera-buttons [accessory]="accessory"></app-camera-buttons>
-      
-    </div>
-  </div>
+  <div ngbAccordion [closeOthers]="true" *ngIf="!device.ignored && isCamera">
 
-  <p></p>
-
-  <div class="card" *ngIf="accessory">
-    <div class="card-header">
-        <b>Snapshot Behaviour</b> for <i>{{accessory.displayName}} ({{accessory.uniqueId}})</i>
-    </div>
-    <div class="card-body pt-0 pb-4">
-      
-      <!-- Put config options components here -->
-      <app-snapshot-handling-method [accessory]="accessory"></app-snapshot-handling-method>
-      <hr *ngIf="isDoorbell" />
-      <app-immediate-notification-on-ring [accessory]="accessory" *ngIf="isDoorbell"></app-immediate-notification-on-ring>
-      <hr />
-      <app-delay-camera-snapshots [accessory]="accessory"></app-delay-camera-snapshots>
-      <hr />
-      <app-periodic-snapshot-refresh [accessory]="accessory"></app-periodic-snapshot-refresh>
-
-      <div *ngIf="!showEnhancedSnapshotBehaviour">
-        <app-force-refreshsnap [accessory]="accessory"></app-force-refreshsnap>
+    <div ngbAccordionItem [collapsed]="false">
+      <h2 ngbAccordionHeader>
+        <button ngbAccordionButton>Device Settings</button>
+      </h2>
+      <div ngbAccordionCollapse>
+        <div ngbAccordionBody>
+          <ng-template>
+            <div>
+              <app-enable-camera [device]="device"></app-enable-camera>
+              <hr *ngIf="supportsRTSP" />
+              <app-rtsp-streaming [device]="device" *ngIf="supportsRTSP"></app-rtsp-streaming>
+              <hr />
+              <app-enable-audio [device]="device"></app-enable-audio>
+              <hr *ngIf="supportsTalkback" />
+              <app-talkback [device]="device" *ngIf="supportsTalkback"></app-talkback>
+            </div>
+          </ng-template>
+        </div>
       </div>
-      
     </div>
+
+    <div *ngIf="isCamera" ngbAccordionItem>
+      <h2 ngbAccordionHeader>
+        <button ngbAccordionButton>HomeKit Behaviour</button>
+      </h2>
+      <div ngbAccordionCollapse>
+        <div ngbAccordionBody>
+          <ng-template>
+            <app-camera-buttons [device]="device"></app-camera-buttons>
+            <hr />
+            <app-enable-hsv [device]="device"></app-enable-hsv>
+          </ng-template>
+        </div>
+      </div>
+    </div>
+
+    <div *ngIf="isCamera" ngbAccordionItem>
+      <h2 ngbAccordionHeader>
+        <button ngbAccordionButton>Snapshot Behaviour</button>
+      </h2>
+      <div ngbAccordionCollapse>
+        <div ngbAccordionBody>
+          <ng-template>
+
+            <!-- Put config options components here -->
+            <app-snapshot-handling-method [device]="device"></app-snapshot-handling-method>
+            <hr *ngIf="isDoorbell" />
+            <app-immediate-notification-on-ring [device]="device"
+              *ngIf="isDoorbell"></app-immediate-notification-on-ring>
+            <hr />
+            <app-delay-camera-snapshots [device]="device"></app-delay-camera-snapshots>
+            <hr />
+            <app-periodic-snapshot-refresh [device]="device"></app-periodic-snapshot-refresh>
+
+            <div *ngIf="!showEnhancedSnapshotBehaviour">
+              <app-force-refreshsnap [device]="device"></app-force-refreshsnap>
+            </div>
+
+          </ng-template>
+        </div>
+      </div>
+    </div>
+
+    <div *ngIf="isCamera" ngbAccordionItem>
+      <h2 ngbAccordionHeader>
+        <button ngbAccordionButton>Advanced Video Config</button>
+      </h2>
+      <div ngbAccordionCollapse>
+        <div ngbAccordionBody>
+          <ng-template>
+            <app-advanced-videoconfig [device]="device"></app-advanced-videoconfig>
+          </ng-template>
+        </div>
+      </div>
+    </div>
+
   </div>
 
-  <p></p>
-
-  <app-advanced-videoconfig [accessory]="accessory"></app-advanced-videoconfig>
 </div>

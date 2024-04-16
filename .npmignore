@@ -143,3 +143,9 @@ tsconfig.configui.server.json
 tsconfig.configui.spec.json
 tsconfig.plugin.json
 karma.conf.js
+
+src/plugin/utils/ffmpeg-options.ts
+src/plugin/utils/ffmpeg-record.ts
+src/plugin/utils/record.ts
+src/plugin/utils/stream.ts
+src/plugin/utils/timeshift.ts

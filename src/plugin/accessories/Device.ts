@@ -8,13 +8,7 @@ import {
 import { EufySecurityPlatform } from '../platform';
 import { BaseAccessory } from './BaseAccessory';
 import { Device, PropertyName } from 'eufy-security-client';
-
-function isServiceInstance(
-  serviceType: WithUUID<typeof Service> | Service,
-): serviceType is Service {
-  // eslint-disable-next-line
-  return typeof (serviceType as any) === 'object';
-}
+import { CHAR, SERV } from '../utils/utils';
 
 export type CharacteristicType = WithUUID<{ new(): Characteristic }>;
 export type ServiceType = WithUUID<typeof Service> | Service;
@@ -32,18 +26,18 @@ export abstract class DeviceAccessory extends BaseAccessory {
   /**
    * Get the current value of the "propertyName" characteristic
    */
-  protected getPropertyValue(characteristic: string, propertyName: PropertyName): CharacteristicValue {
+  public getPropertyValue(characteristic: string, propertyName: PropertyName): CharacteristicValue {
     try {
       const value = this.device.getPropertyValue(propertyName);
-      this.platform.log.debug(`${this.accessory.displayName} GET '${characteristic}' ${propertyName}: ${value}`);
+      this.log.debug(`GET '${characteristic}' ${propertyName}: ${value}`);
       return value as CharacteristicValue;
     } catch (error) {
-      this.platform.log.debug(`${this.accessory.displayName} Error getting '${characteristic}' ${propertyName}: ${error}`);
+      this.log.debug(`Error getting '${characteristic}' ${propertyName}: ${error}`);
       return false;
     }
   }
 
-  protected async setPropertyValue(propertyName: PropertyName, value: unknown) {
+  public async setPropertyValue(propertyName: PropertyName, value: unknown) {
     await this.platform.eufyClient.setDeviceProperty(this.SN, propertyName, value);
   }
 
@@ -51,42 +45,44 @@ export abstract class DeviceAccessory extends BaseAccessory {
     characteristicType: CharacteristicType,
     serviceType: ServiceType,
     value: CharacteristicValue,
-    subType?: string,
   ): void {
-    this.platform.log.debug(`${this.accessory.displayName} ON '${serviceType.name}': ${value}`);
+    this.log.debug(`ON '${serviceType.name}': ${value}`);
     this.getService(serviceType)
       .getCharacteristic(characteristicType)
       .updateValue(value);
   }
 
-  initSensorService(serviceType: ServiceType) {
+  initSensorService() {
     const propertiesToRegister = [
       {
         property: 'battery',
-        characteristicType: this.platform.Characteristic.BatteryLevel,
+        characteristicType: CHAR.BatteryLevel,
         propertyName: PropertyName.DeviceBattery,
         onSimpleValue: null,
+        fallback: 100,
       },
       {
         property: 'batteryLow',
-        characteristicType: this.platform.Characteristic.StatusLowBattery,
+        characteristicType: CHAR.StatusLowBattery,
         propertyName: PropertyName.DeviceBatteryLow,
         onSimpleValue: 'low battery',
+        fallback: false,
       },
       {
         property: 'batteryIsCharging',
-        characteristicType: this.platform.Characteristic.ChargingState,
+        characteristicType: CHAR.ChargingState,
         propertyName: PropertyName.DeviceBatteryIsCharging,
         onSimpleValue: null,
+        fallback: false,
       },
     ];
 
     propertiesToRegister.forEach((propertyConfig) => {
       if (this.device.hasProperty(propertyConfig.property)) {
         this.registerCharacteristic({
-          serviceType: serviceType,
+          serviceType: SERV.Battery,
           characteristicType: propertyConfig.characteristicType,
-          getValue: (data) => this.device.getPropertyValue(propertyConfig.propertyName),
+          getValue: () => this.device.getPropertyValue(propertyConfig.propertyName) || propertyConfig.fallback,
           onSimpleValue: propertyConfig.onSimpleValue,
         });
       }

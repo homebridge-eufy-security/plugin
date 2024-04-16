@@ -1,13 +1,11 @@
 {
   "compilerOptions": {
-    "target": "ES2018", // ~node10
+    "target": "ES2022",
     "module": "commonjs",
     "moduleResolution": "node",
     "lib": [
-      "es2015",
-      "es2016",
-      "es2017",
-      "es2018"
+      "es2022",
+      "dom"
     ],
     "declaration": true,
     "declarationMap": true,
@@ -16,7 +14,8 @@
     "rootDir": "./src",
     "strict": true,
     "esModuleInterop": true,
-    "noImplicitAny": false
+    "noImplicitAny": false,
+    "resolveJsonModule": true,
   },
   "include": [
     "src/server.ts"

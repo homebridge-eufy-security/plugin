@@ -1,0 +1,49 @@
+<div class="settingsItem row p-3">
+  <div class="d-flex justify-content-between align-items-center mb-2">
+    <span>Use HomeKit Secure Video</span>
+
+    <div class="form-check form-switch">
+      <input class="form-check-input" type="checkbox" role="switch" [(ngModel)]="value" id="flexSwitchCheckDefault"
+        [attr.disabled]="(!standalone && !ignoreMultipleDevicesWarning) ? true : null" (change)="update()">
+    </div>
+
+  </div>
+
+  <div class="alert alert-warning" role="alert" *ngIf="!standalone">
+    There are other cameras connected through the same station as this device. One station can only ever stream from one
+    camera at the same time.
+    Therefore it is not recommened to use HomeKit Secure Video with this camera since this would likely lead to
+    conflicts.<p></p>
+    <div *ngIf="!ignoreMultipleDevicesWarning">
+      You can enable this setting nevertheless in <a routerLink="/advancedConfig">Plugin Settings</a>
+      <p></p>
+    </div>
+  </div>
+
+  <div class="alert alert-warning" role="alert" *ngIf="chargingStatus === 2 && value">
+    Since your device is battery powered and currently not charging we don't recommend using this setting. The battery
+    life will most likely decrease significantly.
+  </div>
+
+  <div class="alert alert-secondary" role="alert" *ngIf="chargingStatus === 4 && value">
+    Please be advised that since your device is only solar powered we cannot guarantee optimal results with this
+    setting. It might well be, that your battery is depleting faster than it can be recharged by the sun. This depends
+    heavily on your exact use case.
+  </div>
+
+  <small><i>
+      This feature is in an experimental state and can have some side-effects due to technical limitations imposed by
+      the connection to the eufy device.
+      <p></p>
+      <ul>
+        <li>The device will record until the HomeKit-Controller cancels the recording, or up to a maximum of three
+          minutes. However Apple analyzes the recorded video and only shows the snippets containing an actual event.
+        </li>
+        <li>Due to the continued recording the power consumption will be higher than with the native recording through
+          the eufy app. Keep this in mind, if you use battery powered devices.</li>
+        <li>If you use low performance hardware the recording might interfere with livestreaming. You might be able to
+          utilize the 'copy' preset in advanced configuration to mitigate this.</li>
+      </ul>
+    </i></small>
+
+</div>

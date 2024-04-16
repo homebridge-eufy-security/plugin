@@ -4,14 +4,13 @@ import { fromEvent } from 'rxjs';
 
 import { PluginConfig } from '@homebridge/plugin-ui-utils/dist/ui.interface';
 
-import { Accessory } from './accessory';
+import { L_Device, L_Station } from './util/types';
 
 @Injectable({
   providedIn: 'root',
 })
 export class PluginService extends EventTarget {
-  private stations: Accessory[] = [];
-  private devices: Accessory[] = [];
+  private stations: L_Station[] = [];
 
   private accessories$ = fromEvent(window.homebridge, 'addAccessory');
 
@@ -23,50 +22,56 @@ export class PluginService extends EventTarget {
   }
 
   private init() {
-    this.accessories$.subscribe((event) => {
+    this.accessories$.subscribe(() => {
       this.loadStoredAccessories();
     });
 
     this.loadStoredAccessories();
   }
 
-  public getStations(): Accessory[] {
+  public getStations(): L_Station[] {
     return this.stations;
   }
 
-  public getDevices(): Accessory[] {
-    return this.devices;
-  }
-
-  public getStation(uniqueId: string | null): Accessory | undefined {
+  public getStation(uniqueId: string | null): L_Station | undefined {
     return this.stations.find((s) => s.uniqueId === uniqueId);
   }
 
-  public getDevice(uniqueId: string | null): Accessory | undefined {
-    return this.devices.find((d) => d.uniqueId === uniqueId);
+  public getDevice(uniqueId: string | null): L_Device | undefined {
+    for (const station of this.stations) {
+      if (station.devices) {
+        const foundDevice = station.devices.find(device => device.uniqueId === uniqueId);
+        if (foundDevice) {
+          return foundDevice;
+        }
+      }
+    }
+    return undefined; // Device not found
   }
 
   public async loadStoredAccessories(): Promise<boolean> {
     try {
-      const accessories = (await window.homebridge.request('/storedAccessories')) as Accessory[];
-      accessories.forEach((accessory) => {
-        this.addAccessory(accessory);
+      const stations = (await window.homebridge.request('/storedAccessories')) as L_Station[];
+      stations.forEach((station) => {
+        this.addAccessory(station);
       });
-      if (accessories.length !== 0) {
+      if (stations.length !== 0) {
         this.dispatchEvent(new Event('newAccessories'));
       }
-      return Promise.resolve(accessories.length !== 0);
+      return Promise.resolve(stations.length !== 0);
     } catch (err) {
       return Promise.reject(err);
     }
   }
 
-  private addAccessory(accessory: Accessory) {
-    const targetArray = accessory.station ? this.stations : this.devices;
-
-    if (!targetArray.find((a) => a.uniqueId === accessory.uniqueId)) {
-      targetArray.push(accessory);
+  private addAccessory(station: L_Station) {
+    if (!this.stations.find((a) => a.uniqueId === station.uniqueId)) {
+      this.stations.push(station);
     }
+  }
+
+  private version_unmatched() {
+
   }
 
   public async getConfig(): Promise<PluginConfig> {
@@ -105,21 +110,5 @@ export class PluginService extends EventTarget {
     } catch (err) {
       return Promise.reject(err);
     }
-  }
-
-  public async getCachedName(accessory: Accessory): Promise<string | undefined> {
-    const cachedAccessories = await window.homebridge.getCachedAccessories();
-    let name: string | undefined = undefined;
-    cachedAccessories.forEach((cachedAccessory) => {
-      if (
-        cachedAccessory.context &&
-        cachedAccessory.context['device'] &&
-        cachedAccessory.context['device']['uniqueId'] === accessory.uniqueId &&
-        cachedAccessory.context['device']['station'] === accessory.station
-      ) {
-        name = cachedAccessory.context['device']['displayName'];
-      }
-    });
-    return Promise.resolve(name);
   }
 }

@@ -1,13 +1,15 @@
 import { Component, OnInit } from '@angular/core';
 import { PluginService } from '../../../app/plugin.service';
 import { ConfigOptionsInterpreter } from '../config-options-interpreter';
-import { DEFAULT_CONFIG_VALUES } from '../../../app/util/default-config-values';
+import { FormsModule } from '@angular/forms';
 
 @Component({
-  selector: 'app-unbridge-accessory',
-  templateUrl: './unbridge-accessory.component.html',
+  selector: 'app-nodejs-security',
+  templateUrl: './nodejs-security.component.html',
+  standalone: true,
+  imports: [FormsModule],
 })
-export class UnbridgeAccessoryComponent extends ConfigOptionsInterpreter implements OnInit {
+export class NodejsSecurityComponent extends ConfigOptionsInterpreter implements OnInit {
   constructor(pluginService: PluginService) {
     super(pluginService);
   }
@@ -26,15 +28,14 @@ export class UnbridgeAccessoryComponent extends ConfigOptionsInterpreter impleme
   model = false;
 
   readValue() {
-    const unbridgeValue = Object.prototype.hasOwnProperty.call(this.config, 'unbridge')
-      ? this.config['unbridge']
-      : DEFAULT_CONFIG_VALUES.unbridge;
-    this.model = unbridgeValue;
+    if (Object.prototype.hasOwnProperty.call(this.config, 'nodejs_security')) {
+      this.model = this.config['nodejs_security'];
+    }
   }
 
   update() {
     this.updateConfig({
-      unbridge: this.model,
+      nodejs_security: this.model,
     });
   }
 }

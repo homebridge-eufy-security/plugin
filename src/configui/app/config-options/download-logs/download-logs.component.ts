@@ -3,12 +3,14 @@ import { Component, NgZone, OnInit } from '@angular/core';
 import { Router, NavigationStart } from '@angular/router';
 
 import { Buffer } from 'buffer';
+import { NgIf } from '@angular/common';
 
 @Component({
-  selector: 'app-download-logs',
-  templateUrl: './download-logs.component.html',
-  styles: [
-  ],
+    selector: 'app-download-logs',
+    templateUrl: './download-logs.component.html',
+    styles: [],
+    standalone: true,
+    imports: [NgIf],
 })
 export class DownloadLogsComponent implements OnInit {
 

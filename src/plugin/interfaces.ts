@@ -4,10 +4,14 @@ export interface DeviceIdentifier {
     uniqueId: string;
     displayName: string;
     type: number;
-    station: boolean;
+}
+
+export interface StationContainer {
+    deviceIdentifier: DeviceIdentifier;
+    eufyDevice: Station;
 }
 
 export interface DeviceContainer {
     deviceIdentifier: DeviceIdentifier;
-    eufyDevice: Device | Station;
+    eufyDevice: Device;
 }

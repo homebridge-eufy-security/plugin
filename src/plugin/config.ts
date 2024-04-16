@@ -11,7 +11,7 @@ export interface EufySecurityPlatformConfig extends PlatformConfig {
   username: string;
   password: string;
   deviceName: string;
-  enableDetailedLogging: number;
+  enableDetailedLogging: boolean;
   omitLogFiles: boolean;
   CameraMaxLivestreamDuration: number;
   pollingIntervalMinutes: number;
@@ -25,5 +25,31 @@ export interface EufySecurityPlatformConfig extends PlatformConfig {
   cameras: CameraConfig[];
   stations: StationConfig[];
   cleanCache: boolean;
-  unbridge: boolean;
+  ignoreMultipleDevicesWarning: boolean;
+  autoSyncStation: boolean;
+  nodejs_security: boolean;
 }
+
+export const DEFAULT_CONFIG_VALUES: EufySecurityPlatformConfig = {
+  platform: 'EufySecurity',
+  username: '',
+  password: '',
+  deviceName: 'MyPhone',
+  enableDetailedLogging: false,
+  omitLogFiles: false,
+  CameraMaxLivestreamDuration: 30,
+  pollingIntervalMinutes: 10,
+  hkHome: 1,
+  hkAway: 0,
+  hkNight: 3,
+  hkOff: 63,
+  ignoreStations: [],
+  ignoreDevices: [],
+  country: 'US',
+  stations: [],
+  cameras: [],
+  cleanCache: true,
+  ignoreMultipleDevicesWarning: false,
+  autoSyncStation: false,
+  nodejs_security: false,
+};

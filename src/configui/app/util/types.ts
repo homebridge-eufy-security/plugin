@@ -18,3 +18,47 @@ export type LoginResult = {
   failReason?: LoginFailReason;
   data?: any;
 };
+
+export type Accessory = {
+  stations?: L_Station[];
+};
+
+export type L_Station = {
+  uniqueId: string;
+  displayName: string;
+  type: number;
+  typename: string;
+  ignored?: boolean;
+  devices?: L_Device[];
+};
+
+export type L_Device = {
+  uniqueId: string;
+  displayName: string;
+  type: number;
+  typename: string;
+  standalone: boolean;
+  ignored?: boolean;
+  isCamera?: boolean;
+  hasBattery?: boolean;
+  chargingStatus?: number;
+  isDoorbell?: boolean;
+  supportsRTSP?: boolean;
+  supportsTalkback?: boolean;
+  DeviceEnabled: boolean;
+  DeviceMotionDetection: boolean;
+  DeviceLight: boolean;
+  DeviceChimeIndoor: boolean;
+};
+
+export enum ChargingType {
+  CHARGING = 1,
+  UNPLUGGED = 2,
+  PLUGGED = 3,
+  SOLAR_CHARGING = 4
+}
+
+export type Country = {
+  short: string;
+  long: string;
+};

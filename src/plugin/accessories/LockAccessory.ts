@@ -1,153 +1,161 @@
+/* eslint-disable @typescript-eslint/ban-ts-comment */
+// @ts-ignore
 import { CharacteristicValue, PlatformAccessory } from 'homebridge';
 import { EufySecurityPlatform } from '../platform';
 import { DeviceAccessory } from './Device';
-
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-ignore  
 import { Lock, PropertyName } from 'eufy-security-client';
+import { CHAR, SERV } from '../utils/utils';
 
 /**
- * Platform Accessory
- * An instance of this class is created for each accessory your platform registers
- * Each accessory may expose multiple services of different service types.
+ * LockAccessory Class
+ *
+ * This class represents a lock accessory within a home automation system. It is designed to
+ * integrate smart locks into the system, register appropriate HomeKit characteristics, and provide
+ * functionality for controlling and monitoring the lock's status.
+ *
+ * @class LockAccessory
+ * @extends DeviceAccessory
  */
 export class LockAccessory extends DeviceAccessory {
 
+  /**
+   * Constructor for LockAccessory.
+   *
+   * @param {EufySecurityPlatform} platform - The platform instance managing accessories.
+   * @param {PlatformAccessory} accessory - The platform-specific accessory.
+   * @param {Lock} device - The lock device being represented.
+   */
   constructor(
     platform: EufySecurityPlatform,
     accessory: PlatformAccessory,
     device: Lock,
   ) {
+    // Call the constructor of the parent class DeviceAccessory.
     super(platform, accessory, device);
 
-    this.platform.log.debug(`${this.accessory.displayName} Constructed Lock`);
+    // Log that the LockAccessory is constructed.
+    this.log.debug(`Constructed Lock`);
 
+    // Check if the device has the 'locked' property.
     if (this.device.hasProperty('locked')) {
+      // Initialize Lock Management Service characteristics.
+      this.initLockManagementService();
 
-      // Lock Management is required by Apple guidelines, though not functional for our use case.
-      // Implementing as a no-op to meet requirements.
-      this.registerCharacteristic({
-        serviceType: this.platform.Service.LockManagement,
-        characteristicType: this.platform.Characteristic.Version,
-        getValue: (data) => {
-          return '1.0';
-        },
-      });
-
-      // Sets the Auto Security Timeout for the Lock Management Service.
-      // The value represents the time in seconds that the accessory waits after becoming unsecured,
-      // before trying to enter the secured state again.
-      // A value of 0 disables this feature.
-      // Currently set to 3 seconds.
-      this.registerCharacteristic({
-        serviceType: this.platform.Service.LockManagement,
-        characteristicType: this.platform.Characteristic.LockManagementAutoSecurityTimeout,
-        getValue: (data) => {
-          return 3;
-        },
-      });
-
-      this.registerCharacteristic({
-        serviceType: this.platform.Service.LockManagement,
-        characteristicType: this.platform.Characteristic.AdministratorOnlyAccess,
-        getValue: (data) => () => {
-          this.platform.log.debug(`${this.accessory.displayName} GET AdministratorOnlyAccess: ${data}`);
-          return true;
-        },
-        setValue: (value) => () => {
-          this.platform.log.debug(`${this.accessory.displayName} SET AdministratorOnlyAccess: ${value}`);
-        },
-      });
-
-      this.registerCharacteristic({
-        serviceType: this.platform.Service.LockManagement,
-        characteristicType: this.platform.Characteristic.LockControlPoint,
-        setValue: (value) => () => {
-          this.platform.log.debug(`${this.accessory.displayName} SET LockControlPoint: ${value}`);
-        },
-      });
-
-      this.registerCharacteristic({
-        serviceType: this.platform.Service.LockMechanism,
-        characteristicType: this.platform.Characteristic.LockCurrentState,
-        getValue: (data) => this.getLockStatus(),
-        onValue: (service, characteristic) => {
-          this.device.on('locked', () => {
-            characteristic.updateValue(this.getLockStatus());
-          });
-        },
-      });
-
-      this.registerCharacteristic({
-        serviceType: this.platform.Service.LockMechanism,
-        characteristicType: this.platform.Characteristic.LockTargetState,
-        getValue: (data) => this.getLockStatus(),
-        setValue: (value) => this.setLockTargetState(value),
-        onValue: (service, characteristic) => {
-          this.device.on('locked', () => {
-            characteristic.updateValue(this.getLockStatus());
-          });
-        },
-      });
-
-      this.initSensorService(this.platform.Service.LockMechanism);
-
+      // Initialize Lock Mechanism Service characteristics.
+      this.initLockMechanismService();
     } else {
-      this.platform.log.error(`${this.accessory.displayName} has no lock`);
+      // Log an error if the device has no lock.
+      this.log.error(`has no lock`);
     }
 
+    // Prune any unused services.
     this.pruneUnusedServices();
   }
 
-  private getLockStatus() {
-    const lockStatus = this.device.getPropertyValue(PropertyName.DeviceLocked);
-    this.platform.log.debug(`${this.accessory.displayName} getLockStatus: ${lockStatus}`);
+  /**
+   * Initializes characteristics for the Lock Management Service.
+   */
+  private initLockManagementService() {
+    // Register Lock Management Service characteristics.
+    // Version characteristic (always returns '1.0').
+    this.registerCharacteristic({
+      serviceType: SERV.LockManagement,
+      characteristicType: CHAR.Version,
+      getValue: () => '1.0',
+    });
+
+    // LockManagementAutoSecurityTimeout characteristic (always returns 3 seconds).
+    this.registerCharacteristic({
+      serviceType: SERV.LockManagement,
+      characteristicType: CHAR.LockManagementAutoSecurityTimeout,
+      getValue: () => 3,
+    });
+
+    // AdministratorOnlyAccess characteristic (always returns true).
+    this.registerCharacteristic({
+      serviceType: SERV.LockManagement,
+      characteristicType: CHAR.AdministratorOnlyAccess,
+      getValue: () => true,
+    });
+
+    // LockControlPoint characteristic (no initial value).
+    this.registerCharacteristic({
+      serviceType: SERV.LockManagement,
+      characteristicType: CHAR.LockControlPoint,
+    });
+  }
+
+  /**
+   * Initializes characteristics for the Lock Mechanism Service.
+   */
+  private initLockMechanismService() {
+    // Register Lock Mechanism Service characteristics.
+    // LockCurrentState and LockTargetState characteristics.
+    this.registerCharacteristic({
+      serviceType: SERV.LockMechanism,
+      characteristicType: CHAR.LockCurrentState,
+      getValue: () => this.getLockStatus(),
+      onValue: (service, characteristic) => {
+        this.device.on('locked', () => {
+          characteristic.updateValue(this.getLockStatus());
+        });
+        this.device.on('jammed', () => {
+          characteristic.updateValue(CHAR.LockCurrentState.JAMMED);
+        });
+      },
+    });
+
+    this.registerCharacteristic({
+      serviceType: SERV.LockMechanism,
+      characteristicType: CHAR.LockTargetState,
+      getValue: () => this.getLockStatus(),
+      setValue: async (value) => {
+        try {
+          await this.setLockTargetState(value);
+        } catch (error) {
+          this.log.error(`Lock target state could not be set: ${error}`);
+        }
+      },
+      onValue: (service, characteristic) => {
+        this.device.on('locked', () => {
+          characteristic.updateValue(this.getLockStatus());
+        });
+      },
+    });
+
+    // Initialize the sensor service.
+    this.initSensorService();
+  }
+
+  /**
+   * Gets the lock status and maps it to HomeKit lock states.
+   */
+  private getLockStatus(): CharacteristicValue {
+    const lockStatus = this.device.isLocked();
+    this.log.debug(`getLockStatus: ${lockStatus}`);
     return this.convertLockStatusCode(lockStatus);
   }
 
+  /**
+   * Sets the lock target state asynchronously.
+   */
   private async setLockTargetState(state: CharacteristicValue) {
     try {
       await this.setPropertyValue(PropertyName.DeviceLocked, !!state);
+      this.log.info(`Lock target state set to: ${state}`);
     } catch (error) {
-      this.platform.log.error(`${this.accessory.displayName} Lock target state
-      (${JSON.stringify(typeof state)} / ${JSON.stringify(state)}) 
-      could not be set: ${error}`);
+      this.log.error(`Error setting lock target state: ${error}`);
     }
   }
 
-  // Function to convert lock status codes to corresponding HomeKit lock states
-  convertLockStatusCode(lockStatus) {
-    // Mapping of lock status codes to their corresponding meanings
-    // 1: "1",
-    // 2: "2",
-    // 3: "UNLOCKED",
-    // 4: "LOCKED",
-    // 5: "MECHANICAL_ANOMALY",
-    // 6: "6",
-    // 7: "7",
-
-    // Log the current lock status for debugging purposes
-    this.platform.log.debug(`${this.accessory.displayName} LockStatus: ${lockStatus}`);
-
-    // Determine the HomeKit lock state based on the provided lock status
-    switch (lockStatus) {
-      // If lockStatus is true (locked) or 4 (LOCKED)
-      case true:
-      case 4:
-        return this.platform.Characteristic.LockCurrentState.SECURED;
-      // If lockStatus is false (unlocked) or 3 (UNLOCKED)
-      case false:
-      case 3:
-        return this.platform.Characteristic.LockCurrentState.UNSECURED;
-      // If lockStatus is 5 (MECHANICAL_ANOMALY)
-      case 5:
-        // Return JAMMED as the lock state if jammed
-        return this.platform.Characteristic.LockCurrentState.JAMMED;
-      default:
-        // Log a warning for unknown lock status feedback
-        this.platform.log.warn(`${this.accessory.displayName} Something wrong on the lockstatus feedback`);
-        // Return UNKNOWN as the lock state for unknown lockStatus values
-        return this.platform.Characteristic.LockCurrentState.UNKNOWN;
+  /**
+   * Converts lock status codes to corresponding HomeKit lock states.
+   */
+  private convertLockStatusCode(lockStatus: boolean): CharacteristicValue {
+    if (lockStatus) {
+      return CHAR.LockCurrentState.SECURED;
+    } else {
+      return CHAR.LockCurrentState.UNSECURED;
     }
   }
 }

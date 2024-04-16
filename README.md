@@ -11,9 +11,9 @@ Homebridge plugin to control certain Eufy Security devices
 [![verified-by-homebridge](https://badgen.net/badge/homebridge/verified/purple)](https://github.com/homebridge/homebridge/wiki/Verified-Plugins)
 [![npm](https://img.shields.io/npm/dt/homebridge-eufy-security)](https://www.npmjs.com/package/homebridge-eufy-security)
 
-[![npm](https://img.shields.io/npm/v/homebridge-eufy-security/rc?label=rc)](https://github.com/homebridge-eufy-security/plugin/wiki/RC---Beta-Version)
-[![npm](https://img.shields.io/npm/v/homebridge-eufy-security/beta?label=beta)](https://github.com/homebridge-eufy-security/plugin/wiki/RC---Beta-Version)
-[![npm](https://img.shields.io/npm/v/homebridge-eufy-security/hksv?label=hksv)](https://github.com/homebridge-eufy-security/plugin/wiki/RC---Beta-Version)
+[![npm](https://img.shields.io/npm/v/homebridge-eufy-security/rc?label=rc)](https://github.com/homebridge-eufy-security/plugin/wiki/Special-Version-(BETA---RC---HKSV))
+[![npm](https://img.shields.io/npm/v/homebridge-eufy-security/beta?label=beta)](https://github.com/homebridge-eufy-security/plugin/wiki/Special-Version-(BETA---RC---HKSV))
+[![npm](https://img.shields.io/npm/v/homebridge-eufy-security/hksv?label=hksv)](https://github.com/homebridge-eufy-security/plugin/wiki/Special-Version-(BETA---RC---HKSV))
 [![Discord](https://img.shields.io/discord/432663330281226270?color=728ED5&logo=discord&label=hb-discord)](https://discord.com/channels/432663330281226270/876907345962229791)
 
 </span>
@@ -34,7 +34,7 @@ Homebridge plugin to control certain Eufy Security devices
 * [Installation](https://github.com/homebridge-eufy-security/plugin/wiki/Installation-and-Configuration#installation)
 * [Configuration](https://github.com/homebridge-eufy-security/plugin/wiki/Installation-and-Configuration#configuration)
 * [Bridged and Unbridged Mode](https://github.com/homebridge-eufy-security/plugin/wiki/Bridged-and-Unbridged-Mode-and-Problems)
-* [Beta Version](https://github.com/homebridge-eufy-security/plugin/wiki/Beta-Version)
+* [Beta Version](https://github.com/homebridge-eufy-security/plugin/wiki/Special-Version-(BETA---RC---HKSV))
 * [Uninstallation](https://github.com/homebridge-eufy-security/plugin/wiki/Uninstallation)
 
 #### Features

@@ -1,8 +1,3 @@
-export type Country = {
-  short: string;
-  long: string;
-};
-
 export const COUNTRIES = {
   AF: 'Afghanistan',
   AX: 'Aland Islands',
