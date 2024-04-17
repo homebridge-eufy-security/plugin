@@ -102,7 +102,7 @@ class UiServer extends HomebridgePluginUiServer {
     try {
       if (options && options.username && options.password) {
         this.log.info('deleting persistent.json due to new login');
-        await this.resetPersistentData();
+        await this.resetPersistentData(); // To be commented for testing purpose
       }
     } catch (err) {
       this.log.error('Could not delete persistent.json due to error: ' + err);
@@ -187,7 +187,7 @@ class UiServer extends HomebridgePluginUiServer {
     const s: L_Station = { uniqueId: station.getSerial(), displayName: station.getName(), type: station.getDeviceType(), typename: DeviceType[station.getDeviceType()] };
     this.stations.push(s);
     this.storeAccessories();
-    this.pushEvent('addAccessory', s);
+    this.pushEvent('addAccessory', this.stations);
   }
 
   addDevice(device: Device) {
@@ -221,7 +221,7 @@ class UiServer extends HomebridgePluginUiServer {
       }
       this.stations[stationIndex].devices!.push(d);
       this.storeAccessories();
-      this.pushEvent('addAccessory', d);
+      this.pushEvent('addAccessory', this.stations);
     } else {
       this.log.error('Station not found for device:', d.displayName);
     }
