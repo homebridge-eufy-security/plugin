@@ -110,7 +110,7 @@ export class AccessoryListComponent implements OnInit {
     private routerService: Router,
   ) { }
 
-  ngOnInit(): void {
+  async ngOnInit(): Promise<void> {
     this.waitForAccessories = this.route.snapshot.paramMap.get('waitForAccessories') === 'true';
 
     window.homebridge.addEventListener('versionUnmatched', (event: any) => {
@@ -118,12 +118,12 @@ export class AccessoryListComponent implements OnInit {
       this.versionUnmatched = true;
     });
 
-    this.pluginService.addEventListener('newAccessories', () => {
+    this.pluginService.addEventListener('newAccessories', async () => {
       console.log('plugin accessories have changed. updating...');
-      this.updateStations();
+      await this.updateStations();
     });
 
-    this.updateStations();
+    await this.updateStations();
 
     if (!this.waitForAccessories && this.stations.length === 0) {
       this.pluginService.loadStoredAccessories().then((result) => {
@@ -136,13 +136,9 @@ export class AccessoryListComponent implements OnInit {
     }
   }
 
-  private updateStations() {
-    this.stations = this.pluginService.getStations();
-    this.updateProperties();
-  }
-
-  private async updateProperties() {
+  private async updateStations() {
     const { ignoreStations = [], ignoreDevices = [] } = await this.pluginService.getConfig();
+    this.stations = this.pluginService.getStations() ?? [];
 
     this.stations.forEach((station) => {
       station.ignored = ignoreStations.includes(station.uniqueId);

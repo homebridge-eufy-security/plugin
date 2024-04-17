@@ -86,22 +86,8 @@
             <div *ngFor="let station of stations" ngbAccordionItem="S_{{station.uniqueId}}">
                 <div ngbAccordionHeader>
 
-                    <button *ngIf="station.devices?.length !== 1" ngbAccordionButton class="row m-0">
-                        <div class="col-8" [style.text-decoration]="station.ignored ? 'line-through' : 'none'">{{
-                            station.displayName
-                            }}</div>
-                        <div class="col">
-                            <span class="float-right">
-                                <button type="button" class="btn text-muted my-0 mx-1" placement="top"
-                                    ngbTooltip="Alarm configuration" routerLink="/stationConfig/{{station.uniqueId}}">
-                                    <fa-icon [icon]="shieldIcon" size="lg"></fa-icon>
-                                </button>
-                            </span>
-                        </div>
-                    </button>
-
-                    <div *ngIf="station.devices?.length === 1" ngbAccordionButton class="row m-0 accordion-button2"
-                        routerLink="/cameraConfig/{{station.uniqueId}}">
+                    <div *ngIf="station && (station.devices ?? [])[0].uniqueId === station.uniqueId" ngbAccordionButton
+                        class="row m-0 accordion-button2" routerLink="/cameraConfig/{{station.uniqueId}}">
                         <div class="col-8"
                             [style.text-decoration]="station.devices && station.devices[0].ignored ? 'line-through' : 'none'">
                             {{ station.displayName }}</div>
@@ -115,9 +101,23 @@
                         </div>
                     </div>
 
+                    <button *ngIf="station && (station.devices ?? [])[0].uniqueId !== station.uniqueId"
+                        ngbAccordionButton class="row m-0">
+                        <div class="col-8" [style.text-decoration]="station.ignored ? 'line-through' : 'none'">
+                            {{ station.displayName }}</div>
+                        <div class="col">
+                            <span class="float-right">
+                                <button type="button" class="btn text-muted my-0 mx-1" placement="top"
+                                    ngbTooltip="Alarm configuration" routerLink="/stationConfig/{{station.uniqueId}}">
+                                    <fa-icon [icon]="shieldIcon" size="lg"></fa-icon>
+                                </button>
+                            </span>
+                        </div>
+                    </button>
+
                 </div>
                 <div ngbAccordionCollapse>
-                    <div ngbAccordionBody *ngIf="station && (station.devices ?? []).length >= 2">
+                    <div ngbAccordionBody *ngIf="station && (station.devices ?? [])[0].uniqueId !== station.uniqueId">
                         <ng-template>
 
                             <div class="row">

@@ -102,7 +102,7 @@ class UiServer extends HomebridgePluginUiServer {
     try {
       if (options && options.username && options.password) {
         this.log.info('deleting persistent.json due to new login');
-        await this.resetPersistentData();
+        await this.resetPersistentData(); // To be commented for testing purpose
       }
     } catch (err) {
       this.log.error('Could not delete persistent.json due to error: ' + err);
@@ -185,9 +185,10 @@ class UiServer extends HomebridgePluginUiServer {
 
   addStation(station: Station) {
     const s: L_Station = { uniqueId: station.getSerial(), displayName: station.getName(), type: station.getDeviceType(), typename: DeviceType[station.getDeviceType()] };
+    s.ignored = (this.config['ignoreStations'] ?? []).includes(s.uniqueId);
     this.stations.push(s);
     this.storeAccessories();
-    this.pushEvent('addAccessory', s);
+    this.pushEvent('addAccessory', this.stations);
   }
 
   addDevice(device: Device) {
@@ -212,6 +213,8 @@ class UiServer extends HomebridgePluginUiServer {
       d.chargingStatus = (device.getPropertyValue(PropertyName.DeviceChargingStatus) as number);
     }
 
+    d.ignored = (this.config['ignoreDevices'] ?? []).includes(d.uniqueId);
+
     const stationUniqueId = device.getStationSerial();
     const stationIndex = this.stations.findIndex(station => station.uniqueId === stationUniqueId);
 
@@ -221,7 +224,7 @@ class UiServer extends HomebridgePluginUiServer {
       }
       this.stations[stationIndex].devices!.push(d);
       this.storeAccessories();
-      this.pushEvent('addAccessory', d);
+      this.pushEvent('addAccessory', this.stations);
     } else {
       this.log.error('Station not found for device:', d.displayName);
     }

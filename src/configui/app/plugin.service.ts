@@ -1,6 +1,6 @@
 /* eslint-disable no-console */
 import { Injectable } from '@angular/core';
-import { fromEvent } from 'rxjs';
+import { Observable } from 'rxjs';
 
 import { PluginConfig } from '@homebridge/plugin-ui-utils/dist/ui.interface';
 
@@ -12,7 +12,13 @@ import { L_Device, L_Station } from './util/types';
 export class PluginService extends EventTarget {
   private stations: L_Station[] = [];
 
-  private accessories$ = fromEvent(window.homebridge, 'addAccessory');
+  private accessories$ = new Observable<Event>((subscriber) => { // Explicitly typing the Observable to emit Event
+    const handler = (event: Event) => subscriber.next(event);
+    window.homebridge.addEventListener('addAccessory', handler);
+    return () => {
+      window.homebridge.removeEventListener('addAccessory', handler);
+    };
+  });
 
   private config?: PluginConfig;
 
@@ -22,8 +28,9 @@ export class PluginService extends EventTarget {
   }
 
   private init() {
-    this.accessories$.subscribe(() => {
-      this.loadStoredAccessories();
+    this.accessories$.subscribe((value: Event) => {
+      const v = value as MessageEvent;
+      this.stations = v.data;
     });
 
     this.loadStoredAccessories();
@@ -68,10 +75,6 @@ export class PluginService extends EventTarget {
     if (!this.stations.find((a) => a.uniqueId === station.uniqueId)) {
       this.stations.push(station);
     }
-  }
-
-  private version_unmatched() {
-
   }
 
   public async getConfig(): Promise<PluginConfig> {
