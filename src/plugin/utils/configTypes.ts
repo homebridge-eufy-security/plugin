@@ -24,7 +24,6 @@ export type CameraConfig = {
   talkbackChannels?: number;
   hsv?: boolean;
   hsvRecordingDuration?: number;
-  hsvConfig?: VideoConfig;
   indoorChimeButton?: boolean;
 };
 

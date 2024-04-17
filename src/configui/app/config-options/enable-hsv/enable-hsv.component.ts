@@ -64,14 +64,6 @@ export class EnableHsvComponent extends ConfigOptionsInterpreter implements OnIn
       this.value = config['hsv'];
     }
 
-    if (config && Object.prototype.hasOwnProperty.call(config, 'hsvConfig')) {
-      Object.entries(config['hsvConfig']).forEach(([key, value]) => {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const obj = this as any;
-        obj[key] = value;
-      });
-    }
-
     try {
 
       if (this.device) {
@@ -96,8 +88,8 @@ export class EnableHsvComponent extends ConfigOptionsInterpreter implements OnIn
   }
 
   update() {
-    this.updateConfig({
+    this.updateDeviceConfig({
       hsv: this.value,
-    });
+    }, this.device!);
   }
 }
