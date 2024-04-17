@@ -185,6 +185,7 @@ class UiServer extends HomebridgePluginUiServer {
 
   addStation(station: Station) {
     const s: L_Station = { uniqueId: station.getSerial(), displayName: station.getName(), type: station.getDeviceType(), typename: DeviceType[station.getDeviceType()] };
+    s.ignored = (this.config['ignoreStations'] ?? []).includes(s.uniqueId);
     this.stations.push(s);
     this.storeAccessories();
     this.pushEvent('addAccessory', this.stations);
@@ -211,6 +212,8 @@ class UiServer extends HomebridgePluginUiServer {
     if (device.hasProperty(PropertyName.DeviceChargingStatus)) {
       d.chargingStatus = (device.getPropertyValue(PropertyName.DeviceChargingStatus) as number);
     }
+
+    d.ignored = (this.config['ignoreDevices'] ?? []).includes(d.uniqueId);
 
     const stationUniqueId = device.getStationSerial();
     const stationIndex = this.stations.findIndex(station => station.uniqueId === stationUniqueId);

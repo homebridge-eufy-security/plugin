@@ -14,7 +14,6 @@ import { DeviceImage } from '../util/deviceToImagesMap';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgIf, NgFor } from '@angular/common';
 import { NgbAccordionModule, NgbAlertModule, NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
-import { PluginConfig } from '@homebridge/plugin-ui-utils/dist/ui.interface';
 
 @Component({
   selector: 'app-accessory-list',
@@ -104,8 +103,6 @@ export class AccessoryListComponent implements OnInit {
 
   closeResult = '';
 
-  private config: PluginConfig = {} as PluginConfig;
-
   constructor(
     private modalService: NgbModal,
     public pluginService: PluginService,
@@ -121,14 +118,12 @@ export class AccessoryListComponent implements OnInit {
       this.versionUnmatched = true;
     });
 
-    this.pluginService.addEventListener('newAccessories', () => {
+    this.pluginService.addEventListener('newAccessories', async () => {
       console.log('plugin accessories have changed. updating...');
-      this.updateStations();
+      await this.updateStations();
     });
 
-    this.updateStations();
-
-    this.config = await this.pluginService.getConfig();
+    await this.updateStations();
 
     if (!this.waitForAccessories && this.stations.length === 0) {
       this.pluginService.loadStoredAccessories().then((result) => {
@@ -141,19 +136,16 @@ export class AccessoryListComponent implements OnInit {
     }
   }
 
-  private updateStations() {
-    const stations = this.pluginService.getStations() ?? [];
+  private async updateStations() {
+    const { ignoreStations = [], ignoreDevices = [] } = await this.pluginService.getConfig();
+    this.stations = this.pluginService.getStations() ?? [];
 
-    stations.forEach((station) => {
-      station.ignored = (this.config['ignoreStations'] ?? []).includes(station.uniqueId);
-
-      console.log(`Devices:`,station.devices);
+    this.stations.forEach((station) => {
+      station.ignored = ignoreStations.includes(station.uniqueId);
       station.devices?.forEach((device) => {
-        device.ignored = (this.config['ignoreDevices'] ?? []).includes(device.uniqueId);
+        device.ignored = ignoreDevices.includes(device.uniqueId);
       });
     });
-
-    this.stations = stations;
   }
 
   openReloadModal(content: any) {
