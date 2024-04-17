@@ -89,14 +89,14 @@ export class RecordingDelegate implements CameraRecordingDelegate {
       const videoParams = await FFmpegParameters.forVideoRecording();
       const audioParams = await FFmpegParameters.forAudioRecording();
 
-      const hsvConfig: VideoConfig = this.cameraConfig.hsvConfig ?? {};
+      const videoConfig: VideoConfig = this.cameraConfig.videoConfig ?? {};
 
       if (this.cameraConfig.videoConfig && this.cameraConfig.videoConfig.videoProcessor) {
-        hsvConfig.videoProcessor = this.cameraConfig.videoConfig.videoProcessor;
+        videoConfig.videoProcessor = this.cameraConfig.videoConfig.videoProcessor;
       }
 
-      videoParams.setupForRecording(hsvConfig, this.configuration!);
-      audioParams.setupForRecording(hsvConfig, this.configuration!);
+      videoParams.setupForRecording(videoConfig, this.configuration!);
+      audioParams.setupForRecording(videoConfig, this.configuration!);
 
       const rtsp = is_rtsp_ready(this.camera, this.cameraConfig);
 
