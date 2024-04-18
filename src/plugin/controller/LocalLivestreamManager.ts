@@ -135,7 +135,7 @@ export class LocalLivestreamManager extends EventEmitter {
 
       this.log.debug(station.getName() + ' station livestream (P2P session) for ' + device.getName() + ' has started.');
       this.livestreamStartedAt = Date.now();
-      const createdAt = Date.now();
+      const createdAt = this.livestreamStartedAt;
       this.stationStream = { station, device, metadata, videostream, audiostream, createdAt };
       this.log.debug('Stream metadata: ' + JSON.stringify(this.stationStream.metadata));
 
