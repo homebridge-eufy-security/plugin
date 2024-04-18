@@ -39,8 +39,8 @@ body:
       label: Plugin Version
       description: What version of the plugin are you running?
       options:
-        - v2.3.x (Best Effort)
-        - v2.0.x (Supported)
+        - v3.0.x (Best Effort)
+        - v2.0.x (UnSupported)
         - beta (Best Effort)
         - other (UnSupported)
     validations:
@@ -53,7 +53,7 @@ body:
       description: What version of homebridge are you running?
       options:
         - v1.7.x (Supported)
-        - v1.6.x (Supported)
+        - v1.6.x (UnSupported)
         - v1.4.x (UnSupported)
         - v1.3.x (UnSupported)
         - other (UnSupported)
@@ -81,7 +81,7 @@ body:
       options:
         - Raspbian 10+ (Supported)
         - Ubuntu 22.04+ (Supported)
-        - Debian 11+ (Supported)
+        - Debian 12+ (Supported)
         - Windows 10+ (UnSupported)
         - Mac OS X 11+ (UnSupported)
         - Docker (UnSupported)
