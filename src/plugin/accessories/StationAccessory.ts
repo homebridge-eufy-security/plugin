@@ -15,6 +15,11 @@ export enum HKGuardMode {
   DISARM = 3
 }
 
+export interface EufyMode {
+  hk: number;
+  eufy: number;
+}
+
 /**
  * Platform Accessory
  * An instance of this class is created for each accessory your platform registers
@@ -22,14 +27,13 @@ export enum HKGuardMode {
  */
 export class StationAccessory extends BaseAccessory {
 
-  private alarm_triggered: boolean;
-  private modes;
+  public readonly stationConfig: StationConfig;
   public readonly hasKeyPad: boolean = false;
+  private readonly modes: EufyMode[];
 
+  private alarm_triggered: boolean;
   private alarm_delayed: boolean;
   private alarm_delay_timeout?: NodeJS.Timeout;
-
-  public readonly stationConfig: StationConfig;
 
   private guardModeChangeTimeout: {
     timeout: NodeJS.Timeout | null;
@@ -45,11 +49,11 @@ export class StationAccessory extends BaseAccessory {
 
     this.log.debug(`Constructed Station`);
 
-    this.stationConfig = this.getStationConfig();
-
     this.hasKeyPad = this.device.hasDeviceWithType(DeviceType.KEYPAD);
+    this.log.debug(`has keypad:`, this.hasKeyPad);
 
-    this.mappingHKEufy();
+    this.stationConfig = this.getStationConfig();
+    this.modes = this.mappingHKEufy();
 
     this.alarm_triggered = false;
     this.alarm_delayed = false;
@@ -135,17 +139,6 @@ export class StationAccessory extends BaseAccessory {
   }
 
   /**
-   * Helper function to get a configuration value by checking custom, global, and default settings.
-   * @param {number} customValue - Value from the custom configuration
-   * @param {number} globalValue - Value from the global configuration
-   * @param {number} defaultValue - The default value to use if both custom and global values are undefined
-   * @returns {number} The chosen value based on priority
-   */
-  private getConfigValue(customValue: number | undefined, globalValue: number | undefined, defaultValue: number) {
-    return customValue !== undefined ? customValue : (globalValue !== undefined ? globalValue : defaultValue);
-  }
-
-  /**
    * Gets the station configuration based on several possible sources.
    * Priority is given to custom configurations (if available), then falls back to global configs,
    * and lastly uses default values if neither custom nor global configs are set.
@@ -163,13 +156,14 @@ export class StationAccessory extends BaseAccessory {
     const config: StationConfig = {
       // For each setting (e.g., hkHome), check if it is defined in the custom config,
       // if not, check the global config, and as a last resort, use the default value
-      hkHome: this.getConfigValue(stationConfig?.hkHome, this.platform.config.hkHome, 1),
-      hkAway: this.getConfigValue(stationConfig?.hkAway, this.platform.config.hkAway, 0),
-      hkNight: this.getConfigValue(stationConfig?.hkNight, this.platform.config.hkNight, 2),
+      hkHome: stationConfig?.hkHome ?? this.platform.config.hkHome,
+      hkAway: stationConfig?.hkAway ?? this.platform.config.hkAway,
+      hkNight: stationConfig?.hkNight ?? this.platform.config.hkNight,
+
       // Default HomeKit mode for 'Off':
       // - If a keypad is present, set to 6 (Special value)
       // - Otherwise, set to 63 (Default value)
-      hkOff: this.getConfigValue(stationConfig?.hkOff, this.platform.config.hkOff, this.hasKeyPad ? 6 : 63),
+      hkOff: stationConfig?.hkOff ?? this.hasKeyPad ? 6 : this.platform.config.hkOff,
 
       // Use optional chaining to safely access manualTriggerModes and manualAlarmSeconds
       manualTriggerModes: stationConfig?.manualTriggerModes ?? [],
@@ -183,6 +177,20 @@ export class StationAccessory extends BaseAccessory {
     return config;
   }
 
+  private mappingHKEufy(): EufyMode[] {
+    // Initialize the modes array with HomeKit and Eufy mode mappings
+    const modes = [
+      { hk: 0, eufy: this.stationConfig.hkHome },
+      { hk: 1, eufy: this.stationConfig.hkAway },
+      { hk: 2, eufy: this.stationConfig.hkNight },
+      { hk: 3, eufy: this.stationConfig.hkOff },
+    ];
+
+    // Log the mapping for station modes for debugging purposes
+    this.log.debug(`Mapping for station modes:`, modes);
+
+    return modes;
+  }
 
   private onStationGuardModePushNotification(
     characteristic: Characteristic,
@@ -248,19 +256,6 @@ export class StationAccessory extends BaseAccessory {
     }
 
     this.updateManuelTriggerButton(this.alarm_triggered);
-  }
-
-  private mappingHKEufy(): void {
-    // Initialize the modes array with HomeKit and Eufy mode mappings
-    this.modes = [
-      { hk: 0, eufy: this.stationConfig.hkHome },
-      { hk: 1, eufy: this.stationConfig.hkAway },
-      { hk: 2, eufy: this.stationConfig.hkNight },
-      { hk: 3, eufy: this.stationConfig.hkOff },
-    ];
-
-    // Log the mapping for station modes for debugging purposes
-    this.log.debug(`Mapping for station modes:`, this.modes);
   }
 
   /**
