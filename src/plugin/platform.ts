@@ -479,28 +479,67 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
     return new Promise(resolve => setTimeout(resolve, ms));
   }
 
+  /**
+   * Defines an accessory for a device or station.
+   * 
+   * @param deviceContainer The container holding information about the device or station.
+   * @param isStation A boolean indicating whether the container represents a station.
+   * @returns A tuple containing the created or cached accessory and a boolean indicating whether the accessory was cached.
+   */
+  private defineAccessory(deviceContainer: StationContainer | DeviceContainer, isStation: boolean): [PlatformAccessory, boolean] {
+    // Generate UUID for the accessory based on device's unique identifier and whether it's a station
+    const uuid = this.generateUUID(deviceContainer.deviceIdentifier.uniqueId, isStation);
+
+    // Check if the accessory is already cached
+    const cachedAccessory = this.accessories.find((accessory) => accessory.UUID === uuid);
+
+    // If the accessory is cached, remove it from the accessories array
+    if (cachedAccessory) {
+      this.accessories.splice(this.accessories.indexOf(cachedAccessory), 1);
+    }
+
+    // Determine if the device is a camera
+    const isCamera: boolean = (deviceContainer.eufyDevice instanceof Device)
+      ? deviceContainer.eufyDevice.isCamera()
+      : false;
+
+    // Create a new accessory if not cached, otherwise use the cached one
+    const accessory = cachedAccessory
+      || new this.api.platformAccessory(
+        deviceContainer.deviceIdentifier.displayName,
+        uuid,
+        isCamera ? HAP.Categories.CAMERA : HAP.Categories.SECURITY_SYSTEM,
+      );
+
+    // Store device information in accessory context
+    accessory.context['device'] = deviceContainer.deviceIdentifier;
+
+    return [accessory, !!cachedAccessory];
+  }
+
+  /**
+   * Adds or updates an accessory for a device or station.
+   * 
+   * @param deviceContainer The container holding information about the device or station.
+   * @param isStation A boolean indicating whether the container represents a station.
+   */
   private async addOrUpdateAccessory(deviceContainer: StationContainer | DeviceContainer, isStation: boolean) {
     try {
-      const uuid = this.generateUUID(deviceContainer.deviceIdentifier.uniqueId, isStation);
-      const cachedAccessory = this.accessories.find((accessory) => accessory.UUID === uuid);
+      // Define the accessory and check if it already exists
+      const [accessory, isExist] = this.defineAccessory(deviceContainer, isStation);
 
-      if (cachedAccessory) {
-        this.accessories.splice(this.accessories.indexOf(cachedAccessory), 1); // Remove from the accessories array
-      }
-
-      const accessory = cachedAccessory || new this.api.platformAccessory(deviceContainer.deviceIdentifier.displayName, uuid);
-      accessory.context['device'] = deviceContainer.deviceIdentifier;
-
-      // add to active accessories (see cleanCache)
-      this.activeAccessoryIds.indexOf(uuid) === -1 ? this.activeAccessoryIds.push(uuid) : null;
-
+      // Register the accessory based on whether it's a station or device
       if (isStation) {
         this.register_station(accessory, deviceContainer as StationContainer);
       } else {
         this.register_device(accessory, deviceContainer as DeviceContainer);
       }
 
-      if (cachedAccessory) {
+      // Add the accessory's UUID to activeAccessoryIds if it's not already present
+      this.activeAccessoryIds.indexOf(accessory.UUID) === -1 ? this.activeAccessoryIds.push(accessory.UUID) : null;
+
+      // Update or register the accessory with the platform
+      if (isExist) {
         this.api.updatePlatformAccessories([accessory]);
         log.info(`Updating existing accessory: ${accessory.displayName}`);
       } else {
@@ -508,6 +547,7 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
         log.info(`Registering new accessory: ${accessory.displayName}`);
       }
     } catch (error) {
+      // Log any errors that occur during accessory addition or update
       log.error(`Error in ${isStation ? 'stationAdded' : 'deviceAdded'}: ${error}`);
     }
   }
@@ -705,6 +745,10 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
     if (device.isCamera()) {
       log.debug(accessory.displayName + ' isCamera!');
       new CameraAccessory(this, accessory, device as Camera);
+    }
+
+    if (device.isKeyPad()) {
+      log.debug(accessory.displayName + ' isKeypad!');
     }
 
   }
