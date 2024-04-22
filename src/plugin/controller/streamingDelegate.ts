@@ -272,6 +272,7 @@ export class StreamingDelegate implements CameraStreamingDelegate {
         activeSession.audioProcess.start();
       }
 
+      this.log.warn('Talkback: ', this.camera.cameraConfig.talkback);
       if (this.camera.cameraConfig.talkback) {
         const talkbackParameters = await FFmpegParameters.forAudio(this.videoConfig.debug);
         await talkbackParameters.setTalkbackInput(sessionInfo!);

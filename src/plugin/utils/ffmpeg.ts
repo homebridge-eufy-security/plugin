@@ -19,7 +19,7 @@ import {
     StartStreamRequest,
 } from 'homebridge';
 import { SessionInfo } from '../controller/streamingDelegate';
-import { ffmpegLogger } from './utils';
+import { ffmpegLogger, log } from './utils';
 import { reservePorts } from '@homebridge/camera-utils';
 
 class FFmpegProgress extends EventEmitter {
@@ -488,13 +488,17 @@ export class FFmpegParameters {
             }
             server.close();
 
-            socket.on('error', () => { }); // ignore since this is handled elsewhere
+            socket.on('error', (error) => {
+                log.debug('Talkback Socket', error);
+            }); // ignore since this is handled elsewhere
 
             socket.end(sdpInput);
         });
         server.listen(port);
 
-        server.on('error', () => { }); // ignore since this is handled elsewhere
+        server.on('error', (error) => {
+            log.debug('Talkback Server', error);
+        }); // ignore since this is handled elsewhere
 
         killTimeout = setTimeout(() => {
             server.close();
