@@ -185,6 +185,7 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
         'data',
         'ignoreStations',
         'ignoreDevices',
+        'pincode',
       ],
     };
 
