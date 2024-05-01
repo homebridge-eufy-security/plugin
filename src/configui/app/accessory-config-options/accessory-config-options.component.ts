@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 
-import { L_Device } from '../util/types';
+import { L_Device, L_Station } from '../util/types';
 import { ConfigOptionsInterpreter } from '../config-options/config-options-interpreter';
 import { PluginService } from '../plugin.service';
 import { AdvancedVideoconfigComponent } from '../config-options/advanced-videoconfig/advanced-videoconfig.component';
@@ -17,16 +17,23 @@ import { EnableAudioComponent } from '../config-options/enable-audio/enable-audi
 import { RtspStreamingComponent } from '../config-options/rtsp-streaming/rtsp-streaming.component';
 import { EnableCameraComponent } from '../config-options/enable-camera/enable-camera.component';
 import { IgnoreAccessoryComponent } from '../config-options/ignore-accessory/ignore-accessory.component';
-import { NgIf } from '@angular/common';
+import { NgIf, NgSwitch, NgSwitchCase, NgSwitchDefault } from '@angular/common';
 import { NgbAccordionModule } from '@ng-bootstrap/ng-bootstrap';
+import { GuardModesMappingComponent } from '../config-options/guard-modes-mapping/guard-modes-mapping.component';
+import { ManualAlarmModesComponent } from '../config-options/manual-alarm-modes/manual-alarm-modes.component';
+import { FeatherModule } from 'angular-feather';
 
 @Component({
-  selector: 'app-camera-config-options',
-  templateUrl: './camera-config-options.component.html',
+  selector: 'app-accessory-config-options',
+  templateUrl: './accessory-config-options.component.html',
   standalone: true,
   imports: [
     RouterLink,
     NgIf,
+    NgSwitch,
+    NgSwitchCase,
+    NgSwitchDefault,
+    FeatherModule,
     IgnoreAccessoryComponent,
     EnableCameraComponent,
     RtspStreamingComponent,
@@ -40,11 +47,17 @@ import { NgbAccordionModule } from '@ng-bootstrap/ng-bootstrap';
     PeriodicSnapshotRefreshComponent,
     ForceRefreshsnapComponent,
     AdvancedVideoconfigComponent,
+    GuardModesMappingComponent,
+    ManualAlarmModesComponent,
     NgbAccordionModule,
   ],
 })
-export class CameraConfigOptionsComponent extends ConfigOptionsInterpreter implements OnInit {
+export class AccessoryConfigOptionsComponent extends ConfigOptionsInterpreter implements OnInit {
+  station?: L_Station;
   device?: L_Device;
+
+  uniqueId: string = '';
+  type: string = '';
 
   showEnhancedSnapshotBehaviour = true;
   isDoorbell = false;
@@ -57,8 +70,24 @@ export class CameraConfigOptionsComponent extends ConfigOptionsInterpreter imple
   }
 
   ngOnInit(): void {
-    const uniqueId = this.route.snapshot.paramMap.get('uniqueId');
-    this.device = this.pluginService.getDevice(uniqueId);
+
+    this.route.params.subscribe(params => {
+      this.uniqueId = params['id'];
+      this.type = params['type'];
+    });
+
+    switch (this.type) {
+      case 'both':
+        this.station = this.pluginService.getStation(this.uniqueId);
+        this.device = this.pluginService.getDevice(this.uniqueId);
+        break;
+      case 'station':
+        this.station = this.pluginService.getStation(this.uniqueId);
+        break;
+      case 'device':
+        this.device = this.pluginService.getDevice(this.uniqueId);
+        break;
+    }
 
     if (this.device) {
       this.isCamera = this.device.isCamera!;
@@ -87,7 +116,11 @@ export class CameraConfigOptionsComponent extends ConfigOptionsInterpreter imple
     }
   }
 
-  ignoredChanged(state: boolean) {
+  ignoredStationChanged(state: boolean) {
+    this.station!.ignored = state;
+  }
+
+  ignoredDeviceChanged(state: boolean) {
     this.device!.ignored = state;
   }
 

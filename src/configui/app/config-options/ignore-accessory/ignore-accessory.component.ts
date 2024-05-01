@@ -29,14 +29,14 @@ export class IgnoreAccessoryComponent extends ConfigOptionsInterpreter implement
   @Input() accessory?: L_Station | L_Device;
   @Input() station?: boolean;
   @Output() ignored = new EventEmitter<boolean>();
-  value = false;
+  value = true;
 
   async readValue() {
     this.config = await this.pluginService.getConfig();
     if (this.accessory) {
       const identifier = this.station ? 'ignoreStations' : 'ignoreDevices';
       if (Array.isArray(this.config[identifier])) {
-        this.value = this.config[identifier].find((uId: string) => uId === this.accessory!.uniqueId) !== undefined;
+        this.value = !(this.config[identifier].find((uId: string) => uId === this.accessory!.uniqueId) !== undefined);
       }
     }
   }
@@ -46,11 +46,11 @@ export class IgnoreAccessoryComponent extends ConfigOptionsInterpreter implement
       return;
     }
 
-    this.ignored.emit(this.value); // Warn the parent app to show or hide the camera settings menu
+    this.ignored.emit(!this.value); // Warn the parent app to show or hide the camera settings menu
 
     const identifier = this.station ? 'ignoreStations' : 'ignoreDevices';
     this.config = await this.pluginService.getConfig();
-    if (this.value) {
+    if (!this.value) {
       if (Array.isArray(this.config[identifier]) && !this.config[identifier].find((uId: string) => uId === this.accessory!.uniqueId)) {
         this.config[identifier].push(this.accessory.uniqueId);
       } else if (!Array.isArray(this.config[identifier])) {

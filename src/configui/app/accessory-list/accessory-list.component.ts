@@ -5,13 +5,11 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 
 import { NgbModal, ModalDismissReasons } from '@ng-bootstrap/ng-bootstrap';
 
-import { faScrewdriverWrench, faEyeSlash, faRotate, faVideo, faShieldHalved, faDownload } from '@fortawesome/free-solid-svg-icons';
-
+import { FeatherModule } from 'angular-feather';
 import { PluginService } from '../plugin.service';
 
 import { L_Station } from '../util/types';
 import { DeviceImage } from '../util/deviceToImagesMap';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgIf, NgFor } from '@angular/common';
 import { NgbAccordionModule, NgbAlertModule, NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 
@@ -23,7 +21,7 @@ import { NgbAccordionModule, NgbAlertModule, NgbTooltipModule } from '@ng-bootst
   imports: [
     RouterLink,
     NgIf,
-    FaIconComponent,
+    FeatherModule,
     NgFor,
     NgbAccordionModule,
     NgbAlertModule,
@@ -35,13 +33,6 @@ export class AccessoryListComponent implements OnInit {
   versionUnmatched: boolean = false;
 
   @Input() waitForAccessories?: boolean;
-
-  settingsIcon = faScrewdriverWrench;
-  ignoreIcon = faEyeSlash;
-  reloadIcon = faRotate;
-  videoIcon = faVideo;
-  shieldIcon = faShieldHalved;
-  downloadIcon = faDownload;
 
   DeviceImage = DeviceImage;
 

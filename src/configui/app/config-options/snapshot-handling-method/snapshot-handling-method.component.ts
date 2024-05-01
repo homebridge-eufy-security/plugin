@@ -4,9 +4,8 @@ import { PluginService } from '../../../app/plugin.service';
 import { DEFAULT_CAMERACONFIG_VALUES, DEFAULT_CONFIG_VALUES } from '../../../app/util/default-config-values';
 import { ConfigOptionsInterpreter } from '../config-options-interpreter';
 
-import { faPlusCircle, faMinusCircle, faCircle } from '@fortawesome/free-solid-svg-icons';
+import { FeatherModule } from 'angular-feather';
 import { ChargingType } from '../../util/types';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { RouterLink } from '@angular/router';
 import { NgIf, NgFor } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -21,7 +20,7 @@ import { FormsModule } from '@angular/forms';
     NgIf,
     RouterLink,
     NgFor,
-    FaIconComponent,
+    FeatherModule,
   ],
 })
 export class SnapshotHandlingMethodComponent extends ConfigOptionsInterpreter implements OnInit {
@@ -36,11 +35,6 @@ export class SnapshotHandlingMethodComponent extends ConfigOptionsInterpreter im
   ngOnInit(): void {
     this.readValue();
   }
-
-  // Custom icons
-  plusIcon = faPlusCircle;
-  minusIcon = faMinusCircle;
-  mediumIcon = faCircle;
 
   value = DEFAULT_CAMERACONFIG_VALUES.snapshotHandlingMethod;
 

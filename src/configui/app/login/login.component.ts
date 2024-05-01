@@ -9,6 +9,7 @@ import { COUNTRIES } from '../countries';
 import { FormsModule } from '@angular/forms';
 import { NgbAlert, NgbPopover, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { NgIf, NgFor } from '@angular/common';
+import { FeatherModule } from 'angular-feather';
 
 enum LoginStep {
   LOGIN = 1,
@@ -17,17 +18,18 @@ enum LoginStep {
 }
 
 @Component({
-    selector: 'app-login',
-    templateUrl: './login.component.html',
-    standalone: true,
-    imports: [
-        NgIf,
-        NgbAlert,
-        NgbPopover,
-        FormsModule,
-        NgbTooltip,
-        NgFor,
-    ],
+  selector: 'app-login',
+  templateUrl: './login.component.html',
+  standalone: true,
+  imports: [
+    NgIf,
+    NgbAlert,
+    NgbPopover,
+    FormsModule,
+    NgbTooltip,
+    NgFor,
+    FeatherModule,
+  ],
 })
 export class LoginComponent implements OnInit {
   countries: Country[] = [];
@@ -56,7 +58,7 @@ export class LoginComponent implements OnInit {
   otpIsValid = true;
   captchaIsValid = true;
 
-  constructor(private loginService: LoginService, private routerService: Router) {}
+  constructor(private loginService: LoginService, private routerService: Router) { }
 
   ngOnInit(): void {
     this.getCredentials();

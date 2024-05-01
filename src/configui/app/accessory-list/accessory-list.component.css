@@ -13,6 +13,10 @@
     opacity: 0.5;
 }
 
+.deviceimage {
+    padding: 5px;
+}
+
 .device .devicesettingsicon {
     display: none !important;
 }
@@ -47,16 +51,12 @@
     display: none !important;
 }
 
-.serial {
-    filter: blur(5px);
-}
-
-.serial:hover {
-    filter: none;
-}
-
 .my-custom-header::after {
     content: none;
+}
+
+.material-icons {
+    vertical-align: middle;
 }
 
 .accordion-button2 {

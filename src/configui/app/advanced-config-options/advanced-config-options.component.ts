@@ -1,7 +1,6 @@
 import { Component } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { ResetPluginComponent } from '../config-options/reset-plugin/reset-plugin.component';
-import { DownloadLogsComponent } from '../config-options/download-logs/download-logs.component';
 import { GuardModesMappingComponent } from '../config-options/guard-modes-mapping/guard-modes-mapping.component';
 import { CleanCacheComponent } from '../config-options/clean-cache/clean-cache.component';
 import { OmitLogFilesComponent } from '../config-options/omit-log-files/omit-log-files.component';
@@ -12,6 +11,7 @@ import { PollingIntervalMinutesComponent } from '../config-options/polling-inter
 import { EditCredentialsComponent } from '../config-options/edit-credentials/edit-credentials.component';
 import { AutoSyncStationComponent } from '../config-options/auto-sync-station/auto-sync-station.component';
 import { NodejsSecurityComponent } from '../config-options/nodejs-security/nodejs-security.component';
+import { FeatherModule } from 'angular-feather';
 
 @Component({
     selector: 'app-advanced-config-options',
@@ -27,10 +27,10 @@ import { NodejsSecurityComponent } from '../config-options/nodejs-security/nodej
         OmitLogFilesComponent,
         CleanCacheComponent,
         GuardModesMappingComponent,
-        DownloadLogsComponent,
         ResetPluginComponent,
         AutoSyncStationComponent,
         NodejsSecurityComponent,
+        FeatherModule,
     ],
 })
 export class AdvancedConfigOptionsComponent {

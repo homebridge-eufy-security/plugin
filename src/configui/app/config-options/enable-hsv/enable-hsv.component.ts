@@ -5,8 +5,6 @@ import { DEFAULT_CAMERACONFIG_VALUES, DEFAULT_CONFIG_VALUES } from '../../util/d
 import { ChargingType } from '../../util/types';
 import { ConfigOptionsInterpreter } from '../config-options-interpreter';
 
-import { faQuestionCircle } from '@fortawesome/free-regular-svg-icons';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbCollapse, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { RouterLink } from '@angular/router';
 import { NgIf, NgFor } from '@angular/common';
@@ -23,13 +21,10 @@ import { FormsModule } from '@angular/forms';
     RouterLink,
     NgFor,
     NgbCollapse,
-    FaIconComponent,
     NgbTooltip,
   ],
 })
 export class EnableHsvComponent extends ConfigOptionsInterpreter implements OnInit {
-
-  faQuestionCircle = faQuestionCircle;
 
   constructor(
     pluginService: PluginService,

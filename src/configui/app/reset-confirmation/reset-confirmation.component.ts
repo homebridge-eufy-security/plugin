@@ -3,13 +3,18 @@ import { Router } from '@angular/router';
 import { PluginService } from '../plugin.service';
 import { NgbAlert } from '@ng-bootstrap/ng-bootstrap';
 import { NgIf } from '@angular/common';
+import { FeatherModule } from 'angular-feather';
 
 @Component({
-    selector: 'app-reset-confirmation',
-    templateUrl: './reset-confirmation.component.html',
-    styles: [],
-    standalone: true,
-    imports: [NgIf, NgbAlert],
+  selector: 'app-reset-confirmation',
+  templateUrl: './reset-confirmation.component.html',
+  styles: [],
+  standalone: true,
+  imports: [
+    NgIf,
+    NgbAlert,
+    FeatherModule,
+  ],
 })
 export class ResetConfirmationComponent {
 
