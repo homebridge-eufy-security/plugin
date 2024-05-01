@@ -5,12 +5,12 @@
 }
 
 .btn-secondary {
-  background-color: #a6c!important;
+  background-color: #a6c !important;
   border-color: #565e64;
 }
 
 .form-check-input:checked {
-  background-color: #a6c!important;
+  background-color: #a6c !important;
   border-color: #565e64;
 }
 
@@ -75,4 +75,8 @@
 
 .config-ui-x-dark-mode * .btn-danger {
   color: white !important;
+}
+
+svg {
+  vertical-align: top;
 }
