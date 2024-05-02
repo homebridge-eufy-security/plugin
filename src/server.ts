@@ -184,8 +184,21 @@ class UiServer extends HomebridgePluginUiServer {
   }
 
   addStation(station: Station) {
-    const s: L_Station = { uniqueId: station.getSerial(), displayName: station.getName(), type: station.getDeviceType(), typename: DeviceType[station.getDeviceType()] };
+    const s: L_Station = {
+      uniqueId: station.getSerial(),
+      displayName: station.getName(),
+      type: station.getDeviceType(),
+      typename: DeviceType[station.getDeviceType()],
+      disabled: false,
+    };
     s.ignored = (this.config['ignoreStations'] ?? []).includes(s.uniqueId);
+
+    // Standalone Lock or Doorbell doesn't have Security Control
+    if (Device.isLock(s.type) || Device.isDoorbell(s.type)) {
+      s.disabled = true;
+      s.ignored = true;
+    }
+
     this.stations.push(s);
     this.storeAccessories();
     this.pushEvent('addAccessory', this.stations);
@@ -207,6 +220,7 @@ class UiServer extends HomebridgePluginUiServer {
       DeviceMotionDetection: device.hasProperty(PropertyName.DeviceMotionDetection),
       DeviceLight: device.hasProperty(PropertyName.DeviceLight),
       DeviceChimeIndoor: device.hasProperty(PropertyName.DeviceChimeIndoor),
+      disabled: false,
     };
 
     if (device.hasProperty(PropertyName.DeviceChargingStatus)) {

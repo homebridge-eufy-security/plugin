@@ -90,11 +90,11 @@
                     <div *ngIf="station && (station.devices ?? [])[0].uniqueId === station.uniqueId" ngbAccordionButton
                         class="row m-0 accordion-button2" routerLink="/config/both/{{station.uniqueId}}">
                         <div class="col">{{ station.displayName }}</div>
-                        <div class="col-1">
+                        <div class="col-1" *ngIf="!(station.devices ?? [])[0].disabled">
                             <i-feather [ngbTooltip]="(station.devices ?? [])[0].ignored ? 'Device OFF' : 'Device ON'"
                                 [name]="(station.devices ?? [])[0].ignored ? 'video-off' : 'video'"></i-feather>
                         </div>
-                        <div class="col-1">
+                        <div class="col-1" *ngIf="!station.disabled">
                             <i-feather [ngbTooltip]="station.ignored ? 'Security Control OFF' : 'Security Control ON'"
                                 [name]="station.ignored ? 'shield-off' : 'shield'"></i-feather>
                         </div>

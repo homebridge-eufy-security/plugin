@@ -11,6 +11,9 @@ import { FormsModule } from '@angular/forms';
   imports: [FormsModule],
 })
 export class IgnoreAccessoryComponent extends ConfigOptionsInterpreter implements OnInit {
+
+  isDisabled = false;
+
   constructor(pluginService: PluginService) {
     super(pluginService);
   }
@@ -32,16 +35,26 @@ export class IgnoreAccessoryComponent extends ConfigOptionsInterpreter implement
   value = true;
 
   async readValue() {
-    this.config = await this.pluginService.getConfig();
     if (this.accessory) {
+
+      if (this.accessory.disabled) {
+        return;
+      }
+
+      this.config = await this.pluginService.getConfig();
       const identifier = this.station ? 'ignoreStations' : 'ignoreDevices';
       if (Array.isArray(this.config[identifier])) {
         this.value = !(this.config[identifier].find((uId: string) => uId === this.accessory!.uniqueId) !== undefined);
       }
+
     }
   }
 
   async update() {
+    if (this.isDisabled) {
+      return;
+    }
+
     if (!this.accessory) {
       return;
     }

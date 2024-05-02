@@ -530,10 +530,19 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
       const [accessory, isExist] = this.defineAccessory(deviceContainer, isStation);
 
       // Register the accessory based on whether it's a station or device
-      if (isStation) {
-        this.register_station(accessory, deviceContainer as StationContainer);
-      } else {
-        this.register_device(accessory, deviceContainer as DeviceContainer);
+      try {
+        if (isStation) {
+          this.register_station(accessory, deviceContainer as StationContainer);
+        } else {
+          this.register_device(accessory, deviceContainer as DeviceContainer);
+        }
+      } catch (error) {
+        // Remove station or device accessories created prior to plugin upgrade,
+        // which may have been subject to removal due to newly introduced logic.
+        if (isExist) {
+          this.api.unregisterPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [accessory]);
+        }
+        throw error;
       }
 
       // Add the accessory's UUID to activeAccessoryIds if it's not already present
@@ -549,7 +558,7 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
       }
     } catch (error) {
       // Log any errors that occur during accessory addition or update
-      log.error(`Error in ${isStation ? 'stationAdded' : 'deviceAdded'}: ${error}`);
+      log.error(`Error in ${isStation ? 'stationAdded' : 'deviceAdded'}:`, error);
     }
   }
 
@@ -698,18 +707,9 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
     const station = container.eufyDevice;
 
     if (type !== DeviceType.STATION) {
-      // Allowing camera but not the lock nor doorbell for now
-      if ((type === DeviceType.LOCK_BLE
-        || type === DeviceType.LOCK_WIFI
-        || type === DeviceType.LOCK_BLE_NO_FINGER
-        || type === DeviceType.LOCK_WIFI_NO_FINGER
-        || type === DeviceType.DOORBELL
-        || type === DeviceType.BATTERY_DOORBELL
-        || type === DeviceType.BATTERY_DOORBELL_2
-        || type === DeviceType.BATTERY_DOORBELL_PLUS
-        || type === DeviceType.DOORBELL_SOLO)) {
-        log.warn(`${accessory.displayName} looks station but it's not could imply some errors! Type: ${type}`);
-        return;
+      // Standalone Lock or Doorbell doesn't have Security Control
+      if (Device.isDoorbell(type) || Device.isLock(type)) {
+        throw (`looks station but it's not could imply some errors! Type: ${type}`);
       }
     }
 
@@ -727,28 +727,29 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
 
     log.debug(accessory.displayName + ' UUID:' + accessory.UUID);
     const device = container.eufyDevice;
+    const type = container.deviceIdentifier.type;
 
-    if (device.isMotionSensor()) {
+    if (Device.isMotionSensor(type)) {
       log.debug(accessory.displayName + ' isMotionSensor!');
       new MotionSensorAccessory(this, accessory, device as MotionSensor);
     }
 
-    if (device.isEntrySensor()) {
+    if (Device.isEntrySensor(type)) {
       log.debug(accessory.displayName + ' isEntrySensor!');
       new EntrySensorAccessory(this, accessory, device as EntrySensor);
     }
 
-    if (device.isLock()) {
+    if (Device.isLock(type)) {
       log.debug(accessory.displayName + ' isLock!');
       new LockAccessory(this, accessory, device as Lock);
     }
 
-    if (device.isCamera()) {
+    if (Device.isCamera(type)) {
       log.debug(accessory.displayName + ' isCamera!');
       new CameraAccessory(this, accessory, device as Camera);
     }
 
-    if (device.isKeyPad()) {
+    if (Device.isKeyPad(type)) {
       log.debug(accessory.displayName + ' isKeypad!');
     }
 

@@ -30,6 +30,7 @@ export type L_Station = {
   typename: string;
   ignored?: boolean;
   devices?: L_Device[];
+  disabled: boolean;
 };
 
 export type L_Device = {
@@ -49,6 +50,7 @@ export type L_Device = {
   DeviceMotionDetection: boolean;
   DeviceLight: boolean;
   DeviceChimeIndoor: boolean;
+  disabled: boolean;
 };
 
 export enum ChargingType {
