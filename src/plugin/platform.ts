@@ -698,16 +698,8 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
     const station = container.eufyDevice;
 
     if (type !== DeviceType.STATION) {
-      // Allowing camera but not the lock nor doorbell for now
-      if ((type === DeviceType.LOCK_BLE
-        || type === DeviceType.LOCK_WIFI
-        || type === DeviceType.LOCK_BLE_NO_FINGER
-        || type === DeviceType.LOCK_WIFI_NO_FINGER
-        || type === DeviceType.DOORBELL
-        || type === DeviceType.BATTERY_DOORBELL
-        || type === DeviceType.BATTERY_DOORBELL_2
-        || type === DeviceType.BATTERY_DOORBELL_PLUS
-        || type === DeviceType.DOORBELL_SOLO)) {
+      // Standalone Lock or Doorbell doesn't have Security Control
+      if (Device.isDoorbell(type) || Device.isLock(type)) {
         log.warn(`${accessory.displayName} looks station but it's not could imply some errors! Type: ${type}`);
         return;
       }
@@ -727,28 +719,29 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
 
     log.debug(accessory.displayName + ' UUID:' + accessory.UUID);
     const device = container.eufyDevice;
+    const type = container.deviceIdentifier.type;
 
-    if (device.isMotionSensor()) {
+    if (Device.isMotionSensor(type)) {
       log.debug(accessory.displayName + ' isMotionSensor!');
       new MotionSensorAccessory(this, accessory, device as MotionSensor);
     }
 
-    if (device.isEntrySensor()) {
+    if (Device.isEntrySensor(type)) {
       log.debug(accessory.displayName + ' isEntrySensor!');
       new EntrySensorAccessory(this, accessory, device as EntrySensor);
     }
 
-    if (device.isLock()) {
+    if (Device.isLock(type)) {
       log.debug(accessory.displayName + ' isLock!');
       new LockAccessory(this, accessory, device as Lock);
     }
 
-    if (device.isCamera()) {
+    if (Device.isCamera(type)) {
       log.debug(accessory.displayName + ' isCamera!');
       new CameraAccessory(this, accessory, device as Camera);
     }
 
-    if (device.isKeyPad()) {
+    if (Device.isKeyPad(type)) {
       log.debug(accessory.displayName + ' isKeypad!');
     }
 

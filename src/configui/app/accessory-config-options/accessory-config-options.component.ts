@@ -89,6 +89,10 @@ export class AccessoryConfigOptionsComponent extends ConfigOptionsInterpreter im
         break;
     }
 
+    if (this.station && this.station.disabled) {
+      this.station.ignored = true;
+    }
+
     if (this.device) {
       this.isCamera = this.device.isCamera!;
       this.isDoorbell = this.device.isDoorbell!;

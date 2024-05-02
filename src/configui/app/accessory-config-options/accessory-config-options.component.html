@@ -107,7 +107,7 @@
 
 <p></p>
 
-<ng-template [ngIf]="station">
+<ng-template [ngIf]="station && !station.disabled">
 
   <div class="d-flex justify-content-between align-items-center mb-2">
     <span>Enable Device Security Control on Apple Homekit</span>
