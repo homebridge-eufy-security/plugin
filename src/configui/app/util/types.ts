@@ -29,7 +29,7 @@ export type L_Station = {
   type: number;
   typename: string;
   ignored?: boolean;
-  devices?: L_Device[];
+  devices: L_Device[];
   disabled: boolean;
 };
 
