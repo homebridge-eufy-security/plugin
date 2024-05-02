@@ -530,10 +530,19 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
       const [accessory, isExist] = this.defineAccessory(deviceContainer, isStation);
 
       // Register the accessory based on whether it's a station or device
-      if (isStation) {
-        this.register_station(accessory, deviceContainer as StationContainer);
-      } else {
-        this.register_device(accessory, deviceContainer as DeviceContainer);
+      try {
+        if (isStation) {
+          this.register_station(accessory, deviceContainer as StationContainer);
+        } else {
+          this.register_device(accessory, deviceContainer as DeviceContainer);
+        }
+      } catch (error) {
+        // Remove station or device accessories created prior to plugin upgrade,
+        // which may have been subject to removal due to newly introduced logic.
+        if (isExist) {
+          this.api.unregisterPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [accessory]);
+        }
+        throw error;
       }
 
       // Add the accessory's UUID to activeAccessoryIds if it's not already present
@@ -549,7 +558,7 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
       }
     } catch (error) {
       // Log any errors that occur during accessory addition or update
-      log.error(`Error in ${isStation ? 'stationAdded' : 'deviceAdded'}: ${error}`);
+      log.error(`Error in ${isStation ? 'stationAdded' : 'deviceAdded'}:`, error);
     }
   }
 
@@ -700,8 +709,7 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
     if (type !== DeviceType.STATION) {
       // Standalone Lock or Doorbell doesn't have Security Control
       if (Device.isDoorbell(type) || Device.isLock(type)) {
-        log.warn(`${accessory.displayName} looks station but it's not could imply some errors! Type: ${type}`);
-        return;
+        throw (`looks station but it's not could imply some errors! Type: ${type}`);
       }
     }
 
