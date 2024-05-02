@@ -190,6 +190,7 @@ class UiServer extends HomebridgePluginUiServer {
       type: station.getDeviceType(),
       typename: DeviceType[station.getDeviceType()],
       disabled: false,
+      devices: [],
     };
     s.ignored = (this.config['ignoreStations'] ?? []).includes(s.uniqueId);
 

@@ -3,7 +3,7 @@
 import { Component, OnInit, Input } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 
-import { NgbModal, ModalDismissReasons } from '@ng-bootstrap/ng-bootstrap';
+import { NgbModal, ModalDismissReasons, NgbProgressbar } from '@ng-bootstrap/ng-bootstrap';
 
 import { FeatherModule } from 'angular-feather';
 import { PluginService } from '../plugin.service';
@@ -26,11 +26,15 @@ import { NgbAccordionModule, NgbAlertModule, NgbTooltipModule } from '@ng-bootst
     NgbAccordionModule,
     NgbAlertModule,
     NgbTooltipModule,
+    NgbProgressbar,
   ],
 })
 export class AccessoryListComponent implements OnInit {
   stations: L_Station[] = [];
   versionUnmatched: boolean = false;
+
+  progress: number = 0;
+  wait_timer: number = 200;
 
   @Input() waitForAccessories?: boolean;
 
@@ -53,11 +57,22 @@ export class AccessoryListComponent implements OnInit {
       this.versionUnmatched = true;
     });
 
-    this.pluginService.addEventListener('newAccessories', async () => {
-      console.log('plugin accessories have changed. updating...');
+    this.pluginService.addEventListener('newAccessories', async (event: any) => {
+      await this.wait();
+      console.log('newAccessories received event. updating...', JSON.stringify(event));
       await this.updateStations();
     });
 
+    window.homebridge.addEventListener('addAccessory', async (event: any) => {
+      await this.wait();
+      console.log('addAccessory received event. updating...', JSON.stringify(event));
+      await this.updateStations();
+    });
+
+    this.update_progress(10);
+    if (this.waitForAccessories) {
+      await this.wait();
+    }
     await this.updateStations();
 
     if (!this.waitForAccessories && this.stations.length === 0) {
@@ -71,16 +86,48 @@ export class AccessoryListComponent implements OnInit {
     }
   }
 
-  private async updateStations() {
-    const { ignoreStations = [], ignoreDevices = [] } = await this.pluginService.getConfig();
-    this.stations = this.pluginService.getStations() ?? [];
+  private async wait(): Promise<void> {
+    this.wait_timer += 100;
+    return new Promise(resolve => setTimeout(resolve, this.wait_timer));
+  }
 
-    this.stations.forEach((station) => {
+  private async updateStations() {
+
+    const stations = this.pluginService.getStations();
+
+    // Check if there are no stations with devices populated
+    if (stations.every(station => !station.devices || station.devices.length === 0)) {
+      console.log('No stations with devices populated. Skipping update.');
+      this.update_progress(20);
+      return;
+    }
+
+    this.update_progress(40);
+    const { ignoreStations = [], ignoreDevices = [] } = await this.pluginService.getConfig();
+
+    this.update_progress(50);
+    stations.forEach((station) => {
       station.ignored = ignoreStations.includes(station.uniqueId);
       station.devices?.forEach((device) => {
         device.ignored = ignoreDevices.includes(device.uniqueId);
       });
     });
+
+    this.update_progress(70);
+
+    if (stations === this.stations) {
+      console.log('Nothing to update. Skipping update.');
+      return;
+    }
+
+    this.update_progress(90);
+    console.log('updating...');
+    this.stations = stations;
+
+  }
+
+  private update_progress(progress: number): void {
+    this.progress = progress;
   }
 
   openReloadModal(content: any) {
