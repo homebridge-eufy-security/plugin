@@ -4,14 +4,16 @@ import { PluginService } from '../../../app/plugin.service';
 import { DEFAULT_CAMERACONFIG_VALUES } from '../../../app/util/default-config-values';
 import { ConfigOptionsInterpreter } from '../config-options-interpreter';
 import { FormsModule } from '@angular/forms';
+import { NgIf } from '@angular/common';
 
 @Component({
-    selector: 'app-periodic-snapshot-refresh',
-    templateUrl: './periodic-snapshot-refresh.component.html',
-    styles: [],
-    standalone: true,
-    imports: [FormsModule],
+  selector: 'app-periodic-snapshot-refresh',
+  templateUrl: './periodic-snapshot-refresh.component.html',
+  styles: [],
+  standalone: true,
+  imports: [FormsModule, NgIf],
 })
+
 export class PeriodicSnapshotRefreshComponent extends ConfigOptionsInterpreter implements OnInit {
   constructor(pluginService: PluginService) {
     super(pluginService);
@@ -51,9 +53,7 @@ export class PeriodicSnapshotRefreshComponent extends ConfigOptionsInterpreter i
     }
 
     this.updateDeviceConfig(
-      {
-        refreshSnapshotIntervalMinutes: this.value,
-      },
+      { refreshSnapshotIntervalMinutes: this.value },
       this.device!,
     );
   }

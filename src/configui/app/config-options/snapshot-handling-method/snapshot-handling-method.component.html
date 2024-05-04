@@ -1,85 +1,81 @@
-<div class="settingsItem">
+<div class="settingsItem" *ngIf="standalone || (!standalone && ignoreMultipleDevicesWarning)">
+
+  <div class="alert alert-danger" role="alert" *ngIf="!standalone">
+    There are other cameras connected through the same station as this device. One station can only ever stream from one
+    camera at the same time. Therefore it is not recommened to use another snapshot method other than cloud snapshots.
+  </div>
+
   <div class="d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center mb-2">
     <span>Snapshot Handling Method</span>
 
     <div class="col-12 col-sm-4">
-      <select class="form-select" [(ngModel)]="value" aria-label="Device Operation Mode"
-        [attr.disabled]="(!standalone && !ignoreMultipleDevicesWarning) ? true : null" (change)="update()">
+      <select class="form-select" [(ngModel)]="value" aria-label="Device Operation Mode" (change)="update()">
         <option [ngValue]=1>Force Refresh Snapshots</option>
         <option [ngValue]=2>Balanced</option>
-        <option [ngValue]=3>Cloud Snapshots</option>
+        <option [ngValue]=3>Default (Cloud)</option>
       </select>
     </div>
 
   </div>
 
-  <div class="alert alert-warning" role="alert" *ngIf="!standalone">
-    There are other cameras connected through the same station as this device. One station can only ever stream from one
-    camera at the same time.
-    Therefore it is not recommened to use another snapshot method other than cloud snapshots.<p></p>
-    <div *ngIf="!ignoreMultipleDevicesWarning">
-      You can enable this setting nevertheless in <a routerLink="/advancedConfig">Plugin Settings</a>
-      <p></p>
+  <ng-template [ngIf]="value === 1">
+
+    <div class="alert alert-warning" role="alert">
+      <b>Caution!</b> While Force Refresh Snapshots will deliver most up-to-date snapshots, this can have negative
+      effects on HomeKit behaviour.
+      For example starting a livestream might be delayed as a side effect by this option. See
+      <a href="https://github.com/homebridge-eufy-security/plugin/wiki/Streaming-Settings#streams-take-a-long-time-to-start"
+        target="_blank" rel="noopener noreferrer">here</a> for more informtaion.
     </div>
-  </div>
 
-  <div class="alert alert-warning" role="alert" *ngIf="value === 1">
-    <b>Caution!</b> While Force Refresh Snapshots will deliver most up-to-date snapshots, this can have negative effects
-    on HomeKit behaviour. For example starting a livestream might be delayed as a side effect by this option.
-    See <a
-      href="https://github.com/homebridge-eufy-security/plugin/wiki/Streaming-Settings#streams-take-a-long-time-to-start"
-      target="_blank" rel="noopener noreferrer">here</a> for more informtaion.
-  </div>
+    <div class="alert alert-warning" role="alert" *ngIf="chargingStatus === 2">
+      Since your device is battery powered and currently not charging we don't recommend using this setting. The battery
+      life will most likely decrease significantly.
+    </div>
 
-  <div class="alert alert-warning" role="alert" *ngIf="chargingStatus === 2 && value === 1">
-    Since your device is battery powered and currently not charging we don't recommend using this setting. The battery
-    life will most likely decrease significantly.
-  </div>
+    <div class="alert alert-secondary" role="alert" *ngIf="chargingStatus === 4">
+      Please be advised that since your device is only solar powered we cannot guarantee optimal results with this
+      setting. It might well be, that your battery is depleting faster than it can be recharged by the sun. This depends
+      heavily on your exact use case.
+    </div>
 
-  <div class="alert alert-secondary" role="alert" *ngIf="chargingStatus === 4 && value === 1">
-    Please be advised that since your device is only solar powered we cannot guarantee optimal results with this
-    setting. It might well be, that your battery is depleting faster than it can be recharged by the sun. This depends
-    heavily on your exact use case.
-  </div>
+  </ng-template>
 
-  <small *ngIf="value === 1"><i>
-      <b>Description:</b> The plugin will try to get the latest possible snapshot. If none is present the plugin will
-      start a livestream to render one frame.<br />
-      This process might take a few seconds and can slow down your homebridge instance for this
-      duration. If you encounter problems with this method please try another.
-      <p></p>
-      <i-feather name="plus-square" style="color: #7FFF00"></i-feather> Up-to-date Snapshots
-      (events)<br>
-      <i-feather name="plus-square" style="color: #7FFF00"></i-feather> Up-to-date Snapshots
-      (HomeKit View)<br>
-      <i-feather name="minus-square" style="color: #B22222"></i-feather> Performance<br>
-      <i-feather name="minus-square" style="color: #B22222"></i-feather> Battery life<br>
-    </i></small>
-  <small *ngIf="value === 2"><i>
-      <b>Description:</b> This mode combines the other two. When a snapshot is requested the plugin will try to get
-      a new snapshot from the camera.<br>
-      After one second the snapshot will be delivered - if necessary by using an older snapshot.
-      For events the plugin will wait on a new snapshot.
-      <p></p>
-      <i-feather name="plus-square" style="color: #7FFF00"></i-feather> Up-to-date Snapshots
-      (events)<br>
-      <i-feather name="square" style="color: #FF8C00"></i-feather> Up-to-date Snapshots (HomeKit
-      View)<br>
-      <i-feather name="plus-square" style="color: #7FFF00"></i-feather> Performance<br>
-      <i-feather name="minus-square" style="color: #B22222"></i-feather> Battery life<br>
-    </i></small>
-  <small *ngIf="value === 3"><i>
-      <b>Description:</b> The plugin will preferablly use cloud snapshots from eufy to fulfill snapshot requests as
-      fast as possible.<br>
-      If an event, like motion or doorbell ring oocurs, the plugin will try to wait for a cloud
-      snapshot to be provided.
-      But the periodic snapshots in homekit will most likely be outdated (e.g. up to a few hours old).
-      <p></p>
-      <i-feather name="plus-square" style="color: #7FFF00"></i-feather> Up-to-date Snapshots
-      (events)<br>
-      <i-feather name="minus-square" style="color: #B22222"></i-feather> Up-to-date Snapshots
-      (HomeKit View)<br>
-      <i-feather name="plus-square" style="color: #7FFF00"></i-feather> Performance<br>
-      <i-feather name="plus-square" style="color: #7FFF00"></i-feather> Battery life<br>
-    </i></small>
+  <table class="table table-striped">
+    <thead>
+      <tr>
+        <th scope="col">Mode</th>
+        <th scope="col">Force Refresh Snapshots</th>
+        <th scope="col">Balanced</th>
+        <th scope="col">Default (Cloud)</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Up-to-date Snapshots (events)</td>
+        <td><i-feather name="plus-square" style="color: #7FFF00"></i-feather></td>
+        <td><i-feather name="plus-square" style="color: #7FFF00"></i-feather></td>
+        <td><i-feather name="plus-square" style="color: #7FFF00"></i-feather></td>
+      </tr>
+      <tr>
+        <td>Up-to-date Snapshots (HomeKit View)</td>
+        <td><i-feather name="plus-square" style="color: #7FFF00"></i-feather></td>
+        <td><i-feather name="square" style="color: #FF8C00"></i-feather></td>
+        <td><i-feather name="minus-square" style="color: #B22222"></i-feather></td>
+      </tr>
+      <tr>
+        <td>Performance</td>
+        <td><i-feather name="minus-square" style="color: #B22222"></i-feather></td>
+        <td><i-feather name="plus-square" style="color: #7FFF00"></i-feather></td>
+        <td><i-feather name="plus-square" style="color: #7FFF00"></i-feather></td>
+      </tr>
+      <tr>
+        <td>Battery life</td>
+        <td><i-feather name="minus-square" style="color: #B22222"></i-feather></td>
+        <td><i-feather name="minus-square" style="color: #B22222"></i-feather></td>
+        <td><i-feather name="plus-square" style="color: #7FFF00"></i-feather></td>
+      </tr>
+    </tbody>
+  </table>
+
 </div>

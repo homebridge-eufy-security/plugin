@@ -17,116 +17,34 @@
 
 <ng-template [ngIf]="device">
 
-  <div class="d-flex justify-content-between align-items-center mb-2">
+  <div class="d-flex justify-content-between align-items-center mt-2 mb-2">
     <span>Enable Device on Apple Homekit</span>
     <app-ignore-accessory [accessory]="device" [station]="false"
       (ignored)="ignoredDeviceChanged($event)"></app-ignore-accessory>
   </div>
 
-  <div ngbAccordion [closeOthers]="true">
-
-    <div ngbAccordionItem *ngIf="!device.ignored && isCamera">
-      <h2 ngbAccordionHeader>
-        <button ngbAccordionButton>Device Settings</button>
-      </h2>
-      <div ngbAccordionCollapse>
-        <div ngbAccordionBody>
-          <ng-template>
-            <div>
-              <app-enable-camera [device]="device"></app-enable-camera>
-              <hr *ngIf="supportsRTSP" />
-              <app-rtsp-streaming [device]="device" *ngIf="supportsRTSP"></app-rtsp-streaming>
-              <hr />
-              <app-enable-audio [device]="device"></app-enable-audio>
-              <hr *ngIf="supportsTalkback" />
-              <app-talkback [device]="device" *ngIf="supportsTalkback"></app-talkback>
-            </div>
-          </ng-template>
-        </div>
-      </div>
-    </div>
-
-    <div ngbAccordionItem *ngIf="!device.ignored && isCamera">
-      <h2 ngbAccordionHeader>
-        <button ngbAccordionButton>HomeKit Behaviour</button>
-      </h2>
-      <div ngbAccordionCollapse>
-        <div ngbAccordionBody>
-          <ng-template>
-            <app-camera-buttons [device]="device"></app-camera-buttons>
-            <hr />
-            <app-enable-hsv [device]="device"></app-enable-hsv>
-          </ng-template>
-        </div>
-      </div>
-    </div>
-
-    <div ngbAccordionItem *ngIf="!device.ignored && isCamera">
-      <h2 ngbAccordionHeader>
-        <button ngbAccordionButton>Snapshot Behaviour</button>
-      </h2>
-      <div ngbAccordionCollapse>
-        <div ngbAccordionBody>
-          <ng-template>
-
-            <!-- Put config options components here -->
-            <app-snapshot-handling-method [device]="device"></app-snapshot-handling-method>
-            <hr *ngIf="isDoorbell" />
-            <app-immediate-notification-on-ring [device]="device"
-              *ngIf="isDoorbell"></app-immediate-notification-on-ring>
-            <hr />
-            <app-delay-camera-snapshots [device]="device"></app-delay-camera-snapshots>
-            <hr />
-            <app-periodic-snapshot-refresh [device]="device"></app-periodic-snapshot-refresh>
-
-            <div *ngIf="!showEnhancedSnapshotBehaviour">
-              <app-force-refreshsnap [device]="device"></app-force-refreshsnap>
-            </div>
-
-          </ng-template>
-        </div>
-      </div>
-    </div>
-
-    <div ngbAccordionItem *ngIf="!device.ignored && isCamera">
-      <h2 ngbAccordionHeader>
-        <button ngbAccordionButton>Advanced Video Config</button>
-      </h2>
-      <div ngbAccordionCollapse>
-        <div ngbAccordionBody>
-          <ng-template>
-            <app-advanced-videoconfig [device]="device"></app-advanced-videoconfig>
-          </ng-template>
-        </div>
-      </div>
-    </div>
-
-  </div>
-
-</ng-template>
-
-<p></p>
-
-<ng-template [ngIf]="station && !station.disabled">
-
-  <div class="d-flex justify-content-between align-items-center mb-2">
-    <span>Enable Device Security Control on Apple Homekit</span>
-    <app-ignore-accessory [accessory]="station" [station]="true"
-      (ignored)="ignoredStationChanged($event)"></app-ignore-accessory>
-  </div>
-
-  <ng-template [ngIf]="!station.ignored">
+  <ng-template [ngIf]="!device.ignored && isCamera">
 
     <div ngbAccordion [closeOthers]="true">
 
       <div ngbAccordionItem>
         <h2 ngbAccordionHeader>
-          <button ngbAccordionButton>Customize HomeKit-Eufy App Mode Mapping</button>
+          <button ngbAccordionButton>Device Settings</button>
         </h2>
         <div ngbAccordionCollapse>
           <div ngbAccordionBody>
             <ng-template>
-              <app-guard-modes-mapping [station]="station"></app-guard-modes-mapping>
+              <app-enable-camera [device]="device"></app-enable-camera>
+              <div *ngIf="supportsRTSP">
+                <hr />
+                <app-rtsp-streaming [device]="device"></app-rtsp-streaming>
+              </div>
+              <hr />
+              <app-enable-audio [device]="device"></app-enable-audio>
+              <div *ngIf="supportsTalkback">
+                <hr />
+                <app-talkback [device]="device"></app-talkback>
+              </div>
             </ng-template>
           </div>
         </div>
@@ -134,12 +52,48 @@
 
       <div ngbAccordionItem>
         <h2 ngbAccordionHeader>
-          <button ngbAccordionButton>Manual Alarm Trigger Modes</button>
+          <button ngbAccordionButton>HomeKit Behaviour</button>
         </h2>
         <div ngbAccordionCollapse>
           <div ngbAccordionBody>
             <ng-template>
-              <app-manual-alarm-modes [station]="station"></app-manual-alarm-modes>
+              <app-camera-buttons [device]="device"></app-camera-buttons>
+              <hr />
+              <app-enable-hsv [device]="device"></app-enable-hsv>
+            </ng-template>
+          </div>
+        </div>
+      </div>
+
+      <div ngbAccordionItem>
+        <h2 ngbAccordionHeader>
+          <button ngbAccordionButton>Snapshot Behaviour</button>
+        </h2>
+        <div ngbAccordionCollapse>
+          <div ngbAccordionBody>
+            <ng-template>
+              <app-snapshot-handling-method [device]="device"></app-snapshot-handling-method>
+              <div *ngIf="isDoorbell">
+                <hr />
+                <app-immediate-notification-on-ring [device]="device"></app-immediate-notification-on-ring>
+              </div>
+              <hr />
+              <app-delay-camera-snapshots [device]="device"></app-delay-camera-snapshots>
+              <hr />
+              <app-periodic-snapshot-refresh [device]="device"></app-periodic-snapshot-refresh>
+            </ng-template>
+          </div>
+        </div>
+      </div>
+
+      <div ngbAccordionItem>
+        <h2 ngbAccordionHeader>
+          <button ngbAccordionButton>Advanced Video Config</button>
+        </h2>
+        <div ngbAccordionCollapse>
+          <div ngbAccordionBody>
+            <ng-template>
+              <app-advanced-videoconfig [device]="device"></app-advanced-videoconfig>
             </ng-template>
           </div>
         </div>
@@ -148,5 +102,45 @@
     </div>
 
   </ng-template>
+
+</ng-template>
+
+<ng-template [ngIf]="station && !station.disabled">
+
+  <div class="d-flex justify-content-between align-items-center mt-2 mb-2">
+    <span>Enable Device Security Control on Apple Homekit</span>
+    <app-ignore-accessory [accessory]="station" [station]="true"
+      (ignored)="ignoredStationChanged($event)"></app-ignore-accessory>
+  </div>
+
+  <div ngbAccordion *ngIf="!station.ignored" [closeOthers]="true">
+
+    <div ngbAccordionItem>
+      <h2 ngbAccordionHeader>
+        <button ngbAccordionButton>Customize HomeKit-Eufy App Mode Mapping</button>
+      </h2>
+      <div ngbAccordionCollapse>
+        <div ngbAccordionBody>
+          <ng-template>
+            <app-guard-modes-mapping [station]="station"></app-guard-modes-mapping>
+          </ng-template>
+        </div>
+      </div>
+    </div>
+
+    <div ngbAccordionItem>
+      <h2 ngbAccordionHeader>
+        <button ngbAccordionButton>Manual Alarm Trigger Modes</button>
+      </h2>
+      <div ngbAccordionCollapse>
+        <div ngbAccordionBody>
+          <ng-template>
+            <app-manual-alarm-modes [station]="station"></app-manual-alarm-modes>
+          </ng-template>
+        </div>
+      </div>
+    </div>
+
+  </div>
 
 </ng-template>

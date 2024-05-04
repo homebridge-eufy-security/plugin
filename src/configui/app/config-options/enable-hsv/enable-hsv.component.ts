@@ -32,8 +32,9 @@ export class EnableHsvComponent extends ConfigOptionsInterpreter implements OnIn
     super(pluginService);
   }
 
-  ngOnInit(): void {
-    this.readValue();
+  async ngOnInit(): Promise<void> {
+    await this.initialize();
+    await this.readValue();
   }
 
   /** Customize from here */
@@ -44,7 +45,7 @@ export class EnableHsvComponent extends ConfigOptionsInterpreter implements OnIn
   /** updateConfig() takes an optional second parameter to specify the accessoriy for which the setting is changed */
 
   @Input() device?: L_Device;
-  value = DEFAULT_CAMERACONFIG_VALUES.hsv;
+  hsv = DEFAULT_CAMERACONFIG_VALUES.hsv;
 
   chargingStatus = ChargingType.PLUGGED;
   camerasOnSameStation: string[] = [];
@@ -55,9 +56,7 @@ export class EnableHsvComponent extends ConfigOptionsInterpreter implements OnIn
   async readValue() {
     const config = await this.getCameraConfig(this.device?.uniqueId || '');
 
-    if (config && Object.prototype.hasOwnProperty.call(config, 'hsv')) {
-      this.value = config['hsv'];
-    }
+    this.hsv = config['hsv'] ?? this.hsv;
 
     try {
 
@@ -66,12 +65,10 @@ export class EnableHsvComponent extends ConfigOptionsInterpreter implements OnIn
         this.chargingStatus = this.device.chargingStatus!;
         this.standalone = this.device.standalone!;
 
-        if (Object.prototype.hasOwnProperty.call(this.config, 'ignoreMultipleDevicesWarning')) {
-          this.ignoreMultipleDevicesWarning = this.config['ignoreMultipleDevicesWarning'];
-        }
+        this.ignoreMultipleDevicesWarning = this.config['ignoreMultipleDevicesWarning'] ?? this.ignoreMultipleDevicesWarning;
 
         if (this.camerasOnSameStation.length > 1 && !this.ignoreMultipleDevicesWarning) {
-          this.value = false;
+          this.hsv = false;
           this.update();
         }
 
@@ -84,7 +81,7 @@ export class EnableHsvComponent extends ConfigOptionsInterpreter implements OnIn
 
   update() {
     this.updateDeviceConfig({
-      hsv: this.value,
+      hsv: this.hsv,
     }, this.device!);
   }
 }

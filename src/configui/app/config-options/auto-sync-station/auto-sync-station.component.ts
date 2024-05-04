@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { PluginService } from '../../plugin.service';
 import { ConfigOptionsInterpreter } from '../config-options-interpreter';
 import { FormsModule } from '@angular/forms';
+import { DEFAULT_CONFIG_VALUES } from '../../util/default-config-values';
 
 @Component({
   selector: 'app-auto-sync-station',
@@ -10,11 +11,15 @@ import { FormsModule } from '@angular/forms';
   imports: [FormsModule],
 })
 export class AutoSyncStationComponent extends ConfigOptionsInterpreter implements OnInit {
+
+  autoSyncStation = DEFAULT_CONFIG_VALUES.autoSyncStation;
+
   constructor(pluginService: PluginService) {
     super(pluginService);
   }
 
-  ngOnInit(): void {
+  async ngOnInit(): Promise<void> {
+    await this.initialize();
     this.readValue();
   }
 
@@ -25,17 +30,13 @@ export class AutoSyncStationComponent extends ConfigOptionsInterpreter implement
 
   /** updateConfig() takes an optional second parameter to specify the accessoriy for which the setting is changed */
 
-  model = false;
-
   readValue() {
-    if (Object.prototype.hasOwnProperty.call(this.config, 'autoSyncStation')) {
-      this.model = this.config['autoSyncStation'];
-    }
+    this.autoSyncStation = this.config['autoSyncStation'] ?? this.autoSyncStation;
   }
 
   update() {
     this.updateConfig({
-      autoSyncStation: this.model,
+      autoSyncStation: this.autoSyncStation,
     });
   }
 }

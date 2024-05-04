@@ -34,12 +34,12 @@ type StreamSource = {
 
 /**
  * possible performance settings:
- * 1. snapshots as current as possible (weak homebridge performance) -> forceRefreshSnapshot
+ * 1. snapshots as current as possible (weak homebridge performance)
  *    - always get a new image from cloud or cam
  * 2. balanced
  *    - start snapshot refresh but return snapshot as fast as possible
  *      if request takes too long old snapshot will be returned
- * 3. get an old snapshot immediately -> !forceRefreshSnapshot
+ * 3. get an old snapshot immediately
  *    - wait on cloud snapshot with new events
  * 
  * extra options:

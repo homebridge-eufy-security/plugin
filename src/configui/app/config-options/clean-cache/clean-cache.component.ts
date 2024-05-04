@@ -2,19 +2,24 @@ import { Component, OnInit } from '@angular/core';
 import { PluginService } from '../../../app/plugin.service';
 import { ConfigOptionsInterpreter } from '../config-options-interpreter';
 import { FormsModule } from '@angular/forms';
+import { DEFAULT_CONFIG_VALUES } from '../../util/default-config-values';
 
 @Component({
-    selector: 'app-clean-cache',
-    templateUrl: './clean-cache.component.html',
-    standalone: true,
-    imports: [FormsModule],
+  selector: 'app-clean-cache',
+  templateUrl: './clean-cache.component.html',
+  standalone: true,
+  imports: [FormsModule],
 })
 export class CleanCacheComponent extends ConfigOptionsInterpreter implements OnInit {
+
+  cleanCache = DEFAULT_CONFIG_VALUES.cleanCache;
+
   constructor(pluginService: PluginService) {
     super(pluginService);
   }
-
-  ngOnInit(): void {
+  
+  async ngOnInit(): Promise<void> {
+    await this.initialize();
     this.readValue();
   }
 
@@ -25,17 +30,13 @@ export class CleanCacheComponent extends ConfigOptionsInterpreter implements OnI
 
   /** updateConfig() takes an optional second parameter to specify the accessoriy for which the setting is changed */
 
-  model = false;
-
   readValue() {
-    if (Object.prototype.hasOwnProperty.call(this.config, 'cleanCache')) {
-      this.model = this.config['cleanCache'];
-    }
+    this.cleanCache = this.config['cleanCache'] ?? this.cleanCache;
   }
 
   update() {
     this.updateConfig({
-      cleanCache: this.model,
+      cleanCache: this.cleanCache,
     });
   }
 }
