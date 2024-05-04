@@ -11,9 +11,11 @@ export class ConfigOptionsInterpreter {
   constructor(protected pluginService: PluginService) {
     // Initialize config with default values
     this.config = DEFAULT_CONFIG_VALUES;
+  }
 
-    // Fetch the configuration asynchronously and update config
-    this.pluginService
+  // Fetch the configuration asynchronously and update config
+  async initialize(): Promise<void> {
+    await this.pluginService
       .getConfig()
       .then((config) => {
         this.config = { ...this.config, ...config }; // Update config with fetched data
@@ -52,6 +54,8 @@ export class ConfigOptionsInterpreter {
     };
 
     this.config = config;
+
+    console.log('config:', config);
 
     // Update the configuration
     this.pluginService.updateConfig(config);

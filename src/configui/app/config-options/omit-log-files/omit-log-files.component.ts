@@ -19,7 +19,8 @@ export class OmitLogFilesComponent extends ConfigOptionsInterpreter implements O
     super(pluginService);
   }
 
-  ngOnInit(): void {
+  async ngOnInit(): Promise<void> {
+    await this.initialize();
     this.readValue();
   }
 

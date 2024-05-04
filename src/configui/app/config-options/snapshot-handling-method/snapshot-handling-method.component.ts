@@ -35,8 +35,9 @@ export class SnapshotHandlingMethodComponent extends ConfigOptionsInterpreter im
     super(pluginService);
   }
 
-  ngOnInit(): void {
-    this.readValue();
+  async ngOnInit(): Promise<void> {
+    await this.initialize();
+    await this.readValue();
   }
 
   async readValue() {
@@ -56,9 +57,6 @@ export class SnapshotHandlingMethodComponent extends ConfigOptionsInterpreter im
         this.value = 3;
         this.update();
       }
-
-      console.log('ignoreMultipleDevicesWarning:', this.ignoreMultipleDevicesWarning);
-      console.log('standalone:', this.standalone);
 
     }
   }

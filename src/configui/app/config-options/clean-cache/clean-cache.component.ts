@@ -17,8 +17,9 @@ export class CleanCacheComponent extends ConfigOptionsInterpreter implements OnI
   constructor(pluginService: PluginService) {
     super(pluginService);
   }
-
-  ngOnInit(): void {
+  
+  async ngOnInit(): Promise<void> {
+    await this.initialize();
     this.readValue();
   }
 

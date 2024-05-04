@@ -32,8 +32,9 @@ export class EnableHsvComponent extends ConfigOptionsInterpreter implements OnIn
     super(pluginService);
   }
 
-  ngOnInit(): void {
-    this.readValue();
+  async ngOnInit(): Promise<void> {
+    await this.initialize();
+    await this.readValue();
   }
 
   /** Customize from here */

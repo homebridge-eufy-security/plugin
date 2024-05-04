@@ -18,7 +18,8 @@ export class NodejsSecurityComponent extends ConfigOptionsInterpreter implements
     super(pluginService);
   }
 
-  ngOnInit(): void {
+  async ngOnInit(): Promise<void> {
+    await this.initialize();
     this.readValue();
   }
 

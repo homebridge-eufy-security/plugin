@@ -1,6 +1,6 @@
 <div class="settingsItem" *ngIf="standalone || (!standalone && ignoreMultipleDevicesWarning)">
 
-  <div class="alert alert-error" role="alert" *ngIf="!standalone">
+  <div class="alert alert-danger" role="alert" *ngIf="!standalone">
     There are other cameras connected through the same station as this device. One station can only ever stream from one
     camera at the same time. Therefore it is not recommened to use another snapshot method other than cloud snapshots.
   </div>
