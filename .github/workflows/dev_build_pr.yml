@@ -1,0 +1,32 @@
+name: Check PR
+
+on: 
+  pull_request:
+    branches:
+    - dev
+    paths-ignore:
+      - '.github/**'
+      - '**.md'
+      
+jobs:
+
+  build:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: [18, 20]
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: 'true'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+
+      - run: npm install
+      - run: npm run lint
+
+      - run: npm ci
+      - run: npm run build

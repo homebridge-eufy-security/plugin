@@ -1,0 +1,81 @@
+name: Release
+
+on: 
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'premajor/prerelease/prepatch/major/minor/patch'
+        required: true
+        default: 'patch'
+        type: choice
+        options:
+        - major
+        - minor
+        - patch
+        - premajor
+        - prerelease
+        - prepatch
+      tag:
+        description: 'tag: latest/rc/beta'
+        required: true
+        default: 'latest'
+      preid:
+        description: 'preid: rc/beta'
+        required: false
+        default: ''
+      branch:
+        description: 'branch: master/next/beta'
+        required: true
+        default: 'master'
+        
+jobs:
+
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [18, 20]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.branch }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+
+      - run: npm install
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run build
+
+  version:
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Push the change
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.branch }}
+          token: ${{ secrets.BUILD_SVC_PAT }}
+      - run: git config --global user.name '[GitHub Bot]'
+      - run: git config --global user.email '<>'
+      - run: npm version ${{ github.event.inputs.version }} --preid=${{ github.event.inputs.preid }} -m "[${{ github.event.inputs.tag }}] %s"
+      - run: npm update homebridge-eufy-security
+      - run: git push --force
+      - run: git push origin --tags --force
+
+  publish:
+    runs-on: ubuntu-latest
+    needs: version
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.branch }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          registry-url: https://registry.npmjs.org/
+      - run: npm ci
+      - run: npm publish --access public --tag ${{ github.event.inputs.tag }}
+        env:
+          NODE_AUTH_TOKEN: ${{secrets.npm_token}}
