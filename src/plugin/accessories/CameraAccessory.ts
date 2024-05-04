@@ -232,9 +232,6 @@ export class CameraAccessory extends DeviceAccessory {
       name: this.accessory.displayName,
     };
 
-    // Set snapshot handling method based on `forcerefreshsnap` value
-    config.snapshotHandlingMethod = config.snapshotHandlingMethod ?? (config.forcerefreshsnap ? 1 : 3);
-
     // Initialize videoConfig if it's undefined
     if (!config.videoConfig) {
       config.videoConfig = {};

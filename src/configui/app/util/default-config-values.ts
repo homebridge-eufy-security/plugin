@@ -35,7 +35,6 @@ export const DEFAULT_CAMERACONFIG_VALUES: CameraConfig = {
   hsvRecordingDuration: 90,
   rtsp: false,
   enableCamera: true,
-  forcerefreshsnap: false,
   refreshSnapshotIntervalMinutes: 0,
   snapshotHandlingMethod: 3,
   immediateRingNotificationWithoutSnapshot: false,

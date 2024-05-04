@@ -4,32 +4,28 @@
     <span>HomeKit Home</span>
     <div class="form-check form-switch">
       <input class="form-check-input" type="checkbox" role="switch"
-        [attr.checked]="(value.indexOf(0) !== -1) ? true : null" id="flexSwitchCheckDefault"
-        (change)="toggle(0); update()">
+        [attr.checked]="(value.indexOf(0) !== -1) ? true : null" id="home" (change)="toggle(0); update()">
     </div>
   </div>
   <div class="d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center mb-2">
     <span>HomeKit Away</span>
     <div class="form-check form-switch">
       <input class="form-check-input" type="checkbox" role="switch"
-        [attr.checked]="(value.indexOf(1) !== -1) ? true : null" id="flexSwitchCheckDefault"
-        (change)="toggle(1); update()">
+        [attr.checked]="(value.indexOf(1) !== -1) ? true : null" id="away" (change)="toggle(1); update()">
     </div>
   </div>
   <div class="d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center mb-2">
     <span>HomeKit Night</span>
     <div class="form-check form-switch">
       <input class="form-check-input" type="checkbox" role="switch"
-        [attr.checked]="(value.indexOf(2) !== -1) ? true : null" id="flexSwitchCheckDefault"
-        (change)="toggle(2); update()">
+        [attr.checked]="(value.indexOf(2) !== -1) ? true : null" id="night" (change)="toggle(2); update()">
     </div>
   </div>
   <div class="d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center mb-2">
     <span>HomeKit Off/Disarmed</span>
     <div class="form-check form-switch">
       <input class="form-check-input" type="checkbox" role="switch"
-        [attr.checked]="(value.indexOf(3) !== -1) ? true : null" id="flexSwitchCheckDefault"
-        (change)="toggle(3); update()">
+        [attr.checked]="(value.indexOf(3) !== -1) ? true : null" id="off" (change)="toggle(3); update()">
     </div>
   </div>
 

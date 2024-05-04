@@ -38,8 +38,8 @@
 
 <div *ngIf="stations.length === 0" class="container">
     <div class="card shadow-sm text-center m-3 p-3" style="width: 100%;">
-            Loading Accessories...
-            <ngb-progressbar class="mb-3" type="success" [value]="this.progress" [animated]="true" [striped]="true" />
+        Loading Accessories...
+        <ngb-progressbar class="mb-3" type="success" [value]="this.progress" [animated]="true" [striped]="true" />
     </div>
 </div>
 
@@ -67,6 +67,7 @@
                 <ng-template [ngIf]="station && station.devices.length !== 0">
 
                     <div ngbAccordionItem="S_{{station.uniqueId}}">
+
                         <div ngbAccordionHeader>
 
                             <div *ngIf="station.devices[0].uniqueId === station.uniqueId" ngbAccordionButton
@@ -88,80 +89,87 @@
                             </button>
 
                         </div>
+
                         <div ngbAccordionCollapse>
                             <div ngbAccordionBody *ngIf="station.devices[0].uniqueId !== station.uniqueId">
 
-                                <div class="row">
+                                <ng-template>
 
-                                    <div class="col-6 col-sm-4 mt-3 mb-3 d-flex flex-column align-items-center">
-                                        <div class="col-12 col-sm-7">
-                                            <div class="text-center">
-                                                <a routerLink="/config/station/{{station.uniqueId}}"
-                                                    style="color: black;">
-                                                    <div class="device ratio ratio-1x1 border rounded shadow-sm">
-                                                        <img class="deviceimage"
-                                                            [src]="'assets/devices/' + (DeviceImage.get(station.type) ? DeviceImage.get(station.type)?.image : 'unknown.png')"
-                                                            [style.opacity]="station.ignored === true ? 0.5 : 1"
-                                                            alt="{{ station.displayName }}">
-                                                        <span
-                                                            class="devicesettingsicon d-flex border align-items-center justify-content-center"
-                                                            style="z-index: 15;">
-                                                            <i-feather name="sliders"></i-feather>
-                                                        </span>
-                                                        <span *ngIf="station.ignored"
-                                                            class="d-flex border align-items-top justify-content-end"
-                                                            style="z-index: 20;">
-                                                            <i-feather name="eye-off"
-                                                                class="mt-sm-1 m-sm-2 m-1 mt-0"></i-feather>
-                                                        </span>
-                                                    </div>
-                                                </a>
+                                    <div class="row">
+
+                                        <div class="col-6 col-sm-4 mt-3 mb-3 d-flex flex-column align-items-center">
+                                            <div class="col-12 col-sm-7">
+                                                <div class="text-center">
+                                                    <a routerLink="/config/station/{{station.uniqueId}}"
+                                                        style="color: black;">
+                                                        <div class="device ratio ratio-1x1 border rounded shadow-sm">
+                                                            <img class="deviceimage"
+                                                                [src]="'assets/devices/' + (DeviceImage.get(station.type) ? DeviceImage.get(station.type)?.image : 'unknown.png')"
+                                                                [style.opacity]="station.ignored === true ? 0.5 : 1"
+                                                                alt="{{ station.displayName }}">
+                                                            <span
+                                                                class="devicesettingsicon d-flex border align-items-center justify-content-center"
+                                                                style="z-index: 15;">
+                                                                <i-feather name="sliders"></i-feather>
+                                                            </span>
+                                                            <span *ngIf="station.ignored"
+                                                                class="d-flex border align-items-top justify-content-end"
+                                                                style="z-index: 20;">
+                                                                <i-feather name="eye-off"
+                                                                    class="mt-sm-1 m-sm-2 m-1 mt-0"></i-feather>
+                                                            </span>
+                                                        </div>
+                                                    </a>
+                                                </div>
                                             </div>
+
+                                            <span class="col-12 text-center">{{ station.displayName }}</span>
+                                            <span class="col-12 serial fw-light text-center">({{station.type}} -
+                                                {{station.uniqueId}})</span>
+
                                         </div>
 
-                                        <span class="col-12 text-center">{{ station.displayName }}</span>
-                                        <span class="col-12 serial fw-light text-center">({{station.type}} -
-                                            {{station.uniqueId}})</span>
+                                        <div *ngFor="let device of station.devices"
+                                            class="col-6 col-sm-4 mt-3 mb-3 d-flex flex-column align-items-center">
+                                            <div class="col-12 col-sm-7">
+                                                <div class="text-center">
+                                                    <a routerLink="/config/device/{{device.uniqueId}}"
+                                                        style="color: black;">
+                                                        <div class="device ratio ratio-1x1 border rounded shadow-sm">
+                                                            <img class="deviceimage"
+                                                                [src]="'assets/devices/' + (DeviceImage.get(device.type) ? DeviceImage.get(device.type)?.image : 'unknown.png')"
+                                                                [style.opacity]="device.ignored === true ? 0.5 : 1"
+                                                                alt="{{ device.displayName }}">
+                                                            <span
+                                                                class="devicesettingsicon d-flex border align-items-center justify-content-center"
+                                                                style="z-index: 15;">
+                                                                <i-feather name="sliders"></i-feather>
+                                                            </span>
+                                                            <span *ngIf="device.ignored"
+                                                                class="d-flex border align-items-top justify-content-end"
+                                                                style="z-index: 20;">
+                                                                <i-feather name="eye-off"
+                                                                    class="mt-sm-1 m-sm-2 m-1 mt-0"></i-feather>
+                                                            </span>
+                                                        </div>
+                                                    </a>
+                                                </div>
+                                            </div>
+
+                                            <span class="col-12 text-center">{{ device.displayName }}</span>
+                                            <span class="col-12 serial fw-light text-center">({{device.type}} -
+                                                {{device.uniqueId}})</span>
+
+                                        </div>
 
                                     </div>
 
-                                    <div *ngFor="let device of station.devices"
-                                        class="col-6 col-sm-4 mt-3 mb-3 d-flex flex-column align-items-center">
-                                        <div class="col-12 col-sm-7">
-                                            <div class="text-center">
-                                                <a routerLink="/config/device/{{device.uniqueId}}"
-                                                    style="color: black;">
-                                                    <div class="device ratio ratio-1x1 border rounded shadow-sm">
-                                                        <img class="deviceimage"
-                                                            [src]="'assets/devices/' + (DeviceImage.get(device.type) ? DeviceImage.get(device.type)?.image : 'unknown.png')"
-                                                            [style.opacity]="device.ignored === true ? 0.5 : 1"
-                                                            alt="{{ device.displayName }}">
-                                                        <span
-                                                            class="devicesettingsicon d-flex border align-items-center justify-content-center"
-                                                            style="z-index: 15;">
-                                                            <i-feather name="sliders"></i-feather>
-                                                        </span>
-                                                        <span *ngIf="device.ignored"
-                                                            class="d-flex border align-items-top justify-content-end"
-                                                            style="z-index: 20;">
-                                                            <i-feather name="eye-off"
-                                                                class="mt-sm-1 m-sm-2 m-1 mt-0"></i-feather>
-                                                        </span>
-                                                    </div>
-                                                </a>
-                                            </div>
-                                        </div>
-
-                                        <span class="col-12 text-center">{{ device.displayName }}</span>
-                                        <span class="col-12 serial fw-light text-center">({{device.type}} -
-                                            {{device.uniqueId}})</span>
-
-                                    </div>
-
-                                </div>
+                                </ng-template>
 
                             </div>
+
                         </div>
+
                     </div>
 
                 </ng-template>

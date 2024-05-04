@@ -3,12 +3,13 @@ import { L_Device } from '../../../app/util/types';
 import { PluginService } from '../../../app/plugin.service';
 import { ConfigOptionsInterpreter } from '../config-options-interpreter';
 import { FormsModule } from '@angular/forms';
+import { DEFAULT_VIDEOCONFIG_VALUES } from '../../../../plugin/utils/configTypes';
 
 @Component({
-    selector: 'app-enable-audio',
-    templateUrl: './enable-audio.component.html',
-    standalone: true,
-    imports: [FormsModule],
+  selector: 'app-enable-audio',
+  templateUrl: './enable-audio.component.html',
+  standalone: true,
+  imports: [FormsModule],
 })
 export class EnableAudioComponent extends ConfigOptionsInterpreter implements OnInit {
   constructor(pluginService: PluginService) {
@@ -27,7 +28,7 @@ export class EnableAudioComponent extends ConfigOptionsInterpreter implements On
   /** updateConfig() takes an optional second parameter to specify the accessoriy for which the setting is changed */
 
   @Input() device?: L_Device;
-  value = false;
+  value = DEFAULT_VIDEOCONFIG_VALUES.audio;
   samplerate = 0;
 
   async readValue() {

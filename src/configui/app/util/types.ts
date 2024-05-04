@@ -40,10 +40,10 @@ export type L_Device = {
   typename: string;
   standalone: boolean;
   ignored?: boolean;
-  isCamera?: boolean;
+  isCamera: boolean;
   hasBattery?: boolean;
   chargingStatus?: number;
-  isDoorbell?: boolean;
+  isDoorbell: boolean;
   supportsRTSP?: boolean;
   supportsTalkback?: boolean;
   DeviceEnabled: boolean;

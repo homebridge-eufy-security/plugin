@@ -6,7 +6,7 @@ import { PluginService } from '../plugin.service';
 import { DEFAULT_CONFIG_VALUES } from '../../app/util/default-config-values';
 
 export class ConfigOptionsInterpreter {
-  config: PluginConfig;
+  public config: PluginConfig;
 
   constructor(protected pluginService: PluginService) {
     // Initialize config with default values
@@ -50,6 +50,8 @@ export class ConfigOptionsInterpreter {
       ...config,
       ...options,
     };
+
+    this.config = config;
 
     // Update the configuration
     this.pluginService.updateConfig(config);

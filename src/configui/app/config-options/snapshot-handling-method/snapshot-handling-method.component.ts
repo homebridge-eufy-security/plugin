@@ -26,9 +26,12 @@ import { FormsModule } from '@angular/forms';
 export class SnapshotHandlingMethodComponent extends ConfigOptionsInterpreter implements OnInit {
   @Input() device?: L_Device;
 
-  constructor(
-    pluginService: PluginService,
-  ) {
+  value = DEFAULT_CAMERACONFIG_VALUES.snapshotHandlingMethod;
+  ignoreMultipleDevicesWarning = DEFAULT_CONFIG_VALUES.ignoreMultipleDevicesWarning;
+  chargingStatus = ChargingType.PLUGGED;
+  standalone = false;
+
+  constructor(pluginService: PluginService) {
     super(pluginService);
   }
 
@@ -36,50 +39,40 @@ export class SnapshotHandlingMethodComponent extends ConfigOptionsInterpreter im
     this.readValue();
   }
 
-  value = DEFAULT_CAMERACONFIG_VALUES.snapshotHandlingMethod;
-
-  chargingStatus = ChargingType.PLUGGED;
-  standalone = false;
-
-  ignoreMultipleDevicesWarning = DEFAULT_CONFIG_VALUES.ignoreMultipleDevicesWarning;
-
   async readValue() {
     const uniqueId = this.device?.uniqueId || '';
-    const config = await this.getCameraConfig(uniqueId);
-
-    // Check for ignoreMultipleDevicesWarning in config using hasOwnProperty
-    if (config && Object.prototype.hasOwnProperty.call(config, 'ignoreMultipleDevicesWarning')) {
-      this.ignoreMultipleDevicesWarning = config['ignoreMultipleDevicesWarning'];
-    }
 
     if (this.device) {
 
       this.chargingStatus = this.device.chargingStatus!;
-      this.standalone = this.device.standalone!;
+      this.standalone = this.device.standalone;
 
-      // Check for snapshotHandlingMethod or forcerefreshsnap in config using hasOwnProperty
-      if (config) {
-        if (Object.prototype.hasOwnProperty.call(config, 'snapshotHandlingMethod')) {
-          this.value = config['snapshotHandlingMethod'];
-        } else if (Object.prototype.hasOwnProperty.call(config, 'forcerefreshsnap')) {
-          this.value = config['forcerefreshsnap'] ? 1 : 3;
-        }
-      }
+      this.ignoreMultipleDevicesWarning = this.config['ignoreMultipleDevicesWarning'] ?? this.ignoreMultipleDevicesWarning;
 
-      if (!this.ignoreMultipleDevicesWarning) {
+      const config = await this.getCameraConfig(uniqueId);
+      this.value = config['snapshotHandlingMethod'] ?? this.value;
+
+      if (!this.ignoreMultipleDevicesWarning && !this.standalone) {
         this.value = 3;
         this.update();
       }
+
+      console.log('ignoreMultipleDevicesWarning:', this.ignoreMultipleDevicesWarning);
+      console.log('standalone:', this.standalone);
 
     }
   }
 
   update() {
+
+    if (!this.ignoreMultipleDevicesWarning && !this.standalone) {
+      this.value = 3;
+    }
+
     // Update the configuration with snapshotHandlingMethod
+
     this.updateDeviceConfig(
-      {
-        snapshotHandlingMethod: this.value,
-      },
+      { snapshotHandlingMethod: this.value },
       this.device!,
     );
   }

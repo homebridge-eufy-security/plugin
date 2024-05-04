@@ -5,7 +5,6 @@ import { L_Device, L_Station } from '../util/types';
 import { ConfigOptionsInterpreter } from '../config-options/config-options-interpreter';
 import { PluginService } from '../plugin.service';
 import { AdvancedVideoconfigComponent } from '../config-options/advanced-videoconfig/advanced-videoconfig.component';
-import { ForceRefreshsnapComponent } from '../config-options/force-refreshsnap/force-refreshsnap.component';
 import { PeriodicSnapshotRefreshComponent } from '../config-options/periodic-snapshot-refresh/periodic-snapshot-refresh.component';
 import { DelayCameraSnapshotsComponent } from '../config-options/delay-camera-snapshots/delay-camera-snapshots.component';
 import { ImmediateNotificationOnRingComponent } from '../config-options/immediate-notification-on-ring/immediate-notification-on-ring.component';
@@ -45,7 +44,6 @@ import { FeatherModule } from 'angular-feather';
     ImmediateNotificationOnRingComponent,
     DelayCameraSnapshotsComponent,
     PeriodicSnapshotRefreshComponent,
-    ForceRefreshsnapComponent,
     AdvancedVideoconfigComponent,
     GuardModesMappingComponent,
     ManualAlarmModesComponent,
@@ -59,11 +57,10 @@ export class AccessoryConfigOptionsComponent extends ConfigOptionsInterpreter im
   uniqueId: string = '';
   type: string = '';
 
-  showEnhancedSnapshotBehaviour = true;
-  isDoorbell = false;
-  isCamera = false;
-  supportsRTSP = false;
-  supportsTalkback = false;
+  isDoorbell: boolean = false;
+  isCamera: boolean = false;
+  supportsRTSP: boolean = false;
+  supportsTalkback: boolean = false;
 
   constructor(pluginService: PluginService, private route: ActivatedRoute) {
     super(pluginService);
@@ -94,26 +91,22 @@ export class AccessoryConfigOptionsComponent extends ConfigOptionsInterpreter im
     }
 
     if (this.device) {
-      this.isCamera = this.device.isCamera!;
-      this.isDoorbell = this.device.isDoorbell!;
-      this.supportsRTSP = this.device.supportsRTSP!;
-      this.supportsTalkback = this.device.supportsTalkback!;
+      this.isCamera = this.device.isCamera ?? this.isCamera;
+      this.isDoorbell = this.device.isDoorbell ?? this.isDoorbell;
+      this.supportsRTSP = this.device.supportsRTSP ?? this.supportsRTSP;
+      this.supportsTalkback = this.device.supportsTalkback ?? this.supportsTalkback;
 
       // reset rtsp and talkback setting if these are not supported
       if (!this.supportsRTSP) {
         this.updateDeviceConfig(
-          {
-            rtsp: false,
-          },
+          { rtsp: false },
           this.device,
         );
       }
 
       if (!this.supportsTalkback) {
         this.updateDeviceConfig(
-          {
-            talkback: false,
-          },
+          { talkback: false },
           this.device,
         );
       }
@@ -126,9 +119,5 @@ export class AccessoryConfigOptionsComponent extends ConfigOptionsInterpreter im
 
   ignoredDeviceChanged(state: boolean) {
     this.device!.ignored = state;
-  }
-
-  updateSnapshotView(value: boolean) {
-    this.showEnhancedSnapshotBehaviour = value;
   }
 }

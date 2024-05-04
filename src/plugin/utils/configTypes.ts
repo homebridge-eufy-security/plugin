@@ -15,7 +15,6 @@ export type CameraConfig = {
   lightButton: boolean;
   rtsp: boolean;
   enableCamera: boolean;
-  forcerefreshsnap: boolean;
   refreshSnapshotIntervalMinutes?: number;
   snapshotHandlingMethod?: number;
   immediateRingNotificationWithoutSnapshot?: boolean;
@@ -42,7 +41,6 @@ export const DEFAULT_CAMERACONFIG_VALUES: CameraConfig = {
   hsvRecordingDuration: 90,
   rtsp: false,
   enableCamera: true,
-  forcerefreshsnap: false,
   refreshSnapshotIntervalMinutes: 0,
   snapshotHandlingMethod: 3,
   immediateRingNotificationWithoutSnapshot: false,
