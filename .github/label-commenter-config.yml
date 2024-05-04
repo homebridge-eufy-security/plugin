@@ -1,0 +1,11 @@
+labels:
+  - name: bug
+    labeled:
+      issue:
+        body: |
+          Did you check this [Common Issues](https://github.com/homebridge-eufy-security/plugin/wiki/Common-Issues) pages ?
+  - name: enhancement
+    labeled:
+      issue:
+        body: |
+          Did you check this [Road Map](https://github.com/homebridge-eufy-security/plugin/projects/1) pages ?
