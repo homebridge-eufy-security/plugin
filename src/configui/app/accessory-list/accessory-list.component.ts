@@ -33,6 +33,8 @@ export class AccessoryListComponent implements OnInit {
   stations: L_Station[] = [];
   versionUnmatched: boolean = false;
 
+  adminAccountUsed: boolean = false;
+
   progress: number = 0;
   wait_timer: number = 200;
 
@@ -67,6 +69,11 @@ export class AccessoryListComponent implements OnInit {
       await this.wait();
       console.log('addAccessory received event. updating...', JSON.stringify(event));
       await this.updateStations();
+    });
+
+    window.homebridge.addEventListener('AdminAccountUsed', async () => {
+      this.adminAccountUsed = true;
+      this.stations = [];
     });
 
     this.update_progress(10);
