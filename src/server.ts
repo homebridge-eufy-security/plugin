@@ -1,4 +1,4 @@
-import { EufySecurity, EufySecurityConfig, libVersion, Device, Station, PropertyName, CommandName, DeviceType } from 'eufy-security-client';
+import { EufySecurity, EufySecurityConfig, libVersion, Device, Station, PropertyName, CommandName, DeviceType, UserType } from 'eufy-security-client';
 import { HomebridgePluginUiServer } from '@homebridge/plugin-ui-utils';
 import fs from 'fs';
 import { Logger as TsLogger, ILogObj } from 'tslog';
@@ -6,6 +6,8 @@ import { createStream } from 'rotating-file-stream';
 import { Zip } from 'zip-lib';
 import { Accessory, L_Station, L_Device, LoginResult, LoginFailReason } from './configui/app/util/types';
 import { version } from '../package.json';
+import { version as nodeJSversion } from 'node:process';
+import { satisfies } from 'semver';
 
 class UiServer extends HomebridgePluginUiServer {
   public stations: L_Station[] = [];
@@ -16,6 +18,8 @@ class UiServer extends HomebridgePluginUiServer {
   private storagePath: string = this.homebridgeStoragePath + '/eufysecurity';
   private storedAccessories_file: string = this.storagePath + '/accessories.json';
   private logZipFilePath: string = this.storagePath + '/logs.zip';
+
+  private adminAccountUsed: boolean = false;
 
   public config: EufySecurityConfig = {
     username: '',
@@ -88,6 +92,7 @@ class UiServer extends HomebridgePluginUiServer {
     this.onRequest('/storedAccessories', this.loadStoredAccessories.bind(this));
     this.onRequest('/reset', this.resetPlugin.bind(this));
     this.onRequest('/downloadLogs', this.downloadLogs.bind(this));
+    this.onRequest('/nodeJSVersion', this.nodeJSVersion.bind(this));
   }
 
   async resetPersistentData(): Promise<void> {
@@ -96,6 +101,18 @@ class UiServer extends HomebridgePluginUiServer {
     } catch (err) {
       return Promise.reject(err);
     }
+  }
+
+  /**
+   * Checks compatibility of the current Node.js version with Livestream functionality.
+   */
+  public nodeJSVersion() {
+    // Define versions known to break compatibility with RSA_PKCS1_PADDING
+    const nodeJSIncompatible = satisfies(nodeJSversion, '^18.19.1 || ^20.11.1 || ^21.6.2');
+    return {
+      nodeJSversion: nodeJSversion,
+      nodeJSIncompatible: nodeJSIncompatible,
+    };
   }
 
   async login(options): Promise<LoginResult> {
@@ -184,6 +201,26 @@ class UiServer extends HomebridgePluginUiServer {
   }
 
   addStation(station: Station) {
+
+    // Before doing anything check if creds are guest admin
+    const rawStation = station.getRawStation();
+    if (rawStation.member.member_type !== UserType.ADMIN) {
+      this.adminAccountUsed = true;
+      this.eufyClient?.close();
+      this.pushEvent('AdminAccountUsed', true);
+      this.resetPlugin();
+      this.log.error(`
+      #########################
+      ######### ERROR #########
+      #########################
+      You're not using a guest admin account with this plugin! You must use a guest admin account!
+      Please look here for more details: 
+      https://github.com/homebridge-eufy-security/plugin/wiki/Create-a-dedicated-admin-account-for-Homebridge-Eufy-Security-Plugin
+      #########################
+      `);
+      return;
+    }
+
     const s: L_Station = {
       uniqueId: station.getSerial(),
       displayName: station.getName(),
@@ -206,6 +243,12 @@ class UiServer extends HomebridgePluginUiServer {
   }
 
   addDevice(device: Device) {
+    // Before doing anything check if creds are guest admin
+    if (this.adminAccountUsed) {
+      this.pushEvent('AdminAccountUsed', true);
+      return;
+    }
+
     const d: L_Device = {
       uniqueId: device.getSerial(),
       displayName: device.getName(),

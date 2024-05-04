@@ -1,191 +1,190 @@
 <ng-template #reloadModal let-modal>
-    <div class="modal-header">
-        <h4 class="modal-title" id="modal-basic-title">Refresh stations and devices</h4>
-        <button type="button" class="btn-close" aria-label="Close" (click)="modal.dismiss('Cross click')"></button>
+  <div class="modal-header">
+    <h4 class="modal-title" id="modal-basic-title">Refresh stations and devices</h4>
+    <button type="button" class="btn-close" aria-label="Close" (click)="modal.dismiss('Cross click')"></button>
+  </div>
+  <div class="modal-body">
+    <div class="mb-3">
+      <p>To initiate a full station and device refresh, you will need to log into your eufy account. However,
+        please be aware that this action may interfere with the plugin's connection to the eufy cloud.</p>
+      <ngb-alert [dismissible]="false">
+        We strongly recommend that you <strong>stop</strong> the plugin before
+        proceeding further.
+      </ngb-alert>
+      <p>Otherwise, you may experience glitches such as push notifications from the plugin no longer functioning
+        correctly. (See <a href="https://github.com/homebridge-eufy-security/plugin/issues/59#issuecomment-1147314942"
+          target="_blank" rel="noopener noreferrer">here</a> for more information).</p>
     </div>
-    <div class="modal-body">
-        <div class="mb-3">
-            <p>To initiate a full station and device refresh, you will need to log into your eufy account. However,
-                please be aware that this action may interfere with the plugin's connection to the eufy cloud.</p>
-            <ngb-alert [dismissible]="false">
-                We strongly recommend that you <strong>stop</strong> the plugin before
-                proceeding further.
-            </ngb-alert>
-            <p>Otherwise, you may experience glitches such as push notifications from the plugin no longer functioning
-                correctly. (See <a
-                    href="https://github.com/homebridge-eufy-security/plugin/issues/59#issuecomment-1147314942"
-                    target="_blank" rel="noopener noreferrer">here</a> for more information).</p>
-        </div>
-    </div>
-    <div class="modal-footer">
-        <a routerLink="/login" class="btn btn-success" (click)="modal.close('Login')">Login with eufy</a>
-    </div>
+  </div>
+  <div class="modal-footer">
+    <a routerLink="/login" class="btn btn-success" (click)="modal.close('Login')">Login with eufy</a>
+  </div>
 </ng-template>
 
-<div class="text-end">
-    <button type="button" class="btn btn-success" (click)="openReloadModal(reloadModal)"
-        (keydown.enter)="openReloadModal(reloadModal)" placement="top" ngbTooltip="Re Sync">
-        <i-feather name="refresh-cw"></i-feather>
-    </button>
-    <button type="button" class="btn btn-warning" placement="top" ngbTooltip="Download Logs" routerLink="/downloadLogs">
-        <i-feather name="download"></i-feather>
-    </button>
-    <button type="button" class="btn btn-danger" placement="top" ngbTooltip="Global Settings"
-        routerLink="/advancedConfig">
-        <i-feather name="sliders"></i-feather>
-    </button>
+<div *ngIf="!adminAccountUsed" class="text-end">
+  <button type="button" class="btn btn-success" (click)="openReloadModal(reloadModal)"
+    (keydown.enter)="openReloadModal(reloadModal)" placement="top" ngbTooltip="Re Sync">
+    <i-feather name="refresh-cw"></i-feather>
+  </button>
+  <button type="button" class="btn btn-warning" placement="top" ngbTooltip="Download Logs" routerLink="/downloadLogs">
+    <i-feather name="download"></i-feather>
+  </button>
+  <button type="button" class="btn btn-danger" placement="top" ngbTooltip="Global Settings"
+    routerLink="/advancedConfig">
+    <i-feather name="sliders"></i-feather>
+  </button>
 </div>
 
-<div *ngIf="stations.length === 0" class="container">
-    <div class="card shadow-sm text-center m-3 p-3" style="width: 100%;">
-        Loading Accessories...
-        <ngb-progressbar class="mb-3" type="success" [value]="this.progress" [animated]="true" [striped]="true" />
+<div *ngIf="adminAccountUsed" class="container">
+  <div class="card shadow-sm m-3 p-3" style="width: 100%;">
+    <div class="alert alert-danger" role="alert">
+      You're not using a guest admin account with this plugin! You must use a guest admin account!
+      Please look here for more details:
+      https://github.com/homebridge-eufy-security/plugin/wiki/Create-a-dedicated-admin-account-for-Homebridge-Eufy-Security-Plugin
     </div>
+    <button class="btn btn-secondary" type="button" routerLink="/login">Cancel</button>
+  </div>
 </div>
 
-<div *ngIf="stations.length !== 0" class="container">
+<div *ngIf="!adminAccountUsed && stations.length === 0" class="container">
+  <div class="card shadow-sm text-center p-3" style="width: 100%;">
+    Loading Accessories...
+    <ngb-progressbar class="mb-3" type="success" [value]="this.progress" [animated]="true" [striped]="true" />
+  </div>
+</div>
 
-    <div *ngIf="versionUnmatched">
-        <p></p>
-        <ngb-alert type="warning" [dismissible]="false">
-            <a (click)="openReloadModal(reloadModal)" (keydown.enter)="openReloadModal(reloadModal)" tabindex="0">Plugin
-                has been updated, please refresh and reboot the plugin.</a>
-        </ngb-alert>
-        <p></p>
-    </div>
+<div *ngIf="!adminAccountUsed && stations.length !== 0" class="container">
 
-    <div *ngIf="!versionUnmatched">
+  <div *ngIf="versionUnmatched">
+    <p></p>
+    <ngb-alert type="warning" [dismissible]="false">
+      <a (click)="openReloadModal(reloadModal)" (keydown.enter)="openReloadModal(reloadModal)" tabindex="0">Plugin
+        has been updated, please refresh and reboot the plugin.</a>
+    </ngb-alert>
+    <p></p>
+  </div>
 
-        <p></p>
-        <span>Click the name to reveal the attached device(s) or access accessory configuration.</span>
-        <p></p>
+  <div *ngIf="!versionUnmatched">
 
-        <div ngbAccordion [closeOthers]="true">
+    <p></p>
+    <span>Click the name to reveal the attached device(s) or access accessory configuration.</span>
+    <p></p>
 
-            <ng-template ngFor let-station [ngForOf]="stations">
+    <div ngbAccordion [closeOthers]="true">
 
-                <ng-template [ngIf]="station && station.devices.length !== 0">
+      <ng-template ngFor let-station [ngForOf]="stations">
 
-                    <div ngbAccordionItem="S_{{station.uniqueId}}">
+        <ng-template [ngIf]="station && station.devices.length !== 0">
 
-                        <div ngbAccordionHeader>
+          <div ngbAccordionItem="S_{{station.uniqueId}}">
 
-                            <div *ngIf="station.devices[0].uniqueId === station.uniqueId" ngbAccordionButton
-                                class="row m-0 accordion-button2" routerLink="/config/both/{{station.uniqueId}}">
-                                <div class="col">{{ station.displayName }}</div>
-                                <div class="col-1" *ngIf="!station.devices[0].disabled">
-                                    <i-feather [ngbTooltip]="station.devices[0].ignored ? 'Device OFF' : 'Device ON'"
-                                        [name]="station.devices[0].ignored ? 'video-off' : 'video'"></i-feather>
-                                </div>
-                                <div class="col-1" *ngIf="!station.disabled">
-                                    <i-feather
-                                        [ngbTooltip]="station.ignored ? 'Security Control OFF' : 'Security Control ON'"
-                                        [name]="station.ignored ? 'shield-off' : 'shield'"></i-feather>
-                                </div>
+            <div ngbAccordionHeader>
+
+              <div *ngIf="station.devices[0].uniqueId === station.uniqueId" ngbAccordionButton
+                class="row m-0 accordion-button2" routerLink="/config/both/{{station.uniqueId}}">
+                <div class="col">{{ station.displayName }}</div>
+                <div class="col-1" *ngIf="!station.devices[0].disabled">
+                  <i-feather [ngbTooltip]="station.devices[0].ignored ? 'Device OFF' : 'Device ON'"
+                    [name]="station.devices[0].ignored ? 'video-off' : 'video'"></i-feather>
+                </div>
+                <div class="col-1" *ngIf="!station.disabled">
+                  <i-feather [ngbTooltip]="station.ignored ? 'Security Control OFF' : 'Security Control ON'"
+                    [name]="station.ignored ? 'shield-off' : 'shield'"></i-feather>
+                </div>
+              </div>
+
+              <button *ngIf="station.devices[0].uniqueId !== station.uniqueId" ngbAccordionButton>
+                {{ station.displayName }}
+              </button>
+
+            </div>
+
+            <div ngbAccordionCollapse>
+              <div ngbAccordionBody *ngIf="station.devices[0].uniqueId !== station.uniqueId">
+
+                <ng-template>
+
+                  <div class="row">
+
+                    <div class="col-6 col-sm-4 mt-3 mb-3 d-flex flex-column align-items-center">
+                      <div class="col-12 col-sm-7">
+                        <div class="text-center">
+                          <a routerLink="/config/station/{{station.uniqueId}}" style="color: black;">
+                            <div class="device ratio ratio-1x1 border rounded shadow-sm">
+                              <img class="deviceimage"
+                                [src]="'assets/devices/' + (DeviceImage.get(station.type) ? DeviceImage.get(station.type)?.image : 'unknown.png')"
+                                [style.opacity]="station.ignored === true ? 0.5 : 1" alt="{{ station.displayName }}">
+                              <span class="devicesettingsicon d-flex border align-items-center justify-content-center"
+                                style="z-index: 15;">
+                                <i-feather name="sliders"></i-feather>
+                              </span>
+                              <span *ngIf="station.ignored" class="d-flex border align-items-top justify-content-end"
+                                style="z-index: 20;">
+                                <i-feather name="eye-off" class="mt-sm-1 m-sm-2 m-1 mt-0"></i-feather>
+                              </span>
                             </div>
-
-                            <button *ngIf="station.devices[0].uniqueId !== station.uniqueId" ngbAccordionButton>
-                                {{ station.displayName }}
-                            </button>
-
+                          </a>
                         </div>
+                      </div>
 
-                        <div ngbAccordionCollapse>
-                            <div ngbAccordionBody *ngIf="station.devices[0].uniqueId !== station.uniqueId">
-
-                                <ng-template>
-
-                                    <div class="row">
-
-                                        <div class="col-6 col-sm-4 mt-3 mb-3 d-flex flex-column align-items-center">
-                                            <div class="col-12 col-sm-7">
-                                                <div class="text-center">
-                                                    <a routerLink="/config/station/{{station.uniqueId}}"
-                                                        style="color: black;">
-                                                        <div class="device ratio ratio-1x1 border rounded shadow-sm">
-                                                            <img class="deviceimage"
-                                                                [src]="'assets/devices/' + (DeviceImage.get(station.type) ? DeviceImage.get(station.type)?.image : 'unknown.png')"
-                                                                [style.opacity]="station.ignored === true ? 0.5 : 1"
-                                                                alt="{{ station.displayName }}">
-                                                            <span
-                                                                class="devicesettingsicon d-flex border align-items-center justify-content-center"
-                                                                style="z-index: 15;">
-                                                                <i-feather name="sliders"></i-feather>
-                                                            </span>
-                                                            <span *ngIf="station.ignored"
-                                                                class="d-flex border align-items-top justify-content-end"
-                                                                style="z-index: 20;">
-                                                                <i-feather name="eye-off"
-                                                                    class="mt-sm-1 m-sm-2 m-1 mt-0"></i-feather>
-                                                            </span>
-                                                        </div>
-                                                    </a>
-                                                </div>
-                                            </div>
-
-                                            <span class="col-12 text-center">{{ station.displayName }}</span>
-                                            <span class="col-12 serial fw-light text-center">({{station.type}} -
-                                                {{station.uniqueId}})</span>
-
-                                        </div>
-
-                                        <div *ngFor="let device of station.devices"
-                                            class="col-6 col-sm-4 mt-3 mb-3 d-flex flex-column align-items-center">
-                                            <div class="col-12 col-sm-7">
-                                                <div class="text-center">
-                                                    <a routerLink="/config/device/{{device.uniqueId}}"
-                                                        style="color: black;">
-                                                        <div class="device ratio ratio-1x1 border rounded shadow-sm">
-                                                            <img class="deviceimage"
-                                                                [src]="'assets/devices/' + (DeviceImage.get(device.type) ? DeviceImage.get(device.type)?.image : 'unknown.png')"
-                                                                [style.opacity]="device.ignored === true ? 0.5 : 1"
-                                                                alt="{{ device.displayName }}">
-                                                            <span
-                                                                class="devicesettingsicon d-flex border align-items-center justify-content-center"
-                                                                style="z-index: 15;">
-                                                                <i-feather name="sliders"></i-feather>
-                                                            </span>
-                                                            <span *ngIf="device.ignored"
-                                                                class="d-flex border align-items-top justify-content-end"
-                                                                style="z-index: 20;">
-                                                                <i-feather name="eye-off"
-                                                                    class="mt-sm-1 m-sm-2 m-1 mt-0"></i-feather>
-                                                            </span>
-                                                        </div>
-                                                    </a>
-                                                </div>
-                                            </div>
-
-                                            <span class="col-12 text-center">{{ device.displayName }}</span>
-                                            <span class="col-12 serial fw-light text-center">({{device.type}} -
-                                                {{device.uniqueId}})</span>
-
-                                        </div>
-
-                                    </div>
-
-                                </ng-template>
-
-                            </div>
-
-                        </div>
+                      <span class="col-12 text-center">{{ station.displayName }}</span>
+                      <span class="col-12 serial fw-light text-center">({{station.type}} -
+                        {{station.uniqueId}})</span>
 
                     </div>
 
+                    <div *ngFor="let device of station.devices"
+                      class="col-6 col-sm-4 mt-3 mb-3 d-flex flex-column align-items-center">
+                      <div class="col-12 col-sm-7">
+                        <div class="text-center">
+                          <a routerLink="/config/device/{{device.uniqueId}}" style="color: black;">
+                            <div class="device ratio ratio-1x1 border rounded shadow-sm">
+                              <img class="deviceimage"
+                                [src]="'assets/devices/' + (DeviceImage.get(device.type) ? DeviceImage.get(device.type)?.image : 'unknown.png')"
+                                [style.opacity]="device.ignored === true ? 0.5 : 1" alt="{{ device.displayName }}">
+                              <span class="devicesettingsicon d-flex border align-items-center justify-content-center"
+                                style="z-index: 15;">
+                                <i-feather name="sliders"></i-feather>
+                              </span>
+                              <span *ngIf="device.ignored" class="d-flex border align-items-top justify-content-end"
+                                style="z-index: 20;">
+                                <i-feather name="eye-off" class="mt-sm-1 m-sm-2 m-1 mt-0"></i-feather>
+                              </span>
+                            </div>
+                          </a>
+                        </div>
+                      </div>
+
+                      <span class="col-12 text-center">{{ device.displayName }}</span>
+                      <span class="col-12 serial fw-light text-center">({{device.type}} -
+                        {{device.uniqueId}})</span>
+
+                    </div>
+
+                  </div>
+
                 </ng-template>
 
-            </ng-template>
+              </div>
 
-        </div>
+            </div>
 
-        <p></p>
+          </div>
 
-        <span><i>The images used above are 'best effort' for now, since we do not own every eufy device.
-                If you experience that your device is depicted with a wrong image please feel free to let
-                us know in an issue on our <a href="https://github.com/homebridge-eufy-security/plugin" target="_blank"
-                    rel="noopener noreferrer">Github page.</a></i>
-        </span>
+        </ng-template>
+
+      </ng-template>
 
     </div>
+
+    <p></p>
+
+    <span><i>The images used above are 'best effort' for now, since we do not own every eufy device.
+        If you experience that your device is depicted with a wrong image please feel free to let
+        us know in an issue on our <a href="https://github.com/homebridge-eufy-security/plugin" target="_blank"
+          rel="noopener noreferrer">Github page.</a></i>
+    </span>
+
+  </div>
 
 </div>
