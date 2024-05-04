@@ -53,6 +53,9 @@ export class LoginComponent implements OnInit {
 
   firstLoginAssumed = false;
 
+  nodeJSIncompatible: boolean = true;
+  nodeJSversion: string = '1.1.1';
+
   emailIsValid = true;
   passwordIsValid = true;
   otpIsValid = true;
@@ -60,13 +63,17 @@ export class LoginComponent implements OnInit {
 
   constructor(private loginService: LoginService, private routerService: Router) { }
 
-  ngOnInit(): void {
-    this.getCredentials();
+  async ngOnInit(): Promise<void> {
+    const r = await window.homebridge.request('/nodeJSVersion');
+    this.nodeJSversion = r.nodeJSversion;
+    this.nodeJSIncompatible = r.nodeJSIncompatible;
+
+    await this.getCredentials();
     this.fillCountryArray();
   }
 
-  private getCredentials() {
-    this.loginService
+  private async getCredentials() {
+    await this.loginService
       .getCredentials()
       .then((creds) => (this.credentials = creds))
       .catch((err) => {
