@@ -274,7 +274,7 @@ export class CameraAccessory extends DeviceAccessory {
         setValue: (value, characteristic) =>
           this.setCameraPropertyValue(characteristic, PropertyName.DeviceEnabled, value),
         onValue: (service, characteristic) => {
-          this.device.on('enabled', () => {
+          this.device.on('property changed', () => {
             this.getCameraPropertyValue(characteristic, PropertyName.DeviceEnabled);
           });
         },
@@ -287,7 +287,7 @@ export class CameraAccessory extends DeviceAccessory {
           getValue: (data, characteristic) =>
             this.getCameraPropertyValue(characteristic, PropertyName.DeviceEnabled),
           onValue: (service, characteristic) => {
-            this.device.on('enabled', () => {
+            this.device.on('property changed', () => {
               this.getCameraPropertyValue(characteristic, PropertyName.DeviceEnabled);
             });
           },
@@ -303,7 +303,7 @@ export class CameraAccessory extends DeviceAccessory {
           setValue: (value, characteristic) =>
             this.setCameraPropertyValue(characteristic, PropertyName.DeviceStatusLed, value),
           onValue: (service, characteristic) => {
-            this.device.on('statusLed', () => {
+            this.device.on('property changed', () => {
               this.getCameraPropertyValue(characteristic, PropertyName.DeviceStatusLed);
             });
           },
@@ -319,7 +319,7 @@ export class CameraAccessory extends DeviceAccessory {
           setValue: (value, characteristic) =>
             this.setCameraPropertyValue(characteristic, PropertyName.DeviceNightvision, value),
           onValue: (service, characteristic) => {
-            this.device.on('nightvision', () => {
+            this.device.on('property changed', () => {
               this.getCameraPropertyValue(characteristic, PropertyName.DeviceNightvision);
             });
           },
@@ -335,7 +335,7 @@ export class CameraAccessory extends DeviceAccessory {
           setValue: (value, characteristic) =>
             this.setCameraPropertyValue(characteristic, PropertyName.DeviceAutoNightvision, value),
           onValue: (service, characteristic) => {
-            this.device.on('autoNightvision', () => {
+            this.device.on('property changed', () => {
               this.getCameraPropertyValue(characteristic, PropertyName.DeviceAutoNightvision);
             });
           },
