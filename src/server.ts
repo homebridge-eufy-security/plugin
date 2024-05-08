@@ -1,6 +1,6 @@
 import { EufySecurity, EufySecurityConfig, libVersion, Device, Station, PropertyName, CommandName, DeviceType, UserType } from 'eufy-security-client';
 import { HomebridgePluginUiServer } from '@homebridge/plugin-ui-utils';
-import fs from 'fs';
+import * as fs from 'fs';
 import { Logger as TsLogger, ILogObj } from 'tslog';
 import { createStream } from 'rotating-file-stream';
 import { Zip } from 'zip-lib';
@@ -177,20 +177,38 @@ class UiServer extends HomebridgePluginUiServer {
     });
   }
 
+  /**
+   * Asynchronously loads stored accessories from a file.
+   * @returns A promise resolving to an array of accessories.
+   */
   async loadStoredAccessories(): Promise<Accessory[]> {
     try {
-      const storedData = JSON.parse(fs.readFileSync(this.storedAccessories_file, { encoding: 'utf-8' }));
-      const { version: storedVersion, stations: storedAccessories } = storedData;
+      // Check if the stored accessories file exists
+      if (!fs.existsSync(this.storedAccessories_file)) {
+        // If the file doesn't exist, log a warning and return an empty array
+        this.log.warn('Stored accessories file does not exist.');
+        return [];
+      }
 
+      // Read the content of the stored accessories file asynchronously
+      const storedData = await fs.promises.readFile(this.storedAccessories_file, { encoding: 'utf-8' });
+
+      // Parse the JSON data obtained from the file
+      const { version: storedVersion, stations: storedAccessories } = JSON.parse(storedData);
+
+      // Compare the stored version with the current version
       if (storedVersion !== version) {
+        // If the versions do not match, log a warning and push an event
         this.pushEvent('versionUnmatched', { currentVersion: version, storedVersion: storedVersion });
         this.log.warn(`Stored version (${storedVersion}) does not match current version (${version})`);
       }
 
-      return Promise.resolve(storedAccessories as Accessory[]);
+      // Return the parsed accessories
+      return storedAccessories as Accessory[];
     } catch (err) {
+      // If an error occurs during the process, log an error message and return an empty array
       this.log.error('Could not get stored accessories. Most likely no stored accessories yet: ' + err);
-      return Promise.reject([]);
+      return [];
     }
   }
 
