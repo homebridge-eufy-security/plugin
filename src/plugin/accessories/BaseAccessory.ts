@@ -4,6 +4,7 @@ import {
   CharacteristicValue,
   Service,
   WithUUID,
+  APIEvent,
 } from 'homebridge';
 import { EufySecurityPlatform } from '../platform';
 import { DeviceType, DeviceEvents, PropertyValue, Device, Station, StationEvents } from 'eufy-security-client';
@@ -87,6 +88,11 @@ export abstract class BaseAccessory extends EventEmitter {
       this.device.on('raw property changed', this.handleRawPropertyChange.bind(this));
       this.device.on('property changed', this.handlePropertyChange.bind(this));
     }
+
+    this.platform.api.on(APIEvent.SHUTDOWN, async () => {
+      this.log.debug(`Removing Listeners - num:`, this.listeners.length);
+      this.removeAllListeners();
+    });
 
     this.logPropertyKeys();
   }
