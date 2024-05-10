@@ -61,13 +61,13 @@ export class AccessoryListComponent implements OnInit {
 
     this.pluginService.addEventListener('newAccessories', async (event: any) => {
       await this.wait();
-      console.log('newAccessories received event. updating...', JSON.stringify(event));
+      console.log('newAccessories received event. updating...', event);
       await this.updateStations();
     });
 
     window.homebridge.addEventListener('addAccessory', async (event: any) => {
       await this.wait();
-      console.log('addAccessory received event. updating...', JSON.stringify(event));
+      console.log('addAccessory received event. updating...', event);
       await this.updateStations();
     });
 
