@@ -21,7 +21,7 @@ import { DeviceAccessory } from './Device';
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore  
-import { Camera, DeviceEvents, PropertyName, CommandName, StreamMetadata, PropertyValue, Station } from 'eufy-security-client';
+import { Camera, DeviceEvents, PropertyName, CommandName, StreamMetadata, PropertyValue } from 'eufy-security-client';
 
 import { CameraConfig, DEFAULT_CAMERACONFIG_VALUES } from '../utils/configTypes';
 import { CHAR, SERV } from '../utils/utils';
@@ -284,6 +284,7 @@ export class CameraAccessory extends DeviceAccessory {
         setValue: (value, characteristic) =>
           this.setCameraPropertyValue(characteristic, PropertyName.DeviceEnabled, value),
         onValue: (service, characteristic) => {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           this.device.on('property changed', (device: any, name: string, value: PropertyValue) => {
             this.applyPropertyValue(characteristic, PropertyName.DeviceEnabled, value);
           });
@@ -297,6 +298,7 @@ export class CameraAccessory extends DeviceAccessory {
           getValue: (data, characteristic) =>
             this.getCameraPropertyValue(characteristic, PropertyName.DeviceEnabled),
           onValue: (service, characteristic) => {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             this.device.on('property changed', (device: any, name: string, value: PropertyValue) => {
               this.applyPropertyValue(characteristic, PropertyName.DeviceEnabled, value);
             });
@@ -313,6 +315,7 @@ export class CameraAccessory extends DeviceAccessory {
           setValue: (value, characteristic) =>
             this.setCameraPropertyValue(characteristic, PropertyName.DeviceStatusLed, value),
           onValue: (service, characteristic) => {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             this.device.on('property changed', (device: any, name: string, value: PropertyValue) => {
               this.applyPropertyValue(characteristic, PropertyName.DeviceStatusLed, value);
             });
@@ -329,6 +332,7 @@ export class CameraAccessory extends DeviceAccessory {
           setValue: (value, characteristic) =>
             this.setCameraPropertyValue(characteristic, PropertyName.DeviceNightvision, value),
           onValue: (service, characteristic) => {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             this.device.on('property changed', (device: any, name: string, value: PropertyValue) => {
               this.applyPropertyValue(characteristic, PropertyName.DeviceNightvision, value);
             });
@@ -345,6 +349,7 @@ export class CameraAccessory extends DeviceAccessory {
           setValue: (value, characteristic) =>
             this.setCameraPropertyValue(characteristic, PropertyName.DeviceAutoNightvision, value),
           onValue: (service, characteristic) => {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             this.device.on('property changed', (device: any, name: string, value: PropertyValue) => {
               this.applyPropertyValue(characteristic, PropertyName.DeviceAutoNightvision, value);
             });
@@ -449,7 +454,7 @@ export class CameraAccessory extends DeviceAccessory {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   protected getCameraPropertyValue(characteristic: any, propertyName: PropertyName): CharacteristicValue {
     try {
-      let value = this.device.getPropertyValue(propertyName);
+      const value = this.device.getPropertyValue(propertyName);
       return this.applyPropertyValue(characteristic, propertyName, value);
     } catch (error) {
       this.log.debug(`Error getting '${characteristic.displayName}' ${propertyName}: ${error}`);
