@@ -21,7 +21,7 @@ import { DeviceAccessory } from './Device';
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore  
-import { Camera, DeviceEvents, PropertyName, CommandName, StreamMetadata } from 'eufy-security-client';
+import { Camera, DeviceEvents, PropertyName, CommandName, StreamMetadata, PropertyValue, Station } from 'eufy-security-client';
 
 import { CameraConfig, DEFAULT_CAMERACONFIG_VALUES } from '../utils/configTypes';
 import { CHAR, SERV } from '../utils/utils';
@@ -76,6 +76,8 @@ export class CameraAccessory extends DeviceAccessory {
 
   public metadata!: StreamMetadata;
 
+  public standalone: boolean = false;
+
   // List of event types
   public readonly eventTypesToHandle: (keyof DeviceEvents)[] = [
     'motion detected',
@@ -120,12 +122,20 @@ export class CameraAccessory extends DeviceAccessory {
 
     this.cameraConfig = this.getCameraConfig();
 
+    this.standalone = device.getSerial() === device.getStationSerial();
+
+    this.log.debug(`Is standalone?`, this.standalone);
+
     if (this.cameraConfig.enableCamera || this.device.isDoorbell()) {
-      this.log.debug(`has a camera`);
+      if (this.cameraConfig.enableCamera) {
+        this.log.debug(`Camera enabled: Setting up camera and chime button.`);
+      } else {
+        this.log.debug(`Device identified as a doorbell: Setting up camera and chime button.`);
+      }
       this.setupCamera();
       this.setupChimeButton();
     } else {
-      this.log.debug(`has a motion sensor`);
+      this.log.debug(`has a motion sensor: Setting up motion.`);
       this.setupMotionFunction();
     }
 
@@ -274,8 +284,8 @@ export class CameraAccessory extends DeviceAccessory {
         setValue: (value, characteristic) =>
           this.setCameraPropertyValue(characteristic, PropertyName.DeviceEnabled, value),
         onValue: (service, characteristic) => {
-          this.device.on('property changed', () => {
-            this.getCameraPropertyValue(characteristic, PropertyName.DeviceEnabled);
+          this.device.on('property changed', (device: any, name: string, value: PropertyValue) => {
+            this.applyPropertyValue(characteristic, PropertyName.DeviceEnabled, value);
           });
         },
       });
@@ -287,8 +297,8 @@ export class CameraAccessory extends DeviceAccessory {
           getValue: (data, characteristic) =>
             this.getCameraPropertyValue(characteristic, PropertyName.DeviceEnabled),
           onValue: (service, characteristic) => {
-            this.device.on('property changed', () => {
-              this.getCameraPropertyValue(characteristic, PropertyName.DeviceEnabled);
+            this.device.on('property changed', (device: any, name: string, value: PropertyValue) => {
+              this.applyPropertyValue(characteristic, PropertyName.DeviceEnabled, value);
             });
           },
         });
@@ -303,8 +313,8 @@ export class CameraAccessory extends DeviceAccessory {
           setValue: (value, characteristic) =>
             this.setCameraPropertyValue(characteristic, PropertyName.DeviceStatusLed, value),
           onValue: (service, characteristic) => {
-            this.device.on('property changed', () => {
-              this.getCameraPropertyValue(characteristic, PropertyName.DeviceStatusLed);
+            this.device.on('property changed', (device: any, name: string, value: PropertyValue) => {
+              this.applyPropertyValue(characteristic, PropertyName.DeviceStatusLed, value);
             });
           },
         });
@@ -319,8 +329,8 @@ export class CameraAccessory extends DeviceAccessory {
           setValue: (value, characteristic) =>
             this.setCameraPropertyValue(characteristic, PropertyName.DeviceNightvision, value),
           onValue: (service, characteristic) => {
-            this.device.on('property changed', () => {
-              this.getCameraPropertyValue(characteristic, PropertyName.DeviceNightvision);
+            this.device.on('property changed', (device: any, name: string, value: PropertyValue) => {
+              this.applyPropertyValue(characteristic, PropertyName.DeviceNightvision, value);
             });
           },
         });
@@ -335,8 +345,8 @@ export class CameraAccessory extends DeviceAccessory {
           setValue: (value, characteristic) =>
             this.setCameraPropertyValue(characteristic, PropertyName.DeviceAutoNightvision, value),
           onValue: (service, characteristic) => {
-            this.device.on('property changed', () => {
-              this.getCameraPropertyValue(characteristic, PropertyName.DeviceAutoNightvision);
+            this.device.on('property changed', (device: any, name: string, value: PropertyValue) => {
+              this.applyPropertyValue(characteristic, PropertyName.DeviceAutoNightvision, value);
             });
           },
         });
@@ -440,37 +450,41 @@ export class CameraAccessory extends DeviceAccessory {
   protected getCameraPropertyValue(characteristic: any, propertyName: PropertyName): CharacteristicValue {
     try {
       let value = this.device.getPropertyValue(propertyName);
-
-      this.log.debug(`GET '${characteristic.displayName}' ${propertyName}: ${value}`);
-
-      if (propertyName === PropertyName.DeviceNightvision) {
-        return value === 1;
-      }
-
-      // Override for PropertyName.DeviceEnabled when enabled button is fired and 
-      if (
-        propertyName === PropertyName.DeviceEnabled &&
-        Date.now() - this.cameraStatus.timestamp <= 60000
-      ) {
-        // eslint-disable-next-line max-len
-        this.log.debug(`CACHED for (1 min) '${characteristic.displayName}' ${propertyName}: ${this.cameraStatus.isEnabled}`);
-        value = this.cameraStatus.isEnabled;
-      }
-
-      if (characteristic.displayName === 'Manually Disabled') {
-        value = !value;
-        this.log.debug(`INVERSED '${characteristic.displayName}' ${propertyName}: ${value}`);
-      }
-
-      if (value === undefined) {
-        return false;
-      }
-
-      return value as CharacteristicValue;
+      return this.applyPropertyValue(characteristic, propertyName, value);
     } catch (error) {
       this.log.debug(`Error getting '${characteristic.displayName}' ${propertyName}: ${error}`);
       return false;
     }
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  protected applyPropertyValue(characteristic: any, propertyName: PropertyName, value: PropertyValue): CharacteristicValue {
+    this.log.debug(`GET '${characteristic.displayName}' ${propertyName}: ${value}`);
+
+    if (propertyName === PropertyName.DeviceNightvision) {
+      return value === 1;
+    }
+
+    // Override for PropertyName.DeviceEnabled when enabled button is fired and 
+    if (
+      propertyName === PropertyName.DeviceEnabled &&
+      Date.now() - this.cameraStatus.timestamp <= 60000
+    ) {
+      // eslint-disable-next-line max-len
+      this.log.debug(`CACHED for (1 min) '${characteristic.displayName}' ${propertyName}: ${this.cameraStatus.isEnabled}`);
+      value = this.cameraStatus.isEnabled;
+    }
+
+    if (characteristic.displayName === 'Manually Disabled') {
+      value = !value;
+      this.log.debug(`INVERSED '${characteristic.displayName}' ${propertyName}: ${value}`);
+    }
+
+    if (value === undefined) {
+      throw (`Value is undefined: this shouldn't happend`);
+    }
+
+    return value as CharacteristicValue;
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
