@@ -9,7 +9,7 @@ import { COUNTRIES } from '../countries';
 import { FormsModule } from '@angular/forms';
 import { NgbAlert, NgbPopover, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { NgIf, NgFor } from '@angular/common';
-import { FeatherModule } from 'angular-feather';
+import { LucideAngularModule } from 'lucide-angular';
 
 enum LoginStep {
   LOGIN = 1,
@@ -28,7 +28,7 @@ enum LoginStep {
     FormsModule,
     NgbTooltip,
     NgFor,
-    FeatherModule,
+    LucideAngularModule,
   ],
 })
 export class LoginComponent implements OnInit {

@@ -11,7 +11,7 @@ import { PollingIntervalMinutesComponent } from '../config-options/polling-inter
 import { EditCredentialsComponent } from '../config-options/edit-credentials/edit-credentials.component';
 import { AutoSyncStationComponent } from '../config-options/auto-sync-station/auto-sync-station.component';
 import { NodejsSecurityComponent } from '../config-options/nodejs-security/nodejs-security.component';
-import { FeatherModule } from 'angular-feather';
+import { LucideAngularModule } from 'lucide-angular';
 
 @Component({
     selector: 'app-advanced-config-options',
@@ -30,7 +30,7 @@ import { FeatherModule } from 'angular-feather';
         ResetPluginComponent,
         AutoSyncStationComponent,
         NodejsSecurityComponent,
-        FeatherModule,
+        LucideAngularModule,
     ],
 })
 export class AdvancedConfigOptionsComponent {

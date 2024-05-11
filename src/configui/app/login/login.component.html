@@ -29,7 +29,7 @@
   <!-- Login failed alert -->
   <p class="col-11 col-sm-7" *ngIf="loginFailed">
     <ngb-alert [dismissible]="true" type="danger" (closed)="resetLoginFailed()">
-      <i-feather name="alert-triangle"></i-feather>
+      <lucide-angular name="alert-triangle"></lucide-angular>
       <strong>Login was not successful!</strong>
     </ngb-alert>
   </p>
@@ -40,7 +40,7 @@
     <!-- Login form start -->
     <div *ngIf="loginStep === 1">
       <div *ngIf="nodeJSIncompatible" class="alert alert-danger d-flex align-items-center" role="alert">
-        <i-feather name="info"></i-feather>
+        <lucide-angular name="info"></lucide-angular>
         <div>
           Error: Your current Node.js version {{ nodeJSversion }} is incompatible with the
           RSA_PKCS1_PADDING used by the plugin. If you run the plugin with an incompatible version of Node.js,
@@ -52,7 +52,7 @@
         </div>
       </div>
       <div *ngIf="!firstLoginAssumed" class="alert alert-warning d-flex align-items-center" role="alert">
-        <i-feather name="info"></i-feather>
+        <lucide-angular name="info"></lucide-angular>
         <div>
           Please make sure to restart plugin after you're done.
           <u role="button" popoverTitle="Please restart after login" [autoClose]="'outside'" [ngbPopover]="popInfo">

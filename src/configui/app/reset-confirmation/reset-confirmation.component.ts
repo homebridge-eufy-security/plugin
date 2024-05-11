@@ -3,7 +3,7 @@ import { Router } from '@angular/router';
 import { PluginService } from '../plugin.service';
 import { NgbAlert } from '@ng-bootstrap/ng-bootstrap';
 import { NgIf } from '@angular/common';
-import { FeatherModule } from 'angular-feather';
+import { LucideAngularModule } from 'lucide-angular';
 
 @Component({
   selector: 'app-reset-confirmation',
@@ -13,7 +13,7 @@ import { FeatherModule } from 'angular-feather';
   imports: [
     NgIf,
     NgbAlert,
-    FeatherModule,
+    LucideAngularModule,
   ],
 })
 export class ResetConfirmationComponent {

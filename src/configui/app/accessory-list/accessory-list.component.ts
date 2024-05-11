@@ -5,13 +5,13 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 
 import { NgbModal, ModalDismissReasons, NgbProgressbar } from '@ng-bootstrap/ng-bootstrap';
 
-import { FeatherModule } from 'angular-feather';
 import { PluginService } from '../plugin.service';
 
 import { L_Station } from '../util/types';
 import { DeviceImage } from '../util/deviceToImagesMap';
 import { NgIf, NgFor } from '@angular/common';
 import { NgbAccordionModule, NgbAlertModule, NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
+import { LucideAngularModule } from 'lucide-angular';
 
 @Component({
   selector: 'app-accessory-list',
@@ -21,7 +21,7 @@ import { NgbAccordionModule, NgbAlertModule, NgbTooltipModule } from '@ng-bootst
   imports: [
     RouterLink,
     NgIf,
-    FeatherModule,
+    LucideAngularModule,
     NgFor,
     NgbAccordionModule,
     NgbAlertModule,

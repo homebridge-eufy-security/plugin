@@ -4,7 +4,7 @@ import { PluginService } from '../../../app/plugin.service';
 import { DEFAULT_CAMERACONFIG_VALUES, DEFAULT_CONFIG_VALUES } from '../../../app/util/default-config-values';
 import { ConfigOptionsInterpreter } from '../config-options-interpreter';
 
-import { FeatherModule } from 'angular-feather';
+import { LucideAngularModule } from 'lucide-angular';
 import { ChargingType } from '../../util/types';
 import { RouterLink } from '@angular/router';
 import { NgIf, NgFor } from '@angular/common';
@@ -20,7 +20,7 @@ import { FormsModule } from '@angular/forms';
     NgIf,
     RouterLink,
     NgFor,
-    FeatherModule,
+    LucideAngularModule,
   ],
 })
 export class SnapshotHandlingMethodComponent extends ConfigOptionsInterpreter implements OnInit {
