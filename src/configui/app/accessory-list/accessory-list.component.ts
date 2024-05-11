@@ -1,6 +1,6 @@
 /* eslint-disable no-console */
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { Component, OnInit, Input } from '@angular/core';
+import { Component, OnInit, Input, NgZone } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 
 import { NgbModal, ModalDismissReasons, NgbProgressbar } from '@ng-bootstrap/ng-bootstrap';
@@ -49,6 +49,7 @@ export class AccessoryListComponent implements OnInit {
     public pluginService: PluginService,
     private route: ActivatedRoute,
     private routerService: Router,
+    private zone: NgZone,
   ) { }
 
   async ngOnInit(): Promise<void> {
@@ -60,15 +61,15 @@ export class AccessoryListComponent implements OnInit {
     });
 
     this.pluginService.addEventListener('newAccessories', async (event: any) => {
-      await this.wait();
-      console.log('newAccessories received event. updating...', event);
-      await this.updateStations();
+      this.zone.run(async () => {
+        await this.updateStations();
+      });
     });
 
     window.homebridge.addEventListener('addAccessory', async (event: any) => {
-      await this.wait();
-      console.log('addAccessory received event. updating...', event);
-      await this.updateStations();
+      this.zone.run(async () => {
+        await this.updateStations();
+      });
     });
 
     window.homebridge.addEventListener('AdminAccountUsed', async () => {
@@ -77,9 +78,6 @@ export class AccessoryListComponent implements OnInit {
     });
 
     this.update_progress(10);
-    if (this.waitForAccessories) {
-      await this.wait();
-    }
     await this.updateStations();
 
     if (!this.waitForAccessories && this.stations.length === 0) {
@@ -91,11 +89,6 @@ export class AccessoryListComponent implements OnInit {
         this.routerService.navigateByUrl('/login');
       });
     }
-  }
-
-  private async wait(): Promise<void> {
-    this.wait_timer += 100;
-    return new Promise(resolve => setTimeout(resolve, this.wait_timer));
   }
 
   private async updateStations() {
@@ -128,7 +121,6 @@ export class AccessoryListComponent implements OnInit {
     }
 
     this.update_progress(90);
-    console.log('updating...');
     this.stations = stations;
 
   }
