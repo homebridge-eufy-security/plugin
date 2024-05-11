@@ -17,7 +17,6 @@ export class DownloadLogsComponent implements OnInit {
 
   progress: number = 0;
   status: string = '';
-  wait_timer: number = 200;
 
   constructor(
     private router: Router,
