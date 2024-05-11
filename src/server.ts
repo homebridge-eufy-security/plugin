@@ -321,25 +321,18 @@ class UiServer extends HomebridgePluginUiServer {
     }
   }
 
-  /**
-   * Asynchronously compresses log files from a directory and returns a Promise that resolves to a Buffer.
-   * @returns {Promise<Buffer>} A Promise resolving to a Buffer containing compressed log files.
-   */
-  async downloadLogs(): Promise<Buffer> {
+  async getLogs(): Promise<string[]> {
     // Step 1: List Files in Directory
     // Asynchronously list all files in the directory specified by this.storagePath.
-    this.pushEvent('downloadLogsProgress', { progress: 10, status: 'List Files in Directory' });
     const files = await fs.promises.readdir(this.storagePath);
 
     // Step 2: Filter Log Files
-    // Filter the list of files to include only those with names ending in .log, .log.0, .log.1.
-    this.pushEvent('downloadLogsProgress', { progress: 20, status: 'Filter Log Files' });
+    // Filter the list of files to include only those with names ending in .log, .log.0.
     const logFiles = files.filter(file => {
       return file.endsWith('.log') || file.endsWith('.log.0');
     });
 
     // Step 3: Filter out Empty Log Files
-    this.pushEvent('downloadLogsProgress', { progress: 25, status: 'Filter Empty Files' });
     const nonEmptyLogFiles = await Promise.all(logFiles.map(async file => {
       const filePath = path.join(this.storagePath, file);
       const stats = await fs.promises.stat(filePath);
@@ -350,12 +343,21 @@ class UiServer extends HomebridgePluginUiServer {
     }));
 
     // Step 4: Remove null entries (empty log files) from the array
-    this.pushEvent('downloadLogsProgress', { progress: 30, status: 'Filter Empty Files' });
-    const finalLogFiles = nonEmptyLogFiles.filter(file => file !== null) as string[];
+    return nonEmptyLogFiles.filter(file => file !== null) as string[];
+  }
+
+  /**
+   * Asynchronously compresses log files from a directory and returns a Promise that resolves to a Buffer.
+   * @returns {Promise<Buffer>} A Promise resolving to a Buffer containing compressed log files.
+   */
+  async downloadLogs(): Promise<Buffer> {
+
+    this.pushEvent('downloadLogsProgress', { progress: 10, status: 'Gets non-empty log files' });
+    const finalLogFiles = await this.getLogs();
 
     // Step 5: Add Log Files to Zip
     // Initialize a Zip instance and add each log file to the archive.
-    this.pushEvent('downloadLogsProgress', { progress: 35, status: 'Add Log Files to Zip' });
+    this.pushEvent('downloadLogsProgress', { progress: 30, status: 'Add Log Files to Zip' });
     const zip = new Zip();
     let numberOfFiles = 0;
     finalLogFiles.forEach(logFile => {
