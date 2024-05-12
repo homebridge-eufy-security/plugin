@@ -751,6 +751,7 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
 
     if (Device.isKeyPad(type)) {
       log.debug(accessory.displayName + ' isKeypad!');
+      throw('The keypad needs to be taken out because it serves no purpose.');
     }
 
   }
