@@ -19,7 +19,6 @@ export class IgnoreMultipleDevicesWarningComponent extends ConfigOptionsInterpre
   }
 
   async ngOnInit(): Promise<void> {
-    await this.initialize();
     this.readValue();
   }
 

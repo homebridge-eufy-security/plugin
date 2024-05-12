@@ -20,7 +20,10 @@ export class PluginService extends EventTarget {
     };
   });
 
-  private config?: PluginConfig;
+  public config: PluginConfig[] = [{
+    "platform": "EufySecurity",
+    "name": "EufySecurity"
+  }];
 
   constructor() {
     super();
@@ -28,6 +31,9 @@ export class PluginService extends EventTarget {
   }
 
   private init() {
+
+    this.getPlatformConfig();
+
     this.accessories$.subscribe((value: Event) => {
       const v = value as MessageEvent;
       this.stations = v.data;
@@ -77,41 +83,55 @@ export class PluginService extends EventTarget {
     }
   }
 
-  public async getConfig(): Promise<PluginConfig> {
-    if (this.config) {
-      return Promise.resolve(this.config);
-    }
-
-    return this.getPlatformConfig();
-  }
-
-  public async updateConfig(config: PluginConfig, save?: boolean): Promise<void> {
-    try {
-      await window.homebridge.updatePluginConfig([config]);
-      this.config = config;
-      if (save) {
-        await window.homebridge.savePluginConfig();
-      }
-      this.dispatchEvent(new Event('configChanged'));
-    } catch (err) {
-      console.log('There was an error updating the credentials in your config: ' + err);
-    }
-  }
-
-  private async getPlatformConfig(): Promise<PluginConfig> {
+  public getConfig(): PluginConfig {
     // always use the first platform config since there is only one supported
-    try {
-      const configs = await window.homebridge.getPluginConfig();
+    return this.config[0];
+  }
 
-      if (configs.length > 0) {
-        this.config = configs[0];
-        this.config['platform'] = 'EufySecurity';
-        return Promise.resolve(configs[0]);
-      } else {
-        return Promise.reject('Could not get Platform config');
-      }
-    } catch (err) {
-      return Promise.reject(err);
+  public async updateConfig(config: PluginConfig): Promise<void> {
+    try {
+      this.config = [config];
+      await window.homebridge.updatePluginConfig(this.config);
+      this.dispatchEvent(new Event('configChanged'));
+    } catch (error) {
+      console.log('There was an error updating your config: ', error, this.config);
+    }
+  }
+
+  private async getPlatformConfig(): Promise<PluginConfig[]> {
+    try {
+      const newConfig = await window.homebridge.getPluginConfig();
+      this.config = newConfig.length > 0 ? newConfig : this.config;
+    } catch (error) {
+      console.error('Error fetching plugin config:', error);
+    }
+    return this.config;
+  }
+
+  /**
+   * Saves the configuration changes made by the user.
+   * 
+   * @returns A Promise that resolves when the configuration is successfully saved.
+   */
+  public async saveConfig(): Promise<void> {
+    try {
+      await window.homebridge.savePluginConfig();
+    } catch (error) {
+      console.log('There was an error when saving config: ', error);
+    }
+  }
+
+  /**
+   * Resets the configuration to default settings.
+   * 
+   * @returns A Promise that resolves when the configuration is successfully reset.
+   */
+  public async resetConfig(): Promise<void> {
+    try {
+      await window.homebridge.updatePluginConfig([{}]);
+      await window.homebridge.savePluginConfig();
+    } catch (error) {
+      console.log('There was an error when reseting config: ', error);
     }
   }
 }

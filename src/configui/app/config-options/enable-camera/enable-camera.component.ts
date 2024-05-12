@@ -38,7 +38,7 @@ export class EnableCameraComponent extends ConfigOptionsInterpreter implements O
       this.update();
     }
 
-    const config = await this.getCameraConfig(this.device?.uniqueId || '');
+    const config = this.getCameraConfig(this.device?.uniqueId || '');
 
     if (config && Object.prototype.hasOwnProperty.call(config, 'enableCamera')) {
       this.value = config['enableCamera'];

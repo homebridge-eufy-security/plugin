@@ -36,7 +36,6 @@ export class SnapshotHandlingMethodComponent extends ConfigOptionsInterpreter im
   }
 
   async ngOnInit(): Promise<void> {
-    await this.initialize();
     await this.readValue();
   }
 
@@ -50,7 +49,7 @@ export class SnapshotHandlingMethodComponent extends ConfigOptionsInterpreter im
 
       this.ignoreMultipleDevicesWarning = this.config['ignoreMultipleDevicesWarning'] ?? this.ignoreMultipleDevicesWarning;
 
-      const config = await this.getCameraConfig(uniqueId);
+      const config = this.getCameraConfig(uniqueId);
       this.value = config['snapshotHandlingMethod'] ?? this.value;
 
       if (!this.ignoreMultipleDevicesWarning && !this.standalone) {

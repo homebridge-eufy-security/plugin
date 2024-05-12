@@ -6,10 +6,10 @@ import { NgIf } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 
 @Component({
-    selector: 'app-rtsp-streaming',
-    templateUrl: './rtsp-streaming.component.html',
-    standalone: true,
-    imports: [FormsModule, NgIf],
+  selector: 'app-rtsp-streaming',
+  templateUrl: './rtsp-streaming.component.html',
+  standalone: true,
+  imports: [FormsModule, NgIf],
 })
 export class RtspStreamingComponent extends ConfigOptionsInterpreter implements OnInit {
   constructor(pluginService: PluginService) {
@@ -35,7 +35,7 @@ export class RtspStreamingComponent extends ConfigOptionsInterpreter implements 
   talkbackIsEnabled = false;
 
   async readValue() {
-    const config = await this.getCameraConfig(this.device?.uniqueId || '');
+    const config = this.getCameraConfig(this.device?.uniqueId || '');
 
     if (config && Object.prototype.hasOwnProperty.call(config, 'rtsp')) {
       this.value = config['rtsp'];
@@ -48,9 +48,7 @@ export class RtspStreamingComponent extends ConfigOptionsInterpreter implements 
 
   update() {
     this.updateDeviceConfig(
-      {
-        rtsp: this.value,
-      },
+      { rtsp: this.value, },
       this.device!,
     );
   }

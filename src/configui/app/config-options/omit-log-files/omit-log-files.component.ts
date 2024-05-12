@@ -20,7 +20,6 @@ export class OmitLogFilesComponent extends ConfigOptionsInterpreter implements O
   }
 
   async ngOnInit(): Promise<void> {
-    await this.initialize();
     this.readValue();
   }
 

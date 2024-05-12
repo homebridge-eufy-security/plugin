@@ -41,7 +41,7 @@ export class ResetConfirmationComponent {
     this.disabled = false;
 
     if (!this.failed) {
-      await this.pluginService.updateConfig({}, true);
+      await this.pluginService.resetConfig();
       window.homebridge.closeSettings();
     }
   }

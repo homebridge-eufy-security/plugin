@@ -15,7 +15,6 @@ export class LivestreamDurationSecondsComponent extends ConfigOptionsInterpreter
   }
 
   async ngOnInit(): Promise<void> {
-    await this.initialize();
     this.readValue();
   }
 

@@ -37,7 +37,7 @@ export class TalkbackComponent extends ConfigOptionsInterpreter implements OnIni
   rtspIsEnabled = false;
 
   async readValue() {
-    const config = await this.getCameraConfig(this.device?.uniqueId || '');
+    const config = this.getCameraConfig(this.device?.uniqueId || '');
 
     if (config && Object.prototype.hasOwnProperty.call(config, 'talkback')) {
       this.value = config['talkback'];

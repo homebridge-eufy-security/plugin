@@ -19,7 +19,6 @@ export class CleanCacheComponent extends ConfigOptionsInterpreter implements OnI
   }
   
   async ngOnInit(): Promise<void> {
-    await this.initialize();
     this.readValue();
   }
 

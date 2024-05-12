@@ -35,7 +35,7 @@ export class PeriodicSnapshotRefreshComponent extends ConfigOptionsInterpreter i
   inputIsInvalid = false;
 
   async readValue() {
-    const config = await this.getCameraConfig(this.device?.uniqueId || '');
+    const config = this.getCameraConfig(this.device?.uniqueId || '');
 
     if (config && Object.prototype.hasOwnProperty.call(config, 'refreshSnapshotIntervalMinutes')) {
       this.value = config['refreshSnapshotIntervalMinutes'];

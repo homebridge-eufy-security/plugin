@@ -103,7 +103,7 @@ export class AccessoryListComponent implements OnInit {
     }
 
     this.update_progress(40);
-    const { ignoreStations = [], ignoreDevices = [] } = await this.pluginService.getConfig();
+    const { ignoreStations = [], ignoreDevices = [] } = this.pluginService.getConfig();
 
     this.update_progress(50);
     stations.forEach((station) => {

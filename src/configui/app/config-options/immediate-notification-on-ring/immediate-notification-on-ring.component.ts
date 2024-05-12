@@ -32,7 +32,7 @@ export class ImmediateNotificationOnRingComponent extends ConfigOptionsInterpret
   value = DEFAULT_CAMERACONFIG_VALUES.immediateRingNotificationWithoutSnapshot;
 
   async readValue() {
-    const config = await this.getCameraConfig(this.device?.uniqueId || '');
+    const config = this.getCameraConfig(this.device?.uniqueId || '');
 
     if (config && Object.prototype.hasOwnProperty.call(config, 'immediateRingNotificationWithoutSnapshot')) {
       this.value = config['immediateRingNotificationWithoutSnapshot'];
