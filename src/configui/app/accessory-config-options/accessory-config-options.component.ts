@@ -20,7 +20,7 @@ import { NgIf, NgSwitch, NgSwitchCase, NgSwitchDefault } from '@angular/common';
 import { NgbAccordionModule } from '@ng-bootstrap/ng-bootstrap';
 import { GuardModesMappingComponent } from '../config-options/guard-modes-mapping/guard-modes-mapping.component';
 import { ManualAlarmModesComponent } from '../config-options/manual-alarm-modes/manual-alarm-modes.component';
-import { FeatherModule } from 'angular-feather';
+import { LucideAngularModule } from 'lucide-angular';
 
 @Component({
   selector: 'app-accessory-config-options',
@@ -32,7 +32,7 @@ import { FeatherModule } from 'angular-feather';
     NgSwitch,
     NgSwitchCase,
     NgSwitchDefault,
-    FeatherModule,
+    LucideAngularModule,
     IgnoreAccessoryComponent,
     EnableCameraComponent,
     RtspStreamingComponent,

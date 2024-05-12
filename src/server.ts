@@ -8,6 +8,7 @@ import { Accessory, L_Station, L_Device, LoginResult, LoginFailReason } from './
 import { version } from '../package.json';
 import { version as nodeJSversion } from 'node:process';
 import { satisfies } from 'semver';
+import path from 'path';
 
 class UiServer extends HomebridgePluginUiServer {
   public stations: L_Station[] = [];
@@ -320,43 +321,83 @@ class UiServer extends HomebridgePluginUiServer {
     }
   }
 
-  async downloadLogs(): Promise<Buffer> {
-    this.log.info(`compressing log files to ${this.logZipFilePath} and sending to client.`);
-    if (!this.removeCompressedLogs()) {
-      this.log.error('There were already old compressed log files that could not be removed!');
-      return Promise.reject('There were already old compressed log files that could not be removed!');
-    }
-    return new Promise((resolve, reject) => {
-      const zip = new Zip();
-      let numberOfFiles = 0;
-      ['eufy-lib.log', 'eufy-security.log', 'ffmpeg.log', 'configui-lib.log', 'configui-server.log'].forEach(logFile => {
-        for (let i = 0; i < 3; i++) {
-          const fileName = i === 0 ? logFile : `${logFile}.${i}`;
-          const filePath = `${this.storagePath}/${fileName}`;
-          if (fs.existsSync(filePath)) {
-            zip.addFile(filePath);
-            numberOfFiles++;
-          }
-        }
-      });
+  async getLogs(): Promise<string[]> {
+    // Step 1: List Files in Directory
+    // Asynchronously list all files in the directory specified by this.storagePath.
+    const files = await fs.promises.readdir(this.storagePath);
 
-      if (numberOfFiles === 0) {
-        throw new Error('No log files were found');
-      }
-
-      this.pushEvent('downloadLogsFileCount', { numberOfFiles: numberOfFiles });
-
-      zip.archive(this.logZipFilePath)
-        .then(() => {
-          const fileBuffer = fs.readFileSync(this.logZipFilePath);
-          resolve(fileBuffer);
-        })
-        .catch((err) => {
-          this.log.error('Error while generating log files: ' + err);
-          reject(err);
-        })
-        .finally(() => this.removeCompressedLogs());
+    // Step 2: Filter Log Files
+    // Filter the list of files to include only those with names ending in .log, .log.0.
+    const logFiles = files.filter(file => {
+      return file.endsWith('.log') || file.endsWith('.log.0');
     });
+
+    // Step 3: Filter out Empty Log Files
+    const nonEmptyLogFiles = await Promise.all(logFiles.map(async file => {
+      const filePath = path.join(this.storagePath, file);
+      const stats = await fs.promises.stat(filePath);
+      if (stats.size > 0) {
+        return file;
+      }
+      return null;
+    }));
+
+    // Step 4: Remove null entries (empty log files) from the array
+    return nonEmptyLogFiles.filter(file => file !== null) as string[];
+  }
+
+  /**
+   * Asynchronously compresses log files from a directory and returns a Promise that resolves to a Buffer.
+   * @returns {Promise<Buffer>} A Promise resolving to a Buffer containing compressed log files.
+   */
+  async downloadLogs(): Promise<Buffer> {
+
+    this.pushEvent('downloadLogsProgress', { progress: 10, status: 'Gets non-empty log files' });
+    const finalLogFiles = await this.getLogs();
+
+    // Step 5: Add Log Files to Zip
+    // Initialize a Zip instance and add each log file to the archive.
+    this.pushEvent('downloadLogsProgress', { progress: 30, status: 'Add Log Files to Zip' });
+    const zip = new Zip();
+    let numberOfFiles = 0;
+    finalLogFiles.forEach(logFile => {
+      const filePath = path.join(this.storagePath, logFile);
+      zip.addFile(filePath);
+      numberOfFiles++;
+    });
+
+    // Step 6: Handle No Log Files Found
+    // If no log files are found after filtering, throw an error.
+    this.pushEvent('downloadLogsProgress', { progress: 40, status: 'No Log Files Found' });
+    if (numberOfFiles === 0) {
+      throw new Error('No log files were found');
+    }
+
+    try {
+      // Step 7: Archive Zip
+      // Archive the Zip instance to the specified log zip file.
+      this.pushEvent('downloadLogsProgress', { progress: 45, status: `Compressing ${numberOfFiles} files` });
+      await zip.archive(this.logZipFilePath);
+
+      // Step 8: Read Zip File
+      // Read the content of the generated log zip file into a Buffer.
+      this.pushEvent('downloadLogsProgress', { progress: 80, status: 'Reading content' });
+      const fileBuffer = fs.readFileSync(this.logZipFilePath);
+
+      // Step 9: Return Buffer
+      // Return the Buffer containing the compressed log files.
+      this.pushEvent('downloadLogsProgress', { progress: 90, status: 'Returning zip file' });
+      return fileBuffer;
+    } catch (err) {
+      // Step 10: Error Handling
+      // Log an error if archiving the zip file fails and propagate the error.
+      this.log.error('Error while generating log files: ' + err);
+      throw err;
+    } finally {
+      // Step 11: Cleanup
+      // Ensure to remove any compressed log files after the operation, regardless of success or failure.
+      this.removeCompressedLogs();
+    }
   }
 
   private removeCompressedLogs(): boolean {

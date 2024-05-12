@@ -32,7 +32,7 @@ export class DelayCameraSnapshotsComponent extends ConfigOptionsInterpreter impl
   value = DEFAULT_CAMERACONFIG_VALUES.delayCameraSnapshot;
 
   async readValue() {
-    const config = await this.getCameraConfig(this.device?.uniqueId || '');
+    const config = this.getCameraConfig(this.device?.uniqueId || '');
 
     if (config && Object.prototype.hasOwnProperty.call(config, 'delayCameraSnapshot')) {
       this.value = config['delayCameraSnapshot'];

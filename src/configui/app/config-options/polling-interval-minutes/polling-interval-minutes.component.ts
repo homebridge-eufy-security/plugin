@@ -15,7 +15,6 @@ export class PollingIntervalMinutesComponent extends ConfigOptionsInterpreter im
   }
 
   async ngOnInit(): Promise<void> {
-    await this.initialize();
     this.readValue();
   }
 

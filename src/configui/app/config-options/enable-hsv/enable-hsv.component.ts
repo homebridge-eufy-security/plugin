@@ -33,7 +33,6 @@ export class EnableHsvComponent extends ConfigOptionsInterpreter implements OnIn
   }
 
   async ngOnInit(): Promise<void> {
-    await this.initialize();
     await this.readValue();
   }
 
@@ -54,7 +53,7 @@ export class EnableHsvComponent extends ConfigOptionsInterpreter implements OnIn
   ignoreMultipleDevicesWarning = DEFAULT_CONFIG_VALUES.ignoreMultipleDevicesWarning;
 
   async readValue() {
-    const config = await this.getCameraConfig(this.device?.uniqueId || '');
+    const config = this.getCameraConfig(this.device?.uniqueId || '');
 
     this.hsv = config['hsv'] ?? this.hsv;
 

@@ -32,7 +32,7 @@ export class EnableAudioComponent extends ConfigOptionsInterpreter implements On
   samplerate = 0;
 
   async readValue() {
-    const config = await this.getCameraConfig(this.device?.uniqueId || '');
+    const config = this.getCameraConfig(this.device?.uniqueId || '');
 
     if (config && config['videoConfig'] && Object.prototype.hasOwnProperty.call(config['videoConfig'], 'audio')) {
       this.value = config['videoConfig']['audio'];
@@ -50,7 +50,7 @@ export class EnableAudioComponent extends ConfigOptionsInterpreter implements On
       return;
     }
 
-    let config = await this.getCameraConfig(this.device?.uniqueId || '');
+    let config = this.getCameraConfig(this.device?.uniqueId || '');
 
     if (!config) {
       config = {

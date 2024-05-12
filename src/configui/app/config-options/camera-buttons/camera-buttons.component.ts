@@ -44,7 +44,7 @@ export class CameraButtonsComponent extends ConfigOptionsInterpreter implements 
 
   async readValue(): Promise<void> {
     const uniqueId = this.device?.uniqueId ?? '';
-    const config = await this.getCameraConfig(uniqueId);
+    const config = this.getCameraConfig(uniqueId);
 
     this.buttonConfigs = this.buttonConfigs.filter((buttonConfig) => {
       if (this.device && this.device[buttonConfig.propertyName]) {

@@ -4,7 +4,7 @@ import { PluginService } from '../../../app/plugin.service';
 import { DEFAULT_CAMERACONFIG_VALUES, DEFAULT_CONFIG_VALUES } from '../../../app/util/default-config-values';
 import { ConfigOptionsInterpreter } from '../config-options-interpreter';
 
-import { FeatherModule } from 'angular-feather';
+import { LucideAngularModule } from 'lucide-angular';
 import { ChargingType } from '../../util/types';
 import { RouterLink } from '@angular/router';
 import { NgIf, NgFor } from '@angular/common';
@@ -20,7 +20,7 @@ import { FormsModule } from '@angular/forms';
     NgIf,
     RouterLink,
     NgFor,
-    FeatherModule,
+    LucideAngularModule,
   ],
 })
 export class SnapshotHandlingMethodComponent extends ConfigOptionsInterpreter implements OnInit {
@@ -36,7 +36,6 @@ export class SnapshotHandlingMethodComponent extends ConfigOptionsInterpreter im
   }
 
   async ngOnInit(): Promise<void> {
-    await this.initialize();
     await this.readValue();
   }
 
@@ -50,7 +49,7 @@ export class SnapshotHandlingMethodComponent extends ConfigOptionsInterpreter im
 
       this.ignoreMultipleDevicesWarning = this.config['ignoreMultipleDevicesWarning'] ?? this.ignoreMultipleDevicesWarning;
 
-      const config = await this.getCameraConfig(uniqueId);
+      const config = this.getCameraConfig(uniqueId);
       this.value = config['snapshotHandlingMethod'] ?? this.value;
 
       if (!this.ignoreMultipleDevicesWarning && !this.standalone) {

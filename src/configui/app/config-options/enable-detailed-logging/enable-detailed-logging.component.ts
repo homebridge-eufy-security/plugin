@@ -19,7 +19,6 @@ export class EnableDetailedLoggingComponent extends ConfigOptionsInterpreter imp
   }
 
   async ngOnInit(): Promise<void> {
-    await this.initialize();
     this.readValue();
   }
 

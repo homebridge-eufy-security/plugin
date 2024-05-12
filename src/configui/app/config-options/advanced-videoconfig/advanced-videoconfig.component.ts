@@ -52,7 +52,7 @@ export class AdvancedVideoconfigComponent
   presetDescription?: string;
 
   async readValue() {
-    const config = await this.getCameraConfig(this.device?.uniqueId || '');
+    const config = this.getCameraConfig(this.device?.uniqueId || '');
 
     if (config && Object.prototype.hasOwnProperty.call(config, 'videoConfig')) {
       Object.entries(config['videoConfig']).forEach(([key, value]) => {
@@ -180,7 +180,7 @@ export class AdvancedVideoconfigComponent
   }
 
   async update() {
-    const config = await this.getCameraConfig(this.device?.uniqueId || '');
+    const config = this.getCameraConfig(this.device?.uniqueId || '');
 
     const videoConfig =
       config && Object.prototype.hasOwnProperty.call(config, 'videoConfig')

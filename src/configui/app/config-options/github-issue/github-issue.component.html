@@ -1,0 +1,38 @@
+<a routerLink="/accessories" class="btn btn-secondary mb-3">
+  <lucide-angular name="chevron-left"></lucide-angular> Back
+</a>
+
+<div *ngIf="isCollapsed">
+
+  <p>To troubleshoot effectively before rising your issue to us:</p>
+  <ol>
+    <li>Search Existing Issues: Check <a href="https://github.com/homebridge-eufy-security/plugin/wiki/Common-Issues"
+        target="_blank" rel="noopener noreferrer">Common Issues</a> and <a
+        href="https://github.com/homebridge-eufy-security/plugin/issues" target="_blank"
+        rel="noopener noreferrer">User-Raised Issues</a>.</li>
+    <li>Join Discord Server: Engage with developers and community on <a href="https://discord.gg/hZqqTfjzet"
+        target="_blank" rel="noopener noreferrer">Discord</a>.</li>
+    <li>Enable debug logging</li>
+    <li>Reboot your system</li>
+    <li>Reproduce the issue</li>
+    <li>Download logs</li>
+  </ol>
+  <p>Resetting the system may also help.</p>
+  <p>Remember to disable debug logging after troubleshooting.</p>
+
+  <div class="text-center">
+    <button type="button" class="btn btn-outline-primary " (click)="collapse.toggle()"
+      [attr.aria-expanded]="!isCollapsed">
+      OK! let me go!
+    </button>
+  </div>
+
+</div>
+
+<div #collapse="ngbCollapse" [(ngbCollapse)]="isCollapsed">
+  <app-enable-detailed-logging />
+  <hr />
+  <app-download-logs />
+  <hr />
+  <app-reset-plugin />
+</div>

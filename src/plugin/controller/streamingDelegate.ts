@@ -180,7 +180,7 @@ export class StreamingDelegate implements CameraStreamingDelegate {
       callback(new Error('Error finding session information'));
     }
 
-    this.log.debug('VIDEOCONFIG: ' + JSON.stringify(this.videoConfig));
+    this.log.debug('VIDEOCONFIG: ', this.videoConfig);
 
     try {
       const activeSession: ActiveSession = {};
@@ -313,7 +313,7 @@ export class StreamingDelegate implements CameraStreamingDelegate {
     switch (request.type) {
       case StreamRequestTypes.START:
         this.log.debug(`Received request to start stream with id ${request.sessionID}`);
-        this.log.debug(`request data: ${JSON.stringify(request)}`);
+        this.log.debug(`request data:`, request);
         this.startStream(request, callback);
         break;
       case StreamRequestTypes.RECONFIGURE:
@@ -332,7 +332,7 @@ export class StreamingDelegate implements CameraStreamingDelegate {
         callback();
         break;
       case StreamRequestTypes.STOP:
-        this.log.debug('Receive Apple HK Stop request' + JSON.stringify(request));
+        this.log.debug('Receive Apple HK Stop request', request);
         this.stopStream(request.sessionID);
         callback();
         break;

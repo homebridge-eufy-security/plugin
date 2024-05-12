@@ -24,14 +24,14 @@
 <div *ngIf="!adminAccountUsed" class="text-end">
   <button type="button" class="btn btn-success" (click)="openReloadModal(reloadModal)"
     (keydown.enter)="openReloadModal(reloadModal)" placement="top" ngbTooltip="Re Sync">
-    <i-feather name="refresh-cw"></i-feather>
+    <lucide-angular name="refresh-cw"></lucide-angular>
   </button>
-  <button type="button" class="btn btn-warning" placement="top" ngbTooltip="Download Logs" routerLink="/downloadLogs">
-    <i-feather name="download"></i-feather>
+  <button type="button" class="btn btn-warning" placement="top" ngbTooltip="Having a bug?" routerLink="/githubissue">
+    <lucide-angular name="bug"></lucide-angular>
   </button>
   <button type="button" class="btn btn-danger" placement="top" ngbTooltip="Global Settings"
     routerLink="/advancedConfig">
-    <i-feather name="sliders"></i-feather>
+    <lucide-angular name="sliders-horizontal"></lucide-angular>
   </button>
 </div>
 
@@ -84,12 +84,12 @@
                 class="row m-0 accordion-button2" routerLink="/config/both/{{station.uniqueId}}">
                 <div class="col">{{ station.displayName }}</div>
                 <div class="col-1" *ngIf="!station.devices[0].disabled">
-                  <i-feather [ngbTooltip]="station.devices[0].ignored ? 'Device OFF' : 'Device ON'"
-                    [name]="station.devices[0].ignored ? 'video-off' : 'video'"></i-feather>
+                  <lucide-angular [ngbTooltip]="station.devices[0].ignored ? 'Device OFF' : 'Device ON'"
+                    [name]="station.devices[0].ignored ? 'video-off' : 'video'"></lucide-angular>
                 </div>
                 <div class="col-1" *ngIf="!station.disabled">
-                  <i-feather [ngbTooltip]="station.ignored ? 'Security Control OFF' : 'Security Control ON'"
-                    [name]="station.ignored ? 'shield-off' : 'shield'"></i-feather>
+                  <lucide-angular [ngbTooltip]="station.ignored ? 'Security Control OFF' : 'Security Control ON'"
+                    [name]="station.ignored ? 'shield-off' : 'shield'"></lucide-angular>
                 </div>
               </div>
 
@@ -116,11 +116,11 @@
                                 [style.opacity]="station.ignored === true ? 0.5 : 1" alt="{{ station.displayName }}">
                               <span class="devicesettingsicon d-flex border align-items-center justify-content-center"
                                 style="z-index: 15;">
-                                <i-feather name="sliders"></i-feather>
+                                <lucide-angular name="sliders-horizontal"></lucide-angular>
                               </span>
                               <span *ngIf="station.ignored" class="d-flex border align-items-top justify-content-end"
                                 style="z-index: 20;">
-                                <i-feather name="eye-off" class="mt-sm-1 m-sm-2 m-1 mt-0"></i-feather>
+                                <lucide-angular name="eye-off" class="mt-sm-1 m-sm-2 m-1 mt-0"></lucide-angular>
                               </span>
                             </div>
                           </a>
@@ -128,8 +128,6 @@
                       </div>
 
                       <span class="col-12 text-center">{{ station.displayName }}</span>
-                      <span class="col-12 serial fw-light text-center">({{station.type}} -
-                        {{station.uniqueId}})</span>
 
                     </div>
 
@@ -144,11 +142,11 @@
                                 [style.opacity]="device.ignored === true ? 0.5 : 1" alt="{{ device.displayName }}">
                               <span class="devicesettingsicon d-flex border align-items-center justify-content-center"
                                 style="z-index: 15;">
-                                <i-feather name="sliders"></i-feather>
+                                <lucide-angular name="sliders-horizontal"></lucide-angular>
                               </span>
                               <span *ngIf="device.ignored" class="d-flex border align-items-top justify-content-end"
                                 style="z-index: 20;">
-                                <i-feather name="eye-off" class="mt-sm-1 m-sm-2 m-1 mt-0"></i-feather>
+                                <lucide-angular name="eye-off" class="mt-sm-1 m-sm-2 m-1 mt-0"></lucide-angular>
                               </span>
                             </div>
                           </a>
@@ -156,8 +154,6 @@
                       </div>
 
                       <span class="col-12 text-center">{{ device.displayName }}</span>
-                      <span class="col-12 serial fw-light text-center">({{device.type}} -
-                        {{device.uniqueId}})</span>
 
                     </div>
 

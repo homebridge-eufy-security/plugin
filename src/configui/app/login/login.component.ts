@@ -9,7 +9,7 @@ import { COUNTRIES } from '../countries';
 import { FormsModule } from '@angular/forms';
 import { NgbAlert, NgbPopover, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { NgIf, NgFor } from '@angular/common';
-import { FeatherModule } from 'angular-feather';
+import { LucideAngularModule } from 'lucide-angular';
 
 enum LoginStep {
   LOGIN = 1,
@@ -28,7 +28,7 @@ enum LoginStep {
     FormsModule,
     NgbTooltip,
     NgFor,
-    FeatherModule,
+    LucideAngularModule,
   ],
 })
 export class LoginComponent implements OnInit {
@@ -68,18 +68,17 @@ export class LoginComponent implements OnInit {
     this.nodeJSversion = r.nodeJSversion;
     this.nodeJSIncompatible = r.nodeJSIncompatible;
 
-    await this.getCredentials();
+    this.getCredentials();
     this.fillCountryArray();
   }
 
   private async getCredentials() {
-    await this.loginService
-      .getCredentials()
-      .then((creds) => (this.credentials = creds))
-      .catch((err) => {
-        this.firstLoginAssumed = true;
-        console.log('Could not get config in login component: ' + err);
-      });
+    try {
+      this.credentials = this.loginService.getCredentials();
+    } catch (error) {
+      this.firstLoginAssumed = true;
+      console.log(error);
+    }
   }
 
   private fillCountryArray() {

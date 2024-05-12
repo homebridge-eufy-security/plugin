@@ -19,7 +19,6 @@ export class AutoSyncStationComponent extends ConfigOptionsInterpreter implement
   }
 
   async ngOnInit(): Promise<void> {
-    await this.initialize();
     this.readValue();
   }
 
