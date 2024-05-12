@@ -18,10 +18,21 @@
 <ng-template [ngIf]="device">
 
   <div class="d-flex justify-content-between align-items-center mt-2 mb-2">
-    <span>Enable Device on Apple Homekit</span>
-    <app-ignore-accessory [accessory]="device" [station]="false"
+    <label for="ignoreDevice">Enable Device on Apple Homekit</label>
+    <app-ignore-accessory [accessory]="device" [isDisabled]="device.isKeypad"
       (ignored)="ignoredDeviceChanged($event)"></app-ignore-accessory>
   </div>
+
+  <p *ngIf="device.isKeypad">
+    We've noticed a keypad in your setup. Please be aware that the keypad won't have any function with our plugin. The
+    alarm triggering is already managed by the station's security mode, rendering the keypad useless.
+  </p>
+
+  <p *ngIf="device.isKeypad">
+    When the keypad is connected to the homebase, it generates an Off mode. Exercise caution when altering the security
+    mode, as this process should occur automatically. If you encounter any issues, ensure to remove any configurations
+    associated with eufy modes mapping.
+  </p>
 
   <ng-template [ngIf]="!device.ignored && isCamera">
 
@@ -108,8 +119,8 @@
 <ng-template [ngIf]="station && !station.disabled">
 
   <div class="d-flex justify-content-between align-items-center mt-2 mb-2">
-    <span>Enable Device Security Control on Apple Homekit</span>
-    <app-ignore-accessory [accessory]="station" [station]="true"
+    <label for="ignoreStation">Enable Device Security Control on Apple Homekit</label>
+    <app-ignore-accessory [accessory]="station" [isStation]="true"
       (ignored)="ignoredStationChanged($event)"></app-ignore-accessory>
   </div>
 

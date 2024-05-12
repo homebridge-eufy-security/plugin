@@ -26,6 +26,11 @@
   color: #ffa000 !important;
 }
 
+.icon {
+  color: #0b6288;
+  margin: 2px;
+}
+
 .serial {
   font-size: 12px;
 }
@@ -53,10 +58,6 @@
 
 .my-custom-header::after {
   content: none;
-}
-
-.material-icons {
-  vertical-align: middle;
 }
 
 .accordion-button2 {

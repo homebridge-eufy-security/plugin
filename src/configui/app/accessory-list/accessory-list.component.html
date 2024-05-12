@@ -120,7 +120,7 @@
                               </span>
                               <span *ngIf="station.ignored" class="d-flex border align-items-top justify-content-end"
                                 style="z-index: 20;">
-                                <lucide-angular name="eye-off" class="mt-sm-1 m-sm-2 m-1 mt-0"></lucide-angular>
+                                <lucide-angular name="eye-off" class="icon"></lucide-angular>
                               </span>
                             </div>
                           </a>
@@ -146,7 +146,11 @@
                               </span>
                               <span *ngIf="device.ignored" class="d-flex border align-items-top justify-content-end"
                                 style="z-index: 20;">
-                                <lucide-angular name="eye-off" class="mt-sm-1 m-sm-2 m-1 mt-0"></lucide-angular>
+                                <lucide-angular name="eye-off" class="icon"></lucide-angular>
+                              </span>
+                              <span *ngIf="device.isKeypad" class="d-flex border align-items-top justify-content-end"
+                                style="z-index: 20;">
+                                <lucide-angular name="message-square-warning" class="icon"></lucide-angular>
                               </span>
                             </div>
                           </a>
@@ -172,14 +176,6 @@
       </ng-template>
 
     </div>
-
-    <p></p>
-
-    <span><i>The images used above are 'best effort' for now, since we do not own every eufy device.
-        If you experience that your device is depicted with a wrong image please feel free to let
-        us know in an issue on our <a href="https://github.com/homebridge-eufy-security/plugin" target="_blank"
-          rel="noopener noreferrer">Github page.</a></i>
-    </span>
 
   </div>
 
