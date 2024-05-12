@@ -13,22 +13,18 @@ export class LoginService {
   constructor(private pluginService: PluginService) { }
 
   public getCredentials(): Credentials {
-    try {
-      const config = this.pluginService.getConfig();
+    const config = this.pluginService.getConfig();
 
-      if (!config['username'] || !config['password']) {
-        throw ('no full credentials in config');
-      }
-
-      return {
-        username: config['username'],
-        password: config['password'],
-        country: config['country'] ? config['country'] : 'US',
-        deviceName: config['deviceName'],
-      };
-    } catch (error) {
-      throw (error);
+    if (!config['username'] || !config['password']) {
+      throw ('no full credentials in config');
     }
+
+    return {
+      username: config['username'],
+      password: config['password'],
+      country: config['country'] ? config['country'] : 'US',
+      deviceName: config['deviceName'],
+    };
   }
 
   public async login(options: any): Promise<LoginResult> {
