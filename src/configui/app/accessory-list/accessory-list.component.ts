@@ -60,14 +60,14 @@ export class AccessoryListComponent implements OnInit {
       this.versionUnmatched = true;
     });
 
-    this.pluginService.addEventListener('newAccessories', async (event: any) => {
-      this.zone.run(async () => {
+    this.pluginService.addEventListener('newAccessories', async () => {
+      await this.zone.run(async () => {
         await this.updateStations();
       });
     });
 
-    window.homebridge.addEventListener('addAccessory', async (event: any) => {
-      this.zone.run(async () => {
+    window.homebridge.addEventListener('addAccessory', async () => {
+      await this.zone.run(async () => {
         await this.updateStations();
       });
     });
