@@ -135,8 +135,8 @@ class UiServer extends HomebridgePluginUiServer {
       this.config.trustedDeviceName = options.deviceName;
       try {
         this.eufyClient = await EufySecurity.initialize(this.config, this.tsLog);
-        this.eufyClient?.on('station added', this.addStation.bind(this));
-        this.eufyClient?.on('device added', this.addDevice.bind(this));
+        this.eufyClient?.on('station added', await this.addStation.bind(this));
+        this.eufyClient?.on('device added', await this.addDevice.bind(this));
       } catch (err) {
         this.log.error(err);
       }
@@ -145,7 +145,7 @@ class UiServer extends HomebridgePluginUiServer {
     return new Promise((resolve, reject) => {
       setTimeout(() => {
         resolve({ success: false, failReason: LoginFailReason.TIMEOUT });
-      }, 25000);
+      }, 25 * 1000);
 
       if (options && options.username && options.password && options.country) {
         this.log.debug('login with credentials');
@@ -176,6 +176,12 @@ class UiServer extends HomebridgePluginUiServer {
         reject('unsupported login method');
       }
     });
+  }
+
+  loginHandlers(resolveCallback) {
+    this.eufyClient?.once('tfa request', () => resolveCallback({ success: false, failReason: LoginFailReason.TFA }));
+    this.eufyClient?.once('captcha request', (id, captcha) => resolveCallback({ success: false, failReason: LoginFailReason.CAPTCHA, data: { id: id, captcha: captcha } }));
+    this.eufyClient?.once('connect', () => resolveCallback({ success: true }));
   }
 
   /**
@@ -213,14 +219,11 @@ class UiServer extends HomebridgePluginUiServer {
     }
   }
 
-  loginHandlers(resolveCallback) {
-    this.eufyClient?.once('tfa request', () => resolveCallback({ success: false, failReason: LoginFailReason.TFA }));
-    this.eufyClient?.once('captcha request', (id, captcha) => resolveCallback({ success: false, failReason: LoginFailReason.CAPTCHA, data: { id: id, captcha: captcha } }));
-    this.eufyClient?.once('connect', () => resolveCallback({ success: true }));
+  async delay(ms: number): Promise<void> {
+    return new Promise(resolve => setTimeout(resolve, ms));
   }
 
-  addStation(station: Station) {
-
+  async addStation(station: Station) {
     // Before doing anything check if creds are guest admin
     const rawStation = station.getRawStation();
     if (rawStation.member.member_type !== UserType.ADMIN) {
@@ -239,6 +242,8 @@ class UiServer extends HomebridgePluginUiServer {
       `);
       return;
     }
+
+    await this.delay(1000);
 
     const s: L_Station = {
       uniqueId: station.getSerial(),
@@ -261,12 +266,14 @@ class UiServer extends HomebridgePluginUiServer {
     this.pushEvent('addAccessory', this.stations);
   }
 
-  addDevice(device: Device) {
+  async addDevice(device: Device) {
     // Before doing anything check if creds are guest admin
     if (this.adminAccountUsed) {
       this.pushEvent('AdminAccountUsed', true);
       return;
     }
+
+    await this.delay(2000);
 
     const d: L_Device = {
       uniqueId: device.getSerial(),
@@ -277,6 +284,7 @@ class UiServer extends HomebridgePluginUiServer {
       hasBattery: device.hasBattery(),
       isCamera: device.isCamera(),
       isDoorbell: device.isDoorbell(),
+      isKeypad: device.isKeyPad(),
       supportsRTSP: device.hasPropertyValue(PropertyName.DeviceRTSPStream),
       supportsTalkback: device.hasCommand(CommandName.DeviceStartTalkback),
       DeviceEnabled: device.hasProperty(PropertyName.DeviceEnabled),
@@ -284,10 +292,17 @@ class UiServer extends HomebridgePluginUiServer {
       DeviceLight: device.hasProperty(PropertyName.DeviceLight),
       DeviceChimeIndoor: device.hasProperty(PropertyName.DeviceChimeIndoor),
       disabled: false,
+      properties: device.getProperties(),
     };
 
     if (device.hasProperty(PropertyName.DeviceChargingStatus)) {
       d.chargingStatus = (device.getPropertyValue(PropertyName.DeviceChargingStatus) as number);
+    }
+
+    try {
+      delete d.properties.picture;
+    } catch (error) {
+      this.log.error(error);
     }
 
     d.ignored = (this.config['ignoreDevices'] ?? []).includes(d.uniqueId);

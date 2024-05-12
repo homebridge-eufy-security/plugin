@@ -1,3 +1,9 @@
+export type PropertyValue = number | boolean | string | object;
+
+export interface PropertyValues {
+    [index: string]: PropertyValue;
+}
+
 /* eslint-disable @typescript-eslint/no-explicit-any */
 export type Credentials = {
   username: string;
@@ -44,6 +50,7 @@ export type L_Device = {
   hasBattery?: boolean;
   chargingStatus?: number;
   isDoorbell: boolean;
+  isKeypad: boolean;
   supportsRTSP?: boolean;
   supportsTalkback?: boolean;
   DeviceEnabled: boolean;
@@ -51,6 +58,7 @@ export type L_Device = {
   DeviceLight: boolean;
   DeviceChimeIndoor: boolean;
   disabled: boolean;
+  properties: PropertyValues;
 };
 
 export enum ChargingType {
