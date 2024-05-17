@@ -16,7 +16,7 @@ import { CHAR, SERV } from '../utils/utils';
  * @class LockAccessory
  * @extends DeviceAccessory
  */
-export class LockAccessory extends DeviceAccessory {
+export class LockAccessory extends DeviceAccessory<Lock> {
 
   /**
    * Constructor for LockAccessory.
@@ -131,7 +131,7 @@ export class LockAccessory extends DeviceAccessory {
    * Gets the lock status and maps it to HomeKit lock states.
    */
   private getLockStatus(): CharacteristicValue {
-    const lockStatus = this.device.isLocked();
+    const lockStatus = this.device.isLocked() as boolean;
     this.log.debug(`getLockStatus: ${lockStatus}`);
     return this.convertLockStatusCode(lockStatus);
   }

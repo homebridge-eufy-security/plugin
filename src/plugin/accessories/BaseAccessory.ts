@@ -27,8 +27,9 @@ function isServiceInstance(
 
 export type CharacteristicType = WithUUID<{ new(): Characteristic }>;
 export type ServiceType = WithUUID<typeof Service> | Service;
+export type DeviceTypes = Device | Station;
 
-export abstract class BaseAccessory extends EventEmitter {
+export abstract class BaseAccessory<T extends DeviceTypes = DeviceTypes> extends EventEmitter {
 
   protected servicesInUse: Service[] = [];
   public readonly SN: string;
@@ -39,11 +40,9 @@ export abstract class BaseAccessory extends EventEmitter {
     public readonly platform: EufySecurityPlatform,
     public readonly accessory: PlatformAccessory,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    public device: any,
+    public device: T,
   ) {
     super();
-
-    this.device = device as Device | Station;
 
     this.SN = this.device.getSerial();
     this.name = this.device.getName();
@@ -85,8 +84,13 @@ export abstract class BaseAccessory extends EventEmitter {
     });
 
     if (this.platform.config.enableDetailedLogging) {
-      this.device.on('raw property changed', this.handleRawPropertyChange.bind(this));
-      this.device.on('property changed', this.handlePropertyChange.bind(this));
+      if (this.isStation(this.device)) {
+        this.device.on('raw property changed', this.handleRawPropertyChange.bind(this));
+        this.device.on('property changed', this.handlePropertyChange.bind(this));
+      } else if (this.isDevice(this.device)) {
+        this.device.on('raw property changed', this.handleRawPropertyChange.bind(this));
+        this.device.on('property changed', this.handlePropertyChange.bind(this));
+      }
     }
 
     this.platform.api.on(APIEvent.SHUTDOWN, async () => {
@@ -97,18 +101,26 @@ export abstract class BaseAccessory extends EventEmitter {
     this.logPropertyKeys();
   }
 
+  public isStation(device: any): device is Station {
+    return device instanceof Station;
+  }
+
+  public isDevice(device: any): device is Device {
+    return device instanceof Device;
+  }
+
   // Function to extract and log keys
   private logPropertyKeys() {
     this.log.debug(`Property Keys:`, this.device.getProperties());
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  protected handleRawPropertyChange(device: any, type: number, value: string): void {
+  protected handleRawPropertyChange(device: Device | Station, type: number, value: string): void {
     this.log.debug(`Raw Property Changes:`, type, value);
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  protected handlePropertyChange(device: any, name: string, value: PropertyValue): void {
+  protected handlePropertyChange(device: Device | Station, name: string, value: PropertyValue): void {
     this.log.debug(`Property Changes:`, name, value);
   }
 
@@ -187,12 +199,21 @@ export abstract class BaseAccessory extends EventEmitter {
     }
 
     if (onSimpleValue) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      this.device.on(onSimpleValue, (device: any, value: any) => {
-        // eslint-disable-next-line max-len
-        this.log.info(`ON '${serviceType.name} / ${characteristicType.name} / ${onSimpleValue}':`, value);
-        characteristic.updateValue(value);
-      });
+      if (this.isStation(this.device)) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        this.device.on(onSimpleValue as keyof StationEvents, (device: any, value: any) => {
+          // eslint-disable-next-line max-len
+          this.log.info(`ON '${serviceType.name} / ${characteristicType.name} / ${onSimpleValue}':`, value);
+          characteristic.updateValue(value);
+        });
+      } else if (this.isDevice(this.device)) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        this.device.on(onSimpleValue as keyof DeviceEvents, (device: any, value: any) => {
+          // eslint-disable-next-line max-len
+          this.log.info(`ON '${serviceType.name} / ${characteristicType.name} / ${onSimpleValue}':`, value);
+          characteristic.updateValue(value);
+        });
+      }
     }
 
     if (onValue) {
@@ -203,12 +224,21 @@ export abstract class BaseAccessory extends EventEmitter {
     if (onMultipleValue) {
       // Attach the common event handler to each event type
       onMultipleValue.forEach(eventType => {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        this.device.on(eventType as keyof any, (device: any, value: any) => {
-          // eslint-disable-next-line max-len
-          this.log.info(`ON '${serviceType.name} / ${characteristicType.name} / ${eventType}':`, value);
-          characteristic.updateValue(value);
-        });
+        if (this.isStation(this.device)) {
+          // TypeScript now knows this.device is a Station
+          this.device.on(eventType as keyof StationEvents, (deviceSN: string, params: any) => {
+            // Handle station event
+            this.log.info(`ON '${serviceType.name} / ${characteristicType.name} / ${eventType}':`, params);
+            characteristic.updateValue(params);
+          });
+        } else if (this.isDevice(this.device)) {
+          // TypeScript now knows this.device is a Device
+          this.device.on(eventType as keyof DeviceEvents, (device: Device, value: any) => {
+            // Handle device event
+            this.log.info(`ON '${serviceType.name} / ${characteristicType.name} / ${eventType}':`, value);
+            characteristic.updateValue(value);
+          });
+        }
       });
     }
 

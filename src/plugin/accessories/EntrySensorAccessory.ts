@@ -17,7 +17,7 @@ import { CHAR, SERV } from '../utils/utils';
  * @class EntrySensorAccessory
  * @extends DeviceAccessory
  */
-export class EntrySensorAccessory extends DeviceAccessory {
+export class EntrySensorAccessory extends DeviceAccessory<EntrySensor> {
 
   /**
    * Constructor for EntrySensorAccessory.

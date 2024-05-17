@@ -25,7 +25,7 @@ export interface EufyMode {
  * An instance of this class is created for each accessory your platform registers
  * Each accessory may expose multiple services of different service types.
  */
-export class StationAccessory extends BaseAccessory {
+export class StationAccessory extends BaseAccessory<Station> {
 
   public readonly stationConfig: StationConfig;
   public readonly hasKeyPad: boolean = false;
@@ -219,7 +219,7 @@ export class StationAccessory extends BaseAccessory {
     characteristic: Characteristic,
     alarmEvent: AlarmEvent,
   ): void {
-    let currentValue = this.device.getPropertyValue(PropertyName.StationCurrentMode);
+    let currentValue = this.device.getPropertyValue(PropertyName.StationCurrentMode) as number;
     if (alarmEvent === 0) {
       // do not resset alarm if alarm was triggered manually
       // since the alarm can only be triggered for 30 seconds for now (limitation of @homebridge-eufy-security/eufy-security-client)
@@ -308,7 +308,7 @@ export class StationAccessory extends BaseAccessory {
    */
   private handleSecuritySystemTargetStateGet(stateCharacteristic: string = 'handleSecuritySystemTargetStateGet'): CharacteristicValue {
     try {
-      const currentValue = this.device.getPropertyValue(PropertyName.StationCurrentMode);
+      const currentValue = this.device.getPropertyValue(PropertyName.StationCurrentMode) as number;
       if (currentValue === -1) {
         throw 'Something wrong with this device';
       }
@@ -374,17 +374,15 @@ export class StationAccessory extends BaseAccessory {
   private async handleManualTriggerSwitchStateSet(value: CharacteristicValue) {
     if (value) { // trigger alarm
       try {
-        const currentValue = this.device.getPropertyValue(PropertyName.StationCurrentMode);
+        const currentValue = this.device.getPropertyValue(PropertyName.StationCurrentMode) as number;
         if (currentValue === -1) {
           throw 'Something wrong with this device';
         }
         // check if alarm is allowed for this guard mode
         // and alarm is not delayed
         if (this.stationConfig.manualTriggerModes.indexOf(this.convertEufytoHK(currentValue)) !== -1 && !this.alarm_delayed) {
-          this.device.triggerStationAlarmSound(this.stationConfig.manualAlarmSeconds)
-            .then(() => log.debug(
-              this.accessory.displayName, 'alarm manually triggered for ' + this.stationConfig.manualAlarmSeconds + ' seconds.'))
-            .catch(err => this.log.error(`alarm could not be manually triggered: ${err}`));
+          this.device.triggerStationAlarmSound(this.stationConfig.manualAlarmSeconds);
+          this.log.debug('alarm manually triggered for ' + this.stationConfig.manualAlarmSeconds + ' seconds.');
         } else {
           const message = this.alarm_delayed ?
             'tried to trigger alarm, but the alarm delayed event was triggered beforehand.' :
@@ -400,9 +398,8 @@ export class StationAccessory extends BaseAccessory {
         return;
       }
     } else { // reset alarm
-      this.device.resetStationAlarmSound()
-        .then(() => this.log.debug(`alarm manually reset`))
-        .catch(err => this.log.error(`alarm could not be reset: ${err}`));
+      this.device.resetStationAlarmSound();
+      this.log.debug(`alarm manually reset`);
     }
   }
 

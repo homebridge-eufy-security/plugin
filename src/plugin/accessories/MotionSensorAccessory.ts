@@ -17,7 +17,7 @@ import { CHAR, SERV } from '../utils/utils';
  * @class MotionSensorAccessory
  * @extends DeviceAccessory
  */
-export class MotionSensorAccessory extends DeviceAccessory {
+export class MotionSensorAccessory extends DeviceAccessory<MotionSensor> {
 
   /**
    * Constructor for MotionSensorAccessory.

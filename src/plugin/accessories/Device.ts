@@ -13,12 +13,12 @@ import { CHAR, SERV } from '../utils/utils';
 export type CharacteristicType = WithUUID<{ new(): Characteristic }>;
 export type ServiceType = WithUUID<typeof Service> | Service;
 
-export abstract class DeviceAccessory extends BaseAccessory {
+export class DeviceAccessory<T extends Device = Device> extends BaseAccessory<T> {
 
   constructor(
     platform: EufySecurityPlatform,
     accessory: PlatformAccessory,
-    device: Device,
+    device: T,
   ) {
     super(platform, accessory, device);
   }

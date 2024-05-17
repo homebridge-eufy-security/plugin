@@ -56,7 +56,7 @@ export interface RtspEntry {
  * An instance of this class is created for each accessory your platform registers
  * Each accessory may expose multiple services of different service types.
  */
-export class CameraAccessory extends DeviceAccessory {
+export class CameraAccessory extends DeviceAccessory<Camera> {
 
   // Define the object variable to hold the boolean and timestamp
   protected cameraStatus: { isEnabled: boolean; timestamp: number };
@@ -368,7 +368,7 @@ export class CameraAccessory extends DeviceAccessory {
       onValue: (service, characteristic) => {
         this.eventTypesToHandle.forEach(eventType => {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          this.device.on(eventType as keyof any, (device: any, state: any) => {
+          this.device.on(eventType, (device: any, state: any) => {
             // eslint-disable-next-line max-len
             this.log.info(`MOTION DETECTED (${eventType})': ${state}`);
             characteristic.updateValue(state);
