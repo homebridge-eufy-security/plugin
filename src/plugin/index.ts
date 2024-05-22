@@ -1,13 +1,7 @@
-import { API } from 'homebridge';
-
-import { PLATFORM_NAME } from './settings';
-import { EufySecurityPlatform } from './platform';
+import { EufySecurityPlatform, platformName, pluginName } from './platform';
 import { setHap } from './utils/utils';
 
-/**
- * This method registers the platform with Homebridge
- */
-export = (api: API) => {
-  setHap(api.hap);
-  api.registerPlatform(PLATFORM_NAME, EufySecurityPlatform);
-};
+export default function (homebridge: any) {
+  setHap(homebridge.hap);
+  homebridge.registerPlatform(pluginName, platformName, EufySecurityPlatform, true);
+}

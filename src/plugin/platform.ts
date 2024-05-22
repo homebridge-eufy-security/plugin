@@ -5,12 +5,13 @@ import {
   Logger,
   PlatformAccessory,
   APIEvent,
+  PlatformConfig,
 } from 'homebridge';
 
 import { version } from 'process';
 import { clean, satisfies } from 'semver';
 
-import { DEVICE_INIT_DELAY, PLATFORM_NAME, PLUGIN_NAME, STATION_INIT_DELAY } from './settings';
+import { DEVICE_INIT_DELAY, STATION_INIT_DELAY } from './settings';
 
 import { DEFAULT_CONFIG_VALUES, EufySecurityPlatformConfig } from './config';
 
@@ -51,6 +52,9 @@ import { readFileSync } from 'node:fs';
 
 import { init_log, log, tsLogger, ffmpegLogger, HAP } from './utils/utils';
 
+export const platformName = 'EufySecurity'
+export const pluginName = 'homebridge-eufy-security';
+
 export class EufySecurityPlatform implements DynamicPlatformPlugin {
   public eufyClient: EufySecurity = {} as EufySecurity;
 
@@ -68,7 +72,7 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
 
   constructor(
     hblog: Logger,
-    public config: EufySecurityPlatformConfig,
+    public config: PlatformConfig & EufySecurityPlatformConfig,
     public readonly api: API,
   ) {
 
@@ -538,7 +542,7 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
         // Remove station or device accessories created prior to plugin upgrade,
         // which may have been subject to removal due to newly introduced logic.
         if (isExist) {
-          this.api.unregisterPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [accessory]);
+          this.api.unregisterPlatformAccessories(pluginName, platformName, [accessory]);
         }
         throw error;
       }
@@ -551,7 +555,7 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
         this.api.updatePlatformAccessories([accessory]);
         log.info(`Updating existing accessory: ${accessory.displayName}`);
       } else {
-        this.api.registerPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [accessory]);
+        this.api.registerPlatformAccessories(pluginName, platformName, [accessory]);
         log.info(`Registering new accessory: ${accessory.displayName}`);
       }
     } catch (error) {
@@ -683,7 +687,7 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
       staleAccessories.forEach((staleAccessory) => {
         log.info(`Removing cached accessory ${staleAccessory.UUID} ${staleAccessory.displayName}`);
         num++;
-        this.api.unregisterPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [staleAccessory]);
+        this.api.unregisterPlatformAccessories(pluginName, platformName, [staleAccessory]);
       });
 
       if (num > 0) {
@@ -749,7 +753,7 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
 
     if (Device.isKeyPad(type)) {
       log.debug(accessory.displayName + ' isKeypad!');
-      throw('The keypad needs to be taken out because it serves no purpose.');
+      throw ('The keypad needs to be taken out because it serves no purpose.');
     }
 
   }

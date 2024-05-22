@@ -1,15 +1,5 @@
 /* eslint-disable max-len */
 
-/**
- * This is the name of the platform that users will use to register the plugin in the Homebridge config.json
- */
-export const PLATFORM_NAME = 'EufySecurity';
-
-/**
- * This must match the name of your plugin as defined the package.json
- */
-export const PLUGIN_NAME = 'homebridge-eufy-security';
-
 export const STATION_INIT_DELAY = 5 * 1000; // 5 seconds
 export const DEVICE_INIT_DELAY = 7 * 1000; // 7 seconds;
 
