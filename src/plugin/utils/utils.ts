@@ -90,8 +90,9 @@ export function init_log(debug: boolean = false) {
   }
 
   log = new Logger(logOptions);
-  tsLogger = new Logger({ type: 'hidden' });
-  ffmpegLogger = new Logger({ type: 'hidden' });
+  logOptions.type = 'hidden';
+  tsLogger = new Logger(logOptions);
+  ffmpegLogger = new Logger(logOptions);
 }
 
 export class Deferred<T> {
