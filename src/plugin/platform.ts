@@ -133,73 +133,8 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
    * Configures the logging mechanism for the plugin.
    */
   private configureLogger() {
-    // Retrieve plugin information from package.json
-    const plugin = require('../package.json');
-
-    // Define options for logging
-    const logOptions = {
-      name: '[EufySecurity]', // Name prefix for log messages
-      prettyLogTemplate: '[{{mm}}/{{dd}}/{{yyyy}}, {{hh}}:{{MM}}:{{ss}}]\t{{name}}\t{{logLevelName}}\t', // Template for pretty log output
-      prettyErrorTemplate: '\n{{errorName}} {{errorMessage}}\nerror stack:\n{{errorStack}}', // Template for pretty error output
-      prettyErrorStackTemplate: '  • {{fileName}}\t{{method}}\n\t{{fileNameWithLine}}', // Template for error stack trace
-      prettyErrorParentNamesSeparator: '', // Separator for parent names in error messages
-      prettyErrorLoggerNameDelimiter: '\t', // Delimiter for logger name in error messages
-      stylePrettyLogs: true, // Enable styling for logs
-      minLevel: 3, // Minimum log level to display (3 corresponds to INFO)
-      prettyLogTimeZone: 'local' as 'local' | 'local', // Time zone for log timestamps
-      prettyLogStyles: { // Styles for different log elements
-        logLevelName: { // Styles for log level names
-          '*': ['bold', 'black', 'bgWhiteBright', 'dim'], // Default style
-          SILLY: ['bold', 'white'], // Style for SILLY level
-          TRACE: ['bold', 'whiteBright'], // Style for TRACE level
-          DEBUG: ['bold', 'green'], // Style for DEBUG level
-          INFO: ['bold', 'blue'], // Style for INFO level
-          WARN: ['bold', 'yellow'], // Style for WARN level
-          ERROR: ['bold', 'red'], // Style for ERROR level
-          FATAL: ['bold', 'redBright'], // Style for FATAL level
-        },
-        dateIsoStr: 'gray', // Style for ISO date strings
-        filePathWithLine: 'white', // Style for file paths with line numbers
-        name: 'green', // Style for logger names
-        nameWithDelimiterPrefix: ['white', 'bold'], // Style for logger names with delimiter prefix
-        nameWithDelimiterSuffix: ['white', 'bold'], // Style for logger names with delimiter suffix
-        errorName: ['bold', 'bgRedBright', 'whiteBright'], // Style for error names
-        fileName: ['yellow'], // Style for file names
-      },
-      maskValuesOfKeys: [ // Keys whose values should be masked in logs
-        'username',
-        'password',
-        'token',
-        'clientPrivateKey',
-        'private_key',
-        'login_hash',
-        'serverPublicKey',
-        'cloud_token',
-        'refreshToken',
-        'p2p_conn',
-        'app_conn',
-        'address',
-        'latitude',
-        'longitude',
-        'serialnumber',
-        'serialNumber',
-        'stationSerialNumber',
-        'data',
-        'ignoreStations',
-        'ignoreDevices',
-        'pincode',
-      ],
-    };
-
-    // Modify log options if detailed logging is enabled
-    if (this.config.enableDetailedLogging) {
-      logOptions.name = `[EufySecurity-${plugin.version}]`; // Modify logger name with plugin version
-      logOptions.prettyLogTemplate = '[{{mm}}/{{dd}}/{{yyyy}} {{hh}}:{{MM}}:{{ss}}]\t{{name}}\t{{logLevelName}}\t[{{fileNameWithLine}}]\t'; // Modify log template
-      logOptions.minLevel = 2; // Adjust minimum log level
-    }
-
     // Initialize the global logger with the configured options
-    init_log(logOptions);
+    init_log(this.config.enableDetailedLogging);
 
     // Configures log streams for various log files
     this.configureLogStreams();
@@ -218,9 +153,9 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
 
     // Log streams configuration
     const logStreams = [
-      { name: 'eufy-security.log', logger: log },
-      { name: 'ffmpeg.log', logger: ffmpegLogger },
-      { name: 'eufy-lib.log', logger: tsLogger },
+      { name: 'plugin-security.log', logger: log },
+      { name: 'plugin-ffmpeg.log', logger: ffmpegLogger },
+      { name: 'plugin-lib.log', logger: tsLogger },
     ];
 
     // Iterate over log streams
@@ -229,14 +164,14 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
       const logStream = createStream(name, {
         path: this.eufyPath, // Log file path
         interval: '1d', // Log rotation interval (1 day)
-        rotate: 3, // Number of rotated log files to keep
+        rotate: 2, // Number of rotated log files to keep
         maxSize: '200M', // Maximum log file size
+        compress: true // compress rotated files
       });
 
       // Attach a transport function to write log messages to the log stream
       logger.attachTransport((logObj: ILogObjMeta) => {
         const meta = logObj['_meta'];
-        const name = meta.name;
         const level = meta.logLevelName;
         const date = meta.date.toISOString();
         const fileNameWithLine = meta.path?.fileNameWithLine || 'UNKNOWN_FILE';
@@ -246,13 +181,26 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
 
         // Loop through logObj from index 0 to 5 and append values to the message
         for (let i = 0; i <= 5; i++) {
-          if (logObj[i]) {
-            message += ' ' + typeof logObj[i] === 'string' ? logObj[i] : JSON.stringify(logObj[i]);
+          if (!logObj[i]) {
+            continue;
+          }
+          message += ' ';
+          if (typeof logObj[i] === 'string') {
+            message += logObj[i];
+          } else {
+            message += '(' + typeof logObj[i] + ') ';
+            message += JSON.stringify(logObj[i]);
           }
         }
 
         // Write formatted log message to the log stream
-        logStream.write(date + '\t' + name + '\t' + level + '\t' + fileNameWithLine + '\t' + message + '\n');
+        if (name === 'plugin-ffmpeg.log') {
+          logStream.write(message + '\n');
+        } else if (name === 'plugin-lib.log') {
+          logStream.write(date + '\t' + level + '\t' + message + '\n');
+        } else {
+          logStream.write(date + '\t' + level + '\t' + fileNameWithLine + '\t' + message + '\n');
+        }
       });
     }
   }
