@@ -21,6 +21,7 @@ import { StationAccessory } from './accessories/StationAccessory';
 import { EntrySensorAccessory } from './accessories/EntrySensorAccessory';
 import { MotionSensorAccessory } from './accessories/MotionSensorAccessory';
 import { CameraAccessory } from './accessories/CameraAccessory';
+import { DoorbellAccessory } from './accessories/DoorbellAccessory';
 import { LockAccessory } from './accessories/LockAccessory';
 import { AutoSyncStationAccessory } from './accessories/AutoSyncStationAccessory';
 
@@ -37,6 +38,7 @@ import {
   Lock,
   libVersion,
   LogLevel,
+  DoorbellCamera,
   // eslint-disable-next-line @typescript-eslint/ban-ts-comment
   // @ts-ignore 
 } from 'eufy-security-client';
@@ -694,7 +696,10 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
       new LockAccessory(this, accessory, device as Lock);
     }
 
-    if (Device.isCamera(type)) {
+    if (Device.isDoorbell(type)) {
+      log.debug(accessory.displayName + ' isDoorbell!');
+      new DoorbellAccessory(this, accessory, device as DoorbellCamera);
+    } else if (Device.isCamera(type)) {
       log.debug(accessory.displayName + ' isCamera!');
       new CameraAccessory(this, accessory, device as Camera);
     }

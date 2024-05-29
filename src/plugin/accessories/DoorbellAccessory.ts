@@ -6,11 +6,11 @@ import { DeviceAccessory } from './Device';
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore  
-import { Camera, DeviceEvents, PropertyName, CommandName, StreamMetadata, PropertyValue, Picture } from 'eufy-security-client';
+import { DoorbellCamera, DeviceEvents, PropertyName, CommandName, StreamMetadata, PropertyValue, Picture } from 'eufy-security-client';
 
 import { CameraConfig, DEFAULT_CAMERACONFIG_VALUES } from '../utils/configTypes';
 import { CHAR, SERV } from '../utils/utils';
-import { CameraStreamingDelegate } from '../controller/CameraStreamingDelegate';
+import { DoorbellStreamingDelegate } from '../controller/DoorbellStreamingDelegate';
 
 import { readFileSync } from 'fs';
 const SnapshotUnavailable = require.resolve('../../media/Snapshot-Unavailable.png');
@@ -43,7 +43,7 @@ export interface RtspEntry {
  * An instance of this class is created for each accessory your platform registers
  * Each accessory may expose multiple services of different service types.
  */
-export class CameraAccessory extends DeviceAccessory<Camera> {
+export class DoorbellAccessory extends DeviceAccessory<DoorbellCamera> {
 
   // Define the object variable to hold the boolean and timestamp
   protected cameraStatus: { isEnabled: boolean; timestamp: number };
@@ -77,12 +77,12 @@ export class CameraAccessory extends DeviceAccessory<Camera> {
     'stranger person detected',
   ];
 
-  protected streamingDelegate: CameraStreamingDelegate | null = null;
+  protected streamingDelegate: DoorbellStreamingDelegate | null = null;
 
   constructor(
     platform: EufySecurityPlatform,
     accessory: PlatformAccessory,
-    device: Camera,
+    device: DoorbellCamera,
   ) {
     super(platform, accessory, device);
 
@@ -132,6 +132,10 @@ export class CameraAccessory extends DeviceAccessory<Camera> {
     } catch (error) {
       this.log.error(`while happending Delegate ${error}`);
     }
+  }
+
+  public getCameraLiveStream(): boolean {
+    return true;
   }
 
   public getSnapshot(): Buffer {
@@ -394,16 +398,14 @@ export class CameraAccessory extends DeviceAccessory<Camera> {
     // }
 
     if (this.device.isDoorbell()) {
-      this.registerCharacteristic({
-        serviceType: SERV.Doorbell,
-        characteristicType: CHAR.ProgrammableSwitchEvent,
-        onValue: (service, characteristic) => {
-          this.device.on('rings', () => this.onDeviceRingsPushNotification(characteristic),
-          );
-        },
-      });
+      this.device.on('rings', () => this.handleRing.bind(this));
     }
 
+  }
+
+  private handleRing(): void {
+    this.log.debug('Doorbell ring!');
+    this.streamingDelegate!.getController().ringDoorbell();
   }
 
   // This private function sets up the motion sensor characteristics for the accessory.
@@ -529,7 +531,7 @@ export class CameraAccessory extends DeviceAccessory<Camera> {
   private configureVideoStream(): boolean {
     try {
       this.log.debug(`StreamingDelegate`);
-      this.streamingDelegate = new CameraStreamingDelegate(this);
+      this.streamingDelegate = new DoorbellStreamingDelegate(this);
       this.accessory.configureController(this.streamingDelegate.getController());
 
     } catch (error) {
