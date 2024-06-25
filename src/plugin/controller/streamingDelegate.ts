@@ -249,7 +249,7 @@ export abstract class StreamingDelegate<T extends CameraController> implements C
   private async startStream(request: StartStreamRequest, callback: StreamRequestCallback): Promise<void> {
 
     this.log.debug('startStream requested:', request);
-    this.log.debug('startStream video codec:', VideoCodecType[request.video.codec]);
+    this.log.debug('startStream video codec:', request.video.codec);
     this.log.debug('startStream video profile:', request.video.profile);
     this.log.debug('startStream video level:', request.video.level);
 
@@ -285,44 +285,44 @@ export abstract class StreamingDelegate<T extends CameraController> implements C
       ffmpegArgs.push('-i', 'pipe:3');
     }
 
-    // // // Video tweaks
-    // // ffmpegArgs.push('-map', '0:v:0');
-    // ffmpegArgs.push('-vcodec', 'copy');
+    // // Video tweaks
+    // ffmpegArgs.push('-map', '0:v:0');
+    ffmpegArgs.push('-vcodec', 'copy');
 
 
-    // // Video Stream
-    // ffmpegArgs.push('-payload_type', request.video.pt.toString());
-    // ffmpegArgs.push('-ssrc', sessionInfo.videoSSRC.toString());
-    // ffmpegArgs.push('-f', 'rtp');
-    // ffmpegArgs.push('-srtp_out_suite', 'AES_CM_128_HMAC_SHA1_80');
-    // ffmpegArgs.push('-srtp_out_params', sessionInfo.videoSRTP.toString('base64'));
-    // ffmpegArgs.push('srtp://' + sessionInfo.address + ':' + sessionInfo.videoPort + '?rtcpport=' + sessionInfo.videoPort + '&pkt_size=' + request.video.mtu);
+    // Video Stream
+    ffmpegArgs.push('-payload_type', request.video.pt.toString());
+    ffmpegArgs.push('-ssrc', sessionInfo.videoSSRC.toString());
+    ffmpegArgs.push('-f', 'rtp');
+    ffmpegArgs.push('-srtp_out_suite', 'AES_CM_128_HMAC_SHA1_80');
+    ffmpegArgs.push('-srtp_out_params', sessionInfo.videoSRTP.toString('base64'));
+    ffmpegArgs.push('srtp://' + sessionInfo.address + ':' + sessionInfo.videoPort + '?rtcpport=' + sessionInfo.videoPort + '&pkt_size=' + request.video.mtu);
 
     if (eufyStream.stdio) {
       ffmpegArgs.push('-f', 'aac');
       ffmpegArgs.push('-i', 'pipe:4');
     }
 
-    // // // Audio tweaks
-    // // ffmpegArgs.push('-map', '0:a:0?');
-    // // ffmpegArgs.push('-acodec', 'libfdk_aac');
-    // // ffmpegArgs.push('-afterburner', '1');
-    // // ffmpegArgs.push('-eld_sbr', '1');
-    // // ffmpegArgs.push('-eld_v2', '1');
-    // // ffmpegArgs.push('-profile:a', '38');
-    // // ffmpegArgs.push('-flags', '+global_header');
-    // // ffmpegArgs.push('-f', 'null');
-    // // ffmpegArgs.push('-ar', request.audio.sample_rate + 'k');
-    // // ffmpegArgs.push('-b:a', request.audio.max_bit_rate + 'k');
-    // // ffmpegArgs.push('-ac', request.audio.channel.toString());
+    // Audio tweaks
+    // ffmpegArgs.push('-map', '0:a:0?');
+    ffmpegArgs.push('-acodec', 'libfdk_aac');
+    ffmpegArgs.push('-afterburner', '1');
+    ffmpegArgs.push('-eld_sbr', '1');
+    ffmpegArgs.push('-eld_v2', '1');
+    ffmpegArgs.push('-profile:a', '38');
+    ffmpegArgs.push('-flags', '+global_header');
+    ffmpegArgs.push('-f', 'null');
+    ffmpegArgs.push('-ar', request.audio.sample_rate + 'k');
+    ffmpegArgs.push('-b:a', request.audio.max_bit_rate + 'k');
+    ffmpegArgs.push('-ac', request.audio.channel.toString());
 
-    // // Audio Stream
-    // ffmpegArgs.push('-payload_type', request.audio.pt.toString());
-    // ffmpegArgs.push('-ssrc', sessionInfo.audioSSRC.toString());
-    // ffmpegArgs.push('-f', 'rtp');
-    // ffmpegArgs.push('-srtp_out_suite', 'AES_CM_128_HMAC_SHA1_80');
-    // ffmpegArgs.push('-srtp_out_params', sessionInfo.audioSRTP.toString('base64'));
-    // ffmpegArgs.push('srtp://' + sessionInfo.address + ':' + sessionInfo.audioPort + '?rtcpport=' + sessionInfo.audioPort + '&pkt_size=188');
+    // Audio Stream
+    ffmpegArgs.push('-payload_type', request.audio.pt.toString());
+    ffmpegArgs.push('-ssrc', sessionInfo.audioSSRC.toString());
+    ffmpegArgs.push('-f', 'rtp');
+    ffmpegArgs.push('-srtp_out_suite', 'AES_CM_128_HMAC_SHA1_80');
+    ffmpegArgs.push('-srtp_out_params', sessionInfo.audioSRTP.toString('base64'));
+    ffmpegArgs.push('srtp://' + sessionInfo.address + ':' + sessionInfo.audioPort + '?rtcpport=' + sessionInfo.audioPort + '&pkt_size=188');
 
     if (this.platform.config.enableDetailedLogging) {
       ffmpegArgs.push('-loglevel', 'level+verbose');
@@ -344,7 +344,7 @@ export abstract class StreamingDelegate<T extends CameraController> implements C
           this.log.debug('Device appears to be inactive. Stopping stream.');
           this.controller.forceStopStreamingSession(request.sessionID);
           this.stopStream(request.sessionID);
-        }, request.video.rtcp_interval * 2 * 1000);
+        }, request.video.rtcp_interval * 3 * 1000);
       });
       activeSession.socket.bind(sessionInfo.videoReturnPort);
     } catch (error: any) {
@@ -368,13 +368,14 @@ export abstract class StreamingDelegate<T extends CameraController> implements C
         callback();
         break;
       case StreamRequestTypes.STOP:
-        // await this.stopStream(request.sessionID);
+        await this.stopStream(request.sessionID);
         callback();
         break;
     }
   }
 
   public async stopStream(sessionId: string): Promise<void> {
+    return;
     const session = this.ongoingSessions[sessionId];
     if (session) {
       if (session.timeout) {
