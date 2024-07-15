@@ -193,7 +193,7 @@ class UiServer extends HomebridgePluginUiServer {
       // Check if the stored accessories file exists
       if (!fs.existsSync(this.storedAccessories_file)) {
         // If the file doesn't exist, log a warning and return an empty array
-        this.log.warn('Stored accessories file does not exist.');
+        this.log.debug('Stored accessories file does not exist.');
         return [];
       }
 
