@@ -337,7 +337,6 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
       https://nodejs.org/en/blog/vulnerability/february-2024-security-releases#nodejs-is-vulnerable-to-the-marvin-attack-timing-variant-of-the-bleichenbacher-attack-against-pkcs1-v15-padding-cve-2023-46809---medium
       ***************************        
       `);
-      return;
     }
 
     // Log the final configuration object for debugging purposes
@@ -775,15 +774,6 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
 
     // Define versions known to break compatibility with RSA_PKCS1_PADDING
     const incompatible = satisfies(nodeVersion, '^18.19.1 || ^20.11.1 || ^21.6.2');
-
-    // If Node.js bypass is enforced and an incompatible version is detected, log an error
-    if (this.config.nodejs_security) {
-      if (incompatible) {
-        log.error('Livestream functionality may not work as expected due to an incompatible Node.js version being used.');
-      }
-      // Regardless of compatibility, return true
-      return true;
-    }
 
     // Return true if the Node.js version is compatible, false otherwise
     return !incompatible;
