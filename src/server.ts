@@ -6,7 +6,7 @@ import { createStream } from 'rotating-file-stream';
 import { Zip } from 'zip-lib';
 import { Accessory, L_Station, L_Device, LoginResult, LoginFailReason } from './configui/app/util/types';
 import { version } from '../package.json';
-import { version as nodeJSversion } from 'node:process';
+import { version as nodeJSversion, argv as nodeJSargs, env as nodeJSenv } from 'node:process';
 import { satisfies } from 'semver';
 import path from 'path';
 
@@ -30,7 +30,7 @@ class UiServer extends HomebridgePluginUiServer {
     trustedDeviceName: 'My Phone',
     persistentDir: this.storagePath,
     p2pConnectionSetup: 0,
-    pollingIntervalMinutes: 10,
+    pollingIntervalMinutes: 0,
     eventDurationSeconds: 10,
     acceptInvitations: true,
   } as EufySecurityConfig;
@@ -113,6 +113,8 @@ class UiServer extends HomebridgePluginUiServer {
     return {
       nodeJSversion: nodeJSversion,
       nodeJSIncompatible: nodeJSIncompatible,
+      nodeJSargs: nodeJSargs,
+      nodeJSenv: nodeJSenv,
     };
   }
 
@@ -193,7 +195,7 @@ class UiServer extends HomebridgePluginUiServer {
       // Check if the stored accessories file exists
       if (!fs.existsSync(this.storedAccessories_file)) {
         // If the file doesn't exist, log a warning and return an empty array
-        this.log.warn('Stored accessories file does not exist.');
+        this.log.debug('Stored accessories file does not exist.');
         return [];
       }
 
