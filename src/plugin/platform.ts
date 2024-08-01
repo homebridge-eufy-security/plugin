@@ -774,7 +774,7 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
     log.debug('Node version is', nodeVersion);
 
     // Define versions known to break compatibility with RSA_PKCS1_PADDING
-    const incompatible = satisfies(nodeVersion, '^18.19.1 || ^20.11.1 || ^21.6.2');
+    const incompatible = satisfies(nodeVersion, '>=18.19.1 <19.x || >=20.11.1 <21.x || >=21.6.2 <22');
 
     // If Node.js bypass is enforced and an incompatible version is detected, log an error
     if (this.config.nodejs_security) {
