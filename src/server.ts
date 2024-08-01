@@ -109,7 +109,7 @@ class UiServer extends HomebridgePluginUiServer {
    */
   public nodeJSVersion() {
     // Define versions known to break compatibility with RSA_PKCS1_PADDING
-    const nodeJSIncompatible = satisfies(nodeJSversion, '^18.19.1 || ^20.11.1 || ^21.6.2');
+    const nodeJSIncompatible = satisfies(nodeJSversion, '>=18.19.1 <19.x || >=20.11.1 <21.x || >=21.6.2 <22');
     return {
       nodeJSversion: nodeJSversion,
       nodeJSIncompatible: nodeJSIncompatible,
