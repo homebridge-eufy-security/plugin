@@ -25,7 +25,7 @@ export class PollingIntervalMinutesComponent extends ConfigOptionsInterpreter im
 
   /** updateConfig() takes an optional second parameter to specify the accessoriy for which the setting is changed */
 
-  pollingIntervalMinutes = 10;
+  pollingIntervalMinutes = 0;
   inputIsInvalid = false;
 
   readValue() {

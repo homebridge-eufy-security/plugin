@@ -12,6 +12,7 @@ import { NgIf, NgFor } from '@angular/common';
 import { LucideAngularModule } from 'lucide-angular';
 
 enum LoginStep {
+  START = 0,
   LOGIN = 1,
   TFA = 2,
   CAPTCHA = 3,
@@ -49,7 +50,7 @@ export class LoginComponent implements OnInit {
 
   loginInProgress = false;
   loginFailed = false;
-  loginStep = LoginStep.LOGIN;
+  loginStep = LoginStep.START;
 
   firstLoginAssumed = false;
 
@@ -67,6 +68,8 @@ export class LoginComponent implements OnInit {
     const r = await window.homebridge.request('/nodeJSVersion');
     this.nodeJSversion = r.nodeJSversion;
     this.nodeJSIncompatible = r.nodeJSIncompatible;
+
+    console.log('r: ', r);
 
     this.getCredentials();
     this.fillCountryArray();

@@ -35,7 +35,7 @@
   </button>
 </div>
 
-<div *ngIf="adminAccountUsed" class="container">
+<div *ngIf="adminAccountUsed">
   <div class="card shadow-sm m-3 p-3" style="width: 100%;">
     <div class="alert alert-danger" role="alert">
       You're not using a guest admin account with this plugin! You must use a guest admin account!
@@ -46,14 +46,14 @@
   </div>
 </div>
 
-<div *ngIf="!adminAccountUsed && stations.length === 0" class="container">
+<div *ngIf="!adminAccountUsed && stations.length === 0">
   <div class="card shadow-sm text-center p-3" style="width: 100%;">
     Loading Accessories...
     <ngb-progressbar class="mb-3" type="success" [value]="this.progress" [animated]="true" [striped]="true" />
   </div>
 </div>
 
-<div *ngIf="!adminAccountUsed && stations.length !== 0" class="container">
+<div *ngIf="!adminAccountUsed && stations.length !== 0">
 
   <div *ngIf="versionUnmatched">
     <p></p>
