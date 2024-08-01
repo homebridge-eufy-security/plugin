@@ -68,6 +68,8 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
 
   private _hostSystem: string = '';
 
+  public nodeJScompatible: boolean = false;
+
   constructor(
     hblog: Logger,
     config: PlatformConfig,
@@ -470,7 +472,7 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
    */
   private generateUUID(identifier: string, isStation: boolean): string {
     // Add prefix 's_' if it's a station identifier, otherwise, no prefix.
-    const prefix = isStation ? 's_' : 'd_';
+    const prefix = isStation ? 's1_' : 'd1_';
     // Generate UUID based on the prefix + identifier.
     return HAP.uuid.generate(prefix + identifier);
   }
@@ -513,6 +515,7 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
 
     // Store device information in accessory context
     accessory.context['device'] = deviceContainer.deviceIdentifier;
+    accessory.displayName = deviceContainer.deviceIdentifier.displayName;
 
     return [accessory, !!cachedAccessory];
   }
@@ -587,7 +590,7 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
       const deviceContainer: StationContainer = {
         deviceIdentifier: {
           uniqueId: station.getSerial(),
-          displayName: 'STATION_' + station.getName(),
+          displayName: 'STATION ' + station.getName().replace(/[^a-zA-Z0-9]/g, ''),
           type: station.getDeviceType(),
         } as DeviceIdentifier,
         eufyDevice: station,
@@ -612,7 +615,7 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
       const deviceContainer: DeviceContainer = {
         deviceIdentifier: {
           uniqueId: device.getSerial(),
-          displayName: 'DEVICE_' + device.getName(),
+          displayName: 'DEVICE ' + device.getName().replace(/[^a-zA-Z0-9]/g, ''),
           type: device.getDeviceType(),
         } as DeviceIdentifier,
         eufyDevice: device,
@@ -750,7 +753,7 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
 
     if (Device.isKeyPad(type)) {
       log.debug(accessory.displayName + ' isKeypad!');
-      throw('The keypad needs to be taken out because it serves no purpose.');
+      throw ('The keypad needs to be taken out because it serves no purpose.');
     }
 
   }
@@ -773,10 +776,10 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
     log.debug('Node version is', nodeVersion);
 
     // Define versions known to break compatibility with RSA_PKCS1_PADDING
-    const incompatible = satisfies(nodeVersion, '^18.19.1 || ^20.11.1 || ^21.6.2');
+    this.nodeJScompatible = satisfies(nodeVersion, '^18.19.1 || ^20.11.1 || ^21.6.2');
 
     // Return true if the Node.js version is compatible, false otherwise
-    return !incompatible;
+    return !this.nodeJScompatible;
   }
 
 }

@@ -37,7 +37,7 @@ export const DEFAULT_CONFIG_VALUES: EufySecurityPlatformConfig = {
   enableDetailedLogging: false,
   omitLogFiles: false,
   CameraMaxLivestreamDuration: 30,
-  pollingIntervalMinutes: 10,
+  pollingIntervalMinutes: 0,
   hkHome: 1,
   hkAway: 0,
   hkNight: 3,
