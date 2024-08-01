@@ -198,7 +198,7 @@ export class CameraAccessory extends DeviceAccessory {
     this.registerCharacteristic({
       serviceType: platformServiceMapping[serviceType] || SERV.Switch,
       characteristicType: CHAR.On,
-      name: this.accessory.displayName + '_' + serviceName,
+      name: this.accessory.displayName + ' ' + serviceName,
       serviceSubType: serviceName,
       getValue: (data, characteristic) => this.getCameraPropertyValue(characteristic, propertyName),
       setValue: (value, characteristic) => this.setCameraPropertyValue(characteristic, propertyName, value),
