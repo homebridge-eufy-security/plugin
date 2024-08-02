@@ -34,9 +34,9 @@
 <!-- Login failed alert end -->
 
 <!-- Login form start -->
-<div *ngIf="loginStep === 0">
-  <div *ngIf="nodeJSIncompatible" class="alert alert-danger d-flex align-items-center" role="alert">
-    <lucide-angular name="info"></lucide-angular>
+<div *ngIf="loginStep === 0" class="text-right">
+  <div *ngIf="nodeJSIncompatible" class="alert alert-danger d-flex align-items-center text-left" role="alert">
+    <lucide-angular name="info" class="m-2"></lucide-angular>
     <div>
       Error: Your current Node.js version {{ nodeJSversion }} is incompatible with the
       RSA_PKCS1_PADDING used by the plugin. If you run the plugin with an incompatible version of Node.js,
@@ -47,24 +47,25 @@
       </u>
     </div>
   </div>
-  <div class="alert alert-warning d-flex align-items-center" role="alert">
-    <lucide-angular name="info"></lucide-angular>
+  <div class="alert alert-warning d-flex align-items-center text-left" role="alert">
+    <lucide-angular name="info" class="m-2"></lucide-angular>
     <div>
       Please make sure to restart plugin after you're done.
     </div>
   </div>
-  <button (click)="loginStep = 1">ok!</button>
+  <button class="btn btn-primary" type="button" (click)="loginStep = 1">Continue</button>
 </div>
 
 <!-- Login form login -->
 <div *ngIf="loginStep === 1">
-  <div *ngIf="!firstLoginAssumed" class="alert alert-warning d-flex align-items-center" role="alert">
-    <lucide-angular name="info"></lucide-angular>
+  <div class="alert alert-warning d-flex align-items-center" role="alert">
+    <lucide-angular name="info" class="m-2"></lucide-angular>
     <div>
-      Please make sure to restart plugin after you're done.
-      <u role="button" popoverTitle="Please restart after login" [autoClose]="'outside'" [ngbPopover]="popInfo">
-        Tell me why...
-      </u>
+      Using the same account for both the Eufy App and the Eufy Security Plugin can sometimes cause unexpected issues.
+      To ensure smooth operation, it's recommended to create a dedicated admin account for the Homebridge Eufy Security
+      Plugin. Follow the steps described
+      <a href="https://github.com/homebridge-eufy-security/plugin/wiki/Create-a-dedicated-admin-account-for-Homebridge-Eufy-Security-Plugin"
+        target="_blank" rel="noopener noreferrer">here</a>.
     </div>
   </div>
   <div class="form-floating mb-3">
