@@ -119,7 +119,7 @@ export class StationAccessory extends BaseAccessory {
     this.registerCharacteristic({
       serviceType: SERV.Switch,
       characteristicType: CHAR.On,
-      name: this.accessory.displayName + '_Siren',
+      name: this.accessory.displayName + ' Siren',
       getValue: () => this.handleManualTriggerSwitchStateGet(),
       setValue: (value) => this.handleManualTriggerSwitchStateSet(value),
     });
@@ -438,7 +438,7 @@ export class StationAccessory extends BaseAccessory {
   }
 
   private updateManuelTriggerButton(state: boolean) {
-    this.getService(SERV.Switch, this.accessory.displayName + '_Siren')
+    this.getService(SERV.Switch, this.accessory.displayName + ' Siren')
       .getCharacteristic(CHAR.On)
       .updateValue(state);
   }

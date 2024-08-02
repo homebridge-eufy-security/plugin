@@ -24,172 +24,173 @@
   </p>
 </ng-template>
 
-<div class="row d-flex justify-content-center">
+<!-- Login failed alert -->
+<p class="col-11 col-sm-7" *ngIf="loginFailed">
+  <ngb-alert [dismissible]="true" type="danger" (closed)="resetLoginFailed()">
+    <lucide-angular name="triangle-alert"></lucide-angular>
+    <strong>Login was not successful!</strong>
+  </ngb-alert>
+</p>
+<!-- Login failed alert end -->
 
-  <!-- Login failed alert -->
-  <p class="col-11 col-sm-7" *ngIf="loginFailed">
-    <ngb-alert [dismissible]="true" type="danger" (closed)="resetLoginFailed()">
-      <lucide-angular name="triangle-alert"></lucide-angular>
-      <strong>Login was not successful!</strong>
-    </ngb-alert>
-  </p>
-  <!-- Login failed alert end -->
-
-  <div class="col-11 col-sm-7 card p-4">
-
-    <!-- Login form start -->
-    <div *ngIf="loginStep === 1">
-      <div *ngIf="nodeJSIncompatible" class="alert alert-danger d-flex align-items-center" role="alert">
-        <lucide-angular name="info"></lucide-angular>
-        <div>
-          Error: Your current Node.js version {{ nodeJSversion }} is incompatible with the
-          RSA_PKCS1_PADDING used by the plugin. If you run the plugin with an incompatible version of Node.js,
-          livestream functionality will be disrupted.
-          <u role="button" popoverTitle="Please downgrade your NodeJS version" [autoClose]="'outside'"
-            [ngbPopover]="popInfoNodeJS">
-            Tell me why...
-          </u>
-        </div>
-      </div>
-      <div *ngIf="!firstLoginAssumed" class="alert alert-warning d-flex align-items-center" role="alert">
-        <lucide-angular name="info"></lucide-angular>
-        <div>
-          Please make sure to restart plugin after you're done.
-          <u role="button" popoverTitle="Please restart after login" [autoClose]="'outside'" [ngbPopover]="popInfo">
-            Tell me why...
-          </u>
-        </div>
-      </div>
-      <div class="form-floating mb-3">
-        <input type="email" [attr.class]="emailIsValid ? 'form-control' : 'form-control is-invalid'" id="floatingInput"
-          placeholder="name@example.com" [(ngModel)]="credentials.username"
-          [attr.disabled]="loginInProgress ? true : null" ngModel email>
-        <label for="floatingInput">Email address</label>
-      </div>
-      <p></p>
-      <div class="form-floating mb-3">
-        <input type="password" [attr.class]="passwordIsValid ? 'form-control' : 'form-control is-invalid'"
-          id="floatingPassword" placeholder="Password" [(ngModel)]="credentials.password"
-          [attr.disabled]="loginInProgress ? true : null">
-        <label for="floatingPassword">Password</label>
-      </div>
-      <p></p>
-      <div class="form-floating mb-3">
-        <ng-template #deviceNameExplanation>You can leave this field blank.<p></p>This will set the an option in
-          the api calls to the eufy cloud, so that the servers think this plugin uses the official eufy app on
-          the given device. If left blank the plugin will use a random device identifier. See <a
-            href="https://github.com/homebridge-eufy-security/plugin/issues/201" target="_blank"
-            rel="noopener noreferrer" style="color: white">this disussion</a> to learn more.</ng-template>
-        <input type="text" [attr.class]="passwordIsValid ? 'form-control' : 'form-control is-invalid'"
-          id="floatingDevice" placeholder="Device Name" [(ngModel)]="credentials.deviceName"
-          [attr.disabled]="loginInProgress ? true : null" placement="top" [ngbTooltip]="deviceNameExplanation"
-          [closeDelay]="2500">
-        <label for="floatingDevice">Device Name</label>
-      </div>
-
-      <div class="row">
-        <div class="col-12 col-sm-6 mb-3 mb-sm0">
-          <select class="form-select mb-3" aria-label="select country" [attr.disabled]="loginInProgress ? true : null"
-            [(ngModel)]="credentials.country">
-            <option *ngFor="let country of countries" [attr.value]="country.short"
-              [attr.selected]="credentials.country === country.short ? true : null">{{country.long}}
-            </option>
-          </select>
-          <small><i>
-              Make sure to use the same country that you use to login with the eufy app.
-            </i></small>
-        </div>
-        <span class="col-0 col-sm-1"></span>
-        <div class="col-12 col-sm-5 text-end mb-3">
-          <button class="btn btn-success col-12 mb-3" type="button" [attr.disabled]="loginInProgress ? true : null"
-            (click)="login()">
-            <span *ngIf="loginInProgress" class="spinner-border spinner-border-sm" role="status"
-              aria-hidden="true"></span>
-            Login
-            <span *ngIf="loginInProgress">...</span>
-          </button>
-
-          <button class="btn btn-secondary col-12" type="button" [attr.disabled]="loginInProgress ? true : null"
-            (click)="cancelLogin()">
-            Cancel
-          </button>
-        </div>
-      </div>
+<!-- Login form start -->
+<div *ngIf="loginStep === 0" class="text-right">
+  <div *ngIf="nodeJSIncompatible" class="alert alert-danger d-flex align-items-center text-left" role="alert">
+    <lucide-angular name="info" class="m-2"></lucide-angular>
+    <div>
+      Error: Your current Node.js version {{ nodeJSversion }} is incompatible with the
+      RSA_PKCS1_PADDING used by the plugin. If you run the plugin with an incompatible version of Node.js,
+      livestream functionality will be disrupted.
+      <u role="button" popoverTitle="Please downgrade your NodeJS version" [autoClose]="'outside'"
+        [ngbPopover]="popInfoNodeJS">
+        Tell me why...
+      </u>
     </div>
-    <!-- Login form end -->
-
-    <!-- TFA form start -->
-    <div *ngIf="loginStep === 2">
-      <div class="row mb-3">You should have gotten a 2FA verification code from eufy in your mail. Please enter
-        this below.</div>
-
-      <div class="row d-flex justify-content-center">
-        <div class="form-floating mb-3 col-8 col-sm-6">
-          <input type="text" [attr.class]="otpIsValid ? 'form-control' : 'form-control is-invalid'" id="floatingOTP"
-            placeholder="" [(ngModel)]="otp" [attr.disabled]="loginInProgress ? true : null">
-          <label for="floatingOTP">2FA Code</label>
-        </div>
-      </div>
-
-      <div class="row d-flex justify-content-center mb-3">
-        <div class="col-8 col-sm-6">
-          <button class="btn btn-success col-12" type="button" [attr.disabled]="loginInProgress ? true : null"
-            (click)="login()">
-            <span *ngIf="loginInProgress" class="spinner-border spinner-border-sm" role="status"
-              aria-hidden="true"></span>
-            Verify
-            <span *ngIf="loginInProgress">...</span>
-          </button>
-        </div>
-      </div>
-      <div class="row d-flex justify-content-center">
-        <div class="col-8 col-sm-6">
-          <button class="btn btn-secondary col-12" type="button" [attr.disabled]="loginInProgress ? true : null"
-            (click)="cancelLogin()">
-            Cancel
-          </button>
-        </div>
-      </div>
+  </div>
+  <div class="alert alert-warning d-flex align-items-center text-left" role="alert">
+    <lucide-angular name="info" class="m-2"></lucide-angular>
+    <div>
+      Please make sure to restart plugin after you're done.
     </div>
-    <!-- TFA form end -->
+  </div>
+  <button class="btn btn-primary" type="button" (click)="loginStep = 1">Continue</button>
+</div>
 
-    <!-- Captcha form start -->
-    <div *ngIf="loginStep === 3">
-      <div class="row mb-3">Please enter the captcha below.</div>
-
-      <div class="row d-flex justify-content-center mb-3">
-        <img class="col-10 col-sm-8" [src]="captchaImageData" alt="captcha image" />
-      </div>
-
-      <div class="row d-flex justify-content-center">
-        <div class="form-floating mb-3 col-8 col-sm-6">
-          <input type="text" [attr.class]="captchaIsValid ? 'form-control' : 'form-control is-invalid'" id="floatingOTP"
-            placeholder="" [(ngModel)]="captcha" [attr.disabled]="loginInProgress ? true : null">
-          <label for="floatingOTP">Captcha</label>
-        </div>
-      </div>
-
-      <div class="row d-flex justify-content-center mb-3">
-        <div class="col-8 col-sm-6">
-          <button class="btn btn-success col-12" type="button" [attr.disabled]="loginInProgress ? true : null"
-            (click)="login()">
-            <span *ngIf="loginInProgress" class="spinner-border spinner-border-sm" role="status"
-              aria-hidden="true"></span>
-            Verify
-            <span *ngIf="loginInProgress">...</span>
-          </button>
-        </div>
-      </div>
-      <div class="row d-flex justify-content-center">
-        <div class="col-8 col-sm-6">
-          <button class="btn btn-secondary col-12" type="button" [attr.disabled]="loginInProgress ? true : null"
-            (click)="cancelLogin()">
-            Cancel
-          </button>
-        </div>
-      </div>
+<!-- Login form login -->
+<div *ngIf="loginStep === 1">
+  <div class="alert alert-warning d-flex align-items-center" role="alert">
+    <lucide-angular name="info" class="m-2"></lucide-angular>
+    <div>
+      Using the same account for both the Eufy App and the Eufy Security Plugin can sometimes cause unexpected issues.
+      To ensure smooth operation, it's recommended to create a dedicated admin account for the Homebridge Eufy Security
+      Plugin. Follow the steps described
+      <a href="https://github.com/homebridge-eufy-security/plugin/wiki/Create-a-dedicated-admin-account-for-Homebridge-Eufy-Security-Plugin"
+        target="_blank" rel="noopener noreferrer">here</a>.
     </div>
-    <!-- Captcha form end -->
+  </div>
+  <div class="form-floating mb-3">
+    <input type="email" [attr.class]="emailIsValid ? 'form-control' : 'form-control is-invalid'" id="floatingInput"
+      placeholder="name@example.com" [(ngModel)]="credentials.username" [attr.disabled]="loginInProgress ? true : null"
+      ngModel email>
+    <label for="floatingInput">Email address</label>
+  </div>
+  <p></p>
+  <div class="form-floating mb-3">
+    <input type="password" [attr.class]="passwordIsValid ? 'form-control' : 'form-control is-invalid'"
+      id="floatingPassword" placeholder="Password" [(ngModel)]="credentials.password"
+      [attr.disabled]="loginInProgress ? true : null">
+    <label for="floatingPassword">Password</label>
+  </div>
+  <p></p>
+  <div class="form-floating mb-3">
+    <ng-template #deviceNameExplanation>You can leave this field blank.<p></p>This will set the an option in
+      the api calls to the eufy cloud, so that the servers think this plugin uses the official eufy app on
+      the given device. If left blank the plugin will use a random device identifier. See <a
+        href="https://github.com/homebridge-eufy-security/plugin/issues/201" target="_blank" rel="noopener noreferrer"
+        style="color: white">this disussion</a> to learn more.</ng-template>
+    <input type="text" [attr.class]="passwordIsValid ? 'form-control' : 'form-control is-invalid'" id="floatingDevice"
+      placeholder="Device Name" [(ngModel)]="credentials.deviceName" [attr.disabled]="loginInProgress ? true : null"
+      placement="top" [ngbTooltip]="deviceNameExplanation" [closeDelay]="2500">
+    <label for="floatingDevice">Device Name</label>
+  </div>
 
+  <div class="row">
+    <div class="col-12 col-sm-6 mb-3 mb-sm0">
+      <select class="form-select mb-3" aria-label="select country" [attr.disabled]="loginInProgress ? true : null"
+        [(ngModel)]="credentials.country">
+        <option *ngFor="let country of countries" [attr.value]="country.short"
+          [attr.selected]="credentials.country === country.short ? true : null">{{country.long}}
+        </option>
+      </select>
+      <small><i>
+          Make sure to use the same country that you use to login with the eufy app.
+        </i></small>
+    </div>
+    <span class="col-0 col-sm-1"></span>
+    <div class="col-12 col-sm-5 text-end mb-3">
+      <button class="btn btn-success col-12 mb-3" type="button" [attr.disabled]="loginInProgress ? true : null"
+        (click)="login()">
+        <span *ngIf="loginInProgress" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+        Login
+        <span *ngIf="loginInProgress">...</span>
+      </button>
+
+      <button class="btn btn-secondary col-12" type="button" [attr.disabled]="loginInProgress ? true : null"
+        (click)="cancelLogin()">
+        Cancel
+      </button>
+    </div>
   </div>
 </div>
+<!-- Login form end -->
+
+<!-- TFA form start -->
+<div *ngIf="loginStep === 2">
+  <div class="row mb-3">You should have gotten a 2FA verification code from eufy in your mail. Please enter
+    this below.</div>
+
+  <div class="row d-flex justify-content-center">
+    <div class="form-floating mb-3 col-8 col-sm-6">
+      <input type="text" [attr.class]="otpIsValid ? 'form-control' : 'form-control is-invalid'" id="floatingOTP"
+        placeholder="" [(ngModel)]="otp" [attr.disabled]="loginInProgress ? true : null">
+      <label for="floatingOTP">2FA Code</label>
+    </div>
+  </div>
+
+  <div class="row d-flex justify-content-center mb-3">
+    <div class="col-8 col-sm-6">
+      <button class="btn btn-success col-12" type="button" [attr.disabled]="loginInProgress ? true : null"
+        (click)="login()">
+        <span *ngIf="loginInProgress" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+        Verify
+        <span *ngIf="loginInProgress">...</span>
+      </button>
+    </div>
+  </div>
+  <div class="row d-flex justify-content-center">
+    <div class="col-8 col-sm-6">
+      <button class="btn btn-secondary col-12" type="button" [attr.disabled]="loginInProgress ? true : null"
+        (click)="cancelLogin()">
+        Cancel
+      </button>
+    </div>
+  </div>
+</div>
+<!-- TFA form end -->
+
+<!-- Captcha form start -->
+<div *ngIf="loginStep === 3">
+  <div class="row mb-3">Please enter the captcha below.</div>
+
+  <div class="row d-flex justify-content-center mb-3">
+    <img class="col-10 col-sm-8" [src]="captchaImageData" alt="captcha image" />
+  </div>
+
+  <div class="row d-flex justify-content-center">
+    <div class="form-floating mb-3 col-8 col-sm-6">
+      <input type="text" [attr.class]="captchaIsValid ? 'form-control' : 'form-control is-invalid'" id="floatingOTP"
+        placeholder="" [(ngModel)]="captcha" [attr.disabled]="loginInProgress ? true : null">
+      <label for="floatingOTP">Captcha</label>
+    </div>
+  </div>
+
+  <div class="row d-flex justify-content-center mb-3">
+    <div class="col-8 col-sm-6">
+      <button class="btn btn-success col-12" type="button" [attr.disabled]="loginInProgress ? true : null"
+        (click)="login()">
+        <span *ngIf="loginInProgress" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+        Verify
+        <span *ngIf="loginInProgress">...</span>
+      </button>
+    </div>
+  </div>
+  <div class="row d-flex justify-content-center">
+    <div class="col-8 col-sm-6">
+      <button class="btn btn-secondary col-12" type="button" [attr.disabled]="loginInProgress ? true : null"
+        (click)="cancelLogin()">
+        Cancel
+      </button>
+    </div>
+  </div>
+</div>
+<!-- Captcha form end -->

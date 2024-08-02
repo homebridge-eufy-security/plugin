@@ -8,8 +8,7 @@
       <p>To initiate a full station and device refresh, you will need to log into your eufy account. However,
         please be aware that this action may interfere with the plugin's connection to the eufy cloud.</p>
       <ngb-alert [dismissible]="false">
-        We strongly recommend that you <strong>stop</strong> the plugin before
-        proceeding further.
+        We strongly recommend that you <strong>stop</strong> the plugin before proceeding further.
       </ngb-alert>
       <p>Otherwise, you may experience glitches such as push notifications from the plugin no longer functioning
         correctly. (See <a href="https://github.com/homebridge-eufy-security/plugin/issues/59#issuecomment-1147314942"
@@ -21,22 +20,74 @@
   </div>
 </ng-template>
 
-<div *ngIf="!adminAccountUsed" class="text-end">
-  <button type="button" class="btn btn-success" (click)="openReloadModal(reloadModal)"
-    (keydown.enter)="openReloadModal(reloadModal)" placement="top" ngbTooltip="Re Sync">
-    <lucide-angular name="refresh-cw"></lucide-angular>
-  </button>
-  <button type="button" class="btn btn-warning" placement="top" ngbTooltip="Having a bug?" routerLink="/githubissue">
-    <lucide-angular name="bug"></lucide-angular>
-  </button>
-  <button type="button" class="btn btn-danger" placement="top" ngbTooltip="Global Settings"
-    routerLink="/advancedConfig">
-    <lucide-angular name="sliders-horizontal"></lucide-angular>
-  </button>
-</div>
+<ng-container *ngIf="!adminAccountUsed; else adminAccountUsedTemplate">
+  <div class="text-end">
+    <button type="button" class="btn btn-success" (click)="openReloadModal(reloadModal)"
+      (keydown.enter)="openReloadModal(reloadModal)" placement="bottom" ngbTooltip="Re Sync">
+      <lucide-angular name="refresh-cw"></lucide-angular>
+    </button>
+    <button type="button" class="btn btn-warning" placement="bottom" ngbTooltip="Having a bug?"
+      routerLink="/githubissue">
+      <lucide-angular name="bug"></lucide-angular>
+    </button>
+    <button type="button" class="btn btn-danger" placement="bottom" ngbTooltip="Global Settings"
+      routerLink="/advancedConfig">
+      <lucide-angular name="sliders-horizontal"></lucide-angular>
+    </button>
+  </div>
 
-<div *ngIf="adminAccountUsed" class="container">
-  <div class="card shadow-sm m-3 p-3" style="width: 100%;">
+  <ng-container *ngIf="stations$ | async as stations; else noStations">
+    <ng-container *ngIf="stations.length !== 0; else noStations">
+      <ng-container *ngIf="versionUnmatched; else stationsContent">
+        <p></p>
+        <ngb-alert type="warning" [dismissible]="false">
+          <a (click)="openReloadModal(reloadModal)" (keydown.enter)="openReloadModal(reloadModal)" tabindex="0">
+            Plugin has been updated, please refresh and reboot the plugin.
+          </a>
+        </ngb-alert>
+        <p></p>
+      </ng-container>
+
+      <ng-template #stationsContent>
+        <p></p>
+        <span>Click the name to access accessory configuration.</span>
+        <p></p>
+
+        <div class="row row-cols-md-4">
+          <ng-container *ngFor="let station of stations; trackBy: trackByStationId">
+            <ng-container *ngIf="station && station.devices?.length !== 0">
+
+              <ng-container *ngIf="station.devices[0].uniqueId === station.uniqueId; else separateDevices">
+                <div class="col-4 mb-4">
+                  <ng-container
+                    *ngTemplateOutlet="cardTemplate; context: { $implicit: station, type: 'both' }"></ng-container>
+                </div>
+              </ng-container>
+
+              <ng-template #separateDevices>
+                <div class="col-4 mb-4">
+                  <ng-container
+                    *ngTemplateOutlet="cardTemplate; context: { $implicit: station, type: 'station' }"></ng-container>
+                </div>
+                <ng-container *ngFor="let device of station.devices; trackBy: trackByDeviceId">
+                  <div class="col-4 mb-4">
+                    <ng-container
+                      *ngTemplateOutlet="cardTemplate; context: { $implicit: device, type: 'device' }"></ng-container>
+                  </div>
+                </ng-container>
+              </ng-template>
+
+            </ng-container>
+          </ng-container>
+        </div>
+
+      </ng-template>
+    </ng-container>
+  </ng-container>
+</ng-container>
+
+<ng-template #adminAccountUsedTemplate>
+  <div>
     <div class="alert alert-danger" role="alert">
       You're not using a guest admin account with this plugin! You must use a guest admin account!
       Please look here for more details:
@@ -44,139 +95,38 @@
     </div>
     <button class="btn btn-secondary" type="button" routerLink="/login">Cancel</button>
   </div>
-</div>
+</ng-template>
 
-<div *ngIf="!adminAccountUsed && stations.length === 0" class="container">
-  <div class="card shadow-sm text-center p-3" style="width: 100%;">
-    Loading Accessories...
-    <ngb-progressbar class="mb-3" type="success" [value]="this.progress" [animated]="true" [striped]="true" />
+<ng-template #noStations>
+  <div class="alert alert-info" role="alert">
+    No stations found.
+    Please wait a few seconds and try again.
+    Please check your configuration or try refreshing.
+    Did you change the country settings?
+    If the problem persists, please open an issue.
   </div>
-</div>
+</ng-template>
 
-<div *ngIf="!adminAccountUsed && stations.length !== 0" class="container">
-
-  <div *ngIf="versionUnmatched">
-    <p></p>
-    <ngb-alert type="warning" [dismissible]="false">
-      <a (click)="openReloadModal(reloadModal)" (keydown.enter)="openReloadModal(reloadModal)" tabindex="0">Plugin
-        has been updated, please refresh and reboot the plugin.</a>
-    </ngb-alert>
-    <p></p>
-  </div>
-
-  <div *ngIf="!versionUnmatched">
-
-    <p></p>
-    <span>Click the name to reveal the attached device(s) or access accessory configuration.</span>
-    <p></p>
-
-    <div ngbAccordion [closeOthers]="true">
-
-      <ng-template ngFor let-station [ngForOf]="stations">
-
-        <ng-template [ngIf]="station && station.devices.length !== 0">
-
-          <div ngbAccordionItem="S_{{station.uniqueId}}">
-
-            <div ngbAccordionHeader>
-
-              <div *ngIf="station.devices[0].uniqueId === station.uniqueId" ngbAccordionButton
-                class="row m-0 accordion-button2" routerLink="/config/both/{{station.uniqueId}}">
-                <div class="col">{{ station.displayName }}</div>
-                <div class="col-1" *ngIf="!station.devices[0].disabled">
-                  <lucide-angular [ngbTooltip]="station.devices[0].ignored ? 'Device OFF' : 'Device ON'"
-                    [name]="station.devices[0].ignored ? 'video-off' : 'video'"></lucide-angular>
-                </div>
-                <div class="col-1" *ngIf="!station.disabled">
-                  <lucide-angular [ngbTooltip]="station.ignored ? 'Security Control OFF' : 'Security Control ON'"
-                    [name]="station.ignored ? 'shield-off' : 'shield'"></lucide-angular>
-                </div>
-              </div>
-
-              <button *ngIf="station.devices[0].uniqueId !== station.uniqueId" ngbAccordionButton>
-                {{ station.displayName }}
-              </button>
-
-            </div>
-
-            <div ngbAccordionCollapse>
-              <div ngbAccordionBody *ngIf="station.devices[0].uniqueId !== station.uniqueId">
-
-                <ng-template>
-
-                  <div class="row">
-
-                    <div class="col-6 col-sm-4 mt-3 mb-3 d-flex flex-column align-items-center">
-                      <div class="col-12 col-sm-7">
-                        <div class="text-center">
-                          <a routerLink="/config/station/{{station.uniqueId}}" style="color: black;">
-                            <div class="device ratio ratio-1x1 border rounded shadow-sm">
-                              <img class="deviceimage"
-                                [src]="'assets/devices/' + (DeviceImage.get(station.type) ? DeviceImage.get(station.type)?.image : 'unknown.png')"
-                                [style.opacity]="station.ignored === true ? 0.5 : 1" alt="{{ station.displayName }}">
-                              <span class="devicesettingsicon d-flex border align-items-center justify-content-center"
-                                style="z-index: 15;">
-                                <lucide-angular name="sliders-horizontal"></lucide-angular>
-                              </span>
-                              <span *ngIf="station.ignored" class="d-flex border align-items-top justify-content-end"
-                                style="z-index: 20;">
-                                <lucide-angular name="eye-off" class="icon"></lucide-angular>
-                              </span>
-                            </div>
-                          </a>
-                        </div>
-                      </div>
-
-                      <span class="col-12 text-center">{{ station.displayName }}</span>
-
-                    </div>
-
-                    <div *ngFor="let device of station.devices"
-                      class="col-6 col-sm-4 mt-3 mb-3 d-flex flex-column align-items-center">
-                      <div class="col-12 col-sm-7">
-                        <div class="text-center">
-                          <a routerLink="/config/device/{{device.uniqueId}}" style="color: black;">
-                            <div class="device ratio ratio-1x1 border rounded shadow-sm">
-                              <img class="deviceimage"
-                                [src]="'assets/devices/' + (DeviceImage.get(device.type) ? DeviceImage.get(device.type)?.image : 'unknown.png')"
-                                [style.opacity]="device.ignored === true ? 0.5 : 1" alt="{{ device.displayName }}">
-                              <span class="devicesettingsicon d-flex border align-items-center justify-content-center"
-                                style="z-index: 15;">
-                                <lucide-angular name="sliders-horizontal"></lucide-angular>
-                              </span>
-                              <span *ngIf="device.ignored" class="d-flex border align-items-top justify-content-end"
-                                style="z-index: 20;">
-                                <lucide-angular name="eye-off" class="icon"></lucide-angular>
-                              </span>
-                              <span *ngIf="device.isKeypad" class="d-flex border align-items-top justify-content-end"
-                                style="z-index: 20;">
-                                <lucide-angular name="message-square-warning" class="icon"></lucide-angular>
-                              </span>
-                            </div>
-                          </a>
-                        </div>
-                      </div>
-
-                      <span class="col-12 text-center">{{ device.displayName }}</span>
-
-                    </div>
-
-                  </div>
-
-                </ng-template>
-
-              </div>
-
-            </div>
-
-          </div>
-
-        </ng-template>
-
-      </ng-template>
-
+<ng-template #cardTemplate let-item let-type="type">
+  <a [routerLink]="['/config', type, item.uniqueId]" style="color: black;">
+    <div class="card">
+      <div class="position-absolute top-0 end-0">
+        <span class="d-flex p-2" style="z-index: 20;">
+          <ng-container [ngSwitch]="true">
+            <lucide-angular *ngSwitchCase="type === 'both'"
+              [ngbTooltip]="item.ignored ? 'Security Control OFF' : 'Security Control ON'"
+              [name]="item.ignored ? 'shield-off' : 'shield'">
+            </lucide-angular>
+            <lucide-angular *ngSwitchCase="type === 'device' && item.isKeypad" name="shield-alert" color="red">
+            </lucide-angular>
+          </ng-container>
+        </span>
+      </div>
+      <img class="card-img p-3" [src]="'assets/devices/' + (DeviceImage.get(item.type)?.image || 'unknown.png')"
+        [style.opacity]="(type === 'both' ? item.devices[0].ignored : item.ignored) ? 0.3 : 1" [alt]="item.displayName">
+      <div class="card-img-overlay">
+        <h5 class="card-title position-absolute bottom-0">{{ item.displayName }}</h5>
+      </div>
     </div>
-
-  </div>
-
-</div>
+  </a>
+</ng-template>

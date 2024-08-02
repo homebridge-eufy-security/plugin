@@ -27,7 +27,6 @@ export interface EufySecurityPlatformConfig extends PlatformConfig {
   cleanCache: boolean;
   ignoreMultipleDevicesWarning: boolean;
   autoSyncStation: boolean;
-  nodejs_security: boolean;
 }
 
 export const DEFAULT_CONFIG_VALUES: EufySecurityPlatformConfig = {
@@ -38,7 +37,7 @@ export const DEFAULT_CONFIG_VALUES: EufySecurityPlatformConfig = {
   enableDetailedLogging: false,
   omitLogFiles: false,
   CameraMaxLivestreamDuration: 30,
-  pollingIntervalMinutes: 10,
+  pollingIntervalMinutes: 0,
   hkHome: 1,
   hkAway: 0,
   hkNight: 3,
@@ -51,5 +50,4 @@ export const DEFAULT_CONFIG_VALUES: EufySecurityPlatformConfig = {
   cleanCache: true,
   ignoreMultipleDevicesWarning: false,
   autoSyncStation: false,
-  nodejs_security: false,
 };

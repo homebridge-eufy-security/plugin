@@ -8,7 +8,6 @@ import { LivestreamDurationSecondsComponent } from '../config-options/livestream
 import { PollingIntervalMinutesComponent } from '../config-options/polling-interval-minutes/polling-interval-minutes.component';
 import { EditCredentialsComponent } from '../config-options/edit-credentials/edit-credentials.component';
 import { AutoSyncStationComponent } from '../config-options/auto-sync-station/auto-sync-station.component';
-import { NodejsSecurityComponent } from '../config-options/nodejs-security/nodejs-security.component';
 import { LucideAngularModule } from 'lucide-angular';
 
 @Component({
@@ -25,7 +24,6 @@ import { LucideAngularModule } from 'lucide-angular';
         CleanCacheComponent,
         GuardModesMappingComponent,
         AutoSyncStationComponent,
-        NodejsSecurityComponent,
         LucideAngularModule,
     ],
 })
