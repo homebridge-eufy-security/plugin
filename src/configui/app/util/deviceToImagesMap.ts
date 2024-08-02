@@ -10,7 +10,7 @@ const deviceTypeIds = [
 export function getImageForDeviceType(deviceType: number): string {
   switch (deviceType) {
     case 0: // STATION
-      return 'homebase2_large.jpg';
+      return 'homebase2_large.png';
     case 1: // CAMERA
     case 4: // CAMERA_E
       return 'eufycam_large.jpg';
