@@ -23,13 +23,13 @@
 <ng-container *ngIf="!adminAccountUsed; else adminAccountUsedTemplate">
   <div class="text-end">
     <button type="button" class="btn btn-success" (click)="openReloadModal(reloadModal)"
-      (keydown.enter)="openReloadModal(reloadModal)" placement="top" ngbTooltip="Re Sync">
+      (keydown.enter)="openReloadModal(reloadModal)" placement="bottom" ngbTooltip="Re Sync">
       <lucide-angular name="refresh-cw"></lucide-angular>
     </button>
-    <button type="button" class="btn btn-warning" placement="top" ngbTooltip="Having a bug?" routerLink="/githubissue">
+    <button type="button" class="btn btn-warning" placement="bottom" ngbTooltip="Having a bug?" routerLink="/githubissue">
       <lucide-angular name="bug"></lucide-angular>
     </button>
-    <button type="button" class="btn btn-danger" placement="top" ngbTooltip="Global Settings"
+    <button type="button" class="btn btn-danger" placement="bottom" ngbTooltip="Global Settings"
       routerLink="/advancedConfig">
       <lucide-angular name="sliders-horizontal"></lucide-angular>
     </button>
@@ -108,22 +108,24 @@
 <ng-template #cardTemplate let-item let-type="type">
   <a [routerLink]="['/config', type, item.uniqueId]" style="color: black;">
     <div class="card">
-      <div class="position-absolute bottom-0 end-0">
+      <div class="position-absolute top-0 end-0">
         <span class="d-flex p-2" style="z-index: 20;">
           <ng-container [ngSwitch]="true">
-            <lucide-angular *ngSwitchCase="type === 'station' || type === 'both'"
+            <lucide-angular *ngSwitchCase="type === 'both'"
               [ngbTooltip]="item.ignored ? 'Security Control OFF' : 'Security Control ON'"
               [name]="item.ignored ? 'shield-off' : 'shield'">
             </lucide-angular>
             <lucide-angular *ngSwitchCase="type === 'device' && item.isKeypad" name="shield-alert" color="red">
             </lucide-angular>
+            <lucide-angular *ngSwitchCase="type === 'device' && item.isCamera" name="video">
+            </lucide-angular>
           </ng-container>
         </span>
       </div>
-      <img class="card-img p-2" [src]="'assets/devices/' + (DeviceImage.get(item.type)?.image || 'unknown.png')"
+      <img class="card-img p-3" [src]="'assets/devices/' + (DeviceImage.get(item.type)?.image || 'unknown.png')"
         [style.opacity]="(type === 'both' ? item.devices[0].ignored : item.ignored) ? 0.3 : 1" [alt]="item.displayName">
       <div class="card-img-overlay">
-        <h5 class="card-title">{{ item.displayName }}</h5>
+        <h5 class="card-title position-absolute bottom-0">{{ item.displayName }}</h5>
       </div>
     </div>
   </a>

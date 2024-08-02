@@ -45,3 +45,7 @@ h5.card-title {
 .my-custom-header::after {
   content: none;
 }
+
+.card:hover {
+  transform: scale(1.05);
+}
