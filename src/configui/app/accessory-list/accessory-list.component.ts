@@ -53,7 +53,7 @@ export class AccessoryListComponent implements OnInit {
     this.waitForAccessories = this.route.snapshot.paramMap.get('waitForAccessories') === 'true';
 
     this.setupEventListeners();
-    
+
     this.updateStations();
 
     if (!this.waitForAccessories && this.stationsSubject.getValue().length === 0) {
@@ -87,10 +87,11 @@ export class AccessoryListComponent implements OnInit {
     await this.zone.run(() => this.updateStations());
   }
 
-  private handleAdminAccountUsed(): void {
+  private async handleAdminAccountUsed(): Promise<void> {
     console.log('Admin account used');
     this.adminAccountUsed = true;
     this.stationsSubject.next([]);
+    await this.pluginService.resetConfig();
     this.cdr.markForCheck();
   }
 
@@ -102,9 +103,9 @@ export class AccessoryListComponent implements OnInit {
       return;
     }
 
-    
+
     const { ignoreStations = [], ignoreDevices = [] } = this.pluginService.getConfig();
-    
+
     stations.forEach((station) => {
       station.ignored = ignoreStations.includes(station.uniqueId);
       station.devices?.forEach((device) => {
