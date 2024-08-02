@@ -1,17 +1,13 @@
-/* eslint-disable no-console */
-/* eslint-disable @typescript-eslint/no-explicit-any */
-import { Component, OnInit, Input, NgZone } from '@angular/core';
+import { Component, OnInit, Input, NgZone, ChangeDetectionStrategy, ChangeDetectorRef } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-
-import { NgbModal, ModalDismissReasons, NgbProgressbar } from '@ng-bootstrap/ng-bootstrap';
-
+import { NgbModal, ModalDismissReasons } from '@ng-bootstrap/ng-bootstrap';
 import { PluginService } from '../plugin.service';
-
 import { L_Station } from '../util/types';
 import { DeviceImage } from '../util/deviceToImagesMap';
-import { NgIf, NgFor } from '@angular/common';
-import { NgbAccordionModule, NgbAlertModule, NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
+import { NgIf, NgFor, AsyncPipe, NgSwitch, NgSwitchCase, NgTemplateOutlet } from '@angular/common';
+import { NgbAlertModule, NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { LucideAngularModule } from 'lucide-angular';
+import { BehaviorSubject, Observable } from 'rxjs';
 
 @Component({
   selector: 'app-accessory-list',
@@ -21,91 +17,94 @@ import { LucideAngularModule } from 'lucide-angular';
   imports: [
     RouterLink,
     NgIf,
-    LucideAngularModule,
     NgFor,
-    NgbAccordionModule,
+    NgSwitch,
+    NgSwitchCase,
+    NgTemplateOutlet,
+    LucideAngularModule,
     NgbAlertModule,
     NgbTooltipModule,
-    NgbProgressbar,
+    AsyncPipe,
   ],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class AccessoryListComponent implements OnInit {
-  stations: L_Station[] = [];
-  versionUnmatched: boolean = false;
+  private stationsSubject = new BehaviorSubject<L_Station[]>([]);
+  stations$: Observable<L_Station[]> = this.stationsSubject.asObservable();
 
-  adminAccountUsed: boolean = false;
-
-  progress: number = 0;
-  wait_timer: number = 200;
+  versionUnmatched = false;
+  adminAccountUsed = false;
 
   @Input() waitForAccessories?: boolean;
 
   DeviceImage = DeviceImage;
-
   closeResult = '';
 
   constructor(
     private modalService: NgbModal,
     public pluginService: PluginService,
     private route: ActivatedRoute,
-    private routerService: Router,
+    private router: Router,
     private zone: NgZone,
+    private cdr: ChangeDetectorRef
   ) { }
 
-  async ngOnInit(): Promise<void> {
+  ngOnInit(): void {
     this.waitForAccessories = this.route.snapshot.paramMap.get('waitForAccessories') === 'true';
 
-    window.homebridge.addEventListener('versionUnmatched', (event: any) => {
-      console.log(`Stored version (${event.data['storedVersion']}) does not match current version (${event.data['currentVersion']})`);
-      this.versionUnmatched = true;
-    });
+    this.setupEventListeners();
+    
+    this.updateStations();
 
-    this.pluginService.addEventListener('newAccessories', async () => {
-      await this.zone.run(async () => {
-        await this.updateStations();
-      });
-    });
-
-    window.homebridge.addEventListener('addAccessory', async () => {
-      await this.zone.run(async () => {
-        await this.updateStations();
-      });
-    });
-
-    window.homebridge.addEventListener('AdminAccountUsed', async () => {
-      this.adminAccountUsed = true;
-      this.stations = [];
-    });
-
-    this.update_progress(10);
-    await this.updateStations();
-
-    if (!this.waitForAccessories && this.stations.length === 0) {
-      this.pluginService.loadStoredAccessories().then((result) => {
-        if (!result) {
-          this.routerService.navigateByUrl('/login');
-        }
-      }).catch(() => {
-        this.routerService.navigateByUrl('/login');
-      });
+    if (!this.waitForAccessories && this.stationsSubject.getValue().length === 0) {
+      this.loadStoredAccessories();
     }
+
+    this.stations$.subscribe(stations => {
+      console.log('Stations updated:', stations);
+    });
+
   }
 
-  private async updateStations() {
+  private setupEventListeners(): void {
+    window.homebridge.addEventListener('versionUnmatched', this.handleVersionUnmatched.bind(this));
+    this.pluginService.addEventListener('newAccessories', this.handleNewAccessories.bind(this));
+    window.homebridge.addEventListener('addAccessory', this.handleAddAccessory.bind(this));
+    window.homebridge.addEventListener('AdminAccountUsed', this.handleAdminAccountUsed.bind(this));
+  }
 
+  private handleVersionUnmatched(event: any): void {
+    console.log(`Stored version (${event.data['storedVersion']}) does not match current version (${event.data['currentVersion']})`);
+    this.versionUnmatched = true;
+    this.cdr.markForCheck();
+  }
+
+  private async handleNewAccessories(): Promise<void> {
+    await this.zone.run(() => this.updateStations());
+  }
+
+  private async handleAddAccessory(): Promise<void> {
+    await this.zone.run(() => this.updateStations());
+  }
+
+  private handleAdminAccountUsed(): void {
+    console.log('Admin account used');
+    this.adminAccountUsed = true;
+    this.stationsSubject.next([]);
+    this.cdr.markForCheck();
+  }
+
+  private async updateStations(): Promise<void> {
     const stations = this.pluginService.getStations();
 
-    // Check if there are no stations with devices populated
     if (stations.every(station => !station.devices || station.devices.length === 0)) {
       console.log('No stations with devices populated. Skipping update.');
-      this.update_progress(20);
       return;
     }
 
-    this.update_progress(40);
+    
     const { ignoreStations = [], ignoreDevices = [] } = this.pluginService.getConfig();
-
-    this.update_progress(50);
+    
     stations.forEach((station) => {
       station.ignored = ignoreStations.includes(station.uniqueId);
       station.devices?.forEach((device) => {
@@ -113,23 +112,16 @@ export class AccessoryListComponent implements OnInit {
       });
     });
 
-    this.update_progress(70);
-
-    if (stations === this.stations) {
+    if (stations === this.stationsSubject.getValue()) {
       console.log('Nothing to update. Skipping update.');
       return;
     }
 
-    this.update_progress(90);
-    this.stations = stations;
-
+    this.stationsSubject.next(stations);
+    this.cdr.markForCheck();
   }
 
-  private update_progress(progress: number): void {
-    this.progress = progress;
-  }
-
-  openReloadModal(content: any) {
+  openReloadModal(content: any): void {
     this.modalService.open(content, { ariaLabelledBy: 'modal-basic-title', centered: true }).result.then(
       (result) => {
         this.closeResult = `Closed with: ${result}`;
@@ -150,4 +142,21 @@ export class AccessoryListComponent implements OnInit {
     }
   }
 
+  private loadStoredAccessories(): void {
+    this.pluginService.loadStoredAccessories().then((result) => {
+      if (!result) {
+        this.router.navigateByUrl('/login');
+      }
+    }).catch(() => {
+      this.router.navigateByUrl('/login');
+    });
+  }
+
+  trackByStationId(index: number, station: L_Station): string {
+    return station.uniqueId;
+  }
+
+  trackByDeviceId(index: number, device: any): string {
+    return device.uniqueId;
+  }
 }
