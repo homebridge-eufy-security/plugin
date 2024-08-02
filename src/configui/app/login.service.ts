@@ -1,4 +1,3 @@
-/* eslint-disable no-console */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Injectable } from '@angular/core';
 import { PluginConfig } from '@homebridge/plugin-ui-utils/dist/ui.interface';

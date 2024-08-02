@@ -28,7 +28,6 @@ export class DownloadLogsComponent implements OnInit {
     this.router.events.subscribe((event) => {
       if (event instanceof NavigationStart) {
         if (this.logFileLocation !== '') {
-          // eslint-disable-next-line no-console
           console.log('revoke log zip file blob location url.');
           window.URL.revokeObjectURL(this.logFileLocation);
           this.logFileLocation = '';
@@ -68,7 +67,6 @@ export class DownloadLogsComponent implements OnInit {
 
       this.hasDownloaded = true;
     } catch (err) {
-      // eslint-disable-next-line no-console
       console.log(err);
 
       const error = err as { message: string };

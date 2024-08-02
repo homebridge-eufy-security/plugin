@@ -1,4 +1,3 @@
-/* eslint-disable no-console */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { PluginConfig } from '@homebridge/plugin-ui-utils/dist/ui.interface';
 import { L_Device, L_Station } from '../util/types';

@@ -148,13 +148,11 @@ export abstract class BaseAccessory extends EventEmitter {
     setValueDebounceTime?: number;
   }) {
 
-    // eslint-disable-next-line max-len
     this.log.debug(`REGISTER CHARACTERISTIC ${serviceType.name} / ${characteristicType.name} / ${name}`);
 
     const service = this.getService(serviceType, name, serviceSubType);
     const characteristic = service.getCharacteristic(characteristicType);
 
-    // eslint-disable-next-line max-len
     this.log.debug(`REGISTER CHARACTERISTIC (${service.UUID}) / (${characteristic.UUID})`);
 
     if (getValue) {
@@ -189,7 +187,6 @@ export abstract class BaseAccessory extends EventEmitter {
     if (onSimpleValue) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       this.device.on(onSimpleValue, (device: any, value: any) => {
-        // eslint-disable-next-line max-len
         this.log.info(`ON '${serviceType.name} / ${characteristicType.name} / ${onSimpleValue}':`, value);
         characteristic.updateValue(value);
       });
@@ -205,7 +202,6 @@ export abstract class BaseAccessory extends EventEmitter {
       onMultipleValue.forEach(eventType => {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         this.device.on(eventType as keyof any, (device: any, value: any) => {
-          // eslint-disable-next-line max-len
           this.log.info(`ON '${serviceType.name} / ${characteristicType.name} / ${eventType}':`, value);
           characteristic.updateValue(value);
         });
@@ -265,7 +261,6 @@ export abstract class BaseAccessory extends EventEmitter {
         !this.servicesInUse.includes(service) &&
         !safeServiceUUIDs.includes(service.UUID)
       ) {
-        // eslint-disable-next-line max-len
         this.log.debug(`Pruning unused service ${service.UUID} ${service.displayName || service.name}`);
         this.accessory.removeService(service);
       }

@@ -78,7 +78,6 @@ export class RecordingDelegate implements CameraRecordingDelegate {
     let filebuffer = Buffer.alloc(0);
 
     try {
-      // eslint-disable-next-line max-len
       const audioEnabled = this.controller?.recordingManagement?.recordingManagementService.getCharacteristic(CHAR.RecordingAudioActive).value;
       if (audioEnabled) {
         log.debug('HKSV and plugin are set to record audio.');

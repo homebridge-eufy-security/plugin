@@ -96,8 +96,6 @@ export class AdvancedVideoconfigComponent
       this.maxFPS = undefined;
       this.maxBitrate = undefined;
       this.useSeparateProcesses = true;
-
-      // eslint-disable-next-line max-len
       this.presetDescription = 'Most eufy cams support the same codec that HomeKit requests. You can try and \'forward\' the stream directly without encoding it with ffmpeg. This can increase performance and quality drastically.';
     } else if (this.preset === 2) {
       this.readRate = undefined;
@@ -114,7 +112,6 @@ export class AdvancedVideoconfigComponent
       this.maxBitrate = undefined;
       this.useSeparateProcesses = true;
 
-      // eslint-disable-next-line max-len
       this.presetDescription = 'This preset tries to increase performance by reducing the quality of the stream. This can work for low performance hardware like raspberry pis.';
     } else {
       this.presetDescription = undefined;
