@@ -1,5 +1,3 @@
-/* eslint-disable max-len */
-
 import { Component, Input, OnInit } from '@angular/core';
 import { L_Device } from '../../../app/util/types';
 import { PluginService } from '../../../app/plugin.service';

@@ -103,7 +103,6 @@ export class StationAccessory extends BaseAccessory {
       getValue: () => this.handleSecuritySystemTargetStateGet(),
       setValue: (value) => this.handleSecuritySystemTargetStateSet(value),
       onValue: (service, characteristic) => {
-        // eslint-disable-next-line max-len
         this.device.on('guard mode', (station: Station, guardMode: number) => {
           this.onStationGuardModePushNotification(characteristic, station, guardMode);
         });
@@ -433,6 +432,7 @@ export class StationAccessory extends BaseAccessory {
     try {
       return `${HKGuardMode[value as number]}(${value})`;
     } catch (error) {
+      this.log.error(`Error getting guard mode name! ${error}`);
       return 'Unknown';
     }
   }

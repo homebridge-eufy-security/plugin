@@ -5,7 +5,9 @@ import path from 'path';
 import { tmpdir } from 'os';
 import fse from 'fs-extra';
 
-import { Characteristic, HAP as HAPHB, Service } from 'homebridge';
+import { HAP as HAPHB } from 'homebridge';
+import type { Characteristic, Service } from 'homebridge';
+
 import { CameraConfig } from './configTypes';
 import { Camera, PropertyName } from 'eufy-security-client';
 
@@ -99,7 +101,6 @@ export class UniversalStream {
     }
 
     const stepEndTime = Date.now(); // End time for this step
-    // eslint-disable-next-line max-len
     ffmpegLogger.debug(`Time taken for generateSockPath: ${stepEndTime - stepStartTime}ms (Total time from start: ${stepEndTime - this.startTime}ms)`);
 
     return sockpath;

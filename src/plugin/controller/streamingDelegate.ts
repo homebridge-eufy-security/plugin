@@ -1,5 +1,3 @@
-/* eslint-disable max-len */
-/* eslint-disable indent */
 import {
   APIEvent,
   AudioStreamingCodecType,

@@ -51,6 +51,7 @@ import { platform } from 'node:process';
 import { readFileSync } from 'node:fs';
 
 import { init_log, log, tsLogger, ffmpegLogger, HAP } from './utils/utils';
+import { LIB_VERSION } from './version';
 
 export class EufySecurityPlatform implements DynamicPlatformPlugin {
   public eufyClient: EufySecurity = {} as EufySecurity;
@@ -133,9 +134,6 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
    * Configures the logging mechanism for the plugin.
    */
   private configureLogger() {
-    // Retrieve plugin information from package.json
-    const plugin = require('../package.json');
-
     // Define options for logging
     const logOptions = {
       name: '[EufySecurity]', // Name prefix for log messages
@@ -193,7 +191,7 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
 
     // Modify log options if detailed logging is enabled
     if (this.config.enableDetailedLogging) {
-      logOptions.name = `[EufySecurity-${plugin.version}]`; // Modify logger name with plugin version
+      logOptions.name = `[EufySecurity-${LIB_VERSION}]`; // Modify logger name with plugin version
       logOptions.prettyLogTemplate = '[{{mm}}/{{dd}}/{{yyyy}} {{hh}}:{{MM}}:{{ss}}]\t{{name}}\t{{logLevelName}}\t[{{fileNameWithLine}}]\t'; // Modify log template
       logOptions.minLevel = 2; // Adjust minimum log level
     }
@@ -289,7 +287,7 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
             // If it's a Pi 4, we identify the system as running Raspbian.
             this._hostSystem = 'raspbian';
           }
-        } catch (error) {
+        } catch {
 
           // Errors encountered while attempting to identify the system are ignored.
           // We prioritize getting system information through hints rather than comprehensive detection.
@@ -456,7 +454,6 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
 
     if (this.config.CameraMaxLivestreamDuration > 86400) {
       this.config.CameraMaxLivestreamDuration = 86400;
-      // eslint-disable-next-line max-len
       log.warn('Your maximum livestream duration value is too large. Since this can cause problems it was reset to 86400 seconds (1 day maximum).');
     }
 
@@ -548,7 +545,9 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
       }
 
       // Add the accessory's UUID to activeAccessoryIds if it's not already present
-      this.activeAccessoryIds.indexOf(accessory.UUID) === -1 ? this.activeAccessoryIds.push(accessory.UUID) : null;
+      if (this.activeAccessoryIds.indexOf(accessory.UUID) === -1) {
+        this.activeAccessoryIds.push(accessory.UUID);
+      }
 
       // Update or register the accessory with the platform
       if (isExist) {

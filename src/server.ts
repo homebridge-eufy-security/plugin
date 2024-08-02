@@ -334,6 +334,7 @@ class UiServer extends HomebridgePluginUiServer {
       fs.rmSync(this.storagePath, { recursive: true });
       return { result: 1 };
     } catch (err) {
+      this.log.error('Could not reset plugin: ' + err);
       return { result: 0 };
     }
   }

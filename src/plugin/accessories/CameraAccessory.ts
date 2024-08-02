@@ -1,4 +1,3 @@
-/* eslint-disable max-len */
 import {
   PlatformAccessory,
   Characteristic,
@@ -171,11 +170,9 @@ export class CameraAccessory extends DeviceAccessory {
     try {
       this.log.debug(`${serviceName} config:`, configValue);
       if (configValue && this.device.hasProperty(PropertyName)) {
-        // eslint-disable-next-line max-len
         this.log.debug(`has a ${PropertyName}, so append ${serviceType}${serviceName} characteristic to it.`);
         this.setupSwitchService(serviceName, serviceType, PropertyName);
       } else {
-        // eslint-disable-next-line max-len
         this.log.debug(`Looks like not compatible with ${PropertyName} or this has been disabled within configuration`);
       }
     } catch (error) {
@@ -369,7 +366,6 @@ export class CameraAccessory extends DeviceAccessory {
         this.eventTypesToHandle.forEach(eventType => {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           this.device.on(eventType as keyof any, (device: any, state: any) => {
-            // eslint-disable-next-line max-len
             this.log.info(`MOTION DETECTED (${eventType})': ${state}`);
             characteristic.updateValue(state);
           });
@@ -475,7 +471,6 @@ export class CameraAccessory extends DeviceAccessory {
       propertyName === PropertyName.DeviceEnabled &&
       Date.now() - this.cameraStatus.timestamp <= 60000
     ) {
-      // eslint-disable-next-line max-len
       this.log.debug(`CACHED for (1 min) '${characteristic.displayName}' ${propertyName}: ${this.cameraStatus.isEnabled}`);
       value = this.cameraStatus.isEnabled;
     }

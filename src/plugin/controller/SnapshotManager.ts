@@ -71,7 +71,6 @@ export class SnapshotManager extends EventEmitter {
 
   private snapshotRefreshTimer?: NodeJS.Timeout;
 
-  // eslint-disable-next-line max-len
   constructor(
     camera: CameraAccessory,
     private livestreamManager: LocalLivestreamManager,
@@ -111,7 +110,6 @@ export class SnapshotManager extends EventEmitter {
         this.log.warn('The interval to automatically refresh snapshots is set too low. Minimum is one minute.');
         this.cameraConfig.refreshSnapshotIntervalMinutes = 5;
       }
-      // eslint-disable-next-line max-len
       this.log.info('Setting up automatic snapshot refresh every ' + this.cameraConfig.refreshSnapshotIntervalMinutes + ' minutes. This may decrease battery life dramatically. The refresh process should begin in ' + MINUTES_TO_WAIT_FOR_AUTOMATIC_REFRESH_TO_BEGIN + ' minutes.');
       setTimeout(() => { // give homebridge some time to start up
         this.automaticSnapshotRefresh();
@@ -120,10 +118,8 @@ export class SnapshotManager extends EventEmitter {
     }
 
     if (this.cameraConfig.snapshotHandlingMethod === 1) {
-      // eslint-disable-next-line max-len
       this.log.info('is set to generate new snapshots on events every time. This might reduce homebridge performance and increase power consumption.');
       if (this.cameraConfig.refreshSnapshotIntervalMinutes) {
-        // eslint-disable-next-line max-len
         this.log.warn('You have enabled automatic snapshot refreshing. It is recommened not to use this setting with forced snapshot refreshing.');
       }
     } else if (this.cameraConfig.snapshotHandlingMethod === 2) {
@@ -418,7 +414,7 @@ export class SnapshotManager extends EventEmitter {
           url: url as string,
         };
       } catch (err) {
-        this.log.warn('Could not get snapshot from rtsp stream!');
+        this.log.warn('Could not get snapshot from rtsp stream!', err);
         return null;
       }
     } else {
@@ -428,7 +424,7 @@ export class SnapshotManager extends EventEmitter {
           stream: streamData.videostream,
         };
       } catch (err) {
-        this.log.warn('Could not get snapshot from livestream!');
+        this.log.warn('Could not get snapshot from livestream!', err);
         return null;
       }
     }
