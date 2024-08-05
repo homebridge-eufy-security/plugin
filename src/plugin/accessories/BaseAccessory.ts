@@ -89,11 +89,6 @@ export abstract class BaseAccessory extends EventEmitter {
       this.device.on('property changed', this.handlePropertyChange.bind(this));
     }
 
-    this.platform.api.on(APIEvent.SHUTDOWN, async () => {
-      this.log.debug(`Removing Listeners - num:`, this.listeners.length);
-      this.removeAllListeners();
-    });
-
     this.logPropertyKeys();
   }
 
