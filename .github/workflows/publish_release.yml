@@ -61,6 +61,7 @@ jobs:
       - run: git config --global user.email '<>'
       - run: npm version ${{ github.event.inputs.version }} --preid=${{ github.event.inputs.preid }} -m "[${{ github.event.inputs.tag }}] %s"
       - run: npm update homebridge-eufy-security
+      - run: npm run prebuild
       - run: git push --force
       - run: git push origin --tags --force
 

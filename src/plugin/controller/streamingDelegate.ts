@@ -1,5 +1,4 @@
 import {
-  APIEvent,
   AudioStreamingCodecType,
   CameraController,
   CameraStreamingDelegate,
@@ -89,12 +88,6 @@ export class StreamingDelegate implements CameraStreamingDelegate {
       this.localLivestreamManager,
     );
 
-    this.platform.api.on(APIEvent.SHUTDOWN, () => {
-      for (const session in this.ongoingSessions) {
-        this.stopStream(session);
-      }
-      this.localLivestreamManager.stopLocalLiveStream();
-    });
   }
 
   public setController(controller: CameraController) {

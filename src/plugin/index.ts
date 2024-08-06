@@ -1,6 +1,6 @@
 import { API } from 'homebridge';
 
-import { PLATFORM_NAME } from './settings';
+import { PLATFORM_NAME, PLUGIN_NAME } from './settings';
 import { EufySecurityPlatform } from './platform';
 import { setHap } from './utils/utils';
 
@@ -9,5 +9,5 @@ import { setHap } from './utils/utils';
  */
 export = (api: API) => {
   setHap(api.hap);
-  api.registerPlatform(PLATFORM_NAME, EufySecurityPlatform);
+  api.registerPlatform(PLUGIN_NAME, PLATFORM_NAME, EufySecurityPlatform);
 };
