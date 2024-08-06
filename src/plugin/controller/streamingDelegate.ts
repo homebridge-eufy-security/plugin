@@ -1,5 +1,4 @@
 import {
-  APIEvent,
   AudioStreamingCodecType,
   CameraController,
   CameraStreamingDelegate,

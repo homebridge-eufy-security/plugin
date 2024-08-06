@@ -4,7 +4,6 @@ import {
   CharacteristicValue,
   Service,
   WithUUID,
-  APIEvent,
 } from 'homebridge';
 import { EufySecurityPlatform } from '../platform';
 import { DeviceType, DeviceEvents, PropertyValue, Device, Station, StationEvents } from 'eufy-security-client';

@@ -4,7 +4,6 @@ import {
   DynamicPlatformPlugin,
   Logger,
   PlatformAccessory,
-  PlatformConfig,
   APIEvent,
 } from 'homebridge';
 
