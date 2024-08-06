@@ -31,6 +31,7 @@ export interface EufySecurityPlatformConfig extends PlatformConfig {
 
 export const DEFAULT_CONFIG_VALUES: EufySecurityPlatformConfig = {
   platform: 'EufySecurity',
+  name: 'EufySecurity',
   username: '',
   password: '',
   deviceName: 'MyPhone',

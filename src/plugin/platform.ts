@@ -58,7 +58,6 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
 
   // this is used to track restored cached accessories
   public readonly accessories: PlatformAccessory[] = [];
-  public config: EufySecurityPlatformConfig = {} as EufySecurityPlatformConfig;
 
   private already_shutdown: boolean = false;
 
@@ -73,7 +72,7 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
 
   constructor(
     hblog: Logger,
-    config: PlatformConfig,
+    public config: EufySecurityPlatformConfig,
     public readonly api: API,
   ) {
 

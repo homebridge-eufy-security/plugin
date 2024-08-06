@@ -3,6 +3,7 @@ import { EufySecurityPlatformConfig } from '../../../plugin/config';
 
 export const DEFAULT_CONFIG_VALUES: EufySecurityPlatformConfig = {
   platform: 'EufySecurity',
+  name: 'EufySecurity',
   username: '',
   password: '',
   deviceName: 'MyPhone',
