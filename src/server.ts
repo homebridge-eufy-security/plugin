@@ -96,12 +96,39 @@ class UiServer extends HomebridgePluginUiServer {
     this.onRequest('/nodeJSVersion', this.nodeJSVersion.bind(this));
   }
 
-  async resetPersistentData(): Promise<void> {
+  /**
+   * Deletes a file if it exists.
+   * 
+   * @param filePath The path to the file to be deleted.
+   * @returns A Promise that resolves when the operation is complete, or rejects if an error occurs.
+   * @throws Will reject the Promise with the error if file deletion fails.
+   */
+  private async deleteFileIfExists(filePath: string): Promise<void> {
     try {
-      fs.unlinkSync(this.storagePath + '/persistent.json');
+      if (fs.existsSync(filePath)) {
+        fs.unlinkSync(filePath);
+      }
     } catch (err) {
       return Promise.reject(err);
     }
+  }
+
+  /**
+   * Resets the persistent data by removing the persistent.json file.
+   * 
+   * @returns A Promise that resolves when the operation is complete, or rejects if an error occurs.
+   */
+  async resetPersistentData(): Promise<void> {
+    return this.deleteFileIfExists(this.storagePath + '/persistent.json');
+  }
+
+  /**
+   * Resets the accessory data by removing the stored accessories file.
+   * 
+   * @returns A Promise that resolves when the operation is complete, or rejects if an error occurs.
+   */
+  async resetAccessoryData(): Promise<void> {
+    return this.deleteFileIfExists(this.storedAccessories_file);
   }
 
   /**
@@ -121,7 +148,8 @@ class UiServer extends HomebridgePluginUiServer {
   async login(options): Promise<LoginResult> {
     try {
       if (options && options.username && options.password) {
-        this.log.info('deleting persistent.json due to new login');
+        this.log.info('deleting persistent.json and accessories due to new login');
+        this.resetAccessoryData();
         await this.resetPersistentData(); // To be commented for testing purpose
       }
     } catch (err) {
