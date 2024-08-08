@@ -15,24 +15,24 @@ export function getImageForDeviceType(deviceType: number): string {
     case 4: // CAMERA_E
       return 'eufycam_large.jpg';
     case 2: // SENSOR
-      return 'sensor_large.jpg';
+      return 'sensor_large.png';
     case 3: // FLOODLIGHT
       return 'floodlight_large.jpg';
     case 5: // DOORBELL
     case 7: // BATTERY_DOORBELL
     case 16: // BATTERY_DOORBELL_2
     case 91: // BATTERY_DOORBELL_PLUS
-      return 'batterydoorbell2k_large.jpg';
+      return 'batterydoorbell2k_large.png';
     case 8: // CAMERA2C
       return 'eufycam2c_large.jpg';
     case 9: // CAMERA2
     case 14: // CAMERA2_PRO
     case 15: // CAMERA2C_PRO
-      return 'eufycam2_large.jpg';
+      return 'eufycam2_large.png';
     case 10: // MOTION_SENSOR
-      return 'motionsensor_large.jpg';
+      return 'motionsensor_large.png';
     case 11: // KEYPAD
-      return 'keypad_large.jpg';
+      return 'keypad_large.png';
     case 18: // HB3
       return 'homebase3_large.jpg';
     case 19: // CAMERA3
@@ -49,7 +49,7 @@ export function getImageForDeviceType(deviceType: number): string {
       return 'indoorcammini_large.jpg';
     case 31: // INDOOR_PT_CAMERA
     case 35: // INDOOR_PT_CAMERA_1080
-      return 'indoorcamp24_large.jpg';
+      return 'indoorcamp24_large.png';
     case 32: // SOLO_CAMERA
     case 33: // SOLO_CAMERA_PRO
       return 'solocame20_large.jpg';
@@ -62,13 +62,13 @@ export function getImageForDeviceType(deviceType: number): string {
       return 'floodlight2pro_large.jpg';
     case 44: // INDOOR_OUTDOOR_CAMERA_1080P_NO_LIGHT
     case 46: // INDOOR_OUTDOOR_CAMERA_1080P
-      return 'solooutdoorcamc22_large.jpg';
+      return 'solooutdoorcamc22_large.png';
     case 45: // INDOOR_OUTDOOR_CAMERA_2K
       return 'solooutdoorcamc24_large.jpg';
     case 47: // FLOODLIGHT_CAMERA_8425
       return 'floodlightcame340_large.jpg';
     case 48: // OUTDOOR_PT_CAMERA
-      return 'solocams340_large.jpg';
+      return 'solocams340_large.png';
     case 50: // LOCK_BLE
     case 51: // LOCK_WIFI
     case 52: // LOCK_BLE_NO_FINGER

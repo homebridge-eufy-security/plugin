@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { Component, OnInit, Input, NgZone, ChangeDetectionStrategy, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, Input, NgZone, ChangeDetectionStrategy, ChangeDetectorRef, ViewEncapsulation } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { NgbModal, ModalDismissReasons } from '@ng-bootstrap/ng-bootstrap';
 import { PluginService } from '../plugin.service';
@@ -13,7 +13,6 @@ import { BehaviorSubject, Observable } from 'rxjs';
 @Component({
   selector: 'app-accessory-list',
   templateUrl: './accessory-list.component.html',
-  styleUrls: ['./accessory-list.component.css'],
   standalone: true,
   imports: [
     RouterLink,
@@ -27,7 +26,8 @@ import { BehaviorSubject, Observable } from 'rxjs';
     NgbTooltipModule,
     AsyncPipe,
   ],
-  changeDetection: ChangeDetectionStrategy.OnPush
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  encapsulation: ViewEncapsulation.None,
 })
 export class AccessoryListComponent implements OnInit {
   private stationsSubject = new BehaviorSubject<L_Station[]>([]);

@@ -108,7 +108,7 @@
 </ng-template>
 
 <ng-template #cardTemplate let-item let-type="type">
-  <a [routerLink]="['/config', type, item.uniqueId]" style="color: black;">
+  <a [routerLink]="['/config', type, item.uniqueId]">
     <div class="card">
       <div class="position-absolute top-0 end-0">
         <span class="d-flex p-2" style="z-index: 20;">
@@ -122,7 +122,7 @@
           </ng-container>
         </span>
       </div>
-      <img class="card-img p-3" [src]="'assets/devices/' + (DeviceImage.get(item.type)?.image || 'unknown.png')"
+      <img class="card-img p-4" [src]="'assets/devices/' + (DeviceImage.get(item.type)?.image || 'unknown.png')"
         [style.opacity]="(type === 'both' ? item.devices[0].ignored : item.ignored) ? 0.3 : 1" [alt]="item.displayName">
       <div class="card-img-overlay">
         <h5 class="card-title position-absolute bottom-0">{{ item.displayName }}</h5>
