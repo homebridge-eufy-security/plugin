@@ -47,14 +47,16 @@
         <div ngbAccordionCollapse>
           <div ngbAccordionBody>
             <ng-template>
-              <app-enable-camera [device]="device"></app-enable-camera>
-              <div *ngIf="supportsRTSP">
+              <app-enable-camera [device]="device" (checkDeviceConfig)="checkDeviceConfig()"></app-enable-camera>
+              <div *ngIf="enableCamera && supportsRTSP ">
                 <hr />
                 <app-rtsp-streaming [device]="device"></app-rtsp-streaming>
               </div>
-              <hr />
-              <app-enable-audio [device]="device"></app-enable-audio>
-              <div *ngIf="supportsTalkback">
+              <div *ngIf="enableCamera">
+                <hr />
+                <app-enable-audio [device]="device"></app-enable-audio>
+              </div>
+              <div *ngIf="enableCamera && supportsTalkback">
                 <hr />
                 <app-talkback [device]="device"></app-talkback>
               </div>
@@ -71,14 +73,16 @@
           <div ngbAccordionBody>
             <ng-template>
               <app-camera-buttons [device]="device"></app-camera-buttons>
-              <hr />
-              <app-enable-hsv [device]="device"></app-enable-hsv>
+              <div *ngIf="enableCamera">
+                <hr />
+                <app-enable-hsv [device]="device"></app-enable-hsv>
+              </div>
             </ng-template>
           </div>
         </div>
       </div>
 
-      <div ngbAccordionItem>
+      <div ngbAccordionItem *ngIf="enableCamera">
         <h2 ngbAccordionHeader>
           <button ngbAccordionButton>Snapshot Behaviour</button>
         </h2>
@@ -99,7 +103,7 @@
         </div>
       </div>
 
-      <div ngbAccordionItem>
+      <div ngbAccordionItem *ngIf="enableCamera">
         <h2 ngbAccordionHeader>
           <button ngbAccordionButton>Advanced Video Config</button>
         </h2>
