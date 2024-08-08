@@ -59,6 +59,10 @@ body {
   color: var(--bs-body-color);
 }
 
+.pluginContent {
+  min-height: 420px;
+}
+
 .form-switch {
   transform: scale(1.4);
 }
