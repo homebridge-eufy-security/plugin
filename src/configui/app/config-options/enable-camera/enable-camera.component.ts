@@ -33,12 +33,6 @@ export class EnableCameraComponent extends ConfigOptionsInterpreter implements O
   disabled = false;
 
   async readValue() {
-    if (this.device && this.device.isDoorbell) {
-      this.value = 'true';
-      this.disabled = true;
-      this.update();
-    }
-
     const config = this.getCameraConfig(this.device?.uniqueId || '');
 
     if (config && Object.prototype.hasOwnProperty.call(config, 'enableCamera')) {
