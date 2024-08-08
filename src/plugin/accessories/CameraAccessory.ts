@@ -125,14 +125,9 @@ export class CameraAccessory extends DeviceAccessory {
 
     this.log.debug(`Is standalone?`, this.standalone);
 
-    if (this.cameraConfig.enableCamera || this.device.isDoorbell()) {
-      if (this.cameraConfig.enableCamera) {
-        this.log.debug(`Camera enabled: Setting up camera and chime button.`);
-      } else {
-        this.log.debug(`Device identified as a doorbell: Setting up camera and chime button.`);
-      }
+    if (this.cameraConfig.enableCamera) {
+      this.log.debug(`has a camera: Setting up camera.`);
       this.setupCamera();
-      this.setupChimeButton();
     } else {
       this.log.debug(`has a motion sensor: Setting up motion.`);
       this.setupMotionFunction();
@@ -143,6 +138,7 @@ export class CameraAccessory extends DeviceAccessory {
     this.setupEnableButton();
     this.setupMotionButton();
     this.setupLightButton();
+    this.setupChimeButton();
 
     this.pruneUnusedServices();
   }
@@ -445,6 +441,17 @@ export class CameraAccessory extends DeviceAccessory {
           : CHAR.StatusTampered.TAMPERED;
       },
     });
+
+    if (this.device.isDoorbell()) {
+      this.registerCharacteristic({
+        serviceType: SERV.Doorbell,
+        characteristicType: CHAR.ProgrammableSwitchEvent,
+        onValue: (service, characteristic) => {
+          this.device.on('rings', () => this.onDeviceRingsPushNotification(characteristic),
+          );
+        },
+      });
+    }
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any

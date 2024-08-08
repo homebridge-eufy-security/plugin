@@ -59,6 +59,7 @@ export class AccessoryConfigOptionsComponent extends ConfigOptionsInterpreter im
 
   isDoorbell: boolean = false;
   isCamera: boolean = false;
+  enableCamera: boolean = true;
   supportsRTSP: boolean = false;
   supportsTalkback: boolean = false;
 
@@ -91,6 +92,8 @@ export class AccessoryConfigOptionsComponent extends ConfigOptionsInterpreter im
     }
 
     if (this.device) {
+      this.checkDeviceConfig();
+
       this.isCamera = this.device.isCamera ?? this.isCamera;
       this.isDoorbell = this.device.isDoorbell ?? this.isDoorbell;
       this.supportsRTSP = this.device.supportsRTSP ?? this.supportsRTSP;
@@ -115,6 +118,11 @@ export class AccessoryConfigOptionsComponent extends ConfigOptionsInterpreter im
 
   ignoredStationChanged(state: boolean) {
     this.station!.ignored = state;
+  }
+
+  checkDeviceConfig() {
+    const config = this.getCameraConfig(this.device?.uniqueId || '');
+    this.enableCamera = config.enableCamera ?? this.enableCamera;
   }
 
   ignoredDeviceChanged(state: boolean) {

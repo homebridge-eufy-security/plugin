@@ -78,11 +78,11 @@ export class ConfigOptionsInterpreter {
     await this.pluginService.updateConfig(this.config);
   }
 
-  protected async updateStationConfig(options: any, accessory: L_Station) {
+  protected async updateStationConfig(options: any, accessory: L_Station): Promise<void> {
     await this.updateAccessoryConfig(options, accessory, 'station');
   }
 
-  protected async updateDeviceConfig(options: any, accessory: L_Device) {
+  protected async updateDeviceConfig(options: any, accessory: L_Device): Promise<void> {
     await this.updateAccessoryConfig(options, accessory, 'camera');
   }
 

@@ -83,6 +83,7 @@ svg {
 
 .serial {
   font-size: 12px;
+  font-family: var(--bs-font-monospace);
 }
 
 h5.card-title {
