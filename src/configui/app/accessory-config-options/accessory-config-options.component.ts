@@ -122,7 +122,9 @@ export class AccessoryConfigOptionsComponent extends ConfigOptionsInterpreter im
 
   checkDeviceConfig() {
     const config = this.getCameraConfig(this.device?.uniqueId || '');
-    this.enableCamera = config.enableCamera ?? this.enableCamera;
+    if (config && Object.prototype.hasOwnProperty.call(config, 'enableCamera')) {
+      this.enableCamera = config['enableCamera'];
+    }
   }
 
   ignoredDeviceChanged(state: boolean) {

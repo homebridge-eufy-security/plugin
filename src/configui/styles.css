@@ -1,6 +1,6 @@
 /* You can add global styles to this file, and also import other style files */
 
-.config-ui-x-dark-mode {
+.dark-mode {
   --bs-body-color: #dee2e6;
   --bs-body-color-rgb: 222, 226, 230;
   --bs-body-bg: #212529;
@@ -55,8 +55,66 @@
   --bs-form-invalid-border-color: #ea868f;
 }
 
+.config-ui-x-dark-mode-red {
+  --primary-color: #d32f2f;
+}
+
+.config-ui-x-dark-mode-pink {
+  --primary-color: #c2185b;
+}
+
+.config-ui-x-dark-mode-purple {
+  --primary-color: #9c27b0;
+}
+
+.config-ui-x-dark-mode-indigo {
+  --primary-color: #3f51b5;
+}
+
+.config-ui-x-dark-mode-blue {
+  --primary-color: #2196f3;
+}
+
+.config-ui-x-dark-mode-blue-grey {
+  --primary-color: #607d8b;
+}
+
+.config-ui-x-dark-mode-green {
+  --primary-color: #388e3c;
+}
+
+.config-ui-x-dark-mode-grey {
+  --primary-color: #2b2b2b;
+}
+
+.config-ui-x-dark-mode-brown {
+  --primary-color: #795548;
+}
+
+.config-ui-x-dark-mode-teal {
+  --primary-color: #009688;
+}
+
+.config-ui-x-dark-mode-cyan {
+  --primary-color: #00838f;
+}
+
+.dark-mode {
+  --bs-primary: var(--primary-color) !important;
+  --bs-secondary: var(--primary-color) !important;
+  --bs-tertiary: var(--primary-color) !important;
+  --bs-focus-ring-color: var(--primary-color)33 !important;
+  --bs-btn-border-color: var(--primary-color)33 !important;
+  --bs-btn-hover-border-color: var(--primary-color)33 !important;
+  color: var(--bs-body-color) !important;
+}
+
 body {
   color: var(--bs-body-color);
+}
+
+.pluginContent {
+  min-height: 420px;
 }
 
 .form-switch {
@@ -68,8 +126,22 @@ body {
   margin: 10px 0px;
 }
 
-.config-ui-x-dark-mode .btn {
+.form-check-input:checked {
+  background-color: var(--bs-primary);
+  border-color: var(--bs-primary);
+}
+
+.dark-mode .btn {
   color: var(--bs-body-color) !important;
+  --bs-btn-border-color: var(--primary-color)33 !important;
+  border-color: var(--bs-btn-border-color) !important;
+}
+
+.dark-mode .form-check-input:focus {
+  --bs-focus-ring-color: var(--primary-color)33 !important;
+  box-shadow: 0 0 0 0.25rem var(--bs-focus-ring-color) !important;
+  --bs-btn-border-color: var(--primary-color)33 !important;
+  border-color: var(--bs-btn-border-color) !important;
 }
 
 svg {
