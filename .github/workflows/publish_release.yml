@@ -50,6 +50,9 @@ jobs:
 
   version:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [20]
     needs: build
     steps:
       - name: Push the change
