@@ -30,7 +30,7 @@ class UiServer extends HomebridgePluginUiServer {
     trustedDeviceName: 'My Phone',
     persistentDir: this.storagePath,
     p2pConnectionSetup: 0,
-    pollingIntervalMinutes: 0,
+    pollingIntervalMinutes: 99,
     eventDurationSeconds: 10,
     acceptInvitations: true,
   } as EufySecurityConfig;
@@ -167,6 +167,11 @@ class UiServer extends HomebridgePluginUiServer {
         this.eufyClient = await EufySecurity.initialize(this.config, this.tsLog);
         this.eufyClient?.on('station added', await this.addStation.bind(this));
         this.eufyClient?.on('device added', await this.addDevice.bind(this));
+        // Close connection after 40 seconds enough time to get all devices
+        setTimeout(() => {
+          this.eufyClient?.removeAllListeners();
+          this.eufyClient?.close();
+        }, 40 * 1000);
       } catch (err) {
         this.log.error(err);
       }
