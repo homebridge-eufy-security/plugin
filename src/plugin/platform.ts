@@ -708,7 +708,7 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
     if (type !== DeviceType.STATION) {
       // Standalone Lock or Doorbell doesn't have Security Control
       if (Device.isDoorbell(type) || Device.isLock(type)) {
-        throw (`looks station but it's not could imply some errors! Type: ${type}`);
+        throw new Error(`looks station but it's not could imply some errors! Type: ${type}. You can ignore this message.`);
       }
     }
 
@@ -750,7 +750,7 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
 
     if (Device.isKeyPad(type)) {
       log.debug(accessory.displayName + ' isKeypad!');
-      throw ('The keypad needs to be taken out because it serves no purpose.');
+      throw new Error('The keypad needs to be taken out because it serves no purpose. You can ignore this message.');
     }
 
   }

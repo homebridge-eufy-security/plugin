@@ -35,8 +35,8 @@ export class ResetConfirmationComponent {
     try {
       const r = await window.homebridge.request('/reset');
       this.failed = (r.result !== 1);
-    } catch (err) {
-      console.error(err);
+    } catch (error) {
+      console.error(error);
       this.failed = true;
     }
     this.disabled = false;

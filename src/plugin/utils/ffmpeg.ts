@@ -828,9 +828,9 @@ export class FFmpeg extends EventEmitter {
                 reject('ffmpeg process timed out.');
             }, 15 * 1000);
 
-            this.process.on('error', (err) => {
-                reject(err);
-                this.onProcessError(err);
+            this.process.on('error', (error) => {
+                reject(error);
+                this.onProcessError(error);
             });
 
             let resultBuffer = Buffer.alloc(0);

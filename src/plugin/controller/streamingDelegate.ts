@@ -109,8 +109,8 @@ export class StreamingDelegate implements CameraStreamingDelegate {
       this.log.debug('snapshot byte lenght: ' + snapshot?.byteLength);
 
       callback(undefined, snapshot);
-    } catch (err) {
-      this.log.error(err as string);
+    } catch (error) {
+      this.log.error(error as string);
       callback();
     }
   }
@@ -221,14 +221,14 @@ export class StreamingDelegate implements CameraStreamingDelegate {
         audioParams?.setInputSource(url as string);
       } else {
         try {
-          const streamData = await this.localLivestreamManager.getLocalLivestream().catch((err) => {
-            throw err;
+          const streamData = await this.localLivestreamManager.getLocalLivestream().catch((error) => {
+            throw error;
           });
           await videoParams.setInputStream(streamData.videostream);
           await audioParams?.setInputStream(streamData.audiostream);
-        } catch (err) {
-          this.log.error(('Unable to start the livestream: ' + err) as string);
-          callback(err as Error);
+        } catch (error) {
+          this.log.error(('Unable to start the livestream: ' + error) as string);
+          callback(error as Error);
           this.pendingSessions.delete(request.sessionID);
           return;
         }
@@ -243,8 +243,8 @@ export class StreamingDelegate implements CameraStreamingDelegate {
       videoProcess.on('started', () => {
         callback();
       });
-      videoProcess.on('error', (err) => {
-        this.log.error('Video process ended with error: ' + err);
+      videoProcess.on('error', (error) => {
+        this.log.error('Video process ended with error: ' + error);
         this.stopStream(request.sessionID);
       });
       activeSession.videoProcess = videoProcess;
@@ -255,8 +255,8 @@ export class StreamingDelegate implements CameraStreamingDelegate {
           `[Audio Process]`,
           audioParams,
         );
-        audioProcess.on('error', (err) => { // TODO: better reestablish connection
-          this.log.error('Audio process ended with error: ' + err);
+        audioProcess.on('error', (error) => { // TODO: better reestablish connection
+          this.log.error('Audio process ended with error: ' + error);
           this.stopStream(request.sessionID);
         });
         activeSession.audioProcess = audioProcess;
@@ -274,8 +274,8 @@ export class StreamingDelegate implements CameraStreamingDelegate {
           `[Talkback Process]`,
           talkbackParameters,
         );
-        activeSession.returnProcess.on('error', (err) => {
-          this.log.error('Talkback process ended with error: ' + err);
+        activeSession.returnProcess.on('error', (error) => {
+          this.log.error('Talkback process ended with error: ' + error);
         });
         activeSession.returnProcess.start();
         activeSession.returnProcess.stdout?.pipe(activeSession.talkbackStream);
@@ -293,9 +293,9 @@ export class StreamingDelegate implements CameraStreamingDelegate {
         this.stopStream(request.sessionID);
       }
 
-    } catch (err) {
-      this.log.error('Stream could not be started: ' + err);
-      callback(err as Error);
+    } catch (error) {
+      this.log.error('Stream could not be started: ' + error);
+      callback(error as Error);
       this.pendingSessions.delete(request.sessionID);
     }
   }
@@ -347,30 +347,30 @@ export class StreamingDelegate implements CameraStreamingDelegate {
         session.talkbackStream?.stopTalkbackStream();
         session.returnProcess?.stdout?.unpipe();
         session.returnProcess?.stop();
-      } catch (err) {
-        this.log.error('Error occurred terminating returnAudio FFmpeg process: ' + err);
+      } catch (error) {
+        this.log.error('Error occurred terminating returnAudio FFmpeg process: ' + error);
       }
       try {
         session.videoProcess?.stop();
-      } catch (err) {
-        this.log.error('Error occurred terminating video FFmpeg process: ' + err);
+      } catch (error) {
+        this.log.error('Error occurred terminating video FFmpeg process: ' + error);
       }
       try {
         session.audioProcess?.stop();
-      } catch (err) {
-        this.log.error('Error occurred terminating audio FFmpeg process: ' + err);
+      } catch (error) {
+        this.log.error('Error occurred terminating audio FFmpeg process: ' + error);
       }
       try {
         session.socket?.close();
-      } catch (err) {
-        this.log.error('Error occurred closing socket: ' + err);
+      } catch (error) {
+        this.log.error('Error occurred closing socket: ' + error);
       }
       try {
         if (!is_rtsp_ready(this.device, this.camera.cameraConfig)) {
           this.localLivestreamManager.stopLocalLiveStream();
         }
-      } catch (err) {
-        this.log.error('Error occurred terminating Eufy Station livestream: ' + err);
+      } catch (error) {
+        this.log.error('Error occurred terminating Eufy Station livestream: ' + error);
       }
 
       this.ongoingSessions.delete(sessionId);

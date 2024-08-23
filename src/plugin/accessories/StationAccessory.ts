@@ -309,12 +309,12 @@ export class StationAccessory extends BaseAccessory {
     try {
       const currentValue = this.device.getPropertyValue(PropertyName.StationCurrentMode);
       if (currentValue === -1) {
-        throw 'Something wrong with this device';
+        throw new Error('Something wrong with this device', currentValue);
       }
       this.log.debug(`GET StationCurrentMode: ${currentValue}`);
       return this.convertEufytoHK(currentValue);
-    } catch {
-      this.log.error(`${stateCharacteristic}: Wrong return value`);
+    } catch (error) {
+      this.log.error(`${stateCharacteristic}: Wrong return value`, error);
       return false;
     }
   }
@@ -383,7 +383,7 @@ export class StationAccessory extends BaseAccessory {
           this.device.triggerStationAlarmSound(this.stationConfig.manualAlarmSeconds)
             .then(() => log.debug(
               this.accessory.displayName, 'alarm manually triggered for ' + this.stationConfig.manualAlarmSeconds + ' seconds.'))
-            .catch(err => this.log.error(`alarm could not be manually triggered: ${err}`));
+            .catch(error => this.log.error(`alarm could not be manually triggered: ${error}`));
         } else {
           const message = this.alarm_delayed ?
             'tried to trigger alarm, but the alarm delayed event was triggered beforehand.' :
@@ -401,7 +401,7 @@ export class StationAccessory extends BaseAccessory {
     } else { // reset alarm
       this.device.resetStationAlarmSound()
         .then(() => this.log.debug(`alarm manually reset`))
-        .catch(err => this.log.error(`alarm could not be reset: ${err}`));
+        .catch(error => this.log.error(`alarm could not be reset: ${error}`));
     }
   }
 

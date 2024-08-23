@@ -135,26 +135,26 @@ export class SnapshotManager extends EventEmitter {
       if (this.cameraConfig.immediateRingNotificationWithoutSnapshot) {
         this.log.info('Empty snapshot will be sent on ring events immediately to speed up homekit notifications.');
       }
-    } catch (err) {
-      this.log.error('could not cache black snapshot file for further use: ' + err);
+    } catch (error) {
+      this.log.error('could not cache black snapshot file for further use: ' + error);
     }
 
     try {
       this.unavailableSnapshot = fs.readFileSync(SnapshotUnavailable);
-    } catch (err) {
-      this.log.error('could not cache SnapshotUnavailable file for further use: ' + err);
+    } catch (error) {
+      this.log.error('could not cache SnapshotUnavailable file for further use: ' + error);
     }
 
     try {
       this.cameraOffline = fs.readFileSync(CameraOffline);
-    } catch (err) {
-      this.log.error('could not cache CameraOffline file for further use: ' + err);
+    } catch (error) {
+      this.log.error('could not cache CameraOffline file for further use: ' + error);
     }
 
     try {
       this.cameraDisabled = fs.readFileSync(CameraDisabled);
-    } catch (err) {
-      this.log.error('could not cache CameraDisabled file for further use: ' + err);
+    } catch (error) {
+      this.log.error('could not cache CameraDisabled file for further use: ' + error);
     }
 
     try {
@@ -162,10 +162,10 @@ export class SnapshotManager extends EventEmitter {
       if (picture && picture.type) {
         this.storeSnapshotForCache(picture.data, 0);
       } else {
-        throw ('No currentSnapshot');
+        throw new Error('No currentSnapshot');
       }
-    } catch (err) {
-      this.log.error('could not fetch old snapshot: ' + err);
+    } catch (error) {
+      this.log.error('could not fetch old snapshot: ' + error);
     }
 
   }
@@ -236,11 +236,11 @@ export class SnapshotManager extends EventEmitter {
       }
       return snapshot;
 
-    } catch (err) {
+    } catch {
       try {
         return this.getSnapshotFromCache();
       } catch (error) {
-        this.log.error(err, error);
+        this.log.error(error);
         if (this.unavailableSnapshot) {
           return this.unavailableSnapshot;
         } else {
@@ -277,9 +277,9 @@ export class SnapshotManager extends EventEmitter {
         .then(() => {
           this.once('new snapshot', snapshotListener); // Listen for the 'new snapshot' event
         })
-        .catch((err) => {
+        .catch((error) => {
           clearTimeout(requestTimeout); // Clear the timeout if an error occurs during fetching
-          reject(err); // Reject the promise with the error
+          reject(error); // Reject the promise with the error
         });
     });
   }
@@ -296,7 +296,7 @@ export class SnapshotManager extends EventEmitter {
       return this.currentSnapshot.image;
     } else {
       // If not available, throw an error
-      throw ('No currentSnapshot available');
+      throw new Error('No currentSnapshot available');
     }
   }
 
@@ -312,7 +312,7 @@ export class SnapshotManager extends EventEmitter {
 
   private automaticSnapshotRefresh() {
     this.log.debug('Automatic snapshot refresh triggered.');
-    this.fetchCurrentCameraSnapshot().catch((err) => this.log.warn(err));
+    this.fetchCurrentCameraSnapshot().catch((error) => this.log.warn(error));
     if (this.snapshotRefreshTimer) {
       clearTimeout(this.snapshotRefreshTimer);
     }
@@ -361,10 +361,10 @@ export class SnapshotManager extends EventEmitter {
       this.emit('new snapshot');
 
       return Promise.resolve();
-    } catch (err) {
+    } catch (error) {
       this.refreshProcessRunning = false;
       this.log.debug('Unlocked refresh process.');
-      return Promise.reject(err);
+      return Promise.reject(error);
     }
   }
 
@@ -399,9 +399,9 @@ export class SnapshotManager extends EventEmitter {
       this.livestreamManager.stopLocalLiveStream();
 
       return Promise.resolve(buffer);
-    } catch (err) {
+    } catch (error) {
       this.livestreamManager.stopLocalLiveStream();
-      return Promise.reject(err);
+      return Promise.reject(error);
     }
   }
 
@@ -413,8 +413,8 @@ export class SnapshotManager extends EventEmitter {
         return {
           url: url as string,
         };
-      } catch (err) {
-        this.log.warn('Could not get snapshot from rtsp stream!', err);
+      } catch (error) {
+        this.log.warn('Could not get snapshot from rtsp stream!', error);
         return null;
       }
     } else {
@@ -423,8 +423,8 @@ export class SnapshotManager extends EventEmitter {
         return {
           stream: streamData.videostream,
         };
-      } catch (err) {
-        this.log.warn('Could not get snapshot from livestream!', err);
+      } catch (error) {
+        this.log.warn('Could not get snapshot from livestream!', error);
         return null;
       }
     }

@@ -173,7 +173,7 @@ export class CameraAccessory extends DeviceAccessory {
       }
     } catch (error) {
       this.log.error(`raise error to check and attach ${serviceType}${serviceName}.`, error);
-      throw Error;
+      throw error;
     }
   }
 
@@ -488,7 +488,7 @@ export class CameraAccessory extends DeviceAccessory {
     }
 
     if (value === undefined) {
-      throw (`Value is undefined: this shouldn't happend`);
+      throw new Error(`Value is undefined: this shouldn't happend`);
     }
 
     return value as CharacteristicValue;

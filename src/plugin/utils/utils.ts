@@ -72,9 +72,9 @@ export class UniversalStream {
     this.url = this.generateUrl(sockpath);
 
     this.server = net.createServer(onSocket)
-      .on('error', (err) => {
+      .on('error', (error) => {
         // More robust error handling
-        ffmpegLogger.debug('Server error:', err);
+        ffmpegLogger.debug('Server error:', error);
         this.close();
       })
       .listen(sockpath, () => {

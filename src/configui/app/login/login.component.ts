@@ -115,8 +115,8 @@ export class LoginComponent implements OnInit {
     let loginResult: LoginResult | undefined = undefined;
     try {
       loginResult = await this.loginService.login(this.credentials);
-    } catch (err) {
-      console.log('login error: ' + err);
+    } catch (error) {
+      console.log('login error: ' + error);
     }
 
     this.evaluateLoginResult(loginResult);
@@ -126,8 +126,8 @@ export class LoginComponent implements OnInit {
     let loginResult: LoginResult | undefined = undefined;
     try {
       loginResult = await this.loginService.login({ verifyCode: this.otp });
-    } catch (err) {
-      console.log('login error: ' + err);
+    } catch (error) {
+      console.log('login error: ' + error);
     }
 
     this.evaluateLoginResult(loginResult);
@@ -142,8 +142,8 @@ export class LoginComponent implements OnInit {
           captchaId: this.captchaId,
         },
       });
-    } catch (err) {
-      console.log('login error: ' + err);
+    } catch (error) {
+      console.log('login error: ' + error);
     }
 
     this.evaluateLoginResult(loginResult);
