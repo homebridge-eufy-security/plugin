@@ -66,12 +66,12 @@ export class DownloadLogsComponent implements OnInit {
       // window.open(this.logFileLocation);
 
       this.hasDownloaded = true;
-    } catch (err) {
-      console.log(err);
+    } catch (error) {
+      console.log(error);
 
-      const error = err as { message: string };
+      const err = error as { message: string };
       this.failed = true;
-      this.failureMessage = `Generating of compressed logs.zip file did not complete: ${error.message}`;
+      this.failureMessage = `Generating of compressed logs.zip file did not complete: ${err.message}`;
     } finally {
       this.isDownloading = false;
     }

@@ -71,8 +71,8 @@ export class PluginService extends EventTarget {
         this.dispatchEvent(new Event('newAccessories'));
       }
       return Promise.resolve(stations.length !== 0);
-    } catch (err) {
-      return Promise.reject(err);
+    } catch (error) {
+      return Promise.reject(error);
     }
   }
 

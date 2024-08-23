@@ -108,8 +108,8 @@ class UiServer extends HomebridgePluginUiServer {
       if (fs.existsSync(filePath)) {
         fs.unlinkSync(filePath);
       }
-    } catch (err) {
-      return Promise.reject(err);
+    } catch (error) {
+      return Promise.reject(error);
     }
   }
 
@@ -152,8 +152,8 @@ class UiServer extends HomebridgePluginUiServer {
         this.resetAccessoryData();
         await this.resetPersistentData(); // To be commented for testing purpose
       }
-    } catch (err) {
-      this.log.error('Could not delete persistent.json due to error: ' + err);
+    } catch (error) {
+      this.log.error('Could not delete persistent.json due to error: ' + error);
     }
 
     if (!this.eufyClient && options && options.username && options.password && options.country) {
@@ -172,8 +172,8 @@ class UiServer extends HomebridgePluginUiServer {
           this.eufyClient?.removeAllListeners();
           this.eufyClient?.close();
         }, 40 * 1000);
-      } catch (err) {
-        this.log.error(err);
+      } catch (error) {
+        this.log.error(error);
       }
     }
 
@@ -188,24 +188,24 @@ class UiServer extends HomebridgePluginUiServer {
           this.loginHandlers(resolve);
           this.eufyClient?.connect()
             .then(() => this.log.debug('connected?: ' + this.eufyClient?.isConnected()))
-            .catch((err) => this.log.error(err));
-        } catch (err) {
-          this.log.error(err);
-          resolve({ success: false, failReason: LoginFailReason.UNKNOWN, data: { error: err } });
+            .catch((error) => this.log.error(error));
+        } catch (error) {
+          this.log.error(error);
+          resolve({ success: false, failReason: LoginFailReason.UNKNOWN, data: { error: error } });
         }
       } else if (options && options.verifyCode) {
         try {
           this.loginHandlers(resolve);
           this.eufyClient?.connect({ verifyCode: options.verifyCode, force: false });
-        } catch (err) {
-          resolve({ success: false, failReason: LoginFailReason.UNKNOWN, data: { error: err } });
+        } catch (error) {
+          resolve({ success: false, failReason: LoginFailReason.UNKNOWN, data: { error: error } });
         }
       } else if (options && options.captcha) {
         try {
           this.loginHandlers(resolve);
           this.eufyClient?.connect({ captcha: { captchaCode: options.captcha.captchaCode, captchaId: options.captcha.captchaId }, force: false });
-        } catch (err) {
-          resolve({ success: false, failReason: LoginFailReason.UNKNOWN, data: { error: err } });
+        } catch (error) {
+          resolve({ success: false, failReason: LoginFailReason.UNKNOWN, data: { error: error } });
         }
       } else {
         reject('unsupported login method');
@@ -247,9 +247,9 @@ class UiServer extends HomebridgePluginUiServer {
 
       // Return the parsed accessories
       return storedAccessories as Accessory[];
-    } catch (err) {
+    } catch (error) {
       // If an error occurs during the process, log an error message and return an empty array
-      this.log.error('Could not get stored accessories. Most likely no stored accessories yet: ' + err);
+      this.log.error('Could not get stored accessories. Most likely no stored accessories yet: ' + error);
       return [];
     }
   }
@@ -366,8 +366,8 @@ class UiServer extends HomebridgePluginUiServer {
     try {
       fs.rmSync(this.storagePath, { recursive: true });
       return { result: 1 };
-    } catch (err) {
-      this.log.error('Could not reset plugin: ' + err);
+    } catch (error) {
+      this.log.error('Could not reset plugin: ' + error);
       return { result: 0 };
     }
   }
@@ -439,11 +439,11 @@ class UiServer extends HomebridgePluginUiServer {
       // Return the Buffer containing the compressed log files.
       this.pushEvent('downloadLogsProgress', { progress: 90, status: 'Returning zip file' });
       return fileBuffer;
-    } catch (err) {
+    } catch (error) {
       // Step 10: Error Handling
       // Log an error if archiving the zip file fails and propagate the error.
-      this.log.error('Error while generating log files: ' + err);
-      throw err;
+      this.log.error('Error while generating log files: ' + error);
+      throw error;
     } finally {
       // Step 11: Cleanup
       // Ensure to remove any compressed log files after the operation, regardless of success or failure.

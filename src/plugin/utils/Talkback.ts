@@ -97,8 +97,8 @@ export class TalkbackStream extends Duplex {
       this.talkbackStarted = true;
       log.debug(this.cameraName, 'starting talkback');
       this.eufyClient.startStationTalkback(this.cameraSN)
-        .catch(err => {
-          log.error(this.cameraName, 'talkback could not be started: ' + err);
+        .catch(error => {
+          log.error(this.cameraName, 'talkback could not be started: ' + error);
         });
     }
   }
@@ -108,8 +108,8 @@ export class TalkbackStream extends Duplex {
       this.talkbackStarted = false;
       log.debug(this.cameraName, 'stopping talkback');
       this.eufyClient.stopStationTalkback(this.cameraSN)
-        .catch(err => {
-          log.error(this.cameraName, 'talkback could not be stopped: ' + err);
+        .catch(error => {
+          log.error(this.cameraName, 'talkback could not be stopped: ' + error);
         });
     }
   }

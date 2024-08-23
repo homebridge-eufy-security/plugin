@@ -15,7 +15,7 @@ export class LoginService {
     const config = this.pluginService.getConfig();
 
     if (!config['username'] || !config['password']) {
-      throw ('no full credentials in config');
+      throw new Error('no full credentials in config');
     }
 
     return {
@@ -30,8 +30,8 @@ export class LoginService {
     try {
       const result = await window.homebridge.request('/login', options);
       return Promise.resolve(result as LoginResult);
-    } catch (err) {
-      return Promise.reject(err);
+    } catch (error) {
+      return Promise.reject(error);
     }
   }
 
@@ -40,8 +40,8 @@ export class LoginService {
 
     try {
       config = this.pluginService.getConfig();
-    } catch (err) {
-      console.log('Could not get credentials from config: ', err);
+    } catch (error) {
+      console.log('Could not get credentials from config: ', error);
     }
 
     config['username'] = credentials.username;
