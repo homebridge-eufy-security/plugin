@@ -147,7 +147,7 @@ export abstract class BaseAccessory extends EventEmitter {
     const service = this.getService(serviceType, name, serviceSubType);
     const characteristic = service.getCharacteristic(characteristicType);
 
-    this.log.debug(`REGISTER CHARACTERISTIC (${service.UUID}) / (${characteristic.UUID})`);
+    this.log.debug(`DEFINED CHARACTERISTIC (${service.UUID}) / (${characteristic.UUID})`);
 
     if (getValue) {
       characteristic.onGet(async (data) => {
