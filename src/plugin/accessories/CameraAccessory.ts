@@ -135,10 +135,7 @@ export class CameraAccessory extends DeviceAccessory {
 
     this.initSensorService();
 
-    this.setupEnableButton();
-    this.setupMotionButton();
-    this.setupLightButton();
-    this.setupChimeButton();
+    this.setupPropertyButtons();
 
     this.pruneUnusedServices();
   }
@@ -157,61 +154,61 @@ export class CameraAccessory extends DeviceAccessory {
     }
   }
 
-  private setupButtonService(
+  /**
+   * Configures and sets up a button service (e.g., switch or lightbulb) based on the device's properties
+   * and the configuration settings provided.
+   *
+   * @param serviceName - The name of the service (e.g., 'Enabled', 'Motion').
+   * @param configValue - A boolean indicating whether the service is enabled in the configuration.
+   * @param propertyName - The property name associated with the device (e.g., `PropertyName.DeviceEnabled`).
+   * @param serviceType - The type of service to set up (e.g., `SERV.Switch`, `SERV.Lightbulb`).
+   */
+  private setupPropertyButtonService(
     serviceName: string,
     configValue: boolean | undefined,
-    PropertyName: PropertyName,
-    serviceType: 'switch' | 'lightbulb',
+    propertyName: PropertyName,
+    serviceType: typeof SERV.Switch | typeof SERV.Lightbulb,
   ) {
     try {
       this.log.debug(`${serviceName} config:`, configValue);
-      if (configValue && this.device.hasProperty(PropertyName)) {
-        this.log.debug(`has a ${PropertyName}, so append ${serviceType}${serviceName} characteristic to it.`);
-        this.setupSwitchService(serviceName, serviceType, PropertyName);
+
+      if (configValue && this.device.hasProperty(propertyName)) {
+        this.log.debug(`Has a ${propertyName}, so append ${serviceType.name} ${serviceName} characteristic to it.`);
+
+        // Register the characteristic for the service
+        this.registerCharacteristic({
+          serviceType: serviceType,
+          characteristicType: CHAR.On,
+          name: `${this.accessory.displayName} ${serviceName}`,
+          serviceSubType: serviceName,
+          getValue: (data, characteristic) => this.getCameraPropertyValue(characteristic, propertyName),
+          setValue: (value, characteristic) => this.setCameraPropertyValue(characteristic, propertyName, value),
+        });
       } else {
-        this.log.debug(`Looks like not compatible with ${PropertyName} or this has been disabled within configuration`);
+        this.log.debug(`Not compatible with ${propertyName} or disabled in configuration.`);
       }
     } catch (error) {
-      this.log.error(`raise error to check and attach ${serviceType}${serviceName}.`, error);
+      this.log.error(`Error attaching ${serviceType.name} ${serviceName}.`, error);
       throw error;
     }
   }
 
-  protected setupSwitchService(
-    serviceName: string,
-    serviceType: 'switch' | 'lightbulb' | 'outlet',
-    propertyName: PropertyName,
-  ) {
-    const platformServiceMapping = {
-      switch: SERV.Switch,
-      lightbulb: SERV.Lightbulb,
-      outlet: SERV.Outlet,
-    };
+  /**
+   * Iterates over the button configurations and sets up each button service based on the provided configuration.
+   */
+  private async setupPropertyButtons() {
+    // Define the button configurations
+    const buttonConfigs = [
+      { name: 'Enabled', configValue: this.cameraConfig.enableButton, property: PropertyName.DeviceEnabled, type: SERV.Switch },
+      { name: 'Motion', configValue: this.cameraConfig.motionButton, property: PropertyName.DeviceMotionDetection, type: SERV.Switch },
+      { name: 'Light', configValue: this.cameraConfig.lightButton, property: PropertyName.DeviceLight, type: SERV.Lightbulb },
+      { name: 'IndoorChime', configValue: this.cameraConfig.indoorChimeButton, property: PropertyName.DeviceChimeIndoor, type: SERV.Switch },
+    ];
 
-    this.registerCharacteristic({
-      serviceType: platformServiceMapping[serviceType] || SERV.Switch,
-      characteristicType: CHAR.On,
-      name: this.accessory.displayName + ' ' + serviceName,
-      serviceSubType: serviceName,
-      getValue: (data, characteristic) => this.getCameraPropertyValue(characteristic, propertyName),
-      setValue: (value, characteristic) => this.setCameraPropertyValue(characteristic, propertyName, value),
-    });
-  }
-
-  private async setupEnableButton() {
-    this.setupButtonService('Enabled', this.cameraConfig.enableButton, PropertyName.DeviceEnabled, 'switch');
-  }
-
-  private async setupMotionButton() {
-    this.setupButtonService('Motion', this.cameraConfig.motionButton, PropertyName.DeviceMotionDetection, 'switch');
-  }
-
-  private async setupLightButton() {
-    this.setupButtonService('Light', this.cameraConfig.lightButton, PropertyName.DeviceLight, 'lightbulb');
-  }
-
-  private async setupChimeButton() {
-    this.setupButtonService('IndoorChime', this.cameraConfig.indoorChimeButton, PropertyName.DeviceChimeIndoor, 'switch');
+    // Set up each button service
+    for (const { name, configValue, property, type } of buttonConfigs) {
+      this.setupPropertyButtonService(name, configValue, property, type);
+    }
   }
 
   /**
