@@ -315,7 +315,7 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
     log.debug('Using bropats @homebridge-eufy-security/eufy-security-client library in version ', libVersion);
 
     if (!this.checkNodeJSVersionCompatibility()) {
-      log.error(`
+      log.warn(`
       ***************************
       ****** ERROR MESSAGE ******
       ***************************
@@ -353,7 +353,11 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
       logging: {
         level: (this.config.enableDetailedLogging) ? LogLevel.Debug : LogLevel.Info,
       },
+      enableEmbeddedPKCS1Support: !this.nodeJScompatible,
     } as EufySecurityConfig;
+
+    // Log the final configuration object for debugging purposes
+    log.debug('The Eufy config is:', eufyConfig);
 
     this.api.on(APIEvent.DID_FINISH_LAUNCHING, async () => {
       await this.pluginSetup(eufyConfig);
