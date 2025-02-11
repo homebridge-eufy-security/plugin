@@ -53,7 +53,7 @@
     "rotating-file-stream": "^3.2.5",
     "semver": "^7.6.3",
     "tslog": "^4.9.3",
-    "zip-lib": "^1.0.4"
+    "zip-lib": "^1.0.5"
   },
   "devDependencies": {
     "@angular-devkit/build-angular": "~18.2.6",
