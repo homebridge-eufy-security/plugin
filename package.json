@@ -51,7 +51,7 @@
     "ffmpeg-for-homebridge": "2.1.1",
     "fs-extra": "^11.3.0",
     "rotating-file-stream": "^3.2.5",
-    "semver": "^7.6.3",
+    "semver": "^7.7.0",
     "tslog": "^4.9.3",
     "zip-lib": "^1.0.5"
   },
