@@ -80,13 +80,14 @@ export class LocalLivestreamManager extends EventEmitter {
       const hardStop = setTimeout(
         () => {
           this.log.error('Livestream timeout: No livestream emitted within the expected timeframe.');
-          this.log.warn('If you are using Node.js version 18.19.1, 20.11.1, 21.6.2 or newer, this might be related to RSA_PKCS1_PADDING support removal.');
+          const problematicNodeVersions = ['18.19.1', '20.11.1', '21.6.2'];
+          this.log.warn(`If you are using Node.js version ${problematicNodeVersions.join(', ')} or newer, this might be related to RSA_PKCS1_PADDING support removal.`);
           this.log.warn('Please try enabling "Embedded PKCS1 Support" in the plugin settings to resolve this issue.');
           this.stopLocalLiveStream();
           this.livestreamIsStarting = false;
           reject('No livestream emitted... This may be due to Node.js compatibility issues. Try enabling Embedded PKCS1 Support in settings.');
         },
-        15 * 1000 // After 15sec Apple HK will disconnect so all of this for nothing...
+        15 * 1000 // After 15 seconds, Apple HomeKit may disconnect, invalidating the livestream setup.
       );
 
       this.once('livestream start', async () => {
