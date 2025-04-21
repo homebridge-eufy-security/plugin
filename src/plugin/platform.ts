@@ -319,6 +319,7 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
       persistentDir: this.eufyPath,
       p2pConnectionSetup: 0,
       pollingIntervalMinutes: this.config.pollingIntervalMinutes,
+      enableEmbeddedPKCS1Support:  this.config.enableEmbeddedPKCS1Support,
       eventDurationSeconds: 10,
       logging: {
         level: (this.config.enableDetailedLogging) ? LogLevel.Debug : LogLevel.Info,

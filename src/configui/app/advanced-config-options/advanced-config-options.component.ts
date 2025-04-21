@@ -9,6 +9,7 @@ import { PollingIntervalMinutesComponent } from '../config-options/polling-inter
 import { EditCredentialsComponent } from '../config-options/edit-credentials/edit-credentials.component';
 import { AutoSyncStationComponent } from '../config-options/auto-sync-station/auto-sync-station.component';
 import { LucideAngularModule } from 'lucide-angular';
+import { EmbeddedPKCS1SupportComponent } from '../config-options/embedded-pkcs1-support/embedded-pkcs1-support.component';
 
 @Component({
     selector: 'app-advanced-config-options',
@@ -22,6 +23,7 @@ import { LucideAngularModule } from 'lucide-angular';
         IgnoreMultipleDevicesWarningComponent,
         OmitLogFilesComponent,
         CleanCacheComponent,
+        EmbeddedPKCS1SupportComponent,
         GuardModesMappingComponent,
         AutoSyncStationComponent,
         LucideAngularModule,
