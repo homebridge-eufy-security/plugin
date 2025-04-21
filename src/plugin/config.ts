@@ -27,6 +27,7 @@ export interface EufySecurityPlatformConfig extends PlatformConfig {
   cleanCache: boolean;
   ignoreMultipleDevicesWarning: boolean;
   autoSyncStation: boolean;
+  enableEmbeddedPKCS1Support: boolean;
 }
 
 export const DEFAULT_CONFIG_VALUES: EufySecurityPlatformConfig = {
@@ -51,4 +52,5 @@ export const DEFAULT_CONFIG_VALUES: EufySecurityPlatformConfig = {
   cleanCache: true,
   ignoreMultipleDevicesWarning: false,
   autoSyncStation: false,
+  enableEmbeddedPKCS1Support: false,
 };

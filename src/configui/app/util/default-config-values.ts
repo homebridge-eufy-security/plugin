@@ -23,6 +23,7 @@ export const DEFAULT_CONFIG_VALUES: EufySecurityPlatformConfig = {
   cleanCache: true,
   ignoreMultipleDevicesWarning: false,
   autoSyncStation: false,
+  enableEmbeddedPKCS1Support: false,
 };
 
 export const DEFAULT_CAMERACONFIG_VALUES: CameraConfig = {
