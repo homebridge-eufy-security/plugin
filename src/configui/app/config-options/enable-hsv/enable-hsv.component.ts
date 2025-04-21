@@ -5,9 +5,8 @@ import { DEFAULT_CAMERACONFIG_VALUES, DEFAULT_CONFIG_VALUES } from '../../util/d
 import { ChargingType } from '../../util/types';
 import { ConfigOptionsInterpreter } from '../config-options-interpreter';
 
-import { NgbCollapse, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { RouterLink } from '@angular/router';
-import { NgIf, NgFor } from '@angular/common';
+import { NgIf } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 
 @Component({
@@ -19,9 +18,6 @@ import { FormsModule } from '@angular/forms';
     FormsModule,
     NgIf,
     RouterLink,
-    NgFor,
-    NgbCollapse,
-    NgbTooltip,
   ],
 })
 export class EnableHsvComponent extends ConfigOptionsInterpreter implements OnInit {
