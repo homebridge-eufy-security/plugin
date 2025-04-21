@@ -7,8 +7,6 @@ import {
   APIEvent,
 } from 'homebridge';
 
-import { version } from 'process';
-
 import { DEVICE_INIT_DELAY, PLATFORM_NAME, PLUGIN_NAME, STATION_INIT_DELAY } from './settings';
 
 import { DEFAULT_CONFIG_VALUES, EufySecurityPlatformConfig } from './config';
