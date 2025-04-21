@@ -579,11 +579,18 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
         return;
       }
 
+      // Check if the device is a keypad and ignore it from the start
+      const deviceType = device.getDeviceType();
+      if (Device.isKeyPad(deviceType)) {
+        log.warn(`${device.getName()}: The keypad is ignored as it serves no purpose in this plugin. You can ignore this message.`);
+        return;
+      }
+
       const deviceContainer: DeviceContainer = {
         deviceIdentifier: {
           uniqueId: device.getSerial(),
           displayName: 'DEVICE ' + device.getName().replace(/[^a-zA-Z0-9]/g, ''),
-          type: device.getDeviceType(),
+          type: deviceType,
         } as DeviceIdentifier,
         eufyDevice: device,
       };
@@ -716,11 +723,6 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
     if (Device.isCamera(type)) {
       log.debug(accessory.displayName + ' isCamera!');
       new CameraAccessory(this, accessory, device as Camera);
-    }
-
-    if (Device.isKeyPad(type)) {
-      log.debug(accessory.displayName + ' isKeypad!');
-      throw new Error('The keypad needs to be taken out because it serves no purpose. You can ignore this message.');
     }
 
   }
