@@ -4,6 +4,7 @@ import os from 'os';
 import { Readable, Writable } from 'stream';
 
 import ffmpegPath from 'ffmpeg-for-homebridge';
+import { pickPort } from 'pick-port';
 
 import EventEmitter from 'events';
 import { CameraConfig, VideoConfig } from './configTypes';
@@ -20,7 +21,6 @@ import {
 } from 'homebridge';
 import { SessionInfo } from '../controller/streamingDelegate';
 import { ffmpegLogger } from './utils';
-import { reservePorts } from '@homebridge/camera-utils';
 
 class FFmpegProgress extends EventEmitter {
     private server: net.Server;
@@ -143,7 +143,7 @@ export class FFmpegParameters {
     }
 
     static async forAudio(debug = false): Promise<FFmpegParameters> {
-        const [port] = await reservePorts({ type: 'tcp', count: 1 });
+        const port = await pickPort({ type: 'tcp' });
         const ffmpeg = new FFmpegParameters(port, false, true, false, debug);
         ffmpeg.useWallclockAsTimestamp = false;
         ffmpeg.flagsGlobalHeader = true;
@@ -151,12 +151,12 @@ export class FFmpegParameters {
     }
 
     static async forVideo(debug = false): Promise<FFmpegParameters> {
-        const [port] = await reservePorts({ type: 'tcp', count: 1 });
+        const port = await pickPort({ type: 'tcp' });
         return new FFmpegParameters(port, true, false, false, debug);
     }
 
     static async forSnapshot(debug = false): Promise<FFmpegParameters> {
-        const [port] = await reservePorts({ type: 'tcp', count: 1 });
+        const port = await pickPort({ type: 'tcp' });
         const ffmpeg = new FFmpegParameters(port, false, false, true, debug);
         ffmpeg.useWallclockAsTimestamp = false;
         ffmpeg.numberFrames = 1;
@@ -165,14 +165,14 @@ export class FFmpegParameters {
     }
 
     static async forVideoRecording(debug = false): Promise<FFmpegParameters> {
-        const [port] = await reservePorts({ type: 'tcp', count: 1 });
+        const port = await pickPort({ type: 'tcp' });
         const ffmpeg = new FFmpegParameters(port, true, false, false, debug);
         ffmpeg.useWallclockAsTimestamp = true;
         return ffmpeg;
     }
 
     static async forAudioRecording(debug = false): Promise<FFmpegParameters> {
-        const [port] = await reservePorts({ type: 'tcp', count: 1 });
+        const port = await pickPort({ type: 'tcp' });
         const ffmpeg = new FFmpegParameters(port, false, true, false, debug);
         return ffmpeg;
     }
@@ -191,7 +191,7 @@ export class FFmpegParameters {
     }
 
     public async setInputStream(input: Readable) {
-        const [port] = await reservePorts({ type: 'tcp', count: 1 });
+        const port = await pickPort({ type: 'tcp' });
         let killTimeout: NodeJS.Timeout | undefined = undefined;
         const server = net.createServer((socket) => {
             if (killTimeout) {
@@ -480,7 +480,7 @@ export class FFmpegParameters {
             'config=F8F0212C00BC00\r\n' +
             'a=crypto:1 AES_CM_128_HMAC_SHA1_80 inline:' + sessionInfo.audioSRTP.toString('base64') + '\r\n';
 
-        const [port] = await reservePorts({ type: 'tcp', count: 1 });
+        const port = await pickPort({ type: 'tcp' });
         let killTimeout: NodeJS.Timeout | undefined = undefined;
         const server = net.createServer((socket) => {
             if (killTimeout) {
@@ -869,7 +869,7 @@ export class FFmpeg extends EventEmitter {
         this.progress = new FFmpegProgress(this.parameters[0].progressPort);
         this.progress.on('progress started', this.onProgressStarted.bind(this));
 
-        const [port] = await reservePorts({ type: 'tcp', count: 1 });
+        const port = await pickPort({ type: 'tcp' });
 
         return new Promise((resolve) => {
             const server = net.createServer((socket) => {

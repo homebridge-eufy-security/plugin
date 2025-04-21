@@ -287,7 +287,7 @@ export class SnapshotManager extends EventEmitter {
   /**
    * Retrieves the newest cloud snapshot's image data.
    * @returns Buffer The image data as a Buffer.
-   * @throws Error if there's no currentSnapshot available.
+   * @throws Error if there's no currentSnapshot available and no fallback image.
    */
   private getSnapshotFromCache(): Buffer {
     // Check if there's a currentSnapshot available
@@ -295,8 +295,14 @@ export class SnapshotManager extends EventEmitter {
       // If available, return the image data
       return this.currentSnapshot.image;
     } else {
-      // If not available, throw an error
-      throw new Error('No currentSnapshot available');
+      // If not available, try to use the unavailable snapshot image
+      if (this.unavailableSnapshot) {
+        this.log.warn('No currentSnapshot available, using fallback unavailable snapshot image');
+        return this.unavailableSnapshot;
+      } else {
+        // If fallback image is also not available, throw an error
+        throw new Error('No currentSnapshot available');
+      }
     }
   }
 

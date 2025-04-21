@@ -24,7 +24,7 @@ import { LocalLivestreamManager } from './LocalLivestreamManager';
 import { SnapshotManager } from './SnapshotManager';
 import { TalkbackStream } from '../utils/Talkback';
 import { HAP, is_rtsp_ready } from '../utils/utils';
-import { reservePorts } from '@homebridge/camera-utils';
+import { pickPort } from 'pick-port';
 import { CameraAccessory } from '../accessories/CameraAccessory';
 import { Logger, ILogObj } from 'tslog';
 
@@ -120,7 +120,10 @@ export class StreamingDelegate implements CameraStreamingDelegate {
 
     this.log.debug(`stream prepare request with session id ${request.sessionID} was received.`);
 
-    const [videoReturnPort, audioReturnPort] = await reservePorts({ type: 'udp', count: 2 });
+    const [videoReturnPort, audioReturnPort] = await Promise.all([
+      pickPort({ type: 'udp' }),
+      pickPort({ type: 'udp' })
+    ]);
 
     const videoSSRC = HAP.CameraController.generateSynchronisationSource();
     const audioSSRC = HAP.CameraController.generateSynchronisationSource();
