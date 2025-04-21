@@ -6,7 +6,7 @@ import { LoginService } from '../login.service';
 
 import { COUNTRIES } from '../countries';
 import { FormsModule } from '@angular/forms';
-import { NgbAlert, NgbPopover, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { NgbAlert, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { NgIf, NgFor } from '@angular/common';
 import { LucideAngularModule } from 'lucide-angular';
 
@@ -24,7 +24,6 @@ enum LoginStep {
   imports: [
     NgIf,
     NgbAlert,
-    NgbPopover,
     FormsModule,
     NgbTooltip,
     NgFor,
@@ -53,9 +52,6 @@ export class LoginComponent implements OnInit {
 
   firstLoginAssumed = false;
 
-  nodeJSIncompatible: boolean = true;
-  nodeJSversion: string = '1.1.1';
-
   emailIsValid = true;
   passwordIsValid = true;
   otpIsValid = true;
@@ -64,12 +60,6 @@ export class LoginComponent implements OnInit {
   constructor(private loginService: LoginService, private routerService: Router) { }
 
   async ngOnInit(): Promise<void> {
-    const r = await window.homebridge.request('/nodeJSVersion');
-    this.nodeJSversion = r.nodeJSversion;
-    this.nodeJSIncompatible = r.nodeJSIncompatible;
-
-    console.log('r: ', r);
-
     this.getCredentials();
     this.fillCountryArray();
   }

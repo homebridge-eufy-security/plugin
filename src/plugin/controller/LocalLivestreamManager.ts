@@ -79,14 +79,9 @@ export class LocalLivestreamManager extends EventEmitter {
       // Hard stop
       const hardStop = setTimeout(
         () => {
+          this.log.error('Livestream timeout: No livestream emitted within the expected timeframe.');
           this.stopLocalLiveStream();
           this.livestreamIsStarting = false;
-          if (!this.camera.platform.nodeJScompatible) {
-            this.log.error(`
-              Error: Your current Node.js version is incompatible with the RSA_PKCS1_PADDING used by the plugin.
-              If you run the plugin with an incompatible version of Node.js, livestream functionality will be disrupted.
-            `);
-          }
           reject('No livestream emited... Something wrong between HB and your cam!');
         },
         15 * 1000 // After 10sec Apple HK will disconnect so all of this for nothing...

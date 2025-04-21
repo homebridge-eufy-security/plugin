@@ -6,8 +6,6 @@ import { createStream } from 'rotating-file-stream';
 import { Zip } from 'zip-lib';
 import { Accessory, L_Station, L_Device, LoginResult, LoginFailReason } from './configui/app/util/types';
 import { version } from '../package.json';
-import { version as nodeJSversion, argv as nodeJSargs, env as nodeJSenv } from 'node:process';
-import { satisfies } from 'semver';
 import path from 'path';
 
 class UiServer extends HomebridgePluginUiServer {
@@ -93,7 +91,6 @@ class UiServer extends HomebridgePluginUiServer {
     this.onRequest('/storedAccessories', this.loadStoredAccessories.bind(this));
     this.onRequest('/reset', this.resetPlugin.bind(this));
     this.onRequest('/downloadLogs', this.downloadLogs.bind(this));
-    this.onRequest('/nodeJSVersion', this.nodeJSVersion.bind(this));
   }
 
   /**
@@ -129,20 +126,6 @@ class UiServer extends HomebridgePluginUiServer {
    */
   async resetAccessoryData(): Promise<void> {
     return this.deleteFileIfExists(this.storedAccessories_file);
-  }
-
-  /**
-   * Checks compatibility of the current Node.js version with Livestream functionality.
-   */
-  public nodeJSVersion() {
-    // Define versions known to break compatibility with RSA_PKCS1_PADDING
-    const nodeJSIncompatible = satisfies(nodeJSversion, '>=18.19.1 <19.x || >=20.11.1 <21.x || >=21.6.2 <22');
-    return {
-      nodeJSversion: nodeJSversion,
-      nodeJSIncompatible: nodeJSIncompatible,
-      nodeJSargs: nodeJSargs,
-      nodeJSenv: nodeJSenv,
-    };
   }
 
   async login(options): Promise<LoginResult> {

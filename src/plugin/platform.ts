@@ -8,7 +8,6 @@ import {
 } from 'homebridge';
 
 import { version } from 'process';
-import { clean, satisfies } from 'semver';
 
 import { DEVICE_INIT_DELAY, PLATFORM_NAME, PLUGIN_NAME, STATION_INIT_DELAY } from './settings';
 
@@ -66,8 +65,6 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
   private cleanCachedAccessoriesTimeout?: NodeJS.Timeout;
 
   private _hostSystem: string = '';
-
-  public nodeJScompatible: boolean = false;
 
   constructor(
     hblog: Logger,
@@ -313,29 +310,6 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
     log.debug('plugin data store:', this.eufyPath);
     log.debug('OS is', this.hostSystem);
     log.debug('Using bropats @homebridge-eufy-security/eufy-security-client library in version ', libVersion);
-
-    if (!this.checkNodeJSVersionCompatibility()) {
-      log.error(`
-      ***************************
-      ****** ERROR MESSAGE ******
-      ***************************
-      Error: Your current Node.js version (${version}) is incompatible with the RSA_PKCS1_PADDING used by the plugin.
-      If you run the plugin with an incompatible version of Node.js, livestream functionality will be disrupted. 
-
-      You can override this warning by configuring a special parameter in the global configuration.
-      To resolve this issue, please consider downgrading to a compatible version using a command similar to: sudo hb-service update-node 20.11.0.
-
-      Versions known to cause compatibility issues with this plugin include those within the following ranges:
-      - Node.js 18.x.x (starting from 18.19.1 up to the next major release)
-      - Node.js 20.x.x (starting from 20.11.1 up to the next major release)
-      - Node.js 21.x.x (starting from 21.6.2 up to the next major release)
-
-      For instructions on how to upgrade or downgrade Node.js, please refer to: https://github.com/homebridge/homebridge/wiki/How-To-Update-Node.js
-      For more information on the security vulnerability affecting Node.js, visit: 
-      https://nodejs.org/en/blog/vulnerability/february-2024-security-releases#nodejs-is-vulnerable-to-the-marvin-attack-timing-variant-of-the-bleichenbacher-attack-against-pkcs1-v15-padding-cve-2023-46809---medium
-      ***************************        
-      `);
-    }
 
     // Log the final configuration object for debugging purposes
     log.debug('The config is:', this.config);
@@ -753,33 +727,6 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
       throw new Error('The keypad needs to be taken out because it serves no purpose. You can ignore this message.');
     }
 
-  }
-
-  /**
-   * Checks compatibility of the current Node.js version with Livestream functionality.
-   * @returns {boolean} Returns true if the Node.js version is compatible, false otherwise.
-   */
-  private checkNodeJSVersionCompatibility(): boolean {
-
-    // Obtain the cleaned version of Node.js
-    const nodeVersion = clean(version);
-
-    // If version cannot be determined, assume compatibility
-    if (!nodeVersion) {
-      return true;
-    }
-
-    // Log the Node.js version for debugging purposes
-    log.debug('Node version is', nodeVersion);
-
-    // Define versions known to break compatibility with RSA_PKCS1_PADDING
-    this.nodeJScompatible = !satisfies(nodeVersion, '>=18.19.1 <19.x || >=20.11.1 <21.x || >=21.6.2 <22');
-
-    // Log the Node.js version for debugging purposes
-    log.debug('Node version is compatible', this.nodeJScompatible);
-
-    // Return true if the Node.js version is compatible, false otherwise
-    return this.nodeJScompatible;
   }
 
 }
