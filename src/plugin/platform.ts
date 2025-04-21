@@ -7,8 +7,6 @@ import {
   APIEvent,
 } from 'homebridge';
 
-import { version } from 'process';
-
 import { DEVICE_INIT_DELAY, PLATFORM_NAME, PLUGIN_NAME, STATION_INIT_DELAY } from './settings';
 
 import { DEFAULT_CONFIG_VALUES, EufySecurityPlatformConfig } from './config';
@@ -35,8 +33,6 @@ import {
   Lock,
   libVersion,
   LogLevel,
-  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-  // @ts-ignore 
 } from 'eufy-security-client';
 
 import { ILogObjMeta } from 'tslog';
