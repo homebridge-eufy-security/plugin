@@ -3,13 +3,12 @@ import { L_Device, L_Station } from '../../../app/util/types';
 import { PluginService } from '../../../app/plugin.service';
 import { ConfigOptionsInterpreter } from '../config-options-interpreter';
 import { FormsModule } from '@angular/forms';
-import { NgIf } from '@angular/common';
 
 @Component({
   selector: 'app-ignore-accessory',
   templateUrl: './ignore-accessory.component.html',
   standalone: true,
-  imports: [FormsModule, NgIf],
+  imports: [FormsModule],
 })
 export class IgnoreAccessoryComponent extends ConfigOptionsInterpreter implements OnInit {
 

@@ -2,7 +2,7 @@ import { Component } from '@angular/core';
 import { RouterLink } from '@angular/router';
 
 import { NgIf } from '@angular/common';
-import { NgbCollapse, NgbProgressbar } from '@ng-bootstrap/ng-bootstrap';
+import { NgbCollapse } from '@ng-bootstrap/ng-bootstrap';
 import { DownloadLogsComponent } from '../download-logs/download-logs.component';
 import { LucideAngularModule } from 'lucide-angular';
 import { ResetPluginComponent } from '../reset-plugin/reset-plugin.component';
@@ -16,7 +16,6 @@ import { EnableDetailedLoggingComponent } from '../enable-detailed-logging/enabl
   imports: [
     RouterLink,
     NgIf,
-    NgbProgressbar,
     NgbCollapse,
     LucideAngularModule,
     DownloadLogsComponent,

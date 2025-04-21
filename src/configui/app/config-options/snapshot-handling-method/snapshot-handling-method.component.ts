@@ -6,8 +6,7 @@ import { ConfigOptionsInterpreter } from '../config-options-interpreter';
 
 import { LucideAngularModule } from 'lucide-angular';
 import { ChargingType } from '../../util/types';
-import { RouterLink } from '@angular/router';
-import { NgIf, NgFor } from '@angular/common';
+import { NgIf } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 
 @Component({
@@ -18,8 +17,6 @@ import { FormsModule } from '@angular/forms';
   imports: [
     FormsModule,
     NgIf,
-    RouterLink,
-    NgFor,
     LucideAngularModule,
   ],
 })
