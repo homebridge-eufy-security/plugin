@@ -30,7 +30,7 @@ export class EmbeddedPKCS1SupportComponent extends ConfigOptionsInterpreter impl
   /** updateConfig() takes an optional second parameter to specify the accessoriy for which the setting is changed */
 
   readValue() {
-    this.enableEmbeddedPKCS1Support = this.config['cleanCache'] ?? this.enableEmbeddedPKCS1Support;
+    this.enableEmbeddedPKCS1Support = this.config['enableEmbeddedPKCS1Support'] ?? this.enableEmbeddedPKCS1Support;
   }
 
   update() {
