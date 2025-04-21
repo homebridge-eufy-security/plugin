@@ -34,7 +34,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        node-version: [20]
+        node-version: [20, 22]
     steps:
       - uses: actions/checkout@v4
         with:
@@ -52,7 +52,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        node-version: [20]
+        node-version: [22]
     needs: build
     steps:
       - name: Push the change
@@ -76,7 +76,7 @@ jobs:
           ref: ${{ github.event.inputs.branch }}
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           registry-url: https://registry.npmjs.org/
       - run: npm ci
       - run: npm publish --access public --tag ${{ github.event.inputs.tag }}
