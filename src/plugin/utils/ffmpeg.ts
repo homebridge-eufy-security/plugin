@@ -740,7 +740,7 @@ export class FFmpeg extends EventEmitter {
     private progress?: FFmpegProgress;
     private parameters: FFmpegParameters[];
 
-    private ffmpegExec: any = ffmpegPath || 'ffmpeg';
+    private ffmpegExec: string = (ffmpegPath as unknown as string) || 'ffmpeg';
 
     public stdin?: Writable;
     public stdout?: Readable;
