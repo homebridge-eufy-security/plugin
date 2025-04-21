@@ -5,25 +5,6 @@
     eufy cloud here.</i>
 </ng-template>
 
-<ng-template #popInfoNodeJS>
-  <p>You can override this warning by configuring a special parameter in the global configuration after login.
-    To resolve this issue, please consider downgrading to a compatible version using a command similar to: sudo
-    hb-service update-node 20.11.0.</p>
-
-  <p> Versions known to cause compatibility issues with this plugin include those within the following ranges: </p>
-  <ul>
-    <li>Node.js 18.x.x (starting from 18.19.1 up to the next major release)</li>
-    <li>Node.js 20.x.x (starting from 20.11.1 up to the next major release)</li>
-    <li>Node.js 21.x.x (starting from 21.6.2 up to the next major release)</li>
-  </ul>
-
-  <p> For instructions on how to upgrade or downgrade Node.js, please refer to:
-    https://github.com/homebridge/homebridge/wiki/How-To-Update-Node.js
-    For more information on the security vulnerability affecting Node.js, visit:
-    https://nodejs.org/en/blog/vulnerability/february-2024-security-releases#nodejs-is-vulnerable-to-the-marvin-attack-timing-variant-of-the-bleichenbacher-attack-against-pkcs1-v15-padding-cve-2023-46809---medium
-  </p>
-</ng-template>
-
 <!-- Login failed alert -->
 <p class="col-11 col-sm-7" *ngIf="loginFailed">
   <ngb-alert [dismissible]="true" type="danger" (closed)="resetLoginFailed()">
@@ -35,18 +16,6 @@
 
 <!-- Login form start -->
 <div *ngIf="loginStep === 0" class="text-right">
-  <div *ngIf="nodeJSIncompatible" class="alert alert-danger d-flex align-items-center text-left" role="alert">
-    <lucide-angular name="info" class="m-2"></lucide-angular>
-    <div>
-      Error: Your current Node.js version {{ nodeJSversion }} is incompatible with the
-      RSA_PKCS1_PADDING used by the plugin. If you run the plugin with an incompatible version of Node.js,
-      livestream functionality will be disrupted.
-      <u role="button" popoverTitle="Please downgrade your NodeJS version" [autoClose]="'outside'"
-        [ngbPopover]="popInfoNodeJS">
-        Tell me why...
-      </u>
-    </div>
-  </div>
   <div class="alert alert-warning d-flex align-items-center text-left" role="alert">
     <lucide-angular name="info" class="m-2"></lucide-angular>
     <div>
