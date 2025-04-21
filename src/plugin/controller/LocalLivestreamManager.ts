@@ -79,6 +79,7 @@ export class LocalLivestreamManager extends EventEmitter {
       // Hard stop
       const hardStop = setTimeout(
         () => {
+          this.log.error('Livestream timeout: No livestream emitted within the expected timeframe.');
           this.stopLocalLiveStream();
           this.livestreamIsStarting = false;
           reject('No livestream emited... Something wrong between HB and your cam!');
