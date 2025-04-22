@@ -111,23 +111,34 @@ export class UniversalStream {
   }
 
   public close(): void {
-    try {
-      if (this.server) {
-        this.server.close();
+    const serverClosed = new Promise<void>((resolve) => {
+      try {
+        if (this.server) {
+          this.server.close(() => resolve());
+        } else {
+          resolve();
+        }
+      } catch (error) {
+        ffmpegLogger.debug(`Error closing server: ${error}`);
+        resolve(); // Continue with cleanup even if server closing fails
       }
-    } catch (error) {
-      ffmpegLogger.debug(`An error occurred while closing the server: ${error}`);
-    } finally {
+    });
+
+    // Cleanup resources after server is closed
+    serverClosed.then(() => {
       if (!this.isWin32 && this.url) {
         try {
-          fse.unlinkSync(this.url.replace('unix:', ''));
+          const socketPath = this.url.replace('unix:', '');
+          if (fse.existsSync(socketPath)) {
+            fse.unlinkSync(socketPath);
+          }
         } catch (error) {
-          ffmpegLogger.debug(`An error occurred while unlinking the file: ${error}`);
+          ffmpegLogger.debug(`Failed to unlink socket file: ${error}`);
         }
       }
       UniversalStream.socks.delete(this.sock_id);
-      ffmpegLogger.debug('Resources cleaned up.');
-    }
+      ffmpegLogger.debug('UniversalStream resources cleaned up successfully');
+    });
   }
 
   public static StreamInput(namespace: string, stream: NodeJS.ReadableStream): UniversalStream {
