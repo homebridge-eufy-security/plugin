@@ -304,30 +304,25 @@ export class StreamingDelegate implements CameraStreamingDelegate {
   }
 
   handleStreamRequest(request: StreamingRequest, callback: StreamRequestCallback): void {
-    switch (request.type) {
+    const { type, sessionID } = request;
+
+    switch (type) {
       case StreamRequestTypes.START:
-        this.log.debug(`Received request to start stream with id ${request.sessionID}`);
+        this.log.debug(`Received request to start stream with id ${sessionID}`);
         this.log.debug(`request data:`, request);
         this.startStream(request, callback);
         break;
       case StreamRequestTypes.RECONFIGURE:
+        const { width, height, fps, max_bit_rate } = request.video;
         this.log.debug(
-          'Received request to reconfigure: ' +
-          request.video.width +
-          ' x ' +
-          request.video.height +
-          ', ' +
-          request.video.fps +
-          ' fps, ' +
-          request.video.max_bit_rate +
-          ' kbps (Ignored)',
-          this.videoConfig.debug,
+          `Received request to reconfigure: ${width} x ${height}, ${fps} fps, ${max_bit_rate} kbps (Ignored)`,
+          this.videoConfig.debug
         );
         callback();
         break;
       case StreamRequestTypes.STOP:
-        this.log.debug('Receive Apple HK Stop request', request);
-        this.stopStream(request.sessionID);
+        this.log.debug('Received request to stop stream', sessionID);
+        this.stopStream(sessionID);
         callback();
         break;
     }
