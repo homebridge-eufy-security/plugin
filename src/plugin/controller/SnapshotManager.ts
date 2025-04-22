@@ -437,6 +437,12 @@ export class SnapshotManager extends EventEmitter {
   }
 
   private async resizeSnapshot(snapshot: Buffer, request: SnapshotRequest): Promise<Buffer> {
+    // Avoid creating new FFmpegParameters instance if no resizing is needed
+    if (!this.cameraConfig.videoConfig || 
+        (!this.cameraConfig.videoConfig.maxWidth && !this.cameraConfig.videoConfig.maxHeight && 
+         !this.cameraConfig.videoConfig.videoFilter)) {
+      return snapshot; // Return original if no resizing configuration exists
+    }
 
     const parameters = await FFmpegParameters.forSnapshot(this.cameraConfig.videoConfig?.debug);
     parameters.setup(this.cameraConfig, request);
