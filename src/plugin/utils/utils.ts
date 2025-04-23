@@ -49,86 +49,136 @@ export class Deferred<T> {
   });
 }
 
+/**
+ * UniversalStream provides a platform-independent streaming abstraction
+ * for handling socket communications between processes.
+ */
 export class UniversalStream {
+  /**
+   * Track used socket IDs to prevent conflicts
+   */
+  private static activeSockets = new Set<number>();
 
+  /**
+   * Stream properties
+   */
   public url: string;
-  private static socks = new Set<number>();
   private server: net.Server;
-  private sock_id: number;
-  private isWin32: boolean = false;
-  private readonly startTime = Date.now();
+  private socketId: number;
+  private readonly isWindows: boolean;
+  private readonly createdAt = Date.now();
 
+  /**
+   * Create a universal stream with a socket connection handler
+   */
   private constructor(
     namespace: string,
     onSocket: ((socket: net.Socket) => void) | undefined,
   ) {
-    this.isWin32 = process.platform === 'win32'; // Cache platform check
+    // Cache platform check for performance
+    this.isWindows = process.platform === 'win32';
 
-    const unique_sock_id = Math.min(...Array.from({ length: 100 }, (_, i) => i + 1).filter(i => !UniversalStream.socks.has(i)));
-    UniversalStream.socks.add(unique_sock_id);
-    this.sock_id = unique_sock_id;
+    // Find an available socket ID
+    this.socketId = this.getNextAvailableSocketId();
+    UniversalStream.activeSockets.add(this.socketId);
 
-    const sockpath = this.generateSockPath(namespace, unique_sock_id);
-    this.url = this.generateUrl(sockpath);
+    // Generate socket path based on platform
+    const socketPath = this.generateSocketPath(namespace);
+    this.url = this.generateUrl(socketPath);
 
-    this.server = net.createServer(onSocket)
-      .on('error', (error) => {
-        // More robust error handling
-        ffmpegLogger.debug('Server error:', error);
+    // Create and configure server
+    this.server = this.createServer(socketPath, onSocket);
+  }
+
+  /**
+   * Find the next available socket ID
+   */
+  private getNextAvailableSocketId(): number {
+    // Find unused socket IDs from 1-100
+    const availableIds = Array.from({ length: 100 }, (_, i) => i + 1)
+      .filter(id => !UniversalStream.activeSockets.has(id));
+    
+    // If we have available IDs, return the lowest one
+    if (availableIds.length > 0) {
+      return Math.min(...availableIds);
+    }
+    
+    // If all IDs are used, generate a new ID above 100
+    // This ensures we always have a valid ID even if all lower IDs are used
+    return 101 + UniversalStream.activeSockets.size;
+  }
+
+  /**
+   * Generate appropriate socket path for the current platform
+   */
+  private generateSocketPath(namespace: string): string {
+    const pipeName = `${namespace}.${this.socketId}.sock`;
+    
+    if (this.isWindows) {
+      // Windows named pipes
+      return path.join('\\\\.\\pipe\\', pipeName);
+    } else {
+      // Unix domain sockets
+      const socketPath = path.join(tmpdir(), pipeName);
+      
+      // Ensure socket doesn't already exist
+      if (fse.existsSync(socketPath)) {
+        try {
+          fse.unlinkSync(socketPath);
+        } catch (error) {
+          ffmpegLogger.debug(`Failed to unlink existing socket: ${error}`);
+        }
+      }
+      
+      return socketPath;
+    }
+  }
+
+  /**
+   * Generate appropriate URL for the socket path
+   */
+  private generateUrl(socketPath: string): string {
+    return this.isWindows ? socketPath : `unix:${socketPath}`;
+  }
+
+  /**
+   * Create and configure the server
+   */
+  private createServer(socketPath: string, onSocket: ((socket: net.Socket) => void) | undefined): net.Server {
+    return net.createServer(onSocket)
+      .on('error', error => {
+        ffmpegLogger.debug(`Server error: ${error}`);
         this.close();
       })
-      .listen(sockpath, () => {
-        ffmpegLogger.debug('Server is listening');
-      });
+      .on('listening', () => {
+        ffmpegLogger.debug(`Server listening (took ${Date.now() - this.createdAt}ms)`);
+      })
+      .listen(socketPath);
   }
 
-  private generateSockPath(namespace: string, unique_sock_id: number): string {
-    const stepStartTime = Date.now(); // Start time for this step
-
-    let sockpath = '';
-    const pipeName = `${namespace}.${unique_sock_id}.sock`; // Use template literals
-
-    if (this.isWin32) {
-      const pipePrefix = '\\\\.\\pipe\\';
-      sockpath = path.join(pipePrefix, pipeName);
-    } else {
-      sockpath = path.join(tmpdir(), pipeName);
-
-      // Use async file operations
-      if (fse.existsSync(sockpath)) {
-        fse.unlinkSync(sockpath);
-      }
-    }
-
-    const stepEndTime = Date.now(); // End time for this step
-    ffmpegLogger.debug(`Time taken for generateSockPath: ${stepEndTime - stepStartTime}ms (Total time from start: ${stepEndTime - this.startTime}ms)`);
-
-    return sockpath;
-  }
-
-  private generateUrl(sockpath: string): string {
-    return this.isWin32 ? sockpath : `unix:${sockpath}`; // Use template literals
-  }
-
+  /**
+   * Close the stream and clean up resources
+   */
   public close(): void {
-    const serverClosed = new Promise<void>((resolve) => {
-      try {
-        if (this.server) {
-          this.server.close(() => resolve());
-        } else {
-          resolve();
+    // Close the server first
+    Promise.resolve().then(() => {
+      return new Promise<void>(resolve => {
+        if (!this.server) {
+          return resolve();
         }
-      } catch (error) {
-        ffmpegLogger.debug(`Error closing server: ${error}`);
-        resolve(); // Continue with cleanup even if server closing fails
-      }
-    });
-
-    // Cleanup resources after server is closed
-    serverClosed.then(() => {
-      if (!this.isWin32 && this.url) {
+        
+        this.server.close(err => {
+          if (err) {
+            ffmpegLogger.debug(`Error closing server: ${err}`);
+          }
+          resolve();
+        });
+      });
+    }).then(() => {
+      // Clean up socket file if needed
+      if (!this.isWindows) {
+        const socketPath = this.url.replace('unix:', '');
         try {
-          const socketPath = this.url.replace('unix:', '');
           if (fse.existsSync(socketPath)) {
             fse.unlinkSync(socketPath);
           }
@@ -136,45 +186,83 @@ export class UniversalStream {
           ffmpegLogger.debug(`Failed to unlink socket file: ${error}`);
         }
       }
-      UniversalStream.socks.delete(this.sock_id);
-      ffmpegLogger.debug('UniversalStream resources cleaned up successfully');
+      
+      // Release the socket ID
+      UniversalStream.activeSockets.delete(this.socketId);
+      ffmpegLogger.debug('Stream resources cleaned up successfully');
     });
   }
 
+  /**
+   * Create a stream that receives data from a readable stream
+   */
   public static StreamInput(namespace: string, stream: NodeJS.ReadableStream): UniversalStream {
-    return new UniversalStream(namespace, (socket: net.Socket) => stream.pipe(socket, { end: true }));
+    return new UniversalStream(namespace, socket => {
+      // Pipe the input stream to the socket
+      stream.pipe(socket, { end: true });
+      
+      // Handle potential errors
+      stream.on('error', error => {
+        ffmpegLogger.debug(`Input stream error: ${error}`);
+        socket.end();
+      });
+      
+      socket.on('error', error => {
+        ffmpegLogger.debug(`Socket error in StreamInput: ${error}`);
+      });
+    });
   }
 
+  /**
+   * Create a stream that sends data to a writable stream
+   */
   public static StreamOutput(namespace: string, stream: NodeJS.WritableStream): UniversalStream {
-    return new UniversalStream(namespace, (socket: net.Socket) => socket.pipe(stream, { end: true }));
+    return new UniversalStream(namespace, socket => {
+      // Pipe the socket to the output stream
+      socket.pipe(stream, { end: true });
+      
+      // Handle potential errors
+      socket.on('error', error => {
+        ffmpegLogger.debug(`Socket error in StreamOutput: ${error}`);
+      });
+      
+      stream.on('error', error => {
+        ffmpegLogger.debug(`Output stream error: ${error}`);
+        socket.end();
+      });
+    });
   }
 }
 
+/**
+ * Check if a camera is ready for RTSP streaming
+ */
 export const is_rtsp_ready = function (device: Camera, cameraConfig: CameraConfig): boolean {
-
-  log.debug(device.getName(), 'RTSP rtspStream:', device.hasProperty('rtspStream'));
+  // Check if device supports RTSP
   if (!device.hasProperty('rtspStream')) {
-    log.debug(device.getName(), 'Looks like not compatible with RTSP');
+    log.debug(device.getName(), 'Device does not support RTSP streaming');
     return false;
   }
 
-  log.debug(device.getName(), 'RTSP cameraConfig: ', cameraConfig.rtsp);
+  // Check if RTSP is enabled in configuration
   if (!cameraConfig.rtsp) {
-    log.debug(device.getName(), 'Looks like RTSP is not enabled on camera config');
+    log.debug(device.getName(), 'RTSP is disabled in camera configuration');
     return false;
   }
 
-  log.debug(device.getName(), 'RTSP ', device.getPropertyValue(PropertyName.DeviceRTSPStream));
+  // Check if RTSP is enabled on the device
   if (!device.getPropertyValue(PropertyName.DeviceRTSPStream)) {
-    log.debug(device.getName(), ': RTSP capabilities not enabled. You will need to do it manually!');
+    log.debug(device.getName(), 'RTSP capabilities not enabled on device. This needs to be enabled manually.');
     return false;
   }
 
-  log.debug(device.getName(), 'RTSP ', device.getPropertyValue(PropertyName.DeviceRTSPStreamUrl));
-  if (device.getPropertyValue(PropertyName.DeviceRTSPStreamUrl) === '') {
-    log.debug(device.getName(), ': RTSP URL is unknow');
+  // Check if RTSP URL is available
+  const rtspUrl = device.getPropertyValue(PropertyName.DeviceRTSPStreamUrl);
+  if (!rtspUrl || rtspUrl === '') {
+    log.debug(device.getName(), 'RTSP URL is not available');
     return false;
   }
 
+  // All checks passed, RTSP is ready
   return true;
 };

@@ -3,7 +3,9 @@ import { Station, Device, StreamMetadata, EufySecurity } from 'eufy-security-cli
 import { CameraAccessory } from '../accessories/CameraAccessory';
 import { ILogObj, Logger } from 'tslog';
 
-// Define a type for the station stream data.
+/**
+ * Represents a stream connection to an Eufy station
+ */
 type StationStream = {
   station: Station;
   device: Device;
@@ -13,136 +15,204 @@ type StationStream = {
   createdAt: number;
 };
 
-// Define a class for the local livestream manager.
+/**
+ * Manages local livestream connections to Eufy cameras
+ * Handles starting, stopping, and reusing stream connections
+ */
 export class LocalLivestreamManager extends EventEmitter {
-  private readonly CONNECTION_ESTABLISHED_TIMEOUT = 5;
+  // Configuration
+  private readonly CONNECTION_TIMEOUT_SECONDS = 15;
+  private readonly MIN_STREAM_REUSE_SECONDS = 5;
 
+  // State tracking
   private stationStream: StationStream | null = null;
-
   private livestreamStartedAt: number | null = null;
   private livestreamIsStarting = false;
 
+  // Dependencies
   private eufyClient: EufySecurity;
   public readonly log: Logger<ILogObj>;
-  private readonly serial_number: string;
+  private readonly serialNumber: string;
 
-  constructor(
-    private camera: CameraAccessory,
-  ) {
+  constructor(private camera: CameraAccessory) {
     super();
+    
     this.eufyClient = camera.platform.eufyClient;
-
-    this.serial_number = camera.device.getSerial();
+    this.serialNumber = camera.device.getSerial();
     this.log = camera.log;
 
-    this.initialize();
+    // Initialize manager
+    this.setupEventListeners();
+  }
 
+  /**
+   * Set up event listeners for Eufy client events
+   */
+  private setupEventListeners(): void {
     this.eufyClient.on('station livestream start', this.onStationLivestreamStart.bind(this));
     this.eufyClient.on('station livestream stop', this.onStationLivestreamStop.bind(this));
   }
 
-  // Initialize the manager.
-  private initialize() {
-    if (this.stationStream) {
-      this.stationStream.audiostream.unpipe();
-      this.stationStream.audiostream.destroy();
-      this.stationStream.videostream.unpipe();
-      this.stationStream.videostream.destroy();
-    }
-    this.stationStream = null;
-    this.livestreamStartedAt = null;
-  }
-
-  // Get the local livestream.
+  /**
+   * Get an active livestream or start a new one
+   */
   public async getLocalLivestream(): Promise<StationStream> {
     this.log.debug('New instance requests livestream.');
-    if (this.stationStream) {
-      const runtime = (Date.now() - this.livestreamStartedAt!) / 1000;
-      this.log.debug('Using livestream that was started ' + runtime + ' seconds ago.');
-      return this.stationStream;
+    
+    if (this.hasUsableExistingStream()) {
+      const runtime = this.getStreamRuntime();
+      this.log.debug(`Using existing livestream (running for ${runtime.toFixed(1)} seconds)`);
+      return this.stationStream!;
     } else {
-      return await this.startAndGetLocalLiveStream();
+      return this.startAndGetLocalLiveStream();
     }
   }
 
-  // Start and get the local livestream.
+  /**
+   * Check if we have a usable existing stream
+   */
+  private hasUsableExistingStream(): boolean {
+    return !!this.stationStream && !!this.livestreamStartedAt;
+  }
+
+  /**
+   * Get runtime of current stream in seconds
+   */
+  private getStreamRuntime(): number {
+    return this.livestreamStartedAt ? (Date.now() - this.livestreamStartedAt) / 1000 : 0;
+  }
+
+  /**
+   * Start a new livestream and return it
+   */
   private async startAndGetLocalLiveStream(): Promise<StationStream> {
     return new Promise((resolve, reject) => {
-      this.log.debug('Start new station livestream...');
-      if (!this.livestreamIsStarting) { // prevent multiple stream starts from eufy station
+      this.log.debug('Starting new station livestream...');
+      
+      // Prevent multiple simultaneous start attempts
+      if (!this.livestreamIsStarting) {
         this.livestreamIsStarting = true;
-        this.eufyClient.startStationLivestream(this.serial_number);
+        this.eufyClient.startStationLivestream(this.serialNumber);
       } else {
-        this.log.debug('stream is already starting. waiting...');
+        this.log.debug('Stream is already starting, waiting for completion...');
       }
 
-      // Hard stop
-      const hardStop = setTimeout(
-        () => {
-          this.log.error('Livestream timeout: No livestream emitted within the expected timeframe.');
-          const problematicNodeVersions = ['18.19.1', '20.11.1', '21.6.2'];
-          this.log.warn(`If you are using Node.js version ${problematicNodeVersions.join(', ')} or newer, this might be related to RSA_PKCS1_PADDING support removal.`);
-          this.log.warn('Please try enabling "Embedded PKCS1 Support" in the plugin settings to resolve this issue.');
-          this.stopLocalLiveStream();
-          this.livestreamIsStarting = false;
-          reject('No livestream emitted... This may be due to Node.js compatibility issues. Try enabling Embedded PKCS1 Support in settings.');
-        },
-        15 * 1000 // After 15 seconds, Apple HomeKit may disconnect, invalidating the livestream setup.
-      );
+      // Set up timeout for stream start
+      const hardStop = setTimeout(() => {
+        this.handleStreamStartTimeout(reject);
+      }, this.CONNECTION_TIMEOUT_SECONDS * 1000);
 
-      this.once('livestream start', async () => {
-        if (this.stationStream !== null) {
-          this.log.debug('New livestream started.');
+      // Set up success handler
+      this.once('livestream start', () => {
+        if (this.stationStream) {
+          this.log.debug('New livestream started successfully');
           clearTimeout(hardStop);
           this.livestreamIsStarting = false;
           resolve(this.stationStream);
         } else {
-          reject('no started livestream found');
+          reject(new Error('No started livestream found'));
         }
       });
     });
   }
 
-  // Stop the local livestream.
+  /**
+   * Handle timeout when starting a stream
+   */
+  private handleStreamStartTimeout(reject: (reason: any) => void): void {
+    const errorMessage = 'Livestream timeout: No livestream emitted within the expected timeframe.';
+    this.log.error(errorMessage);
+    
+    // Check for compatibility issues with recent Node.js versions
+    const problematicNodeVersions = ['18.19.1', '20.11.1', '21.6.2'];
+    this.log.warn(`If you are using Node.js version ${problematicNodeVersions.join(', ')} or newer, this might be related to RSA_PKCS1_PADDING support removal.`);
+    this.log.warn('Please try enabling "Embedded PKCS1 Support" in the plugin settings to resolve this issue.');
+    
+    this.stopLocalLiveStream();
+    this.livestreamIsStarting = false;
+    reject(new Error('No livestream emitted... This may be due to Node.js compatibility issues. Try enabling Embedded PKCS1 Support in settings.'));
+  }
+
+  /**
+   * Stop the current livestream
+   */
   public stopLocalLiveStream(): void {
-    this.log.debug('Stopping station livestream.');
-    this.eufyClient.stopStationLivestream(this.serial_number);
-    this.initialize();
-  }
-
-  // Handle the station livestream stop event.
-  private onStationLivestreamStop(station: Station, device: Device) {
-    if (device.getSerial() === this.serial_number) {
-      this.log.debug(`${station.getName()} station livestream for ${device.getName()} has stopped.`);
-      this.initialize();
+    if (!this.stationStream) {
+      return;
     }
+    
+    this.log.debug('Stopping station livestream.');
+    this.eufyClient.stopStationLivestream(this.serialNumber);
+    this.cleanupStream();
   }
 
-  // Handle the station livestream start event.
-  private async onStationLivestreamStart(
+  /**
+   * Clean up stream resources
+   */
+  private cleanupStream(): void {
+    if (this.stationStream) {
+      // Close and destroy streams
+      this.stationStream.audiostream.unpipe();
+      this.stationStream.audiostream.destroy();
+      this.stationStream.videostream.unpipe();
+      this.stationStream.videostream.destroy();
+    }
+    
+    this.stationStream = null;
+    this.livestreamStartedAt = null;
+  }
+
+  /**
+   * Handle station livestream stop event
+   */
+  private onStationLivestreamStop(station: Station, device: Device): void {
+    if (device.getSerial() !== this.serialNumber) {
+      return;
+    }
+    
+    this.log.debug(`${station.getName()} station livestream for ${device.getName()} has stopped.`);
+    this.cleanupStream();
+  }
+
+  /**
+   * Handle station livestream start event
+   */
+  private onStationLivestreamStart(
     station: Station,
     device: Device,
     metadata: StreamMetadata,
     videostream: Readable,
     audiostream: Readable,
-  ) {
-    if (device.getSerial() === this.serial_number) {
-      if (this.stationStream) {
-        const diff = (Date.now() - this.stationStream.createdAt) / 1000;
-        if (diff < 5) {
-          this.log.warn('Second livestream was started from station. Ignore.');
-          return;
-        }
-      }
-      this.initialize(); // important to prevent unwanted behaviour when the eufy station emits the 'livestream start' event multiple times
-
-      this.log.debug(station.getName() + ' station livestream (P2P session) for ' + device.getName() + ' has started.');
-      this.livestreamStartedAt = Date.now();
-      const createdAt = Date.now();
-      this.stationStream = { station, device, metadata, videostream, audiostream, createdAt };
-      this.log.debug('Stream metadata: ', this.stationStream.metadata);
-
-      this.emit('livestream start');
+  ): void {
+    if (device.getSerial() !== this.serialNumber) {
+      return;
     }
+    
+    // Check for duplicate stream start events from station
+    if (this.stationStream) {
+      const diff = (Date.now() - this.stationStream.createdAt) / 1000;
+      if (diff < this.MIN_STREAM_REUSE_SECONDS) {
+        this.log.warn('Duplicate livestream start detected from station - ignoring.');
+        return;
+      }
+    }
+    
+    // Clean up any existing stream
+    this.cleanupStream();
+
+    // Set up new stream
+    this.log.debug(`${station.getName()} station livestream (P2P session) for ${device.getName()} has started.`);
+    this.livestreamStartedAt = Date.now();
+    this.stationStream = { 
+      station, 
+      device, 
+      metadata, 
+      videostream, 
+      audiostream, 
+      createdAt: Date.now() 
+    };
+    
+    this.log.debug('Stream metadata: ', this.stationStream.metadata);
+    this.emit('livestream start');
   }
 }
