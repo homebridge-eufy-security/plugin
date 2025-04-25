@@ -165,3 +165,7 @@ h5.card-title {
 .card:hover {
   transform: scale(1.05);
 }
+
+.btn {
+  margin: 0px 2px;
+}
