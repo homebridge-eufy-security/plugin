@@ -128,7 +128,7 @@ dist
 
 homebridge-ui/
 
-configui/plugin/version.ts
+src/plugin/version.ts
 src/version.ts
 
 TODO

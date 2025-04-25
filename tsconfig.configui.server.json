@@ -1,8 +1,8 @@
 {
   "compilerOptions": {
     "target": "ES2022",
-    "module": "commonjs",
-    "moduleResolution": "node",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
     "lib": [
       "es2022",
       "dom"
@@ -18,7 +18,8 @@
     "resolveJsonModule": true,
   },
   "include": [
-    "src/server.ts"
+    "src/server.ts",
+    "src/version.ts"
   ],
   "exclude": [
     "**/*.spec.ts"
