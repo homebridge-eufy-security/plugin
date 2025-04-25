@@ -17,7 +17,9 @@ class UiServer {
   private storagePath: string;
   private storedAccessories_file: string;
   private logZipFilePath: string;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private pushEvent: (event: string, data: any) => void;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private onRequest: (path: string, callback: (data?: any) => Promise<any>) => void;
   private ready: () => void;
 
@@ -36,6 +38,7 @@ class UiServer {
     acceptInvitations: true,
   } as EufySecurityConfig;
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   constructor(server: any) {
     // Copy over properties from the HomebridgePluginUiServer instance
     this.homebridgeStoragePath = server.homebridgeStoragePath;
