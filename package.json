@@ -4,7 +4,6 @@
   "version": "4.3.7-beta.0",
   "description": "Control Eufy Security from homebridge.",
   "license": "Apache-2.0",
-  "type": "module",
   "repository": {
     "type": "git",
     "url": "git://github.com/homebridge-eufy-security/plugin.git"
