@@ -1,5 +1,4 @@
 import { EufySecurity, EufySecurityConfig, libVersion, Device, Station, PropertyName, CommandName, DeviceType, UserType } from 'eufy-security-client';
-import { HomebridgePluginUiServer } from '@homebridge/plugin-ui-utils';
 import * as fs from 'fs';
 import { Logger as TsLogger, ILogObj } from 'tslog';
 import { createStream } from 'rotating-file-stream';
@@ -8,15 +7,19 @@ import { Accessory, L_Station, L_Device, LoginResult, LoginFailReason } from './
 import { LIB_VERSION } from './version.js';
 import path from 'path';
 
-class UiServer extends HomebridgePluginUiServer {
+class UiServer {
   public stations: L_Station[] = [];
 
   private eufyClient: EufySecurity | null = null;
   private log!: TsLogger<ILogObj>;
   private tsLog!: TsLogger<ILogObj>;
-  private storagePath: string = this.homebridgeStoragePath + '/eufysecurity';
-  private storedAccessories_file: string = this.storagePath + '/accessories.json';
-  private logZipFilePath: string = this.storagePath + '/logs.zip';
+  private homebridgeStoragePath: string;
+  private storagePath: string;
+  private storedAccessories_file: string;
+  private logZipFilePath: string;
+  private pushEvent: (event: string, data: any) => void;
+  private onRequest: (path: string, callback: (data?: any) => Promise<any>) => void;
+  private ready: () => void;
 
   private adminAccountUsed: boolean = false;
 
@@ -26,15 +29,26 @@ class UiServer extends HomebridgePluginUiServer {
     language: 'en',
     country: 'US',
     trustedDeviceName: 'My Phone',
-    persistentDir: this.storagePath,
+    persistentDir: '',
     p2pConnectionSetup: 0,
     pollingIntervalMinutes: 99,
     eventDurationSeconds: 10,
     acceptInvitations: true,
   } as EufySecurityConfig;
 
-  constructor() {
-    super();
+  constructor(server: any) {
+    // Copy over properties from the HomebridgePluginUiServer instance
+    this.homebridgeStoragePath = server.homebridgeStoragePath;
+    this.pushEvent = server.pushEvent.bind(server);
+    this.onRequest = server.onRequest.bind(server);
+    this.ready = server.ready.bind(server);
+
+    // Initialize paths now that we have homebridgeStoragePath
+    this.storagePath = this.homebridgeStoragePath + '/eufysecurity';
+    this.storedAccessories_file = this.storagePath + '/accessories.json';
+    this.logZipFilePath = this.storagePath + '/logs.zip';
+    this.config.persistentDir = this.storagePath;
+
     this.initLogger();
     this.initTransportStreams();
     this.initEventListeners();
@@ -446,7 +460,19 @@ class UiServer extends HomebridgePluginUiServer {
   }
 }
 
-// Start the instance of the server
-(() => {
-  return new UiServer();
+// Start the instance of the server with dynamic import
+(async () => {
+  try {
+    // Dynamically import the ESM module
+    const pluginUiUtils = await import('@homebridge/plugin-ui-utils');
+    const HomebridgePluginUiServer = pluginUiUtils.HomebridgePluginUiServer;
+
+    // Create an instance of HomebridgePluginUiServer
+    const server = new HomebridgePluginUiServer();
+
+    // Initialize our UiServer with the server instance
+    new UiServer(server);
+  } catch (error) {
+    console.error('Failed to initialize server:', error);
+  }
 })();
