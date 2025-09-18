@@ -49,7 +49,7 @@
     "ffmpeg-for-homebridge": "2.1.7",
     "fs-extra": "^11.3.0",
     "pick-port": "^2.1.0",
-    "rotating-file-stream": "^3.2.6",
+    "rotating-file-stream": "^3.2.7",
     "tslog": "^4.9.3",
     "zip-lib": "^1.1.2"
   },
