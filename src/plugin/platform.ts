@@ -46,6 +46,7 @@ import { readFileSync } from 'node:fs';
 
 import { init_log, log, tsLogger, ffmpegLogger, HAP } from './utils/utils';
 import { LIB_VERSION } from './version';
+import { hasNativePKCS1Support, shouldEnableEmbeddedPKCS1 } from './utils/pkcs1-support';
 
 export class EufySecurityPlatform implements DynamicPlatformPlugin {
   public eufyClient: EufySecurity = {} as EufySecurity;
@@ -306,6 +307,25 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
     log.debug('plugin data store:', this.eufyPath);
     log.debug('OS is', this.hostSystem);
     log.debug('Using bropats @homebridge-eufy-security/eufy-security-client library in version ', libVersion);
+    
+    // Detect PKCS1 support and configure accordingly
+    const nativePKCS1Support = hasNativePKCS1Support();
+    const shouldUseEmbedded = shouldEnableEmbeddedPKCS1(this.config.enableEmbeddedPKCS1Support);
+    
+    log.debug(`Node.js version: ${process.version}, OpenSSL version: ${process.versions.openssl}`);
+    log.debug(`Native PKCS1 support detected: ${nativePKCS1Support}`);
+    
+    if (nativePKCS1Support && this.config.enableEmbeddedPKCS1Support) {
+      log.warn('Native PKCS1 support is available in this Node.js version. Consider disabling "Embedded PKCS1 Support" for better performance.');
+    } else if (!nativePKCS1Support && !this.config.enableEmbeddedPKCS1Support) {
+      log.warn('Native PKCS1 support is not available in this Node.js version. Consider enabling "Embedded PKCS1 Support" to resolve livestream issues.');
+    }
+    
+    if (nativePKCS1Support) {
+      log.debug('Using native PKCS1 support (hardware accelerated)');
+    } else {
+      log.debug(shouldUseEmbedded ? 'Using embedded PKCS1 support (software-based, reduced performance)' : 'No PKCS1 support configured');
+    }
 
     // Log the final configuration object for debugging purposes
     log.debug('The config is:', this.config);

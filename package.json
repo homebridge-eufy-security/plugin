@@ -18,7 +18,7 @@
     "url": "https://github.com/homebridge-eufy-security/plugin/issues"
   },
   "engines": {
-    "node": "20.11.0 || ^22",
+    "node": "20.11.0 || ^22 || ^24",
     "homebridge": "^1.9.0 || ^2.0.0 || ^2.0.0-beta.27 || ^2.0.0-alpha.37"
   },
   "main": "dist/index.js",

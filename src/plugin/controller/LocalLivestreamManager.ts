@@ -2,6 +2,7 @@ import { EventEmitter, Readable } from 'stream';
 import { Station, Device, StreamMetadata, EufySecurity } from 'eufy-security-client';
 import { CameraAccessory } from '../accessories/CameraAccessory';
 import { ILogObj, Logger } from 'tslog';
+import { hasNativePKCS1Support, getProblematicNodeVersions } from '../utils/pkcs1-support';
 
 // Define a type for the station stream data.
 type StationStream = {
@@ -80,12 +81,33 @@ export class LocalLivestreamManager extends EventEmitter {
       const hardStop = setTimeout(
         () => {
           this.log.error('Livestream timeout: No livestream emitted within the expected timeframe.');
-          const problematicNodeVersions = ['18.19.1', '20.11.1', '21.6.2'];
-          this.log.warn(`If you are using Node.js version ${problematicNodeVersions.join(', ')} or newer, this might be related to RSA_PKCS1_PADDING support removal.`);
-          this.log.warn('Please try enabling "Embedded PKCS1 Support" in the plugin settings to resolve this issue.');
+          
+          const nativePKCS1Support = hasNativePKCS1Support();
+          const problematicNodeVersions = getProblematicNodeVersions();
+          const currentNodeVersion = process.version;
+          const currentOpenSSLVersion = process.versions.openssl;
+          
+          this.log.debug(`Current Node.js version: ${currentNodeVersion}, OpenSSL version: ${currentOpenSSLVersion}`);
+          this.log.debug(`Native PKCS1 support detected: ${nativePKCS1Support}`);
+          
+          if (!nativePKCS1Support) {
+            this.log.warn(`Node.js version ${currentNodeVersion} with problematic PKCS1 support detected (problematic versions: ${problematicNodeVersions.join(', ')}).`);
+            this.log.warn('This might be related to RSA_PKCS1_PADDING support removal in your Node.js version.');
+            this.log.warn('Please try enabling "Embedded PKCS1 Support" in the plugin settings to resolve this issue.');
+          } else {
+            this.log.warn(`Node.js version ${currentNodeVersion} with OpenSSL ${currentOpenSSLVersion} should support PKCS1 natively.`);
+            this.log.warn('If you have "Embedded PKCS1 Support" enabled, consider disabling it for better performance.');
+            this.log.warn('This livestream timeout might be due to network connectivity, device issues, or other factors.');
+          }
+          
           this.stopLocalLiveStream();
           this.livestreamIsStarting = false;
-          reject('No livestream emitted... This may be due to Node.js compatibility issues. Try enabling Embedded PKCS1 Support in settings.');
+          
+          const errorMessage = nativePKCS1Support 
+            ? 'No livestream emitted... This might be due to network or device issues rather than Node.js compatibility.'
+            : 'No livestream emitted... This may be due to Node.js compatibility issues. Try enabling Embedded PKCS1 Support in settings.';
+            
+          reject(errorMessage);
         },
         15 * 1000 // After 15 seconds, Apple HomeKit may disconnect, invalidating the livestream setup.
       );

@@ -8,7 +8,15 @@
     </div>
   </div>
 
-  <small><i>
-      Starting from Node.js versions 18.19.1, 20.11.1, and 21.6.2, the removal of RSA_PKCS1_PADDING support breaks Eufy Security's livestream/P2P functionality. We've developed a countermeasure based on software calculation, it will be 10x times less effective than hardware but it can make some cameras work on Node.js 22+. <a href="https://github.com/homebridge-eufy-security/plugin/wiki/Node.js-Compatibility-with-Eufy-Security-Plugin" target="_blank">More technical details here</a>.
-    </i></small>
+    <div class="mb-2" *ngIf="nodeVersion && opensslVersion">
+      <small class="text-muted">
+        <strong>Current Environment:</strong> Node.js {{nodeVersion}}, OpenSSL {{opensslVersion}}
+        <span *ngIf="nativePKCS1Support" class="badge bg-success ms-2">Native PKCS1 Support Available</span>
+        <span *ngIf="!nativePKCS1Support" class="badge bg-warning ms-2">Native PKCS1 Support Not Available</span>
+      </small>
+    </div>
+    
+    <small><i>
+        Starting from Node.js versions 18.19.1, 20.11.1, and 21.6.2, the removal of RSA_PKCS1_PADDING support broke Eufy Security's livestream/P2P functionality. However, <strong>Node.js 24.9.0+ with OpenSSL 3.5.2+</strong> has restored native PKCS1 support. If you're using one of these newer versions, you can disable this setting for better performance. For older affected versions, we've developed a countermeasure based on software calculation, though it will be 10x less effective than hardware but can make cameras work. <a href="https://github.com/homebridge-eufy-security/plugin/wiki/Node.js-Compatibility-with-Eufy-Security-Plugin" target="_blank">More technical details here</a>.
+      </i></small>
 </div>
