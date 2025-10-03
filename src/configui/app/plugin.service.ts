@@ -139,13 +139,13 @@ export class PluginService extends EventTarget {
    * 
    * @returns A Promise that resolves with version information.
    */
-  public async getNodeVersions(): Promise<{ node: string; openssl: string }> {
+  public async getNodeVersions(): Promise<{ node: string; openssl: string; nativePKCS1Support: boolean }> {
     try {
       const versions = await window.homebridge.request('/nodeVersions');
       return versions;
     } catch (error) {
       console.log('There was an error getting Node.js versions: ', error);
-      return { node: '', openssl: '' };
+      return { node: '', openssl: '', nativePKCS1Support: false };
     }
   }
 }

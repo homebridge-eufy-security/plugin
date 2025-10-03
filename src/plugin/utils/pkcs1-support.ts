@@ -21,6 +21,11 @@ export function hasNativePKCS1Support(): boolean {
   const nodeMinor = parseInt(nodeVersionMatch[2], 10);
   const nodePatch = parseInt(nodeVersionMatch[3], 10);
   
+  // Handle missing OpenSSL version (should not happen in normal Node.js, but defensive programming)
+  if (!openSSLVersion) {
+    return false;
+  }
+  
   // Parse OpenSSL version
   const opensslVersionMatch = openSSLVersion.match(/^(\d+)\.(\d+)\.(\d+)/);
   if (!opensslVersionMatch) {
