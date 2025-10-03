@@ -133,4 +133,19 @@ export class PluginService extends EventTarget {
       console.log('There was an error when reseting config: ', error);
     }
   }
+
+  /**
+   * Gets the current Node.js and OpenSSL versions from the server.
+   * 
+   * @returns A Promise that resolves with version information.
+   */
+  public async getNodeVersions(): Promise<{ node: string; openssl: string; nativePKCS1Support: boolean }> {
+    try {
+      const versions = await window.homebridge.request('/nodeVersions');
+      return versions;
+    } catch (error) {
+      console.log('There was an error getting Node.js versions: ', error);
+      return { node: '', openssl: '', nativePKCS1Support: false };
+    }
+  }
 }

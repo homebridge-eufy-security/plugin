@@ -108,6 +108,7 @@ class UiServer {
     this.onRequest('/storedAccessories', this.loadStoredAccessories.bind(this));
     this.onRequest('/reset', this.resetPlugin.bind(this));
     this.onRequest('/downloadLogs', this.downloadLogs.bind(this));
+    this.onRequest('/nodeVersions', this.getNodeVersions.bind(this));
   }
 
   /**
@@ -459,6 +460,31 @@ class UiServer {
       return true;
     } catch {
       return false;
+    }
+  }
+
+  /**
+   * Gets the current Node.js and OpenSSL versions.
+   * 
+   * @returns An object containing Node.js and OpenSSL versions.
+   */
+  async getNodeVersions(): Promise<{ node: string; openssl: string; nativePKCS1Support: boolean }> {
+    try {
+      // Import the PKCS1 support utility
+      const { hasNativePKCS1Support } = await import('./plugin/utils/pkcs1-support.js');
+      
+      return {
+        node: process.version,
+        openssl: process.versions.openssl || 'Unknown',
+        nativePKCS1Support: hasNativePKCS1Support()
+      };
+    } catch (error) {
+      this.log.error('Error getting Node.js versions:', error);
+      return {
+        node: 'Unknown',
+        openssl: 'Unknown',
+        nativePKCS1Support: false
+      };
     }
   }
 }

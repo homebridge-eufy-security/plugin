@@ -1,4 +1,5 @@
 import { Component, OnInit } from '@angular/core';
+import { CommonModule } from '@angular/common';
 import { PluginService } from '../../plugin.service';
 import { ConfigOptionsInterpreter } from '../config-options-interpreter';
 import { FormsModule } from '@angular/forms';
@@ -8,11 +9,14 @@ import { DEFAULT_CONFIG_VALUES } from '../../util/default-config-values';
   selector: 'app-embedded-pkcs1-support',
   templateUrl: './embedded-pkcs1-support.component.html',
   standalone: true,
-  imports: [FormsModule],
+  imports: [CommonModule, FormsModule],
 })
 export class EmbeddedPKCS1SupportComponent extends ConfigOptionsInterpreter implements OnInit {
 
   enableEmbeddedPKCS1Support = DEFAULT_CONFIG_VALUES.enableEmbeddedPKCS1Support;
+  nodeVersion: string = '';
+  opensslVersion: string = '';
+  nativePKCS1Support: boolean = false;
 
   constructor(pluginService: PluginService) {
     super(pluginService);
@@ -20,6 +24,19 @@ export class EmbeddedPKCS1SupportComponent extends ConfigOptionsInterpreter impl
   
   async ngOnInit(): Promise<void> {
     this.readValue();
+    await this.detectNodeVersions();
+  }
+  
+  private async detectNodeVersions(): Promise<void> {
+    try {
+      // Get Node.js and OpenSSL versions and PKCS1 support status from the server
+      const versionInfo = await this.pluginService.getNodeVersions();
+      this.nodeVersion = versionInfo.node || 'Unknown';
+      this.opensslVersion = versionInfo.openssl || 'Unknown';
+      this.nativePKCS1Support = versionInfo.nativePKCS1Support || false;
+    } catch (error) {
+      console.warn('Could not detect Node.js versions:', error);
+    }
   }
 
   /** Customize from here */
