@@ -1,6 +1,6 @@
 {
-  "displayName": "Homebridge Eufy Security",
-  "name": "homebridge-eufy-security",
+  "displayName": "Homebridge Eufy Security E340",
+  "name": "homebridge-eufy-security-e340",
   "version": "4.3.7",
   "description": "Control Eufy Security from homebridge.",
   "license": "Apache-2.0",

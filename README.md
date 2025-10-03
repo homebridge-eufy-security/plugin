@@ -5,6 +5,9 @@
 
 # homebridge-eufy-security
 
+⚠️ WARNING:
+> This is a fork of homebridge-eufy-security with fixes for the E340 doorbell (Node 24.x compatibility, PKCS1 padding). Use at your own risk.
+
 Homebridge plugin to control certain Eufy Security devices
 
 [![npm](https://img.shields.io/npm/v/homebridge-eufy-security?color=green)](https://www.npmjs.com/package/homebridge-eufy-security)
