@@ -54,7 +54,7 @@
     "zip-lib": "^1.1.2"
   },
   "devDependencies": {
-    "@angular-devkit/build-angular": "^19.2.9",
+    "@angular-devkit/build-angular": "^20.3.6",
     "@angular-devkit/core": "^19.2.9",
     "@angular-eslint/builder": "19.3.0",
     "@angular-eslint/eslint-plugin": "19.3.0",
