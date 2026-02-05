@@ -400,9 +400,14 @@ export class StationAccessory extends BaseAccessory {
         return;
       }
     } else { // reset alarm
-      this.device.resetStationAlarmSound()
-        .then(() => this.log.debug(`alarm manually reset`))
-        .catch(error => this.log.error(`alarm could not be reset: ${error}`));
+      const resetPromise = this.device.resetStationAlarmSound();
+      if (resetPromise) {
+        resetPromise
+          .then(() => this.log.debug(`alarm manually reset`))
+          .catch(error => this.log.error(`alarm could not be reset: ${error}`));
+      } else {
+        this.log.warn(`resetStationAlarmSound returned undefined`);
+      }
     }
   }
 
