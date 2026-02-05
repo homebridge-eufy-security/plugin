@@ -1,6 +1,8 @@
+import { IHomebridgePluginUi } from '@homebridge/plugin-ui-utils/ui.interface';
+
 declare global {
   interface Window {
-    homebridge: any; // eslint-disable-line @typescript-eslint/no-explicit-any
+    homebridge: IHomebridgePluginUi;
   }
 }
 
