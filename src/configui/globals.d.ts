@@ -1,6 +1,6 @@
 declare global {
   interface Window {
-    homebridge: any;
+    homebridge: any; // eslint-disable-line @typescript-eslint/no-explicit-any
   }
 }
 
