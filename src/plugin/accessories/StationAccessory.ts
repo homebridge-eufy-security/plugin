@@ -315,7 +315,7 @@ export class StationAccessory extends BaseAccessory {
       return this.convertEufytoHK(currentValue);
     } catch (error) {
       this.log.error(`${stateCharacteristic}: Wrong return value`, error);
-      return false;
+      return CHAR.SecuritySystemTargetState.DISARM;
     }
   }
 
