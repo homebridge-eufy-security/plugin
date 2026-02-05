@@ -4,7 +4,7 @@ import { Router, NavigationStart } from '@angular/router';
 
 import { Buffer } from 'buffer';
 import { NgIf } from '@angular/common';
-import { NgbProgressbar } from '@ng-bootstrap/ng-bootstrap';
+import { NgbProgressbar } from '@ng-bootstrap/ng-bootstrap/progressbar';
 
 @Component({
   selector: 'app-download-logs',

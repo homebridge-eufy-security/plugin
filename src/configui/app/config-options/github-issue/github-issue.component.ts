@@ -2,7 +2,7 @@ import { Component } from '@angular/core';
 import { RouterLink } from '@angular/router';
 
 import { NgIf } from '@angular/common';
-import { NgbCollapse } from '@ng-bootstrap/ng-bootstrap';
+import { NgbCollapse } from '@ng-bootstrap/ng-bootstrap/collapse';
 import { DownloadLogsComponent } from '../download-logs/download-logs.component';
 import { LucideAngularModule } from 'lucide-angular';
 import { ResetPluginComponent } from '../reset-plugin/reset-plugin.component';

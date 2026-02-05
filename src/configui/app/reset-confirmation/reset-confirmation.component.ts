@@ -1,7 +1,7 @@
 import { Component } from '@angular/core';
 import { Router } from '@angular/router';
 import { PluginService } from '../plugin.service';
-import { NgbAlert } from '@ng-bootstrap/ng-bootstrap';
+import { NgbAlert } from '@ng-bootstrap/ng-bootstrap/alert';
 import { NgIf } from '@angular/common';
 import { LucideAngularModule } from 'lucide-angular';
 

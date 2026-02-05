@@ -17,7 +17,15 @@ import { RtspStreamingComponent } from '../config-options/rtsp-streaming/rtsp-st
 import { EnableCameraComponent } from '../config-options/enable-camera/enable-camera.component';
 import { IgnoreAccessoryComponent } from '../config-options/ignore-accessory/ignore-accessory.component';
 import { NgIf, NgSwitch, NgSwitchCase, NgSwitchDefault } from '@angular/common';
-import { NgbAccordionModule } from '@ng-bootstrap/ng-bootstrap';
+import {
+  NgbAccordionButton,
+  NgbAccordionDirective,
+  NgbAccordionItem,
+  NgbAccordionHeader,
+  NgbAccordionToggle,
+  NgbAccordionBody,
+  NgbAccordionCollapse,
+} from '@ng-bootstrap/ng-bootstrap/accordion';
 import { GuardModesMappingComponent } from '../config-options/guard-modes-mapping/guard-modes-mapping.component';
 import { ManualAlarmModesComponent } from '../config-options/manual-alarm-modes/manual-alarm-modes.component';
 import { LucideAngularModule } from 'lucide-angular';
@@ -47,7 +55,13 @@ import { LucideAngularModule } from 'lucide-angular';
     AdvancedVideoconfigComponent,
     GuardModesMappingComponent,
     ManualAlarmModesComponent,
-    NgbAccordionModule,
+    NgbAccordionButton,
+    NgbAccordionDirective,
+    NgbAccordionItem,
+    NgbAccordionHeader,
+    NgbAccordionToggle,
+    NgbAccordionBody,
+    NgbAccordionCollapse,
   ],
 })
 export class AccessoryConfigOptionsComponent extends ConfigOptionsInterpreter implements OnInit {

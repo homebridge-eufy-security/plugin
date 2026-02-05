@@ -1,12 +1,13 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Component, OnInit, Input, NgZone, ChangeDetectionStrategy, ChangeDetectorRef, ViewEncapsulation } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { NgbModal, ModalDismissReasons } from '@ng-bootstrap/ng-bootstrap';
+import { NgbModal, ModalDismissReasons } from '@ng-bootstrap/ng-bootstrap/modal';
 import { PluginService } from '../plugin.service';
 import { L_Station } from '../util/types';
 import { DeviceImage } from '../util/deviceToImagesMap';
 import { NgIf, NgFor, AsyncPipe, NgSwitch, NgSwitchCase, NgTemplateOutlet } from '@angular/common';
-import { NgbAlertModule, NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
+import { NgbAlert } from '@ng-bootstrap/ng-bootstrap/alert';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap/tooltip';
 import { LucideAngularModule } from 'lucide-angular';
 import { BehaviorSubject, Observable } from 'rxjs';
 
@@ -22,8 +23,8 @@ import { BehaviorSubject, Observable } from 'rxjs';
     NgSwitchCase,
     NgTemplateOutlet,
     LucideAngularModule,
-    NgbAlertModule,
-    NgbTooltipModule,
+    NgbAlert,
+    NgbTooltip,
     AsyncPipe,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,

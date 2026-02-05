@@ -6,7 +6,8 @@ import { LoginService } from '../login.service';
 
 import { COUNTRIES } from '../countries';
 import { FormsModule } from '@angular/forms';
-import { NgbAlert, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { NgbAlert } from '@ng-bootstrap/ng-bootstrap/alert';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap/tooltip';
 import { NgIf, NgFor } from '@angular/common';
 import { LucideAngularModule } from 'lucide-angular';
 
