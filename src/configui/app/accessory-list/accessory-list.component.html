@@ -55,7 +55,7 @@
 
         <div class="row row-cols-md-4">
           <ng-container *ngFor="let station of stations; trackBy: trackByStationId">
-            <ng-container *ngIf="station && station.devices?.length !== 0">
+            <ng-container *ngIf="station && station.devices && station.devices.length !== 0">
 
               <ng-container *ngIf="station.devices[0].uniqueId === station.uniqueId; else separateDevices">
                 <div class="col-4 mb-4">
