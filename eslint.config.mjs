@@ -36,6 +36,8 @@ export default [{
             prefix: "app",
             style: "kebab-case",
         }],
+
+        "@angular-eslint/prefer-inject": "off",
     },
 }, ...compat.extends(
     "plugin:@angular-eslint/template/recommended",
@@ -45,5 +47,7 @@ export default [{
     files: ["**/*.html"],
 })), {
     files: ["**/*.html"],
-    rules: {},
+    rules: {
+        "@angular-eslint/template/prefer-control-flow": "off",
+    },
 }];
