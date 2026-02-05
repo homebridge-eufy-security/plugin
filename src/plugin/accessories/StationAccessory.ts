@@ -309,7 +309,8 @@ export class StationAccessory extends BaseAccessory {
     try {
       const currentValue = this.device.getPropertyValue(PropertyName.StationCurrentMode);
       if (currentValue === -1) {
-        throw new Error(`Something wrong with this device (currentValue: ${currentValue})`);
+        this.log.warn(`${stateCharacteristic}: Device state not initialized, returning safe default (DISARM)`);
+        return CHAR.SecuritySystemTargetState.DISARM;
       }
       this.log.debug(`GET StationCurrentMode: ${currentValue}`);
       return this.convertEufytoHK(currentValue);
