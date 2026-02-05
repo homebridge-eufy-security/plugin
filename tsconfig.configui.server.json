@@ -16,6 +16,7 @@
     "esModuleInterop": true,
     "noImplicitAny": false,
     "resolveJsonModule": true,
+    "skipLibCheck": true
   },
   "include": [
     "src/server.ts",
