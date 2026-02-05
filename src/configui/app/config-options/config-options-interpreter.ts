@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { PluginConfig } from '@homebridge/plugin-ui-utils/dist/ui.interface';
+import { PluginConfig } from '@homebridge/plugin-ui-utils/ui.interface';
 import { L_Device, L_Station } from '../util/types';
 import { PluginService } from '../plugin.service';
 import { DEFAULT_CONFIG_VALUES } from '../../app/util/default-config-values';

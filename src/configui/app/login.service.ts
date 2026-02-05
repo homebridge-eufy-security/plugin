@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Injectable } from '@angular/core';
-import { PluginConfig } from '@homebridge/plugin-ui-utils/dist/ui.interface';
+import { PluginConfig } from '@homebridge/plugin-ui-utils/ui.interface';
 
 import { PluginService } from './plugin.service';
 import { Credentials, LoginResult } from './util/types';

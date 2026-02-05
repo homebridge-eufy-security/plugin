@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 
-import { PluginConfig } from '@homebridge/plugin-ui-utils/dist/ui.interface';
+import { PluginConfig } from '@homebridge/plugin-ui-utils/ui.interface';
 
 import { L_Device, L_Station } from './util/types';
 
