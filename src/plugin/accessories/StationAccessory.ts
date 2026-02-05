@@ -315,7 +315,7 @@ export class StationAccessory extends BaseAccessory {
       this.log.debug(`GET StationCurrentMode: ${currentValue}`);
       return this.convertEufytoHK(currentValue);
     } catch (error) {
-      this.log.error(`${stateCharacteristic}: Wrong return value`, error);
+      this.log.error(`${stateCharacteristic}: Failed to retrieve security system state`, error);
       return CHAR.SecuritySystemTargetState.DISARM;
     }
   }
