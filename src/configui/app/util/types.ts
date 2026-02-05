@@ -1,4 +1,4 @@
-export type PropertyValue = number | boolean | string | object;
+export type PropertyValue = number | boolean | string | object | undefined;
 
 export interface PropertyValues {
     [index: string]: PropertyValue;
