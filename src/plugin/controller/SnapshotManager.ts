@@ -224,13 +224,13 @@ export class SnapshotManager extends EventEmitter {
     try {
       if (this.cameraConfig.snapshotHandlingMethod === 1) {
         // return a preferablly most recent snapshot every time
-        snapshot = (await this.getSnapshotFromStream()) as Buffer;
+        snapshot = await this.getSnapshotFromStream();
       } else if (this.cameraConfig.snapshotHandlingMethod === 2) {
         // balanced method
-        snapshot = (await this.getBalancedSnapshot()) as Buffer;
+        snapshot = await this.getBalancedSnapshot();
       } else if (this.cameraConfig.snapshotHandlingMethod === 3) {
         // fastest method with potentially old snapshots
-        snapshot = (await this.getSnapshotFromCache()) as Buffer;
+        snapshot = await this.getSnapshotFromCache();
       } else {
         return Promise.reject('No suitable handling method for snapshots defined');
       }
