@@ -8,6 +8,7 @@ const App = {
   state: {
     stations: [],
     initialized: false,
+    nodeVersionWarning: null, // { nodeVersion, affected, acknowledged }
   },
 
   /** Root container element */
@@ -50,6 +51,8 @@ const App = {
       const stored = await Api.loadStoredAccessories();
       if (stored && stored.length > 0) {
         this.state.stations = stored;
+        // Check Node.js version for returning users (skipping login)
+        await this.checkNodeVersion();
         if (!window.location.hash || window.location.hash === '#/') {
           this.navigate('dashboard');
         } else {
@@ -141,6 +144,43 @@ const App = {
         </p>
       </div>
     `;
+  },
+
+  /**
+   * Check if a Node.js version string is affected by the RSA_PKCS1_PADDING removal.
+   * Affected: 18.19.1+, 20.11.1+, 21.6.2+, 22.x, 23.x, and 24.x < 24.5.0.
+   * Safe: <= 18.19.0, <= 20.11.0, <= 21.6.1, and >= 24.5.0.
+   * @param {string} versionStr - e.g. 'v20.18.1'
+   * @returns {boolean}
+   */
+  isNodeVersionAffected(versionStr) {
+    const parts = versionStr.replace('v', '').split('.').map(Number);
+    const [major, minor, patch] = parts;
+
+    if (major === 18 && (minor > 19 || (minor === 19 && patch >= 1))) return true;
+    if (major === 20 && (minor > 11 || (minor === 11 && patch >= 1))) return true;
+    if (major === 21 && (minor > 6 || (minor === 6 && patch >= 2))) return true;
+    if (major === 22 || major === 23) return true;
+    if (major === 24 && (minor < 5)) return true;
+
+    return false;
+  },
+
+  /**
+   * Fetch the Node.js version from the server and update state.
+   */
+  async checkNodeVersion() {
+    try {
+      const info = await Api.getSystemInfo();
+      const affected = this.isNodeVersionAffected(info.nodeVersion);
+      this.state.nodeVersionWarning = {
+        nodeVersion: info.nodeVersion,
+        affected,
+        acknowledged: false,
+      };
+    } catch (e) {
+      // Silently ignore — non-critical check
+    }
   },
 };
 

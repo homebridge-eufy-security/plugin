@@ -370,6 +370,48 @@
   border-radius: var(--eufy-border-radius);
 }
 
+/* ===== Node.js Version Warning Banner ===== */
+.node-version-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px 16px;
+  margin-bottom: 16px;
+  background: #fff3cd;
+  border: 1px solid #ffc107;
+  border-radius: var(--eufy-border-radius);
+  font-size: 0.85rem;
+  line-height: 1.5;
+}
+
+.node-version-banner__icon {
+  font-size: 1.3rem;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.node-version-banner__content > strong {
+  display: block;
+  margin-bottom: 4px;
+  color: #664d03;
+}
+
+.node-version-banner__text {
+  color: #664d03;
+}
+
+.node-version-banner__text code {
+  background: rgba(0, 0, 0, 0.08);
+  padding: 1px 4px;
+  border-radius: 3px;
+  font-size: 0.8rem;
+}
+
+.node-version-banner__text a {
+  color: #664d03;
+  font-weight: 500;
+}
+
 /* ===== Number Input ===== */
 .number-input-group {
   display: flex;
@@ -488,4 +530,26 @@ body.dark-mode .welcome-banner__text {
 
 body.dark-mode .discovery-screen__subtitle {
   color: var(--eufy-muted);
+}
+
+body.dark-mode .node-version-banner {
+  background: rgba(255, 193, 7, 0.12);
+  border-color: rgba(255, 193, 7, 0.3);
+}
+
+body.dark-mode .node-version-banner__content strong {
+  color: #ffda6a;
+}
+
+body.dark-mode .node-version-banner__text {
+  color: #ffe69c;
+}
+
+body.dark-mode .node-version-banner__text code {
+  background: rgba(255, 255, 255, 0.1);
+  color: #ffe69c;
+}
+
+body.dark-mode .node-version-banner__text a {
+  color: #ffda6a;
 }

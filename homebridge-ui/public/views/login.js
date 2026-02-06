@@ -75,18 +75,43 @@ const LoginView = {
           </label>
         </div>
       </div>
+      <div id="node-version-warning" class="d-none"></div>
       <button class="btn btn-primary w-100 mt-2" id="btn-start" disabled>Continue to Login</button>
     `;
 
     const ack1 = body.querySelector('#ack-guest-admin');
     const ack2 = body.querySelector('#ack-stop-plugin');
     const btnStart = body.querySelector('#btn-start');
+    const nodeWarningContainer = body.querySelector('#node-version-warning');
+    let ack3 = null; // Node version checkbox, only if affected
 
     const updateBtn = () => {
-      btnStart.disabled = !(ack1.checked && ack2.checked);
+      const allChecked = ack1.checked && ack2.checked && (!ack3 || ack3.checked);
+      btnStart.disabled = !allChecked;
     };
     ack1.addEventListener('change', updateBtn);
     ack2.addEventListener('change', updateBtn);
+
+    // Check Node.js version and conditionally show warning
+    App.checkNodeVersion().then(() => {
+      const warning = App.state.nodeVersionWarning;
+      if (warning && warning.affected) {
+        nodeWarningContainer.className = 'alert alert-danger mt-2';
+        nodeWarningContainer.setAttribute('role', 'alert');
+        nodeWarningContainer.style.fontSize = '0.85rem';
+        nodeWarningContainer.innerHTML = `
+          <div class="form-check">
+            <input class="form-check-input" type="checkbox" id="ack-node-version">
+            <label class="form-check-label" for="ack-node-version">
+              <strong>Streaming unavailable:</strong> Node.js <strong>${warning.nodeVersion}</strong> has removed <code>RSA_PKCS1_PADDING</code> support, which breaks streaming. The rest of the plugin works fine. Use <strong>v20.11.0</strong> or earlier, or upgrade to <strong>v24.5.0+</strong>. <a href="https://github.com/homebridge-eufy-security/plugin/wiki/Node.js-Compatibility-with-Eufy-Security-Plugin" target="_blank">Learn more</a>
+            </label>
+          </div>
+        `;
+        ack3 = nodeWarningContainer.querySelector('#ack-node-version');
+        ack3.addEventListener('change', updateBtn);
+        updateBtn();
+      }
+    });
 
     btnStart.addEventListener('click', () => {
       this._currentStep = this.STEP.CREDENTIALS;
@@ -392,6 +417,9 @@ const LoginView = {
       if (msg) statusEl.textContent = msg.text;
     }, 1000);
 
+    // Start Node.js version check early (runs in parallel with discovery)
+    App.checkNodeVersion();
+
     // Listen for the batch-processed accessories
     Api.onAccessoriesReady((stations) => {
       clearInterval(interval);
@@ -404,7 +432,7 @@ const LoginView = {
         this._credentials = null;
       }
 
-      // Store in app state and navigate to dashboard
+      // Go to dashboard
       setTimeout(() => {
         App.state.stations = stations;
         App.navigate('dashboard');
