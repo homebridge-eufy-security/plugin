@@ -612,13 +612,17 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
    * All discovered devices are processed since they are already verified by bropat/eufy-security-client.
    */
   private async processPendingDevices(): Promise<void> {
-    log.debug(`Processing ${this.pendingStations.length} stations and ${this.pendingDevices.length} devices`);
+    log.debug(`[PROCESSING START] Processing ${this.pendingStations.length} stations and ${this.pendingDevices.length} devices`);
 
     // Build set of stations that have at least one device
     const stationsWithDevices = new Set<string>();
 
     // Create all queued devices (they are already verified by bropat/eufy-security-client)
-    for (const device of this.pendingDevices) {
+    log.debug(`[DEVICES PROCESSING] Starting to process ${this.pendingDevices.length} devices`);
+    
+    for (let i = 0; i < this.pendingDevices.length; i++) {
+      const device = this.pendingDevices[i];
+      
       stationsWithDevices.add(device.getStationSerial());
 
       try {
@@ -632,17 +636,24 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
           eufyDevice: device,
         };
 
+        log.debug(`[DEVICE ${i + 1}/${this.pendingDevices.length}] Processing: ${deviceContainer.deviceIdentifier.displayName}`);
         await this.delay(DEVICE_INIT_DELAY);
-        log.debug(`${deviceContainer.deviceIdentifier.displayName} pre-caching complete`);
-
         await this.addOrUpdateAccessory(deviceContainer, false);
+        log.debug(`[DEVICE ${i + 1}/${this.pendingDevices.length}] Completed: ${deviceContainer.deviceIdentifier.displayName}`);
       } catch (error) {
-        log.error(`Error processing device "${device.getName()}": ${error}`);
+        log.error(`[DEVICE ERROR ${i + 1}/${this.pendingDevices.length}] Error processing device "${device.getName()}": ${error}`);
       }
     }
+    
+    log.debug(`[DEVICES COMPLETE] All ${this.pendingDevices.length} devices processed`);
 
     // Create queued stations that should be created
-    for (const station of this.pendingStations) {
+    log.debug(`[STATIONS PROCESSING] Starting to process ${this.pendingStations.length} stations`);
+    let stationsCreated = 0;
+    let stationsSkipped = 0;
+    
+    for (let i = 0; i < this.pendingStations.length; i++) {
+      const station = this.pendingStations[i];
       const stationType = station.getDeviceType();
       const stationSerial = station.getSerial();
 
@@ -652,7 +663,8 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
         stationsWithDevices.has(stationSerial);
 
       if (!shouldCreate) {
-        log.warn(`Station "${station.getName()}" has no devices and will be skipped`);
+        stationsSkipped++;
+        log.debug(`[STATION SKIP ${i + 1}/${this.pendingStations.length}] "${station.getName()}" has no devices and will be skipped`);
         continue;
       }
 
@@ -666,20 +678,23 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
           eufyDevice: station,
         };
 
+        log.debug(`[STATION ${stationsCreated + 1}/${this.pendingStations.length - stationsSkipped}] Processing: ${deviceContainer.deviceIdentifier.displayName}`);
         await this.delay(STATION_INIT_DELAY);
-        log.debug(`${deviceContainer.deviceIdentifier.displayName} pre-caching complete`);
-
         await this.addOrUpdateAccessory(deviceContainer, true);
+        stationsCreated++;
+        log.debug(`[STATION ${stationsCreated}/${this.pendingStations.length - stationsSkipped}] Completed: ${deviceContainer.deviceIdentifier.displayName}`);
       } catch (error) {
-        log.error(`Error processing station "${station.getName()}": ${error}`);
+        log.error(`[STATION ERROR ${i + 1}/${this.pendingStations.length}] Error processing station "${station.getName()}": ${error}`);
       }
     }
+    
+    log.debug(`[STATIONS COMPLETE] ${stationsCreated} stations created, ${stationsSkipped} skipped`);
 
     // Clear pending queues
     this.pendingStations = [];
     this.pendingDevices = [];
 
-    log.debug('Finished processing pending stations and devices');
+    log.info(`[PROCESSING COMPLETE] All pending devices and stations processed`);
   }
 
   private async pluginShutdown() {
