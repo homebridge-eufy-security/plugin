@@ -29,6 +29,27 @@ body:
     validations:
       required: true
 
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      description: Which area is affected?
+      options:
+        - Installation / Setup
+        - Login / Authentication
+        - Livestream / Streaming
+        - Events / Notifications
+        - Snapshots
+        - Recording
+        - Talkback
+        - Guard Modes / Security System
+        - Device Discovery
+        - HomeKit Integration
+        - Plugin UI
+        - Other
+    validations:
+      required: true
+
   - type: textarea
     id: description
     attributes:
