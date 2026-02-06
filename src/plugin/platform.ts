@@ -7,7 +7,7 @@ import {
   APIEvent,
 } from 'homebridge';
 
-import { DEVICE_INIT_DELAY, PLATFORM_NAME, PLUGIN_NAME, STATION_INIT_DELAY } from './settings';
+import { PLATFORM_NAME, PLUGIN_NAME } from './settings';
 
 import { DEFAULT_CONFIG_VALUES, EufySecurityPlatformConfig } from './config';
 
@@ -637,7 +637,6 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
         };
 
         log.debug(`[DEVICE ${i + 1}/${this.pendingDevices.length}] Processing: ${deviceContainer.deviceIdentifier.displayName}`);
-        await this.delay(DEVICE_INIT_DELAY);
         await this.addOrUpdateAccessory(deviceContainer, false);
         log.debug(`[DEVICE ${i + 1}/${this.pendingDevices.length}] Completed: ${deviceContainer.deviceIdentifier.displayName}`);
       } catch (error) {
@@ -679,7 +678,6 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
         };
 
         log.debug(`[STATION ${stationsCreated + 1}/${this.pendingStations.length - stationsSkipped}] Processing: ${deviceContainer.deviceIdentifier.displayName}`);
-        await this.delay(STATION_INIT_DELAY);
         await this.addOrUpdateAccessory(deviceContainer, true);
         stationsCreated++;
         log.debug(`[STATION ${stationsCreated}/${this.pendingStations.length - stationsSkipped}] Completed: ${deviceContainer.deviceIdentifier.displayName}`);
