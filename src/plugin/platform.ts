@@ -60,6 +60,9 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
   private activeAccessoryIds: string[] = [];
   private cleanCachedAccessoriesTimeout?: NodeJS.Timeout;
 
+  private pendingStations: Station[] = [];
+  private pendingDevices: Device[] = [];
+
   private _hostSystem: string = '';
 
   constructor(
