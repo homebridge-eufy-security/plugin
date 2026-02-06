@@ -601,19 +601,10 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
         return;
       }
 
-      const deviceContainer: DeviceContainer = {
-        deviceIdentifier: {
-          uniqueId: device.getSerial(),
-          displayName: 'DEVICE ' + device.getName().replace(/[^a-zA-Z0-9]/g, ''),
-          type: deviceType,
-        } as DeviceIdentifier,
-        eufyDevice: device,
-      };
+      // Store device for batch processing later
+      this.pendingDevices.push(device);
+      log.debug(`${device.getName()}: Device queued for processing`);
 
-      await this.delay(DEVICE_INIT_DELAY);
-      log.debug(`${deviceContainer.deviceIdentifier.displayName} pre-caching complete`);
-
-      this.addOrUpdateAccessory(deviceContainer, false);
     } catch (error) {
       log.error(`Error in deviceAdded: ${error}`);
     }
