@@ -1,0 +1,460 @@
+import { EufySecurity, libVersion, Device, PropertyName, CommandName, DeviceType, UserType } from 'eufy-security-client';
+import * as fs from 'fs';
+import { Logger as TsLogger } from 'tslog';
+import { createStream } from 'rotating-file-stream';
+import { Zip } from 'zip-lib';
+import { HomebridgePluginUiServer } from '@homebridge/plugin-ui-utils';
+import path from 'path';
+import { createRequire } from 'module';
+
+const require = createRequire(import.meta.url);
+const { version: LIB_VERSION } = require('../package.json');
+
+const LoginFailReason = Object.freeze({
+  UNKNOWN: 0,
+  CAPTCHA: 1,
+  TFA: 2,
+  TIMEOUT: 3,
+});
+
+class UiServer extends HomebridgePluginUiServer {
+
+  stations = [];
+  eufyClient = null;
+  log;
+  tsLog;
+  storagePath;
+  storedAccessories_file;
+  logZipFilePath;
+
+  adminAccountUsed = false;
+
+  // Batch processing for stations and devices
+  pendingStations = [];
+  pendingDevices = [];
+  processingTimeout;
+
+  config = {
+    username: '',
+    password: '',
+    language: 'en',
+    country: 'US',
+    trustedDeviceName: 'My Phone',
+    persistentDir: '',
+    p2pConnectionSetup: 0,
+    pollingIntervalMinutes: 99,
+    eventDurationSeconds: 10,
+    acceptInvitations: true,
+  };
+
+  constructor() {
+    super();
+
+    this.storagePath = this.homebridgeStoragePath + '/eufysecurity';
+    this.storedAccessories_file = this.storagePath + '/accessories.json';
+    this.logZipFilePath = this.storagePath + '/logs.zip';
+    this.config.persistentDir = this.storagePath;
+
+    this.initLogger();
+    this.initTransportStreams();
+    this.initEventListeners();
+    this.ready();
+  }
+
+  initLogger() {
+    this.log = new TsLogger({
+      name: `[${LIB_VERSION}]`,
+      prettyLogTemplate: '{{name}}\t{{logLevelName}}\t',
+      prettyErrorTemplate: '\n{{errorName}} {{errorMessage}}\nerror stack:\n{{errorStack}}',
+      prettyErrorStackTemplate: '  • {{fileName}}\t{{method}}\n\t{{fileNameWithLine}}',
+      prettyErrorParentNamesSeparator: ':',
+      prettyErrorLoggerNameDelimiter: '\t',
+      stylePrettyLogs: true,
+      minLevel: 2,
+      prettyLogTimeZone: 'local',
+      prettyLogStyles: {
+        logLevelName: {
+          '*': ['bold', 'black', 'bgWhiteBright', 'dim'],
+          SILLY: ['bold', 'white'],
+          TRACE: ['bold', 'whiteBright'],
+          DEBUG: ['bold', 'green'],
+          INFO: ['bold', 'blue'],
+          WARN: ['bold', 'yellow'],
+          ERROR: ['bold', 'red'],
+          FATAL: ['bold', 'redBright'],
+        },
+        dateIsoStr: 'gray',
+        filePathWithLine: 'white',
+        name: 'green',
+        nameWithDelimiterPrefix: ['white', 'bold'],
+        nameWithDelimiterSuffix: ['white', 'bold'],
+        errorName: ['bold', 'bgRedBright', 'whiteBright'],
+        fileName: ['yellow'],
+      },
+    });
+    this.tsLog = new TsLogger({ type: 'hidden', minLevel: 2 });
+  }
+
+  initTransportStreams() {
+    if (!fs.existsSync(this.storagePath)) {
+      fs.mkdirSync(this.storagePath);
+    }
+    const pluginLogStream = createStream('configui-server.log', { path: this.storagePath, interval: '1d', rotate: 3, maxSize: '200M' });
+    const pluginLogLibStream = createStream('configui-lib.log', { path: this.storagePath, interval: '1d', rotate: 3, maxSize: '200M' });
+    this.log.attachTransport((logObj) => pluginLogStream.write(JSON.stringify(logObj) + '\n'));
+    this.tsLog.attachTransport((logObj) => pluginLogLibStream.write(JSON.stringify(logObj) + '\n'));
+    this.log.debug('Using bropats eufy-security-client library in version ' + libVersion);
+  }
+
+  initEventListeners() {
+    this.onRequest('/login', this.login.bind(this));
+    this.onRequest('/storedAccessories', this.loadStoredAccessories.bind(this));
+    this.onRequest('/reset', this.resetPlugin.bind(this));
+    this.onRequest('/downloadLogs', this.downloadLogs.bind(this));
+  }
+
+  async deleteFileIfExists(filePath) {
+    try {
+      if (fs.existsSync(filePath)) {
+        fs.unlinkSync(filePath);
+      }
+    } catch (error) {
+      return Promise.reject(error);
+    }
+  }
+
+  async resetPersistentData() {
+    return this.deleteFileIfExists(this.storagePath + '/persistent.json');
+  }
+
+  async resetAccessoryData() {
+    return this.deleteFileIfExists(this.storedAccessories_file);
+  }
+
+  async login(options) {
+    try {
+      if (options && options.username && options.password) {
+        this.log.info('deleting persistent.json and accessories due to new login');
+        this.resetAccessoryData();
+        await this.resetPersistentData();
+      }
+    } catch (error) {
+      this.log.error('Could not delete persistent.json due to error: ' + error);
+    }
+
+    if (!this.eufyClient && options && options.username && options.password && options.country) {
+      this.stations = [];
+      this.pendingStations = [];
+      this.pendingDevices = [];
+      this.log.debug('init eufyClient');
+      this.config.username = options.username;
+      this.config.password = options.password;
+      this.config.country = options.country;
+      this.config.trustedDeviceName = options.deviceName;
+      try {
+        this.eufyClient = await EufySecurity.initialize(this.config, this.tsLog);
+        this.eufyClient?.on('station added', this.addStation.bind(this));
+        this.eufyClient?.on('device added', this.addDevice.bind(this));
+        // Wait for 45 seconds to gather all stations and devices, then process them
+        this.processingTimeout = setTimeout(() => {
+          this.processPendingAccessories().catch(error => this.log.error('Error processing pending accessories:', error));
+        }, 45 * 1000);
+        // Close connection after 50 seconds to allow processing time
+        setTimeout(() => {
+          this.eufyClient?.removeAllListeners();
+          this.eufyClient?.close();
+        }, 50 * 1000);
+      } catch (error) {
+        this.log.error(error);
+      }
+    }
+
+    return new Promise((resolve, reject) => {
+      setTimeout(() => {
+        resolve({ success: false, failReason: LoginFailReason.TIMEOUT });
+      }, 25 * 1000);
+
+      if (options && options.username && options.password && options.country) {
+        this.log.debug('login with credentials');
+        try {
+          this.loginHandlers(resolve);
+          this.eufyClient?.connect()
+            .then(() => this.log.debug('connected?: ' + this.eufyClient?.isConnected()))
+            .catch((error) => this.log.error(error));
+        } catch (error) {
+          this.log.error(error);
+          resolve({ success: false, failReason: LoginFailReason.UNKNOWN, data: { error } });
+        }
+      } else if (options && options.verifyCode) {
+        try {
+          this.loginHandlers(resolve);
+          this.eufyClient?.connect({ verifyCode: options.verifyCode, force: false });
+        } catch (error) {
+          resolve({ success: false, failReason: LoginFailReason.UNKNOWN, data: { error } });
+        }
+      } else if (options && options.captcha) {
+        try {
+          this.loginHandlers(resolve);
+          this.eufyClient?.connect({ captcha: { captchaCode: options.captcha.captchaCode, captchaId: options.captcha.captchaId }, force: false });
+        } catch (error) {
+          resolve({ success: false, failReason: LoginFailReason.UNKNOWN, data: { error } });
+        }
+      } else {
+        reject('unsupported login method');
+      }
+    });
+  }
+
+  loginHandlers(resolveCallback) {
+    this.eufyClient?.once('tfa request', () => resolveCallback({ success: false, failReason: LoginFailReason.TFA }));
+    this.eufyClient?.once('captcha request', (id, captcha) => resolveCallback({ success: false, failReason: LoginFailReason.CAPTCHA, data: { id, captcha } }));
+    this.eufyClient?.once('connect', () => resolveCallback({ success: true }));
+  }
+
+  async loadStoredAccessories() {
+    try {
+      if (!fs.existsSync(this.storedAccessories_file)) {
+        this.log.debug('Stored accessories file does not exist.');
+        return [];
+      }
+
+      const storedData = await fs.promises.readFile(this.storedAccessories_file, { encoding: 'utf-8' });
+      const { version: storedVersion, stations: storedAccessories } = JSON.parse(storedData);
+
+      if (storedVersion !== LIB_VERSION) {
+        this.pushEvent('versionUnmatched', { currentVersion: LIB_VERSION, storedVersion });
+        this.log.warn(`Stored version (${storedVersion}) does not match current version (${LIB_VERSION})`);
+      }
+
+      return storedAccessories;
+    } catch (error) {
+      this.log.error('Could not get stored accessories. Most likely no stored accessories yet: ' + error);
+      return [];
+    }
+  }
+
+  async delay(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+  }
+
+  async addStation(station) {
+    // Check if creds are guest admin
+    const rawStation = station.getRawStation();
+    if (rawStation.member.member_type !== UserType.ADMIN) {
+      this.adminAccountUsed = true;
+      this.eufyClient?.close();
+      this.pushEvent('AdminAccountUsed', true);
+      this.resetPlugin();
+      this.log.error(`
+      #########################
+      ######### ERROR #########
+      #########################
+      You're not using a guest admin account with this plugin! You must use a guest admin account!
+      Please look here for more details: 
+      https://github.com/homebridge-eufy-security/plugin/wiki/Create-a-dedicated-admin-account-for-Homebridge-Eufy-Security-Plugin
+      #########################
+      `);
+      return;
+    }
+
+    this.pendingStations.push(station);
+    this.log.debug(`${station.getName()}: Station queued for processing`);
+  }
+
+  async addDevice(device) {
+    if (this.adminAccountUsed) {
+      this.pushEvent('AdminAccountUsed', true);
+      return;
+    }
+
+    const deviceType = device.getDeviceType();
+    if (Device.isKeyPad(deviceType)) {
+      this.log.warn(`${device.getName()}: The keypad is ignored as it serves no purpose in this plugin. You can ignore this message.`);
+      return;
+    }
+
+    this.pendingDevices.push(device);
+    this.log.debug(`${device.getName()}: Device queued for processing`);
+  }
+
+  async processPendingAccessories() {
+    this.log.debug(`Processing ${this.pendingStations.length} stations and ${this.pendingDevices.length} devices`);
+
+    // Build set of stations that have at least one device
+    const stationsWithDevices = new Set();
+    for (const device of this.pendingDevices) {
+      stationsWithDevices.add(device.getStationSerial());
+    }
+
+    // Process queued stations
+    for (const station of this.pendingStations) {
+      const stationType = station.getDeviceType();
+      const stationSerial = station.getSerial();
+
+      const s = {
+        uniqueId: stationSerial,
+        displayName: station.getName(),
+        type: stationType,
+        typename: DeviceType[stationType],
+        disabled: false,
+        devices: [],
+      };
+      s.ignored = (this.config['ignoreStations'] ?? []).includes(s.uniqueId);
+
+      // Standalone Lock or Doorbell doesn't have Security Control
+      if (Device.isLock(s.type) || Device.isDoorbell(s.type)) {
+        s.disabled = true;
+        s.ignored = true;
+      }
+
+      // Check if this station should be marked as unsupported
+      const shouldCreate =
+        stationType === DeviceType.STATION ||
+        stationsWithDevices.has(stationSerial);
+
+      if (!shouldCreate) {
+        s.unsupported = true;
+        this.log.warn(`Station "${station.getName()}" has no devices and will be marked as unsupported`);
+      }
+
+      this.stations.push(s);
+    }
+
+    // Process queued devices and attach them to stations
+    for (const device of this.pendingDevices) {
+      const d = {
+        uniqueId: device.getSerial(),
+        displayName: device.getName(),
+        type: device.getDeviceType(),
+        typename: DeviceType[device.getDeviceType()],
+        standalone: device.getSerial() === device.getStationSerial(),
+        hasBattery: device.hasBattery(),
+        isCamera: device.isCamera(),
+        isDoorbell: device.isDoorbell(),
+        isKeypad: device.isKeyPad(),
+        supportsRTSP: device.hasPropertyValue(PropertyName.DeviceRTSPStream),
+        supportsTalkback: device.hasCommand(CommandName.DeviceStartTalkback),
+        DeviceEnabled: device.hasProperty(PropertyName.DeviceEnabled),
+        DeviceMotionDetection: device.hasProperty(PropertyName.DeviceMotionDetection),
+        DeviceLight: device.hasProperty(PropertyName.DeviceLight),
+        DeviceChimeIndoor: device.hasProperty(PropertyName.DeviceChimeIndoor),
+        disabled: false,
+        properties: device.getProperties(),
+      };
+
+      if (device.hasProperty(PropertyName.DeviceChargingStatus)) {
+        d.chargingStatus = device.getPropertyValue(PropertyName.DeviceChargingStatus);
+      }
+
+      try {
+        delete d.properties.picture;
+      } catch (error) {
+        this.log.error(error);
+      }
+
+      d.ignored = (this.config['ignoreDevices'] ?? []).includes(d.uniqueId);
+
+      const stationUniqueId = device.getStationSerial();
+      const stationIndex = this.stations.findIndex(station => station.uniqueId === stationUniqueId);
+
+      if (stationIndex !== -1) {
+        if (!this.stations[stationIndex].devices) {
+          this.stations[stationIndex].devices = [];
+        }
+        this.stations[stationIndex].devices.push(d);
+      } else {
+        this.log.error('Station not found for device:', d.displayName);
+      }
+    }
+
+    // Clear pending queues
+    this.pendingStations = [];
+    this.pendingDevices = [];
+
+    // Store and send the final list to the UI
+    this.storeAccessories();
+    this.pushEvent('addAccessory', this.stations);
+  }
+
+  storeAccessories() {
+    const dataToStore = { version: LIB_VERSION, stations: this.stations };
+    fs.writeFileSync(this.storedAccessories_file, JSON.stringify(dataToStore));
+  }
+
+  async resetPlugin() {
+    try {
+      fs.rmSync(this.storagePath, { recursive: true, force: true });
+      return { result: 1 };
+    } catch (error) {
+      this.log.error('Could not reset plugin: ' + error);
+      return { result: 0 };
+    }
+  }
+
+  async getLogs() {
+    const files = await fs.promises.readdir(this.storagePath);
+
+    const logFiles = files.filter(file => {
+      return file.endsWith('.log') || file.endsWith('.log.0');
+    });
+
+    const nonEmptyLogFiles = await Promise.all(logFiles.map(async file => {
+      const filePath = path.join(this.storagePath, file);
+      const stats = await fs.promises.stat(filePath);
+      if (stats.size > 0) {
+        return file;
+      }
+      return null;
+    }));
+
+    return nonEmptyLogFiles.filter(file => file !== null);
+  }
+
+  async downloadLogs() {
+    this.pushEvent('downloadLogsProgress', { progress: 10, status: 'Gets non-empty log files' });
+    const finalLogFiles = await this.getLogs();
+
+    this.pushEvent('downloadLogsProgress', { progress: 30, status: 'Add Log Files to Zip' });
+    const zip = new Zip();
+    let numberOfFiles = 0;
+    finalLogFiles.forEach(logFile => {
+      const filePath = path.join(this.storagePath, logFile);
+      zip.addFile(filePath);
+      numberOfFiles++;
+    });
+
+    this.pushEvent('downloadLogsProgress', { progress: 40, status: 'No Log Files Found' });
+    if (numberOfFiles === 0) {
+      throw new Error('No log files were found');
+    }
+
+    try {
+      this.pushEvent('downloadLogsProgress', { progress: 45, status: `Compressing ${numberOfFiles} files` });
+      await zip.archive(this.logZipFilePath);
+
+      this.pushEvent('downloadLogsProgress', { progress: 80, status: 'Reading content' });
+      const fileBuffer = fs.readFileSync(this.logZipFilePath);
+
+      this.pushEvent('downloadLogsProgress', { progress: 90, status: 'Returning zip file' });
+      return fileBuffer;
+    } catch (error) {
+      this.log.error('Error while generating log files: ' + error);
+      throw error;
+    } finally {
+      this.removeCompressedLogs();
+    }
+  }
+
+  removeCompressedLogs() {
+    try {
+      if (fs.existsSync(this.logZipFilePath)) {
+        fs.unlinkSync(this.logZipFilePath);
+      }
+      return true;
+    } catch {
+      return false;
+    }
+  }
+}
+
+(() => new UiServer())();

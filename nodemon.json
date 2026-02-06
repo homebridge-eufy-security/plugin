@@ -4,7 +4,7 @@
   ],
   "ext": "ts",
   "ignore": [],
-  "exec": "tsc --project tsconfig.plugin.json && homebridge -I -D",
+  "exec": "tsc && homebridge -I -D",
   "signal": "SIGTERM",
   "env": {
     "NODE_OPTIONS": "--trace-warnings"

@@ -1,4 +1,3 @@
-/* eslint @typescript-eslint/no-var-requires: "off" */
 import {
   API,
   DynamicPlatformPlugin,
@@ -347,6 +346,10 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
         eufyConfig,
         (this.config.enableDetailedLogging) ? tsLogger : undefined
       );
+
+      // Each camera adds listeners (livestream, talkback) on top of the base ones.
+      // Raise limit to prevent MaxListenersExceededWarning in Node 22+.
+      this.eufyClient.setMaxListeners(30);
 
       this.eufyClient.on('station added', this.stationAdded.bind(this));
       this.eufyClient.on('station removed', this.stationRemoved.bind(this));

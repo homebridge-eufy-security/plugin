@@ -20,7 +20,7 @@ import { ILogObj, Logger } from 'tslog';
 function isServiceInstance(
   serviceType: WithUUID<typeof Service> | Service,
 ): serviceType is Service {
-  // eslint-disable-next-line
+   
   return typeof (serviceType as any) === 'object';
 }
 
@@ -37,7 +37,7 @@ export abstract class BaseAccessory extends EventEmitter {
   constructor(
     public readonly platform: EufySecurityPlatform,
     public readonly accessory: PlatformAccessory,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     public device: any,
   ) {
     super();
@@ -83,6 +83,12 @@ export abstract class BaseAccessory extends EventEmitter {
       getValue: () => this.device.getHardwareVersion() || 'Unknowm',
     });
 
+    // Cameras accumulate many listeners (property changes, events, snapshots, streaming).
+    // Raise limit to prevent MaxListenersExceededWarning in Node 22+.
+    if (typeof this.device.setMaxListeners === 'function') {
+      this.device.setMaxListeners(30);
+    }
+
     if (this.platform.config.enableDetailedLogging) {
       this.device.on('raw property changed', this.handleRawPropertyChange.bind(this));
       this.device.on('property changed', this.handlePropertyChange.bind(this));
@@ -96,12 +102,12 @@ export abstract class BaseAccessory extends EventEmitter {
     this.log.debug(`Property Keys:`, this.device.getProperties());
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   protected handleRawPropertyChange(device: any, type: number, value: string): void {
     this.log.debug(`Raw Property Changes:`, type, value);
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   protected handlePropertyChange(device: any, name: string, value: PropertyValue): void {
     this.log.debug(`Property Changes:`, name, value);
   }
@@ -130,13 +136,13 @@ export abstract class BaseAccessory extends EventEmitter {
     serviceType: ServiceType;
     serviceSubType?: string;
     name?: string;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     getValue?: (data: any, characteristic?: Characteristic, service?: Service) => any;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     setValue?: (value: any, characteristic?: Characteristic, service?: Service) => any;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     onValue?: (service: Service, characteristic: Characteristic) => any;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     onSimpleValue?: any;
     onMultipleValue?: (keyof DeviceEvents | StationEvents)[];
     setValueDebounceTime?: number;
@@ -179,7 +185,7 @@ export abstract class BaseAccessory extends EventEmitter {
     }
 
     if (onSimpleValue) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+       
       this.device.on(onSimpleValue, (device: any, value: any) => {
         this.log.info(`ON '${serviceType.name} / ${characteristicType.name} / ${onSimpleValue}':`, value);
         characteristic.updateValue(value);
@@ -194,7 +200,7 @@ export abstract class BaseAccessory extends EventEmitter {
     if (onMultipleValue) {
       // Attach the common event handler to each event type
       onMultipleValue.forEach(eventType => {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+         
         this.device.on(eventType as keyof any, (device: any, value: any) => {
           this.log.info(`ON '${serviceType.name} / ${characteristicType.name} / ${eventType}':`, value);
           characteristic.updateValue(value);

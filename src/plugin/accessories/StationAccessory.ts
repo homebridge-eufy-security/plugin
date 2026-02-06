@@ -2,7 +2,7 @@ import { Characteristic, PlatformAccessory, CharacteristicValue } from 'homebrid
 
 import { EufySecurityPlatform } from '../platform';
 import { BaseAccessory } from './BaseAccessory';
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+ 
 // @ts-ignore  
 import { Station, DeviceType, PropertyName, PropertyValue, AlarmEvent, GuardMode } from 'eufy-security-client';
 import { StationConfig } from '../utils/configTypes';

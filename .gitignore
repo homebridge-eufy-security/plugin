@@ -126,10 +126,9 @@ dist
 
 .angular
 
-homebridge-ui/
-
 src/plugin/version.ts
 src/version.ts
+homebridge-ui/version.ts
 
 TODO
 

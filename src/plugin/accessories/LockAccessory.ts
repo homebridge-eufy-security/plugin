@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/ban-ts-comment */
+ 
 // @ts-ignore
 import { CharacteristicValue, PlatformAccessory } from 'homebridge';
 import { EufySecurityPlatform } from '../platform';

@@ -18,7 +18,7 @@
     "url": "https://github.com/homebridge-eufy-security/plugin/issues"
   },
   "engines": {
-    "node": "^24",
+    "node": "^20 || ^22 || ^24",
     "homebridge": ">=1.9.0 <1.12.0 || ^2.0.0-beta.0"
   },
   "main": "dist/index.js",
@@ -26,12 +26,10 @@
     "lint": "eslint src/** --max-warnings=0",
     "lint-fix": "eslint src/** --max-warnings=0 --fix",
     "watch": "npm run build && npm link && nodemon",
-    "build": "npm run build-plugin && npm run postbuild && npm run build-configui",
-    "build-plugin": "rimraf ./dist && tsc --project tsconfig.plugin.json",
-    "build-configui": "rimraf ./homebridge-ui && ng build --base-href /api/plugins/settings-ui/homebridge-eufy-security/ && tsc --project tsconfig.configui.server.json",
+    "build": "npm run build-plugin && npm run postbuild",
+    "build-plugin": "rimraf ./dist && tsc",
     "postbuild": "cp -r ./media ./dist/media",
-    "prebuild": "node -p \"'export const LIB_VERSION = ' + JSON.stringify(require('./package.json').version) + ';'\" > src/plugin/version.ts && node -p \"'export const LIB_VERSION = ' + JSON.stringify(require('./package.json').version) + ';'\" > src/version.ts",
-    "serve-configui": "ng serve",
+    "prebuild": "node -p \"'export const LIB_VERSION = ' + JSON.stringify(require('./package.json').version) + ';'\" > src/plugin/version.ts",
     "prepublishOnly": "npm run lint && npm run build"
   },
   "keywords": [
@@ -54,54 +52,15 @@
     "zip-lib": "^1.1.2"
   },
   "devDependencies": {
-    "@angular-devkit/build-angular": "^21.1.2",
-    "@angular-devkit/core": "^21.1.2",
-    "@angular-eslint/builder": "21.2.0",
-    "@angular-eslint/eslint-plugin": "21.2.0",
-    "@angular-eslint/eslint-plugin-template": "21.2.0",
-    "@angular-eslint/schematics": "21.2.0",
-    "@angular-eslint/template-parser": "21.2.0",
-    "@angular/cli": "^21.1.2",
-    "@angular/common": "~21.1.2",
-    "@angular/compiler": "~21.1.2",
-    "@angular/compiler-cli": "~21.1.2",
-    "@angular/core": "~21.1.2",
-    "@angular/forms": "~21.1.2",
-    "@angular/localize": "~21.1.2",
-    "@angular/platform-browser": "~21.1.2",
-    "@angular/platform-browser-dynamic": "~21.1.2",
-    "@angular/router": "~21.1.2",
-    "@eslint/eslintrc": "^3.3.3",
     "@eslint/js": "^9.39.2",
-    "@ng-bootstrap/ng-bootstrap": "^20.0.0",
-    "@popperjs/core": "^2.11.8",
-    "@types/jasmine": "~6.0.0",
     "@types/node": "^25.2.0",
     "@typescript-eslint/eslint-plugin": "8.54.0",
     "@typescript-eslint/parser": "8.54.0",
-    "bootstrap": "^5.3.8",
     "eslint": "^9.39.2",
     "homebridge": "^1.11.1",
-    "jasmine-core": "~6.0.1",
-    "karma": "~6.4.4",
-    "karma-chrome-launcher": "~3.2.0",
-    "karma-coverage": "~2.2.1",
-    "karma-jasmine": "~5.1.0",
-    "karma-jasmine-html-reporter": "~2.2.0",
-    "lucide-angular": "^0.563.0",
     "nodemon": "^3.1.11",
     "rimraf": "^6.1.2",
-    "rxjs": "^7.8.2",
-    "typescript": "^5.9.3",
-    "zone.js": "~0.16.0"
-  },
-  "overrides": {
-    "autoprefixer": "^10.4.5"
-  },
-  "eslintConfig": {
-    "rules": {
-      "ban-ts-comment": 0
-    }
+    "typescript": "^5.9.3"
   },
   "homepage": "https://github.com/homebridge-eufy-security/plugin/wiki",
   "author": "homebridge-eufy-security"
