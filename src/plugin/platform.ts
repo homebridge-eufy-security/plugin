@@ -454,26 +454,6 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
   }
 
   /**
-   * Checks if a device type is supported by the plugin.
-   * A device is considered supported if it matches at least one handler type:
-   * - Motion Sensor
-   * - Entry Sensor
-   * - Lock
-   * - Camera
-   * 
-   * @param deviceType The device type to check
-   * @returns true if the device type is supported, false otherwise
-   */
-  private isSupportedDevice(deviceType: number): boolean {
-    return (
-      Device.isMotionSensor(deviceType) ||
-      Device.isEntrySensor(deviceType) ||
-      Device.isLock(deviceType) ||
-      Device.isCamera(deviceType)
-    );
-  }
-
-  /**
    * Defines an accessory for a device or station.
    * 
    * @param deviceContainer The container holding information about the device or station.
@@ -627,19 +607,17 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
    * Processes pending stations and devices in batch.
    * Only creates station entities if:
    * 1. It's a real HomeBase (DeviceType.STATION) OR
-   * 2. It has at least one supported device attached
+   * 2. It has at least one device attached
    * 
-   * Devices are only created if their type is supported.
+   * All discovered devices are processed since they are already verified by bropat/eufy-security-client.
    */
   private async processPendingDevices(): Promise<void> {
     log.debug(`Processing ${this.pendingStations.length} stations and ${this.pendingDevices.length} devices`);
 
-    // Build set of stations that have at least one supported device
-    const stationsWithSupportedDevices = new Set<string>();
+    // Build set of stations that have at least one device
+    const stationsWithDevices = new Set<string>();
     for (const device of this.pendingDevices) {
-      if (this.isSupportedDevice(device.getDeviceType())) {
-        stationsWithSupportedDevices.add(device.getStationSerial());
-      }
+      stationsWithDevices.add(device.getStationSerial());
     }
 
     // Create queued stations that should be created
@@ -647,13 +625,13 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
       const stationType = station.getDeviceType();
       const stationSerial = station.getSerial();
 
-      // Create if: it's a real HomeBase OR it has supported devices
+      // Create if: it's a real HomeBase OR it has devices
       const shouldCreate = 
         stationType === DeviceType.STATION || 
-        stationsWithSupportedDevices.has(stationSerial);
+        stationsWithDevices.has(stationSerial);
 
       if (!shouldCreate) {
-        log.warn(`Station "${station.getName()}" has no supported devices and will be skipped`);
+        log.warn(`Station "${station.getName()}" has no devices and will be skipped`);
         continue;
       }
 
@@ -676,17 +654,10 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
       }
     }
 
-    // Create queued devices that are supported
+    // Create all queued devices (they are already verified by bropat/eufy-security-client)
     for (const device of this.pendingDevices) {
-      const deviceType = device.getDeviceType();
-
-      // Skip unsupported devices
-      if (!this.isSupportedDevice(deviceType)) {
-        log.debug(`${device.getName()}: Device type ${deviceType} not supported, skipping`);
-        continue;
-      }
-
       try {
+        const deviceType = device.getDeviceType();
         const deviceContainer: DeviceContainer = {
           deviceIdentifier: {
             uniqueId: device.getSerial(),
