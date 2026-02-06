@@ -111,6 +111,7 @@ class UiServer extends HomebridgePluginUiServer {
     this.onRequest('/storedAccessories', this.loadStoredAccessories.bind(this));
     this.onRequest('/reset', this.resetPlugin.bind(this));
     this.onRequest('/downloadLogs', this.downloadLogs.bind(this));
+    this.onRequest('/systemInfo', this.getSystemInfo.bind(this));
   }
 
   async deleteFileIfExists(filePath) {
@@ -454,6 +455,45 @@ class UiServer extends HomebridgePluginUiServer {
     } catch {
       return false;
     }
+  }
+
+  async getSystemInfo() {
+    const os = await import('os');
+    let homebridgeVersion = 'unknown';
+    try {
+      const hbPkg = require('homebridge/package.json');
+      homebridgeVersion = hbPkg.version;
+    } catch {
+      // Homebridge package not resolvable from here
+    }
+
+    let deviceSummary = [];
+    try {
+      if (fs.existsSync(this.storedAccessories_file)) {
+        const storedData = JSON.parse(fs.readFileSync(this.storedAccessories_file, 'utf-8'));
+        if (storedData.stations) {
+          deviceSummary = storedData.stations.map(s => ({
+            name: s.displayName,
+            type: s.typename,
+            devices: (s.devices || []).map(d => ({
+              name: d.displayName,
+              type: d.typename,
+            })),
+          }));
+        }
+      }
+    } catch {
+      // ignore
+    }
+
+    return {
+      pluginVersion: LIB_VERSION,
+      eufyClientVersion: libVersion,
+      homebridgeVersion,
+      nodeVersion: process.version,
+      os: `${os.type()} ${os.release()} (${os.arch()})`,
+      devices: deviceSummary,
+    };
   }
 }
 

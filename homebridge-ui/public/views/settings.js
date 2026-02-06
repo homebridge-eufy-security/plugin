@@ -61,11 +61,10 @@ const SettingsView = {
     btnRow.appendChild(btnLogs);
 
     // Bug report button
-    const btnBug = document.createElement('a');
+    const btnBug = document.createElement('button');
     btnBug.className = 'btn btn-outline-secondary btn-sm';
     btnBug.textContent = '🐛 Report Issue';
-    btnBug.href = 'https://github.com/homebridge-eufy-security/plugin/issues/new';
-    btnBug.target = '_blank';
+    btnBug.addEventListener('click', () => this._reportIssue());
     btnRow.appendChild(btnBug);
 
     // Reset plugin button
@@ -246,6 +245,35 @@ const SettingsView = {
     container.appendChild(advSection);
 
 
+  },
+
+  // ===== Report Issue =====
+  async _reportIssue() {
+    try {
+      homebridge.toast.info('Gathering system info...', 'Report Issue');
+      const info = await Api.getSystemInfo();
+
+      // Build environment section for the template
+      const envSection = [
+        `- **Plugin Version**: ${info.pluginVersion}`,
+        `- **Homebridge Version**: ${info.homebridgeVersion}`,
+        `- **Node.js Version**: ${info.nodeVersion}`,
+        `- **OS**: ${info.os}`,
+        `- **eufy-security-client**: ${info.eufyClientVersion}`,
+      ].join('\n');
+
+      // Build the URL with query params matching the bug report template field IDs
+      const params = new URLSearchParams();
+      params.set('template', 'bug_report.yml');
+      params.set('environment', envSection);
+
+      const url = 'https://github.com/homebridge-eufy-security/plugin/issues/new?' + params.toString();
+      window.open(url, '_blank');
+    } catch (e) {
+      // Fallback: open without pre-fill
+      homebridge.toast.error('Could not gather system info. Opening blank issue form.');
+      window.open('https://github.com/homebridge-eufy-security/plugin/issues/new?template=bug_report.yml', '_blank');
+    }
   },
 
   // ===== Log Download =====

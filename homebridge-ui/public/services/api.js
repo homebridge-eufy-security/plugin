@@ -77,4 +77,12 @@ const Api = {
       callback(event.data);
     });
   },
+
+  /**
+   * Get system and environment information for issue reporting
+   * @returns {Promise<{pluginVersion: string, eufyClientVersion: string, homebridgeVersion: string, nodeVersion: string, os: string, devices: Array}>}
+   */
+  async getSystemInfo() {
+    return homebridge.request('/systemInfo');
+  },
 };
