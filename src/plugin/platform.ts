@@ -448,6 +448,26 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
   }
 
   /**
+   * Checks if a device type is supported by the plugin.
+   * A device is considered supported if it matches at least one handler type:
+   * - Motion Sensor
+   * - Entry Sensor
+   * - Lock
+   * - Camera
+   * 
+   * @param deviceType The device type to check
+   * @returns true if the device type is supported, false otherwise
+   */
+  private isSupportedDevice(deviceType: number): boolean {
+    return (
+      Device.isMotionSensor(deviceType) ||
+      Device.isEntrySensor(deviceType) ||
+      Device.isLock(deviceType) ||
+      Device.isCamera(deviceType)
+    );
+  }
+
+  /**
    * Defines an accessory for a device or station.
    * 
    * @param deviceContainer The container holding information about the device or station.
