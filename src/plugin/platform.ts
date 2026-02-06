@@ -418,6 +418,8 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
       return;
     }
 
+    log.info('Connected to Eufy. Discovering stations and devices... This may take up to 45 seconds.');
+
     // give the connection 45 seconds to discover all devices
     // then process pending stations and devices, and clean old accessories after that
     this.cleanCachedAccessoriesTimeout = setTimeout(async () => {
