@@ -36,6 +36,7 @@ export class AccessoryListComponent implements OnInit {
 
   versionUnmatched = false;
   adminAccountUsed = false;
+  isLoadingAccessories = false;
 
   @Input() waitForAccessories?: boolean;
 
@@ -53,6 +54,11 @@ export class AccessoryListComponent implements OnInit {
 
   ngOnInit(): void {
     this.waitForAccessories = this.route.snapshot.paramMap.get('waitForAccessories') === 'true';
+
+    if (this.waitForAccessories) {
+      this.isLoadingAccessories = true;
+      this.cdr.markForCheck();
+    }
 
     this.setupEventListeners();
 
@@ -86,6 +92,8 @@ export class AccessoryListComponent implements OnInit {
   }
 
   private async handleAddAccessory(): Promise<void> {
+    this.isLoadingAccessories = false;
+    this.cdr.markForCheck();
     await this.zone.run(() => this.updateStations());
   }
 

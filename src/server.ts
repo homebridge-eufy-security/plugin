@@ -25,6 +25,11 @@ class UiServer {
 
   private adminAccountUsed: boolean = false;
 
+  // Batch processing for stations and devices
+  private pendingStations: Station[] = [];
+  private pendingDevices: Device[] = [];
+  private processingTimeout?: NodeJS.Timeout;
+
   public config: EufySecurityConfig = {
     username: '',
     password: '',
@@ -158,6 +163,8 @@ class UiServer {
 
     if (!this.eufyClient && options && options.username && options.password && options.country) {
       this.stations = [];
+      this.pendingStations = [];
+      this.pendingDevices = [];
       this.log.debug('init eufyClient');
       this.config.username = options.username;
       this.config.password = options.password;
@@ -167,11 +174,15 @@ class UiServer {
         this.eufyClient = await EufySecurity.initialize(this.config, this.tsLog);
         this.eufyClient?.on('station added', await this.addStation.bind(this));
         this.eufyClient?.on('device added', await this.addDevice.bind(this));
-        // Close connection after 40 seconds enough time to get all devices
+        // Wait for 45 seconds to gather all stations and devices, then process them
+        this.processingTimeout = setTimeout(() => {
+          this.processPendingAccessories().catch(error => this.log.error('Error processing pending accessories:', error));
+        }, 45 * 1000);
+        // Close connection after 50 seconds to allow processing time
         setTimeout(() => {
           this.eufyClient?.removeAllListeners();
           this.eufyClient?.close();
-        }, 40 * 1000);
+        }, 50 * 1000);
       } catch (error) {
         this.log.error(error);
       }
@@ -278,27 +289,9 @@ class UiServer {
       return;
     }
 
-    await this.delay(1000);
-
-    const s: L_Station = {
-      uniqueId: station.getSerial(),
-      displayName: station.getName(),
-      type: station.getDeviceType(),
-      typename: DeviceType[station.getDeviceType()],
-      disabled: false,
-      devices: [],
-    };
-    s.ignored = (this.config['ignoreStations'] ?? []).includes(s.uniqueId);
-
-    // Standalone Lock or Doorbell doesn't have Security Control
-    if (Device.isLock(s.type) || Device.isDoorbell(s.type)) {
-      s.disabled = true;
-      s.ignored = true;
-    }
-
-    this.stations.push(s);
-    this.storeAccessories();
-    this.pushEvent('addAccessory', this.stations);
+    // Store station for batch processing later
+    this.pendingStations.push(station);
+    this.log.debug(`${station.getName()}: Station queued for processing`);
   }
 
   async addDevice(device: Device) {
@@ -308,53 +301,119 @@ class UiServer {
       return;
     }
 
-    await this.delay(2000);
-
-    const d: L_Device = {
-      uniqueId: device.getSerial(),
-      displayName: device.getName(),
-      type: device.getDeviceType(),
-      typename: DeviceType[device.getDeviceType()],
-      standalone: device.getSerial() === device.getStationSerial(),
-      hasBattery: device.hasBattery(),
-      isCamera: device.isCamera(),
-      isDoorbell: device.isDoorbell(),
-      isKeypad: device.isKeyPad(),
-      supportsRTSP: device.hasPropertyValue(PropertyName.DeviceRTSPStream),
-      supportsTalkback: device.hasCommand(CommandName.DeviceStartTalkback),
-      DeviceEnabled: device.hasProperty(PropertyName.DeviceEnabled),
-      DeviceMotionDetection: device.hasProperty(PropertyName.DeviceMotionDetection),
-      DeviceLight: device.hasProperty(PropertyName.DeviceLight),
-      DeviceChimeIndoor: device.hasProperty(PropertyName.DeviceChimeIndoor),
-      disabled: false,
-      properties: device.getProperties(),
-    };
-
-    if (device.hasProperty(PropertyName.DeviceChargingStatus)) {
-      d.chargingStatus = (device.getPropertyValue(PropertyName.DeviceChargingStatus) as number);
+    // Check if the device is a keypad and ignore it
+    const deviceType = device.getDeviceType();
+    if (Device.isKeyPad(deviceType)) {
+      this.log.warn(`${device.getName()}: The keypad is ignored as it serves no purpose in this plugin. You can ignore this message.`);
+      return;
     }
 
-    try {
-      delete d.properties.picture;
-    } catch (error) {
-      this.log.error(error);
+    // Store device for batch processing later
+    this.pendingDevices.push(device);
+    this.log.debug(`${device.getName()}: Device queued for processing`);
+  }
+
+  private async processPendingAccessories(): Promise<void> {
+    this.log.debug(`Processing ${this.pendingStations.length} stations and ${this.pendingDevices.length} devices`);
+
+    // Build set of stations that have at least one device
+    const stationsWithDevices = new Set<string>();
+    for (const device of this.pendingDevices) {
+      stationsWithDevices.add(device.getStationSerial());
     }
 
-    d.ignored = (this.config['ignoreDevices'] ?? []).includes(d.uniqueId);
+    // Process queued stations
+    for (const station of this.pendingStations) {
+      const stationType = station.getDeviceType();
+      const stationSerial = station.getSerial();
 
-    const stationUniqueId = device.getStationSerial();
-    const stationIndex = this.stations.findIndex(station => station.uniqueId === stationUniqueId);
+      const s: L_Station = {
+        uniqueId: stationSerial,
+        displayName: station.getName(),
+        type: stationType,
+        typename: DeviceType[stationType],
+        disabled: false,
+        devices: [],
+      };
+      s.ignored = (this.config['ignoreStations'] ?? []).includes(s.uniqueId);
 
-    if (stationIndex !== -1) {
-      if (!this.stations[stationIndex].devices) {
-        this.stations[stationIndex].devices = [];
+      // Standalone Lock or Doorbell doesn't have Security Control
+      if (Device.isLock(s.type) || Device.isDoorbell(s.type)) {
+        s.disabled = true;
+        s.ignored = true;
       }
-      this.stations[stationIndex].devices!.push(d);
-      this.storeAccessories();
-      this.pushEvent('addAccessory', this.stations);
-    } else {
-      this.log.error('Station not found for device:', d.displayName);
+
+      // Check if this station should be marked as unsupported
+      // A station is unsupported if:
+      // 1. It's NOT a HomeBase (DeviceType.STATION)
+      // 2. AND it has zero devices
+      const shouldCreate = 
+        stationType === DeviceType.STATION || 
+        stationsWithDevices.has(stationSerial);
+
+      if (!shouldCreate) {
+        // Mark this station as unsupported and add it anyway for visibility
+        s.unsupported = true;
+        this.log.warn(`Station "${station.getName()}" has no devices and will be marked as unsupported`);
+      }
+
+      this.stations.push(s);
     }
+
+    // Process queued devices and attach them to stations
+    for (const device of this.pendingDevices) {
+      const d: L_Device = {
+        uniqueId: device.getSerial(),
+        displayName: device.getName(),
+        type: device.getDeviceType(),
+        typename: DeviceType[device.getDeviceType()],
+        standalone: device.getSerial() === device.getStationSerial(),
+        hasBattery: device.hasBattery(),
+        isCamera: device.isCamera(),
+        isDoorbell: device.isDoorbell(),
+        isKeypad: device.isKeyPad(),
+        supportsRTSP: device.hasPropertyValue(PropertyName.DeviceRTSPStream),
+        supportsTalkback: device.hasCommand(CommandName.DeviceStartTalkback),
+        DeviceEnabled: device.hasProperty(PropertyName.DeviceEnabled),
+        DeviceMotionDetection: device.hasProperty(PropertyName.DeviceMotionDetection),
+        DeviceLight: device.hasProperty(PropertyName.DeviceLight),
+        DeviceChimeIndoor: device.hasProperty(PropertyName.DeviceChimeIndoor),
+        disabled: false,
+        properties: device.getProperties(),
+      };
+
+      if (device.hasProperty(PropertyName.DeviceChargingStatus)) {
+        d.chargingStatus = (device.getPropertyValue(PropertyName.DeviceChargingStatus) as number);
+      }
+
+      try {
+        delete d.properties.picture;
+      } catch (error) {
+        this.log.error(error);
+      }
+
+      d.ignored = (this.config['ignoreDevices'] ?? []).includes(d.uniqueId);
+
+      const stationUniqueId = device.getStationSerial();
+      const stationIndex = this.stations.findIndex(station => station.uniqueId === stationUniqueId);
+
+      if (stationIndex !== -1) {
+        if (!this.stations[stationIndex].devices) {
+          this.stations[stationIndex].devices = [];
+        }
+        this.stations[stationIndex].devices!.push(d);
+      } else {
+        this.log.error('Station not found for device:', d.displayName);
+      }
+    }
+
+    // Clear pending queues
+    this.pendingStations = [];
+    this.pendingDevices = [];
+
+    // Store and send the final list to the UI
+    this.storeAccessories();
+    this.pushEvent('addAccessory', this.stations);
   }
 
   storeAccessories() {

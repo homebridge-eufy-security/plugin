@@ -35,6 +35,7 @@ export type L_Station = {
   type: number;
   typename: string;
   ignored?: boolean;
+  unsupported?: boolean;
   devices: L_Device[];
   disabled: boolean;
 };

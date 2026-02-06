@@ -36,54 +36,90 @@
     </button>
   </div>
 
-  <ng-container *ngIf="stations$ | async as stations; else noStations">
-    <ng-container *ngIf="stations.length !== 0; else noStations">
-      <ng-container *ngIf="versionUnmatched; else stationsContent">
-        <p></p>
-        <ngb-alert type="warning" [dismissible]="false">
-          <a (click)="openReloadModal(reloadModal)" (keydown.enter)="openReloadModal(reloadModal)" tabindex="0">
-            Plugin has been updated, please refresh and reboot the plugin.
-          </a>
-        </ngb-alert>
-        <p></p>
-      </ng-container>
+  <ng-container *ngIf="isLoadingAccessories; else contentWithStations">
+    <div class="text-center mt-5">
+      <div class="spinner-border" role="status">
+        <span class="visually-hidden">Discovering accessories...</span>
+      </div>
+      <p class="mt-3">Discovering stations and devices...</p>
+      <p class="text-muted small">This may take up to 45 seconds. Please wait.</p>
+    </div>
+  </ng-container>
 
-      <ng-template #stationsContent>
-        <p></p>
-        <span>Click the name to access accessory configuration.</span>
-        <p></p>
+  <ng-template #contentWithStations>
+    <ng-container *ngIf="stations$ | async as stations; else noStations">
+      <ng-container *ngIf="stations.length !== 0; else noStations">
+        <ng-container *ngIf="versionUnmatched; else stationsContent">
+          <p></p>
+          <ngb-alert type="warning" [dismissible]="false">
+            <a (click)="openReloadModal(reloadModal)" (keydown.enter)="openReloadModal(reloadModal)" tabindex="0">
+              Plugin has been updated, please refresh and reboot the plugin.
+            </a>
+          </ngb-alert>
+          <p></p>
+        </ng-container>
 
-        <div class="row row-cols-md-4">
-          <ng-container *ngFor="let station of stations; trackBy: trackByStationId">
-            <ng-container *ngIf="station && station.devices && station.devices.length !== 0">
+        <ng-template #stationsContent>
+          <p></p>
+          <span>Click the name to access accessory configuration.</span>
+          <p></p>
 
-              <ng-container *ngIf="station.devices[0].uniqueId === station.uniqueId; else separateDevices">
-                <div class="col-4 mb-4">
-                  <ng-container
-                    *ngTemplateOutlet="cardTemplate; context: { $implicit: station, type: 'both' }"></ng-container>
-                </div>
-              </ng-container>
+          <div class="row row-cols-md-4">
+            <ng-container *ngFor="let station of stations; trackBy: trackByStationId">
+              <ng-container *ngIf="!station.unsupported && station && station.devices && station.devices.length !== 0">
 
-              <ng-template #separateDevices>
-                <div class="col-4 mb-4">
-                  <ng-container
-                    *ngTemplateOutlet="cardTemplate; context: { $implicit: station, type: 'station' }"></ng-container>
-                </div>
-                <ng-container *ngFor="let device of station.devices; trackBy: trackByDeviceId">
+                <ng-container *ngIf="station.devices[0].uniqueId === station.uniqueId; else separateDevices">
                   <div class="col-4 mb-4">
                     <ng-container
-                      *ngTemplateOutlet="cardTemplate; context: { $implicit: device, type: 'device' }"></ng-container>
+                      *ngTemplateOutlet="cardTemplate; context: { $implicit: station, type: 'both' }"></ng-container>
                   </div>
                 </ng-container>
-              </ng-template>
 
+                <ng-template #separateDevices>
+                  <div class="col-4 mb-4">
+                    <ng-container
+                      *ngTemplateOutlet="cardTemplate; context: { $implicit: station, type: 'station' }"></ng-container>
+                  </div>
+                  <ng-container *ngFor="let device of station.devices; trackBy: trackByDeviceId">
+                    <div class="col-4 mb-4">
+                      <ng-container
+                        *ngTemplateOutlet="cardTemplate; context: { $implicit: device, type: 'device' }"></ng-container>
+                    </div>
+                  </ng-container>
+                </ng-template>
+
+              </ng-container>
             </ng-container>
-          </ng-container>
-        </div>
+          </div>
 
-      </ng-template>
+          <!-- Display unsupported stations in a separate section -->
+          <ng-container *ngIf="stations.some(s => s.unsupported); else noUnsupported">
+            <p></p>
+            <ngb-alert type="warning" [dismissible]="false">
+              <strong>Partially Supported Devices Found</strong><br>
+              The following devices were found but are not fully supported by this plugin. While they may work to some extent, 
+              some features might be missing. Please check the <a href="https://github.com/homebridge-eufy-security/plugin/issues" 
+              target="_blank" rel="noopener noreferrer">GitHub repository</a> to request support or report any issues.
+            </ngb-alert>
+
+            <div class="row row-cols-md-4 mt-3 mb-3">
+              <ng-container *ngFor="let station of stations; trackBy: trackByStationId">
+                <ng-container *ngIf="station.unsupported">
+                  <div class="col-4 mb-4">
+                    <ng-container
+                      *ngTemplateOutlet="unsupportedCardTemplate; context: { $implicit: station }"></ng-container>
+                  </div>
+                </ng-container>
+              </ng-container>
+            </div>
+          </ng-container>
+
+          <ng-template #noUnsupported></ng-template>
+
+        </ng-template>
+      </ng-container>
     </ng-container>
-  </ng-container>
+  </ng-template>
 </ng-container>
 
 <ng-template #adminAccountUsedTemplate>
@@ -129,4 +165,19 @@
       </div>
     </div>
   </a>
+</ng-template>
+
+<ng-template #unsupportedCardTemplate let-station>
+  <div class="card" [ngbTooltip]="'This device was found but is not fully supported. Click for more information.'" placement="bottom">
+    <div class="position-absolute top-0 end-0">
+      <span class="d-flex p-2" style="z-index: 20;">
+        <lucide-angular name="help-circle" color="orange"></lucide-angular>
+      </span>
+    </div>
+    <img class="card-img p-4" [src]="'assets/devices/' + (DeviceImage.get(station.type)?.image || 'unknown.png')"
+      [style.opacity]="0.4" [alt]="station.displayName">
+    <div class="card-img-overlay">
+      <h5 class="card-title position-absolute bottom-0" style="opacity: 0.6;">{{ station.displayName }}</h5>
+    </div>
+  </div>
 </ng-template>
