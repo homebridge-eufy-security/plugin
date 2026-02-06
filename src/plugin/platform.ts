@@ -620,9 +620,7 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
     // Create all queued devices (they are already verified by bropat/eufy-security-client)
     log.debug(`[DEVICES PROCESSING] Starting to process ${this.pendingDevices.length} devices`);
     
-    for (let i = 0; i < this.pendingDevices.length; i++) {
-      const device = this.pendingDevices[i];
-      
+    for (const device of this.pendingDevices) {
       stationsWithDevices.add(device.getStationSerial());
 
       try {
@@ -636,11 +634,11 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
           eufyDevice: device,
         };
 
-        log.debug(`[DEVICE ${i + 1}/${this.pendingDevices.length}] Processing: ${deviceContainer.deviceIdentifier.displayName}`);
+        log.debug(`[DEVICE] Processing: ${deviceContainer.deviceIdentifier.displayName}`);
         await this.addOrUpdateAccessory(deviceContainer, false);
-        log.debug(`[DEVICE ${i + 1}/${this.pendingDevices.length}] Completed: ${deviceContainer.deviceIdentifier.displayName}`);
+        log.debug(`[DEVICE] Completed: ${deviceContainer.deviceIdentifier.displayName}`);
       } catch (error) {
-        log.error(`[DEVICE ERROR ${i + 1}/${this.pendingDevices.length}] Error processing device "${device.getName()}": ${error}`);
+        log.error(`[DEVICE ERROR] Error processing device "${device.getName()}": ${error}`);
       }
     }
     
@@ -648,11 +646,9 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
 
     // Create queued stations that should be created
     log.debug(`[STATIONS PROCESSING] Starting to process ${this.pendingStations.length} stations`);
-    let stationsCreated = 0;
     let stationsSkipped = 0;
     
-    for (let i = 0; i < this.pendingStations.length; i++) {
-      const station = this.pendingStations[i];
+    for (const station of this.pendingStations) {
       const stationType = station.getDeviceType();
       const stationSerial = station.getSerial();
 
@@ -663,7 +659,7 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
 
       if (!shouldCreate) {
         stationsSkipped++;
-        log.debug(`[STATION SKIP ${i + 1}/${this.pendingStations.length}] "${station.getName()}" has no devices and will be skipped`);
+        log.debug(`[STATION SKIP] "${station.getName()}" has no devices and will be skipped`);
         continue;
       }
 
@@ -677,16 +673,15 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
           eufyDevice: station,
         };
 
-        log.debug(`[STATION ${stationsCreated + 1}/${this.pendingStations.length - stationsSkipped}] Processing: ${deviceContainer.deviceIdentifier.displayName}`);
+        log.debug(`[STATION] Processing: ${deviceContainer.deviceIdentifier.displayName}`);
         await this.addOrUpdateAccessory(deviceContainer, true);
-        stationsCreated++;
-        log.debug(`[STATION ${stationsCreated}/${this.pendingStations.length - stationsSkipped}] Completed: ${deviceContainer.deviceIdentifier.displayName}`);
+        log.debug(`[STATION] Completed: ${deviceContainer.deviceIdentifier.displayName}`);
       } catch (error) {
-        log.error(`[STATION ERROR ${i + 1}/${this.pendingStations.length}] Error processing station "${station.getName()}": ${error}`);
+        log.error(`[STATION ERROR] Error processing station "${station.getName()}": ${error}`);
       }
     }
     
-    log.debug(`[STATIONS COMPLETE] ${stationsCreated} stations created, ${stationsSkipped} skipped`);
+    log.debug(`[STATIONS COMPLETE] ${this.pendingStations.length - stationsSkipped} stations created, ${stationsSkipped} skipped`);
 
     // Clear pending queues
     this.pendingStations = [];
