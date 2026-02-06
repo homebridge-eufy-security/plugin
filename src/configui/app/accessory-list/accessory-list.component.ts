@@ -170,4 +170,8 @@ export class AccessoryListComponent implements OnInit {
   trackByDeviceId(index: number, device: any): string {
     return device.uniqueId;
   }
+
+  hasUnsupportedStations(stations: L_Station[]): boolean {
+    return stations && stations.some(s => s.unsupported === true);
+  }
 }

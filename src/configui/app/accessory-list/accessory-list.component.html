@@ -93,7 +93,7 @@
           </div>
 
           <!-- Display unsupported stations in a separate section -->
-          <ng-container *ngIf="stations.some(s => s.unsupported); else noUnsupported">
+          <ng-container *ngIf="hasUnsupportedStations(stations); else noUnsupported">
             <p></p>
             <ngb-alert type="warning" [dismissible]="false">
               <strong>Partially Supported Devices Found</strong><br>
