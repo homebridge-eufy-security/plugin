@@ -15,14 +15,16 @@ on:
         - premajor
         - prerelease
         - prepatch
-      tag:
-        description: 'tag: latest/rc/beta'
+      release-tag:
+        description: 'Release tag: latest/rc/beta/alpha'
         required: true
         default: 'latest'
-      preid:
-        description: 'preid: rc/beta'
-        required: false
-        default: ''
+        type: choice
+        options:
+        - latest
+        - rc
+        - beta
+        - alpha
       branch:
         description: 'branch: master/next/beta'
         required: true
@@ -62,7 +64,7 @@ jobs:
           token: ${{ secrets.BUILD_SVC_PAT }}
       - run: git config --global user.name '[GitHub Bot]'
       - run: git config --global user.email '<>'
-      - run: npm version ${{ github.event.inputs.version }} ${{ github.event.inputs.preid && format('--preid={0}', github.event.inputs.preid) || '' }} -m "[${{ github.event.inputs.tag }}] %s"
+      - run: npm version ${{ github.event.inputs.version }} ${{ github.event.inputs.release-tag != 'latest' && format('--preid={0}', github.event.inputs.release-tag) || '' }} -m "[${{ github.event.inputs.release-tag }}] %s"
       - run: npm update homebridge-eufy-security
       - run: git push --force
       - run: git push origin --tags --force
@@ -82,4 +84,4 @@ jobs:
           node-version: 24
           registry-url: https://registry.npmjs.org/
       - run: npm ci
-      - run: npm publish --access public --tag ${{ github.event.inputs.tag }}
+      - run: npm publish --access public --tag ${{ github.event.inputs.release-tag }}
