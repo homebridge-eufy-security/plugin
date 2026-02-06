@@ -419,8 +419,9 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
     }
 
     // give the connection 45 seconds to discover all devices
-    // clean old accessories after that time
-    this.cleanCachedAccessoriesTimeout = setTimeout(() => {
+    // then process pending stations and devices, and clean old accessories after that
+    this.cleanCachedAccessoriesTimeout = setTimeout(async () => {
+      await this.processPendingDevices();
       this.cleanCachedAccessories();
     }, 45 * 1000);
 
@@ -618,6 +619,95 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
   private async deviceRemoved(device: Device) {
     const serial = device.getSerial();
     log.debug(`A device has been removed: ${serial}`);
+  }
+
+  /**
+   * Processes pending stations and devices in batch.
+   * Only creates station entities if:
+   * 1. It's a real HomeBase (DeviceType.STATION) OR
+   * 2. It has at least one supported device attached
+   * 
+   * Devices are only created if their type is supported.
+   */
+  private async processPendingDevices(): Promise<void> {
+    log.debug(`Processing ${this.pendingStations.length} stations and ${this.pendingDevices.length} devices`);
+
+    // Build set of stations that have at least one supported device
+    const stationsWithSupportedDevices = new Set<string>();
+    for (const device of this.pendingDevices) {
+      if (this.isSupportedDevice(device.getDeviceType())) {
+        stationsWithSupportedDevices.add(device.getStationSerial());
+      }
+    }
+
+    // Create queued stations that should be created
+    for (const station of this.pendingStations) {
+      const stationType = station.getDeviceType();
+      const stationSerial = station.getSerial();
+
+      // Create if: it's a real HomeBase OR it has supported devices
+      const shouldCreate = 
+        stationType === DeviceType.STATION || 
+        stationsWithSupportedDevices.has(stationSerial);
+
+      if (!shouldCreate) {
+        log.warn(`Station "${station.getName()}" has no supported devices and will be skipped`);
+        continue;
+      }
+
+      try {
+        const deviceContainer: StationContainer = {
+          deviceIdentifier: {
+            uniqueId: stationSerial,
+            displayName: 'STATION ' + station.getName().replace(/[^a-zA-Z0-9]/g, ''),
+            type: stationType,
+          } as DeviceIdentifier,
+          eufyDevice: station,
+        };
+
+        await this.delay(STATION_INIT_DELAY);
+        log.debug(`${deviceContainer.deviceIdentifier.displayName} pre-caching complete`);
+
+        await this.addOrUpdateAccessory(deviceContainer, true);
+      } catch (error) {
+        log.error(`Error processing station "${station.getName()}": ${error}`);
+      }
+    }
+
+    // Create queued devices that are supported
+    for (const device of this.pendingDevices) {
+      const deviceType = device.getDeviceType();
+
+      // Skip unsupported devices
+      if (!this.isSupportedDevice(deviceType)) {
+        log.debug(`${device.getName()}: Device type ${deviceType} not supported, skipping`);
+        continue;
+      }
+
+      try {
+        const deviceContainer: DeviceContainer = {
+          deviceIdentifier: {
+            uniqueId: device.getSerial(),
+            displayName: 'DEVICE ' + device.getName().replace(/[^a-zA-Z0-9]/g, ''),
+            type: deviceType,
+          } as DeviceIdentifier,
+          eufyDevice: device,
+        };
+
+        await this.delay(DEVICE_INIT_DELAY);
+        log.debug(`${deviceContainer.deviceIdentifier.displayName} pre-caching complete`);
+
+        await this.addOrUpdateAccessory(deviceContainer, false);
+      } catch (error) {
+        log.error(`Error processing device "${device.getName()}": ${error}`);
+      }
+    }
+
+    // Clear pending queues
+    this.pendingStations = [];
+    this.pendingDevices = [];
+
+    log.debug('Finished processing pending stations and devices');
   }
 
   private async pluginShutdown() {
