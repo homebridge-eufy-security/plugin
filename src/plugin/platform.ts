@@ -614,9 +614,11 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
   private async processPendingDevices(): Promise<void> {
     log.debug(`Processing ${this.pendingStations.length} stations and ${this.pendingDevices.length} devices`);
 
+    // Build set of stations that have at least one device
+    const stationsWithDevices = new Set<string>();
+
     // Create all queued devices (they are already verified by bropat/eufy-security-client)
     for (const device of this.pendingDevices) {
-      // Build set of stations that have at least one device
       stationsWithDevices.add(device.getStationSerial());
 
       try {
