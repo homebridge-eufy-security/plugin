@@ -1,42 +1,41 @@
 name: Release
 
-on: 
+on:
   workflow_dispatch:
     inputs:
       version:
-        description: 'premajor/prerelease/prepatch/major/minor/patch'
+        description: "premajor/prerelease/prepatch/major/minor/patch"
         required: true
-        default: 'patch'
+        default: "patch"
         type: choice
         options:
-        - major
-        - minor
-        - patch
-        - premajor
-        - prerelease
-        - prepatch
+          - major
+          - minor
+          - patch
+          - premajor
+          - prerelease
+          - prepatch
       release-tag:
-        description: 'Release tag: latest/rc/beta/alpha'
+        description: "Release tag: latest/rc/beta/alpha"
         required: true
-        default: 'latest'
+        default: "latest"
         type: choice
         options:
-        - latest
-        - rc
-        - beta
-        - alpha
+          - latest
+          - rc
+          - beta
+          - alpha
       branch:
-        description: 'branch: master/next/beta'
+        description: "branch: master/next/beta"
         required: true
-        default: 'master'
-        
-jobs:
+        default: "master"
 
+jobs:
   build:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        node-version: [24]
+        node-version: [20, 22, 24]
     steps:
       - uses: actions/checkout@v4
         with:
