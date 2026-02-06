@@ -412,29 +412,80 @@
 }
 
 /* ===== Dark mode support ===== */
-@media (prefers-color-scheme: dark) {
-  .device-card {
-    border-color: rgba(255, 255, 255, 0.1);
-  }
+/* Homebridge UI applies .dark-mode on the body inside the plugin iframe */
+body.dark-mode {
+  --eufy-card-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+  --eufy-card-hover-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
+  --eufy-muted: #9ea7b3;
+}
 
-  .eufy-toggle {
-    border-bottom-color: rgba(255, 255, 255, 0.06);
-  }
+body.dark-mode .device-card {
+  border-color: rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.05);
+}
 
-  .eufy-toggle__help {
-    background: rgba(255, 255, 255, 0.1);
-    color: rgba(255, 255, 255, 0.5);
-  }
+body.dark-mode .device-card:hover:not(.device-card--disabled) {
+  box-shadow: var(--eufy-card-hover-shadow);
+}
 
-  .eufy-header {
-    border-bottom-color: rgba(255, 255, 255, 0.08);
-  }
+body.dark-mode .eufy-header {
+  border-bottom-color: rgba(255, 255, 255, 0.1);
+}
 
-  .detail-header {
-    border-bottom-color: rgba(255, 255, 255, 0.08);
-  }
+body.dark-mode .eufy-toggle {
+  border-bottom-color: rgba(255, 255, 255, 0.08);
+}
 
-  .login-step-dot {
-    background: rgba(255, 255, 255, 0.2);
-  }
+body.dark-mode .eufy-toggle__help {
+  background: rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.5);
+}
+
+body.dark-mode .detail-header {
+  border-bottom-color: rgba(255, 255, 255, 0.1);
+}
+
+body.dark-mode .login-card .card {
+  border-color: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+body.dark-mode .login-card .card-header {
+  border-bottom-color: rgba(255, 255, 255, 0.08);
+}
+
+body.dark-mode .login-step-dot {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+body.dark-mode .settings-section {
+  border-bottom-color: rgba(255, 255, 255, 0.08);
+}
+
+body.dark-mode .advanced-toggle {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+body.dark-mode .advanced-toggle:hover {
+  color: var(--eufy-primary);
+}
+
+body.dark-mode .device-card__meta {
+  color: var(--eufy-muted);
+}
+
+body.dark-mode .detail-header__info small {
+  color: var(--eufy-muted);
+}
+
+body.dark-mode .detail-section__title {
+  color: var(--eufy-muted);
+}
+
+body.dark-mode .welcome-banner__text {
+  color: var(--eufy-muted);
+}
+
+body.dark-mode .discovery-screen__subtitle {
+  color: var(--eufy-muted);
 }
