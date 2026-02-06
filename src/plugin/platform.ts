@@ -614,10 +614,29 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
   private async processPendingDevices(): Promise<void> {
     log.debug(`Processing ${this.pendingStations.length} stations and ${this.pendingDevices.length} devices`);
 
-    // Build set of stations that have at least one device
-    const stationsWithDevices = new Set<string>();
+    // Create all queued devices (they are already verified by bropat/eufy-security-client)
     for (const device of this.pendingDevices) {
+      // Build set of stations that have at least one device
       stationsWithDevices.add(device.getStationSerial());
+
+      try {
+        const deviceType = device.getDeviceType();
+        const deviceContainer: DeviceContainer = {
+          deviceIdentifier: {
+            uniqueId: device.getSerial(),
+            displayName: 'DEVICE ' + device.getName().replace(/[^a-zA-Z0-9]/g, ''),
+            type: deviceType,
+          } as DeviceIdentifier,
+          eufyDevice: device,
+        };
+
+        await this.delay(DEVICE_INIT_DELAY);
+        log.debug(`${deviceContainer.deviceIdentifier.displayName} pre-caching complete`);
+
+        await this.addOrUpdateAccessory(deviceContainer, false);
+      } catch (error) {
+        log.error(`Error processing device "${device.getName()}": ${error}`);
+      }
     }
 
     // Create queued stations that should be created
@@ -651,28 +670,6 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
         await this.addOrUpdateAccessory(deviceContainer, true);
       } catch (error) {
         log.error(`Error processing station "${station.getName()}": ${error}`);
-      }
-    }
-
-    // Create all queued devices (they are already verified by bropat/eufy-security-client)
-    for (const device of this.pendingDevices) {
-      try {
-        const deviceType = device.getDeviceType();
-        const deviceContainer: DeviceContainer = {
-          deviceIdentifier: {
-            uniqueId: device.getSerial(),
-            displayName: 'DEVICE ' + device.getName().replace(/[^a-zA-Z0-9]/g, ''),
-            type: deviceType,
-          } as DeviceIdentifier,
-          eufyDevice: device,
-        };
-
-        await this.delay(DEVICE_INIT_DELAY);
-        log.debug(`${deviceContainer.deviceIdentifier.displayName} pre-caching complete`);
-
-        await this.addOrUpdateAccessory(deviceContainer, false);
-      } catch (error) {
-        log.error(`Error processing device "${device.getName()}": ${error}`);
       }
     }
 
