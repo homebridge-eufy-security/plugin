@@ -223,12 +223,15 @@ export class StreamingDelegate implements CameraStreamingDelegate {
         videoParams.setInputSource(url as string);
         audioParams?.setInputSource(url as string);
       } else {
+        this.log.debug(`Using P2P local livestream for ${this.device.getName()} (serial: ${this.device.getSerial()}, type: ${this.device.getDeviceType()})`);
         try {
           const streamData = await this.localLivestreamManager.getLocalLivestream().catch((error) => {
             throw error;
           });
+          this.log.debug(`Livestream obtained successfully. Setting up FFmpeg input streams...`);
           await videoParams.setInputStream(streamData.videostream);
           await audioParams?.setInputStream(streamData.audiostream);
+          this.log.debug('FFmpeg input streams configured.');
         } catch (error) {
           this.log.error(('Unable to start the livestream: ' + error) as string);
           callback(error as Error);
