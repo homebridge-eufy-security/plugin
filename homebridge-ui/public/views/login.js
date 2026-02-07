@@ -103,7 +103,7 @@ const LoginView = {
           <div class="form-check">
             <input class="form-check-input" type="checkbox" id="ack-node-version">
             <label class="form-check-label" for="ack-node-version">
-              <strong>Streaming unavailable:</strong> Node.js <strong>${warning.nodeVersion}</strong> has removed <code>RSA_PKCS1_PADDING</code> support, which breaks streaming. The rest of the plugin works fine. Use <strong>v20.11.0</strong> or earlier, or upgrade to <strong>v24.5.0+</strong>. <a href="https://github.com/homebridge-eufy-security/plugin/wiki/Node.js-Compatibility-with-Eufy-Security-Plugin" target="_blank">Learn more</a>
+              <strong>Streaming unavailable:</strong> Node.js <strong>${warning.nodeVersion}</strong> — ${Helpers.nodeVersionWarningHtml(warning.nodeVersion)}
             </label>
           </div>
         `;
@@ -416,9 +416,6 @@ const LoginView = {
       const msg = messages.filter((m) => m.at <= progress).pop();
       if (msg) statusEl.textContent = msg.text;
     }, 1000);
-
-    // Start Node.js version check early (runs in parallel with discovery)
-    App.checkNodeVersion();
 
     // Listen for the batch-processed accessories
     Api.onAccessoriesReady((stations) => {
