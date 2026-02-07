@@ -205,16 +205,6 @@ const DeviceDetailView = {
       hsvTitle.textContent = 'HomeKit Secure Video';
       advSection.appendChild(hsvTitle);
 
-      Toggle.render(advSection, {
-        id: 'toggle-hsv',
-        label: 'Enable HSV',
-        help: 'Enable HomeKit Secure Video recording. Requires an iCloud+ plan with HomeKit Secure Video support.',
-        checked: !!deviceConfig.hsv,
-        onChange: async (checked) => {
-          await Config.updateDeviceConfig(device.uniqueId, { hsv: checked });
-        },
-      });
-
       NumberInput.render(advSection, {
         id: 'num-hsv-duration',
         label: 'HSV Recording Duration',

@@ -275,23 +275,4 @@ export abstract class BaseAccessory extends EventEmitter {
     });
   }
 
-  protected handleDummyEventGet(serviceName: string): Promise<CharacteristicValue> {
-    const characteristicValues: Record<string, CharacteristicValue> = {
-      'EventSnapshotsActive': CHAR.EventSnapshotsActive.DISABLE,
-      'HomeKitCameraActive': CHAR.HomeKitCameraActive.OFF,
-    };
-
-    const currentValue = characteristicValues[serviceName];
-
-    if (currentValue === undefined) {
-      throw new Error(`Invalid serviceName: ${serviceName}`);
-    }
-
-    this.log.debug(`IGNORE GET ${serviceName}: ${currentValue}`);
-    return Promise.resolve(currentValue);
-  }
-
-  protected handleDummyEventSet(serviceName: string, value: CharacteristicValue) {
-    this.log.debug(`IGNORE SET ${serviceName}: ${value}`);
-  }
 }
