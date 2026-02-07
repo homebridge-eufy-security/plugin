@@ -35,7 +35,7 @@ export class LocalLivestreamManager extends EventEmitter {
     this.serial_number = camera.device.getSerial();
     this.log = camera.log;
 
-    const deviceModel = camera.device.getPropertyValue(PropertyName.DeviceModel);
+    const deviceModel = camera.device.getPropertyValue(PropertyName.Model);
     const deviceType = camera.device.getDeviceType();
     this.log.debug(`LocalLivestreamManager initialized for device: ${camera.device.getName()} ` +
       `(serial: ${this.serial_number}, model: ${deviceModel}, type: ${deviceType})`);
