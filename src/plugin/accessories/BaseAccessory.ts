@@ -252,8 +252,16 @@ export abstract class BaseAccessory extends EventEmitter {
   }
 
   protected pruneUnusedServices() {
+    // Services managed by CameraController must never be pruned.
+    // CameraController creates these automatically during configureController()
+    // and they are not tracked in servicesInUse.
     const safeServiceUUIDs = [
-      SERV.CameraRTPStreamManagement.UUID,
+      SERV.CameraRTPStreamManagement.UUID,      // 00000110
+      '0000021A-0000-1000-8000-0026BB765291',    // CameraOperatingMode (HKSV)
+      '00000204-0000-1000-8000-0026BB765291',    // CameraRecordingManagement (HKSV)
+      '00000129-0000-1000-8000-0026BB765291',    // DataStreamTransportManagement (HKSV)
+      SERV.Microphone.UUID,                      // 00000112 (created by CameraController)
+      SERV.Speaker.UUID,                         // 00000113 (created by CameraController)
     ];
 
     this.accessory.services.forEach((service) => {

@@ -72,17 +72,24 @@ export class RecordingDelegate implements CameraRecordingDelegate {
 
   async * handleRecordingStreamRequest(): AsyncGenerator<RecordingPacket, any, unknown> {
     this.handlingStreamingRequest = true;
+    this.closeReason = undefined;
     log.info(this.camera.getName(), 'requesting recording for HomeKit Secure Video.');
 
-    let pending: Buffer[] = [];
-    let filebuffer = Buffer.alloc(0);
+    let totalBytes = 0;
+    let fragmentCount = 0;
 
     try {
+      if (!this.configuration) {
+        log.error(this.camera.getName(), 'No recording configuration available. Aborting.');
+        yield { data: Buffer.alloc(0), isLast: true };
+        return;
+      }
+
       const audioEnabled = this.controller?.recordingManagement?.recordingManagementService.getCharacteristic(CHAR.RecordingAudioActive).value;
       if (audioEnabled) {
-        log.debug('HKSV and plugin are set to record audio.');
+        log.debug(this.camera.getName(), 'HKSV and plugin are set to record audio.');
       } else {
-        log.debug('HKSV and plugin are set to omit audio recording.');
+        log.debug(this.camera.getName(), 'HKSV and plugin are set to omit audio recording.');
       }
 
       const videoParams = await FFmpegParameters.forVideoRecording();
@@ -94,8 +101,8 @@ export class RecordingDelegate implements CameraRecordingDelegate {
         videoConfig.videoProcessor = this.cameraConfig.videoConfig.videoProcessor;
       }
 
-      videoParams.setupForRecording(videoConfig, this.configuration!);
-      audioParams.setupForRecording(videoConfig, this.configuration!);
+      videoParams.setupForRecording(videoConfig, this.configuration);
+      audioParams.setupForRecording(videoConfig, this.configuration);
 
       const rtsp = is_rtsp_ready(this.camera, this.cameraConfig);
 
@@ -137,6 +144,13 @@ export class RecordingDelegate implements CameraRecordingDelegate {
         }, timer * 1000);
       }
 
+      // Properly handle fragmented MP4 structure for HKSV:
+      // 1. Initialization segment: accumulate ftyp + moov, yield once
+      // 2. Media fragments: yield each moof + mdat pair
+      let isInitializationSegment = true;
+      let initPending: Buffer[] = [];
+      let moofBuffer: Buffer | null = null;
+
       for await (const box of this.session.generator) {
 
         if (!this.handlingStreamingRequest) {
@@ -146,25 +160,48 @@ export class RecordingDelegate implements CameraRecordingDelegate {
 
         const { header, type, data } = box;
 
-        pending.push(header, data);
+        if (isInitializationSegment) {
+          // Accumulate ftyp + moov into initialization segment
+          initPending.push(header, data);
 
-        const motionDetected = this.accessory
-          .getService(SERV.MotionSensor)?.getCharacteristic(CHAR.MotionDetected).value;
+          if (type === 'moov') {
+            const fragment = Buffer.concat(initPending);
+            totalBytes += fragment.length;
+            initPending = [];
+            isInitializationSegment = false;
 
-        if (type === 'moov' || type === 'mdat') {
-          const fragment = Buffer.concat(pending);
+            log.debug(this.camera.getName(), `HKSV: Sending initialization segment, size: ${fragment.length}`);
 
-          filebuffer = Buffer.concat([filebuffer, Buffer.concat(pending)]);
-          pending = [];
+            yield {
+              data: fragment,
+              isLast: false,
+            };
+          }
+        } else {
+          // Media fragments: pair moof + mdat
+          if (type === 'moof') {
+            moofBuffer = Buffer.concat([header, data]);
+          } else if (type === 'mdat' && moofBuffer) {
+            const fragment = Buffer.concat([moofBuffer, header, data]);
+            moofBuffer = null;
+            fragmentCount++;
+            totalBytes += fragment.length;
 
-          yield {
-            data: fragment,
-            isLast: !motionDetected,
-          };
+            log.debug(this.camera.getName(), `HKSV: Fragment #${fragmentCount}, size: ${fragment.length}`);
 
-          if (!motionDetected) {
-            log.debug(this.camera.getName(), 'Ending recording session due to motion stopped!');
-            break;
+            yield {
+              data: fragment,
+              isLast: false,
+            };
+
+            // Check if motion has stopped after yielding the fragment
+            const motionDetected = this.accessory
+              .getService(SERV.MotionSensor)?.getCharacteristic(CHAR.MotionDetected).value;
+
+            if (!motionDetected) {
+              log.debug(this.camera.getName(), 'Ending recording session due to motion stopped!');
+              break;
+            }
           }
         }
       }
@@ -191,8 +228,8 @@ export class RecordingDelegate implements CameraRecordingDelegate {
           'The recording process was canceled by the HomeKit Controller."',
         );
       }
-      if (filebuffer.length > 0) {
-        log.debug(this.camera.getName(), 'Recording completed (HSV). Send ' + filebuffer.length + ' bytes.');
+      if (totalBytes > 0) {
+        log.debug(this.camera.getName(), `Recording completed (HSV). Sent ${fragmentCount} fragments, ${totalBytes} bytes total.`);
       }
 
       if (this.forceStopTimeout) {

@@ -361,7 +361,7 @@ export class FFmpegParameters {
     }
 
     public setupForRecording(videoConfig: VideoConfig, configuration: CameraRecordingConfiguration) {
-        this.movflags = 'frag_keyframe+empty_moov+default_base_moof';
+        this.movflags = 'frag_keyframe+empty_moov+default_base_moof+omit_tfhd_offset';
         this.maxMuxingQueueSize = 1024;
 
         if (videoConfig.videoProcessor && videoConfig.videoProcessor !== '') {
@@ -389,7 +389,7 @@ export class FFmpegParameters {
                         : configuration.videoCodec.parameters.level === H264Level.LEVEL3_2
                             ? '3.2'
                             : '3.1';
-                this.codecOptions = `-profile:v ${profile} -level:v ${level}`;
+                this.codecOptions = `-preset ultrafast -tune zerolatency -profile:v ${profile} -level:v ${level}`;
             }
             if (this.codec !== 'copy') {
                 this.bitrate = videoConfig.maxBitrate ?? configuration.videoCodec.parameters.bitRate;

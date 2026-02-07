@@ -576,6 +576,24 @@ export class CameraAccessory extends DeviceAccessory {
       }
 
       this.log.debug(`configureController`);
+
+      // Remove stale controller-managed services from cache before configuring.
+      // When HSV is enabled, CameraController creates CameraOperatingMode and
+      // DataStreamTransportManagement services automatically. If the cached
+      // accessory already has them (e.g. from a previous run), configureController
+      // will throw a duplicate UUID error.
+      const controllerManagedServiceUUIDs = [
+        '0000021A-0000-1000-8000-0026BB765291', // CameraOperatingMode
+        '00000129-0000-1000-8000-0026BB765291', // DataStreamTransportManagement
+      ];
+      for (const uuid of controllerManagedServiceUUIDs) {
+        const existingService = this.accessory.services.find(s => s.UUID === uuid);
+        if (existingService) {
+          this.log.debug(`Removing stale cached service ${uuid} before configureController`);
+          this.accessory.removeService(existingService);
+        }
+      }
+
       this.accessory.configureController(controller);
 
     } catch (error) {
