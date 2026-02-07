@@ -104,6 +104,33 @@ const SettingsView = {
     credsSection.appendChild(credsInfo);
     container.appendChild(credsSection);
 
+    // ── Debugging ──
+    const debugSection = document.createElement('div');
+    debugSection.className = 'settings-section';
+
+    const debugTitle = document.createElement('div');
+    debugTitle.className = 'detail-section__title';
+    debugTitle.textContent = 'Debugging';
+    debugSection.appendChild(debugTitle);
+
+    Toggle.render(debugSection, {
+      id: 'toggle-detailed-log',
+      label: 'Enable Debug Logging',
+      help: 'Enable verbose logging for troubleshooting. When reporting issues, enable this, reproduce the problem, then use the "Download Logs" button above to capture everything.',
+      checked: !!config.enableDetailedLogging,
+      onChange: async (checked) => {
+        await Config.updateGlobal({ enableDetailedLogging: checked });
+      },
+    });
+
+    const debugHint = document.createElement('div');
+    debugHint.className = 'text-muted mt-1';
+    debugHint.style.fontSize = '0.8rem';
+    debugHint.innerHTML = '💡 After enabling, reproduce the issue, then click <strong>📋 Download Logs</strong> above to collect the debug output.<br>⚠️ Remember to disable debug logging once you\'re done — it generates a lot of data and may impact performance.';
+    debugSection.appendChild(debugHint);
+
+    container.appendChild(debugSection);
+
     // ── Advanced Settings ──
     const advBtn = document.createElement('button');
     advBtn.className = 'advanced-toggle';
@@ -229,16 +256,6 @@ const SettingsView = {
       checked: !!config.enableEmbeddedPKCS1Support,
       onChange: async (checked) => {
         await Config.updateGlobal({ enableEmbeddedPKCS1Support: checked });
-      },
-    });
-
-    Toggle.render(advSection, {
-      id: 'toggle-detailed-log',
-      label: 'Detailed Logging',
-      help: 'Enable verbose logging for debugging purposes.',
-      checked: !!config.enableDetailedLogging,
-      onChange: async (checked) => {
-        await Config.updateGlobal({ enableDetailedLogging: checked });
       },
     });
 
