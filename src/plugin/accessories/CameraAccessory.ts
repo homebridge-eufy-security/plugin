@@ -261,98 +261,6 @@ export class CameraAccessory extends DeviceAccessory {
 
   private cameraFunction() {
 
-    if (!this.cameraConfig.hsv) {
-      this.registerCharacteristic({
-        serviceType: SERV.CameraOperatingMode,
-        characteristicType: CHAR.EventSnapshotsActive,
-        getValue: () => this.handleDummyEventGet('EventSnapshotsActive'),
-        setValue: (value) => this.handleDummyEventSet('EventSnapshotsActive', value),
-      });
-
-      this.registerCharacteristic({
-        serviceType: SERV.CameraOperatingMode,
-        characteristicType: CHAR.HomeKitCameraActive,
-        getValue: (data, characteristic) =>
-          this.getCameraPropertyValue(characteristic, PropertyName.DeviceEnabled),
-        setValue: (value, characteristic) =>
-          this.setCameraPropertyValue(characteristic, PropertyName.DeviceEnabled, value),
-        onValue: (service, characteristic) => {
-           
-          this.device.on('property changed', (device: any, name: string, value: PropertyValue) => {
-            this.applyPropertyValue(characteristic, PropertyName.DeviceEnabled, value);
-          });
-        },
-      });
-
-      if (this.device.hasProperty('enabled')) {
-        this.registerCharacteristic({
-          serviceType: SERV.CameraOperatingMode,
-          characteristicType: CHAR.ManuallyDisabled,
-          getValue: (data, characteristic) =>
-            this.getCameraPropertyValue(characteristic, PropertyName.DeviceEnabled),
-          onValue: (service, characteristic) => {
-             
-            this.device.on('property changed', (device: any, name: string, value: PropertyValue) => {
-              this.applyPropertyValue(characteristic, PropertyName.DeviceEnabled, value);
-            });
-          },
-        });
-      }
-
-      if (this.device.hasProperty('statusLed')) {
-        this.registerCharacteristic({
-          serviceType: SERV.CameraOperatingMode,
-          characteristicType: CHAR.CameraOperatingModeIndicator,
-          getValue: (data, characteristic) =>
-            this.getCameraPropertyValue(characteristic, PropertyName.DeviceStatusLed),
-          setValue: (value, characteristic) =>
-            this.setCameraPropertyValue(characteristic, PropertyName.DeviceStatusLed, value),
-          onValue: (service, characteristic) => {
-             
-            this.device.on('property changed', (device: any, name: string, value: PropertyValue) => {
-              this.applyPropertyValue(characteristic, PropertyName.DeviceStatusLed, value);
-            });
-          },
-        });
-      }
-
-      if (this.device.hasProperty('nightvision')) {
-        this.registerCharacteristic({
-          serviceType: SERV.CameraOperatingMode,
-          characteristicType: CHAR.NightVision,
-          getValue: (data, characteristic) =>
-            this.getCameraPropertyValue(characteristic, PropertyName.DeviceNightvision),
-          setValue: (value, characteristic) =>
-            this.setCameraPropertyValue(characteristic, PropertyName.DeviceNightvision, value),
-          onValue: (service, characteristic) => {
-             
-            this.device.on('property changed', (device: any, name: string, value: PropertyValue) => {
-              this.applyPropertyValue(characteristic, PropertyName.DeviceNightvision, value);
-            });
-          },
-        });
-      }
-
-      if (this.device.hasProperty('autoNightvision')) {
-        this.registerCharacteristic({
-          serviceType: SERV.CameraOperatingMode,
-          characteristicType: CHAR.NightVision,
-          getValue: (data, characteristic) =>
-            this.getCameraPropertyValue(characteristic, PropertyName.DeviceAutoNightvision),
-          setValue: (value, characteristic) =>
-            this.setCameraPropertyValue(characteristic, PropertyName.DeviceAutoNightvision, value),
-          onValue: (service, characteristic) => {
-             
-            this.device.on('property changed', (device: any, name: string, value: PropertyValue) => {
-              this.applyPropertyValue(characteristic, PropertyName.DeviceAutoNightvision, value);
-            });
-          },
-        });
-      }
-
-      this.getService(SERV.CameraOperatingMode).setPrimaryService(true);
-    }
-
     // Fire snapshot when motion detected
     this.registerCharacteristic({
       serviceType: SERV.MotionSensor,
@@ -570,10 +478,8 @@ export class CameraAccessory extends DeviceAccessory {
       this.log.debug(`streamingDelegate.setController`);
       this.streamingDelegate.setController(controller);
 
-      if (this.cameraConfig.hsv) {
-        this.log.debug(`recordingDelegate.setController`);
-        this.recordingDelegate.setController(controller);
-      }
+      this.log.debug(`recordingDelegate.setController`);
+      this.recordingDelegate.setController(controller);
 
       this.log.debug(`configureController`);
 
@@ -626,46 +532,42 @@ export class CameraAccessory extends DeviceAccessory {
           ],
         },
       },
-      recording: this.cameraConfig.hsv
-        ? {
-          options: {
-            overrideEventTriggerOptions: [
-              EventTriggerOption.MOTION,
-              EventTriggerOption.DOORBELL,
-            ],
-            prebufferLength: 0, // prebufferLength always remains 4s ?
-            mediaContainerConfiguration: [
-              {
-                type: MediaContainerType.FRAGMENTED_MP4,
-                fragmentLength: 4000,
-              },
-            ],
-            video: {
-              type: this.platform.api.hap.VideoCodecType.H264,
-              parameters: {
-                profiles: [H264Profile.BASELINE, H264Profile.MAIN, H264Profile.HIGH],
-                levels: [H264Level.LEVEL3_1, H264Level.LEVEL3_2, H264Level.LEVEL4_0],
-              },
-              resolutions: this.resolutions,
+      recording: {
+        options: {
+          overrideEventTriggerOptions: [
+            EventTriggerOption.MOTION,
+            EventTriggerOption.DOORBELL,
+          ],
+          prebufferLength: 0, // prebufferLength always remains 4s ?
+          mediaContainerConfiguration: [
+            {
+              type: MediaContainerType.FRAGMENTED_MP4,
+              fragmentLength: 4000,
             },
-            audio: {
-              codecs: {
-                type: AudioRecordingCodecType.AAC_ELD,
-                samplerate: AudioRecordingSamplerate.KHZ_24,
-                bitrateMode: 0,
-                audioChannels: 1,
-              },
+          ],
+          video: {
+            type: this.platform.api.hap.VideoCodecType.H264,
+            parameters: {
+              profiles: [H264Profile.BASELINE, H264Profile.MAIN, H264Profile.HIGH],
+              levels: [H264Level.LEVEL3_1, H264Level.LEVEL3_2, H264Level.LEVEL4_0],
+            },
+            resolutions: this.resolutions,
+          },
+          audio: {
+            codecs: {
+              type: AudioRecordingCodecType.AAC_ELD,
+              samplerate: AudioRecordingSamplerate.KHZ_24,
+              bitrateMode: 0,
+              audioChannels: 1,
             },
           },
-          delegate: this.recordingDelegate as RecordingDelegate,
-        }
-        : undefined,
-      sensors: this.cameraConfig.hsv
-        ? {
-          motion: this.getService(SERV.MotionSensor),
-          occupancy: undefined,
-        }
-        : undefined,
+        },
+        delegate: this.recordingDelegate as RecordingDelegate,
+      },
+      sensors: {
+        motion: this.getService(SERV.MotionSensor),
+        occupancy: undefined,
+      },
     };
 
     return option;

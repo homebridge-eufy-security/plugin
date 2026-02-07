@@ -21,7 +21,6 @@ export type CameraConfig = {
   delayCameraSnapshot?: boolean;
   talkback?: boolean;
   talkbackChannels?: number;
-  hsv?: boolean;
   hsvRecordingDuration?: number;
   indoorChimeButton?: boolean;
 };
@@ -37,7 +36,6 @@ export const DEFAULT_CAMERACONFIG_VALUES: CameraConfig = {
   lightButton: true,
   talkback: false,
   talkbackChannels: 1,
-  hsv: false,
   hsvRecordingDuration: 90,
   rtsp: false,
   enableCamera: true,
