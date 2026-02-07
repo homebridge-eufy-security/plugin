@@ -116,11 +116,12 @@ class UiServer extends HomebridgePluginUiServer {
 
   async deleteFileIfExists(filePath) {
     try {
-      if (fs.existsSync(filePath)) {
-        fs.unlinkSync(filePath);
-      }
+      await fs.promises.access(filePath);
+      await fs.promises.unlink(filePath);
     } catch (error) {
-      return Promise.reject(error);
+      if (error.code !== 'ENOENT') {
+        throw error;
+      }
     }
   }
 
@@ -136,7 +137,7 @@ class UiServer extends HomebridgePluginUiServer {
     try {
       if (options && options.username && options.password) {
         this.log.info('deleting persistent.json and accessories due to new login');
-        this.resetAccessoryData();
+        await this.resetAccessoryData();
         await this.resetPersistentData();
       }
     } catch (error) {
@@ -144,6 +145,15 @@ class UiServer extends HomebridgePluginUiServer {
     }
 
     if (!this.eufyClient && options && options.username && options.password && options.country) {
+      // Clear any pending timeouts from a previous login attempt
+      if (this.processingTimeout) {
+        clearTimeout(this.processingTimeout);
+        this.processingTimeout = null;
+      }
+      if (this._closeTimeout) {
+        clearTimeout(this._closeTimeout);
+        this._closeTimeout = null;
+      }
       this.stations = [];
       this.pendingStations = [];
       this.pendingDevices = [];
@@ -161,7 +171,7 @@ class UiServer extends HomebridgePluginUiServer {
           this.processPendingAccessories().catch(error => this.log.error('Error processing pending accessories:', error));
         }, 45 * 1000);
         // Close connection after 50 seconds to allow processing time
-        setTimeout(() => {
+        this._closeTimeout = setTimeout(() => {
           this.eufyClient?.removeAllListeners();
           this.eufyClient?.close();
         }, 50 * 1000);
