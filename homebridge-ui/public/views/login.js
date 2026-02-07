@@ -99,14 +99,32 @@ const LoginView = {
         nodeWarningContainer.className = 'alert alert-danger mt-2';
         nodeWarningContainer.setAttribute('role', 'alert');
         nodeWarningContainer.style.fontSize = '0.85rem';
-        nodeWarningContainer.innerHTML = `
-          <div class="form-check">
-            <input class="form-check-input" type="checkbox" id="ack-node-version">
-            <label class="form-check-label" for="ack-node-version">
-              <strong>Streaming unavailable:</strong> Node.js <strong>${Helpers.escHtml(warning.nodeVersion)}</strong> — ${Helpers.nodeVersionWarningHtml()}
-            </label>
-          </div>
-        `;
+
+        const formCheck = document.createElement('div');
+        formCheck.className = 'form-check';
+
+        const input = document.createElement('input');
+        input.className = 'form-check-input';
+        input.type = 'checkbox';
+        input.id = 'ack-node-version';
+        formCheck.appendChild(input);
+
+        const label = document.createElement('label');
+        label.className = 'form-check-label';
+        label.htmlFor = 'ack-node-version';
+
+        const strongPrefix = document.createElement('strong');
+        strongPrefix.textContent = 'Streaming unavailable:';
+        label.appendChild(strongPrefix);
+        label.appendChild(document.createTextNode(' Node.js '));
+        const strongVer = document.createElement('strong');
+        strongVer.textContent = warning.nodeVersion;
+        label.appendChild(strongVer);
+        label.appendChild(document.createTextNode(' — '));
+        Helpers.appendNodeVersionWarning(label);
+
+        formCheck.appendChild(label);
+        nodeWarningContainer.appendChild(formCheck);
         ack3 = nodeWarningContainer.querySelector('#ack-node-version');
         ack3.addEventListener('change', updateBtn);
         updateBtn();
