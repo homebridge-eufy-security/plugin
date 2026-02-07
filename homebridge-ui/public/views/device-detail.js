@@ -36,7 +36,7 @@ const DeviceDetailView = {
     const accessory = type === 'station' ? station : device;
     const accessoryConfig = type === 'station'
       ? Config.getStationConfig(id)
-      : Config.getCameraConfig(id);
+      : Config.getDeviceConfig(id);
 
     // Header with back button + device image
     this._renderHeader(container, accessory, type);

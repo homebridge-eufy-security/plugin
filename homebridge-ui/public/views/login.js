@@ -298,7 +298,7 @@ const LoginView = {
     const card = this._card(wrap, 'Captcha Verification');
     const body = card.querySelector('.card-body');
 
-    this._renderStepDots(body, 2);
+    this._renderStepDots(body, 3);
 
     body.insertAdjacentHTML('beforeend', `
       <p class="text-muted" style="font-size: 0.85rem;">

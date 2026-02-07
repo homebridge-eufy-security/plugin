@@ -53,11 +53,11 @@ const Config = {
   },
 
   /**
-   * Get camera config for a specific device by serial number.
+   * Get device config for a specific device by serial number.
    * @param {string} serialNumber
    * @returns {object|undefined}
    */
-  getCameraConfig(serialNumber) {
+  getDeviceConfig(serialNumber) {
     if (!this._cache) return undefined;
     const cameras = this._cache.cameras || [];
     return cameras.find((c) => c.serialNumber === serialNumber);
