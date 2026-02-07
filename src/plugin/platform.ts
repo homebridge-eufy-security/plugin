@@ -1,4 +1,3 @@
-/* eslint @typescript-eslint/no-var-requires: "off" */
 import {
   API,
   DynamicPlatformPlugin,
@@ -7,7 +6,7 @@ import {
   APIEvent,
 } from 'homebridge';
 
-import { DEVICE_INIT_DELAY, PLATFORM_NAME, PLUGIN_NAME, STATION_INIT_DELAY } from './settings';
+import { PLATFORM_NAME, PLUGIN_NAME } from './settings';
 
 import { DEFAULT_CONFIG_VALUES, EufySecurityPlatformConfig } from './config';
 
@@ -59,6 +58,9 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
 
   private activeAccessoryIds: string[] = [];
   private cleanCachedAccessoriesTimeout?: NodeJS.Timeout;
+
+  private pendingStations: Station[] = [];
+  private pendingDevices: Device[] = [];
 
   private _hostSystem: string = '';
 
@@ -345,6 +347,10 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
         (this.config.enableDetailedLogging) ? tsLogger : undefined
       );
 
+      // Each camera adds listeners (livestream, talkback) on top of the base ones.
+      // Raise limit to prevent MaxListenersExceededWarning in Node 22+.
+      this.eufyClient.setMaxListeners(30);
+
       this.eufyClient.on('station added', this.stationAdded.bind(this));
       this.eufyClient.on('station removed', this.stationRemoved.bind(this));
       this.eufyClient.on('device added', this.deviceAdded.bind(this));
@@ -415,9 +421,12 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
       return;
     }
 
+    log.info('Connected to Eufy. Discovering stations and devices... This may take up to 45 seconds.');
+
     // give the connection 45 seconds to discover all devices
-    // clean old accessories after that time
-    this.cleanCachedAccessoriesTimeout = setTimeout(() => {
+    // then process pending stations and devices, and clean old accessories after that
+    this.cleanCachedAccessoriesTimeout = setTimeout(async () => {
+      await this.processPendingDevices();
       this.cleanCachedAccessories();
     }, 45 * 1000);
 
@@ -555,19 +564,10 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
         return;
       }
 
-      const deviceContainer: StationContainer = {
-        deviceIdentifier: {
-          uniqueId: station.getSerial(),
-          displayName: 'STATION ' + station.getName().replace(/[^a-zA-Z0-9]/g, ''),
-          type: station.getDeviceType(),
-        } as DeviceIdentifier,
-        eufyDevice: station,
-      };
+      // Store station for batch processing later
+      this.pendingStations.push(station);
+      log.debug(`${station.getName()}: Station queued for processing`);
 
-      await this.delay(STATION_INIT_DELAY);
-      log.debug(`${deviceContainer.deviceIdentifier.displayName} pre-caching complete`);
-
-      this.addOrUpdateAccessory(deviceContainer, true);
     } catch (error) {
       log.error(`Error in stationAdded:, ${error}`);
     }
@@ -587,19 +587,10 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
         return;
       }
 
-      const deviceContainer: DeviceContainer = {
-        deviceIdentifier: {
-          uniqueId: device.getSerial(),
-          displayName: 'DEVICE ' + device.getName().replace(/[^a-zA-Z0-9]/g, ''),
-          type: deviceType,
-        } as DeviceIdentifier,
-        eufyDevice: device,
-      };
+      // Store device for batch processing later
+      this.pendingDevices.push(device);
+      log.debug(`${device.getName()}: Device queued for processing`);
 
-      await this.delay(DEVICE_INIT_DELAY);
-      log.debug(`${deviceContainer.deviceIdentifier.displayName} pre-caching complete`);
-
-      this.addOrUpdateAccessory(deviceContainer, false);
     } catch (error) {
       log.error(`Error in deviceAdded: ${error}`);
     }
@@ -613,6 +604,93 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
   private async deviceRemoved(device: Device) {
     const serial = device.getSerial();
     log.debug(`A device has been removed: ${serial}`);
+  }
+
+  /**
+   * Processes pending stations and devices in batch.
+   * Only creates station entities if:
+   * 1. It's a real HomeBase (DeviceType.STATION) OR
+   * 2. It has at least one device attached
+   * 
+   * All discovered devices are processed since they are already verified by bropat/eufy-security-client.
+   */
+  private async processPendingDevices(): Promise<void> {
+    log.debug(`[PROCESSING START] Processing ${this.pendingStations.length} stations and ${this.pendingDevices.length} devices`);
+
+    // Build set of stations that have at least one device
+    const stationsWithDevices = new Set<string>();
+
+    // Create all queued devices (they are already verified by bropat/eufy-security-client)
+    log.debug(`[DEVICES PROCESSING] Starting to process ${this.pendingDevices.length} devices`);
+    
+    for (const device of this.pendingDevices) {
+      stationsWithDevices.add(device.getStationSerial());
+
+      try {
+        const deviceType = device.getDeviceType();
+        const deviceContainer: DeviceContainer = {
+          deviceIdentifier: {
+            uniqueId: device.getSerial(),
+            displayName: 'DEVICE ' + device.getName().replace(/[^a-zA-Z0-9]/g, ''),
+            type: deviceType,
+          } as DeviceIdentifier,
+          eufyDevice: device,
+        };
+
+        log.debug(`[DEVICE] Processing: ${deviceContainer.deviceIdentifier.displayName}`);
+        await this.addOrUpdateAccessory(deviceContainer, false);
+        log.debug(`[DEVICE] Completed: ${deviceContainer.deviceIdentifier.displayName}`);
+      } catch (error) {
+        log.error(`[DEVICE ERROR] Error processing device "${device.getName()}": ${error}`);
+      }
+    }
+    
+    log.debug(`[DEVICES COMPLETE] All ${this.pendingDevices.length} devices processed`);
+
+    // Create queued stations that should be created
+    log.debug(`[STATIONS PROCESSING] Starting to process ${this.pendingStations.length} stations`);
+    let stationsSkipped = 0;
+    
+    for (const station of this.pendingStations) {
+      const stationType = station.getDeviceType();
+      const stationSerial = station.getSerial();
+
+      // Create if: it's a real HomeBase OR it has devices
+      const shouldCreate = 
+        stationType === DeviceType.STATION || 
+        stationsWithDevices.has(stationSerial);
+
+      if (!shouldCreate) {
+        stationsSkipped++;
+        log.debug(`[STATION SKIP] "${station.getName()}" has no devices and will be skipped`);
+        continue;
+      }
+
+      try {
+        const deviceContainer: StationContainer = {
+          deviceIdentifier: {
+            uniqueId: stationSerial,
+            displayName: 'STATION ' + station.getName().replace(/[^a-zA-Z0-9]/g, ''),
+            type: stationType,
+          } as DeviceIdentifier,
+          eufyDevice: station,
+        };
+
+        log.debug(`[STATION] Processing: ${deviceContainer.deviceIdentifier.displayName}`);
+        await this.addOrUpdateAccessory(deviceContainer, true);
+        log.debug(`[STATION] Completed: ${deviceContainer.deviceIdentifier.displayName}`);
+      } catch (error) {
+        log.error(`[STATION ERROR] Error processing station "${station.getName()}": ${error}`);
+      }
+    }
+    
+    log.debug(`[STATIONS COMPLETE] ${this.pendingStations.length - stationsSkipped} stations created, ${stationsSkipped} skipped`);
+
+    // Clear pending queues
+    this.pendingStations = [];
+    this.pendingDevices = [];
+
+    log.info(`[PROCESSING COMPLETE] All pending devices and stations processed`);
   }
 
   private async pluginShutdown() {

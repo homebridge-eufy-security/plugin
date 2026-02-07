@@ -3,21 +3,17 @@
     "target": "ES2022",
     "module": "commonjs",
     "lib": [
-      "es2022",
+      "es2022"
     ],
-    "declaration": true,
-    "declarationMap": true,
     "sourceMap": true,
     "outDir": "./dist",
     "rootDir": "./src/plugin",
     "strict": true,
     "esModuleInterop": true,
-    "noImplicitAny": false
+    "noImplicitAny": false,
+    "skipLibCheck": true
   },
   "include": [
     "src/plugin/"
-  ],
-  "exclude": [
-    "**/*.spec.ts"
   ]
 }

@@ -220,7 +220,7 @@ export class SnapshotManager extends EventEmitter {
       }
     }
 
-    let snapshot = Buffer.from([]);
+    let snapshot: Buffer = Buffer.from([]);
     try {
       if (this.cameraConfig.snapshotHandlingMethod === 1) {
         // return a preferablly most recent snapshot every time

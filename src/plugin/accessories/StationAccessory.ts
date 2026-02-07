@@ -2,7 +2,7 @@ import { Characteristic, PlatformAccessory, CharacteristicValue } from 'homebrid
 
 import { EufySecurityPlatform } from '../platform';
 import { BaseAccessory } from './BaseAccessory';
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+ 
 // @ts-ignore  
 import { Station, DeviceType, PropertyName, PropertyValue, AlarmEvent, GuardMode } from 'eufy-security-client';
 import { StationConfig } from '../utils/configTypes';
@@ -309,13 +309,14 @@ export class StationAccessory extends BaseAccessory {
     try {
       const currentValue = this.device.getPropertyValue(PropertyName.StationCurrentMode);
       if (currentValue === -1) {
-        throw new Error('Something wrong with this device', currentValue);
+        this.log.warn(`${stateCharacteristic}: Device state not initialized, returning safe default (DISARM)`);
+        return CHAR.SecuritySystemTargetState.DISARM;
       }
       this.log.debug(`GET StationCurrentMode: ${currentValue}`);
       return this.convertEufytoHK(currentValue);
     } catch (error) {
-      this.log.error(`${stateCharacteristic}: Wrong return value`, error);
-      return false;
+      this.log.error(`${stateCharacteristic}: Failed to retrieve security system state`, error);
+      return CHAR.SecuritySystemTargetState.DISARM;
     }
   }
 
@@ -399,9 +400,14 @@ export class StationAccessory extends BaseAccessory {
         return;
       }
     } else { // reset alarm
-      this.device.resetStationAlarmSound()
-        .then(() => this.log.debug(`alarm manually reset`))
-        .catch(error => this.log.error(`alarm could not be reset: ${error}`));
+      const resetPromise = this.device.resetStationAlarmSound();
+      if (resetPromise) {
+        resetPromise
+          .then(() => this.log.debug(`alarm manually reset`))
+          .catch(error => this.log.error(`alarm could not be reset: ${error}`));
+      } else {
+        this.log.warn(`resetStationAlarmSound returned undefined`);
+      }
     }
   }
 

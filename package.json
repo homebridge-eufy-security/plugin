@@ -1,7 +1,7 @@
 {
   "displayName": "Homebridge Eufy Security",
   "name": "homebridge-eufy-security",
-  "version": "4.3.7",
+  "version": "4.4.2-beta.5",
   "description": "Control Eufy Security from homebridge.",
   "license": "Apache-2.0",
   "repository": {
@@ -18,20 +18,18 @@
     "url": "https://github.com/homebridge-eufy-security/plugin/issues"
   },
   "engines": {
-    "node": "20.11.0 || ^22",
-    "homebridge": "^1.9.0 || ^2.0.0 || ^2.0.0-beta.27 || ^2.0.0-alpha.37"
+    "node": "^20 || ^22 || ^24",
+    "homebridge": ">=1.9.0 <1.12.0 || ^2.0.0-beta.0"
   },
   "main": "dist/index.js",
   "scripts": {
     "lint": "eslint src/** --max-warnings=0",
     "lint-fix": "eslint src/** --max-warnings=0 --fix",
     "watch": "npm run build && npm link && nodemon",
-    "build": "npm run build-plugin && npm run postbuild && npm run build-configui",
-    "build-plugin": "rimraf ./dist && tsc --project tsconfig.plugin.json",
-    "build-configui": "rimraf ./homebridge-ui && ng build --base-href /api/plugins/settings-ui/homebridge-eufy-security/ && tsc --project tsconfig.configui.server.json",
+    "build": "npm run build-plugin && npm run postbuild",
+    "build-plugin": "rimraf ./dist && tsc",
     "postbuild": "cp -r ./media ./dist/media",
-    "prebuild": "node -p \"'export const LIB_VERSION = ' + JSON.stringify(require('./package.json').version) + ';'\" > src/plugin/version.ts && node -p \"'export const LIB_VERSION = ' + JSON.stringify(require('./package.json').version) + ';'\" > src/version.ts",
-    "serve-configui": "ng serve",
+    "prebuild": "node -p \"'export const LIB_VERSION = ' + JSON.stringify(require('./package.json').version) + ';'\" > src/plugin/version.ts",
     "prepublishOnly": "npm run lint && npm run build"
   },
   "keywords": [
@@ -44,64 +42,25 @@
     "camera"
   ],
   "dependencies": {
-    "@homebridge/plugin-ui-utils": "^2.0.2",
-    "eufy-security-client": "^3.2.0",
-    "ffmpeg-for-homebridge": "2.1.7",
-    "fs-extra": "^11.3.0",
-    "pick-port": "^2.1.0",
-    "rotating-file-stream": "^3.2.6",
-    "tslog": "^4.9.3",
+    "@homebridge/plugin-ui-utils": "^2.1.2",
+    "eufy-security-client": "^3.6.0",
+    "ffmpeg-for-homebridge": "2.2.1",
+    "fs-extra": "^11.3.3",
+    "pick-port": "^2.2.0",
+    "rotating-file-stream": "^3.2.8",
+    "tslog": "^4.10.2",
     "zip-lib": "^1.1.2"
   },
   "devDependencies": {
-    "@angular-devkit/build-angular": "^19.2.9",
-    "@angular-devkit/core": "^19.2.9",
-    "@angular-eslint/builder": "19.3.0",
-    "@angular-eslint/eslint-plugin": "19.3.0",
-    "@angular-eslint/eslint-plugin-template": "19.3.0",
-    "@angular-eslint/schematics": "19.3.0",
-    "@angular-eslint/template-parser": "19.3.0",
-    "@angular/cli": "^19.2.9",
-    "@angular/common": "~19.2.8",
-    "@angular/compiler": "~19.2.8",
-    "@angular/compiler-cli": "~19.2.8",
-    "@angular/core": "~19.2.8",
-    "@angular/forms": "~19.2.8",
-    "@angular/localize": "~19.2.8",
-    "@angular/platform-browser": "~19.2.8",
-    "@angular/platform-browser-dynamic": "~19.2.8",
-    "@angular/router": "~19.2.8",
-    "@eslint/eslintrc": "^3.3.1",
-    "@eslint/js": "^9.25.1",
-    "@ng-bootstrap/ng-bootstrap": "^18.0.0",
-    "@popperjs/core": "^2.11.8",
-    "@types/jasmine": "~5.1.7",
-    "@types/node": "^22.15.2",
-    "@typescript-eslint/eslint-plugin": "8.31.0",
-    "@typescript-eslint/parser": "8.31.0",
-    "bootstrap": "^5.3.5",
-    "eslint": "^9.25.1",
-    "homebridge": "^1.9.0",
-    "jasmine-core": "~5.6.0",
-    "karma": "~6.4.4",
-    "karma-chrome-launcher": "~3.2.0",
-    "karma-coverage": "~2.2.1",
-    "karma-jasmine": "~5.1.0",
-    "karma-jasmine-html-reporter": "~2.1.0",
-    "lucide-angular": "^0.503.0",
-    "nodemon": "^3.1.10",
-    "rimraf": "^6.0.1",
-    "rxjs": "^7.8.2",
-    "typescript": "^5.8.3",
-    "zone.js": "~0.15.0"
-  },
-  "overrides": {
-    "autoprefixer": "^10.4.5"
-  },
-  "eslintConfig": {
-    "rules": {
-      "ban-ts-comment": 0
-    }
+    "@eslint/js": "^9.39.2",
+    "@types/node": "^25.2.0",
+    "@typescript-eslint/eslint-plugin": "8.54.0",
+    "@typescript-eslint/parser": "8.54.0",
+    "eslint": "^9.39.2",
+    "homebridge": "^1.11.1",
+    "nodemon": "^3.1.11",
+    "rimraf": "^6.1.2",
+    "typescript": "^5.9.3"
   },
   "homepage": "https://github.com/homebridge-eufy-security/plugin/wiki",
   "author": "homebridge-eufy-security"

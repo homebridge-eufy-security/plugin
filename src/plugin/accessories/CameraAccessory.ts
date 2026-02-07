@@ -18,7 +18,7 @@ import {
 import { EufySecurityPlatform } from '../platform';
 import { DeviceAccessory } from './Device';
 
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+ 
 // @ts-ignore  
 import { Camera, DeviceEvents, PropertyName, CommandName, StreamMetadata, PropertyValue } from 'eufy-security-client';
 
@@ -277,7 +277,7 @@ export class CameraAccessory extends DeviceAccessory {
         setValue: (value, characteristic) =>
           this.setCameraPropertyValue(characteristic, PropertyName.DeviceEnabled, value),
         onValue: (service, characteristic) => {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+           
           this.device.on('property changed', (device: any, name: string, value: PropertyValue) => {
             this.applyPropertyValue(characteristic, PropertyName.DeviceEnabled, value);
           });
@@ -291,7 +291,7 @@ export class CameraAccessory extends DeviceAccessory {
           getValue: (data, characteristic) =>
             this.getCameraPropertyValue(characteristic, PropertyName.DeviceEnabled),
           onValue: (service, characteristic) => {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+             
             this.device.on('property changed', (device: any, name: string, value: PropertyValue) => {
               this.applyPropertyValue(characteristic, PropertyName.DeviceEnabled, value);
             });
@@ -308,7 +308,7 @@ export class CameraAccessory extends DeviceAccessory {
           setValue: (value, characteristic) =>
             this.setCameraPropertyValue(characteristic, PropertyName.DeviceStatusLed, value),
           onValue: (service, characteristic) => {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+             
             this.device.on('property changed', (device: any, name: string, value: PropertyValue) => {
               this.applyPropertyValue(characteristic, PropertyName.DeviceStatusLed, value);
             });
@@ -325,7 +325,7 @@ export class CameraAccessory extends DeviceAccessory {
           setValue: (value, characteristic) =>
             this.setCameraPropertyValue(characteristic, PropertyName.DeviceNightvision, value),
           onValue: (service, characteristic) => {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+             
             this.device.on('property changed', (device: any, name: string, value: PropertyValue) => {
               this.applyPropertyValue(characteristic, PropertyName.DeviceNightvision, value);
             });
@@ -342,7 +342,7 @@ export class CameraAccessory extends DeviceAccessory {
           setValue: (value, characteristic) =>
             this.setCameraPropertyValue(characteristic, PropertyName.DeviceAutoNightvision, value),
           onValue: (service, characteristic) => {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+             
             this.device.on('property changed', (device: any, name: string, value: PropertyValue) => {
               this.applyPropertyValue(characteristic, PropertyName.DeviceAutoNightvision, value);
             });
@@ -360,7 +360,7 @@ export class CameraAccessory extends DeviceAccessory {
       getValue: () => this.device.getPropertyValue(PropertyName.DeviceMotionDetected),
       onValue: (service, characteristic) => {
         this.eventTypesToHandle.forEach(eventType => {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+           
           this.device.on(eventType as keyof any, (device: any, state: any) => {
             this.log.info(`MOTION DETECTED (${eventType})': ${state}`);
             characteristic.updateValue(state);
@@ -454,7 +454,7 @@ export class CameraAccessory extends DeviceAccessory {
     }
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   protected getCameraPropertyValue(characteristic: any, propertyName: PropertyName): CharacteristicValue {
     try {
       const value = this.device.getPropertyValue(propertyName);
@@ -465,7 +465,7 @@ export class CameraAccessory extends DeviceAccessory {
     }
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   protected applyPropertyValue(characteristic: any, propertyName: PropertyName, value: PropertyValue): CharacteristicValue {
     this.log.debug(`GET '${characteristic.displayName}' ${propertyName}: ${value}`);
 
@@ -494,7 +494,7 @@ export class CameraAccessory extends DeviceAccessory {
     return value as CharacteristicValue;
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   protected async setCameraPropertyValue(characteristic: any, propertyName: PropertyName, value: CharacteristicValue) {
     try {
       this.log.debug(`SET '${characteristic.displayName}' ${propertyName}: ${value}`);

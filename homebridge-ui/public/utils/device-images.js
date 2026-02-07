@@ -1,0 +1,62 @@
+/**
+ * Device type → image filename mapping.
+ * Ported from src/configui/app/util/deviceToImagesMap.ts
+ */
+// eslint-disable-next-line no-unused-vars
+const DeviceImages = {
+  getImage(deviceType) {
+    switch (deviceType) {
+      case 0: return 'homebase2_large.png';
+      case 1: case 4: return 'eufycam_large.jpg';
+      case 2: return 'sensor_large.png';
+      case 3: return 'floodlight_large.jpg';
+      case 5: case 7: case 16: case 91: return 'batterydoorbell2k_large.png';
+      case 8: return 'eufycam2c_large.jpg';
+      case 9: case 14: case 15: return 'eufycam2_large.png';
+      case 10: return 'motionsensor_large.png';
+      case 11: return 'keypad_large.png';
+      case 18: return 'homebase3_large.jpg';
+      case 19: return 'eufycam3_large.jpg';
+      case 23: return 'eufycam3c_large.jpg';
+      case 24: return 'eufycame330_large.jpg';
+      case 25: return 'minibase_chime_T8023_large.jpg';
+      case 30: return 'indoorcamc120_large.png';
+      case 100: return 'indoorcammini_large.jpg';
+      case 31: case 35: return 'indoorcamp24_large.png';
+      case 32: case 33: return 'solocame20_large.jpg';
+      case 34: return 'soloindoorcamc24_large.jpg';
+      case 37: case 39: return 'floodlight_large.jpg';
+      case 38: return 'floodlight2pro_large.jpg';
+      case 44: case 46: return 'solooutdoorcamc22_large.png';
+      case 45: return 'solooutdoorcamc24_large.jpg';
+      case 47: return 'floodlightcame340_large.jpg';
+      case 48: return 'solocams340_large.png';
+      case 50: case 51: case 52: case 53: case 54: case 55:
+      case 56: case 57: case 58: case 180: case 184:
+        return 'smartlock_t8500_large.jpg';
+      case 60: case 61: case 62: return 'solooutdoorcamc24_large.jpg';
+      case 63: return 'solocams220_large.jpg';
+      case 64: return 'solocamc210_large.jpg';
+      case 90: return 'smartdrop_t8790_large.jpg';
+      case 93: return 'wireddoorbelldual_large.jpg';
+      case 94: return 'batterydoorbell_e340_large.jpg';
+      case 104: return 'indoorcams350_large.jpg';
+      case 101: case 102: case 110:
+      case 131: case 132: case 133:
+        return 'garage_camera_t8452_large.jpg';
+      case 140: return 'smartsafe_s10_t7400_large.jpg';
+      case 141: return 'smartsafe_s12_t7401_large.jpg';
+      case 142: case 143: return 'smartsafe_s10_t7400_large.jpg';
+      case 151: return 'walllight_s100_large.jpg';
+      case 10005: return 'walllight_s120_large.jpg';
+      case 157: return 'smarttrack_link_t87B0_large.jpg';
+      case 159: return 'smarttrack_card_t87B2_large.jpg';
+      default: return 'unknown.png';
+    }
+  },
+
+  /** Returns full relative path to device image */
+  getPath(deviceType) {
+    return 'assets/devices/' + this.getImage(deviceType);
+  },
+};
