@@ -103,7 +103,7 @@ const LoginView = {
           <div class="form-check">
             <input class="form-check-input" type="checkbox" id="ack-node-version">
             <label class="form-check-label" for="ack-node-version">
-              <strong>Streaming unavailable:</strong> Node.js <strong>${warning.nodeVersion}</strong> — ${Helpers.nodeVersionWarningHtml(warning.nodeVersion)}
+              <strong>Streaming unavailable:</strong> Node.js <strong>${warning.nodeVersion}</strong> — ${Helpers.nodeVersionWarningHtml()}
             </label>
           </div>
         `;

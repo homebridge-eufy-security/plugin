@@ -41,7 +41,7 @@ const DashboardView = {
         <div class="node-version-banner__icon">⚠️</div>
         <div class="node-version-banner__content">
           <strong>Node.js ${warning.nodeVersion} — Streaming Incompatible</strong>
-          <div class="node-version-banner__text">${Helpers.nodeVersionWarningHtml(warning.nodeVersion)}</div>
+          <div class="node-version-banner__text">${Helpers.nodeVersionWarningHtml()}</div>
         </div>
       `;
       container.appendChild(banner);
