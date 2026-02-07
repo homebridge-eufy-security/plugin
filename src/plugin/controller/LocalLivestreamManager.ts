@@ -1,5 +1,5 @@
 import { EventEmitter, Readable } from 'stream';
-import { Station, Device, StreamMetadata, EufySecurity } from 'eufy-security-client';
+import { Station, Device, StreamMetadata, EufySecurity, PropertyName } from 'eufy-security-client';
 import { CameraAccessory } from '../accessories/CameraAccessory';
 import { ILogObj, Logger } from 'tslog';
 
@@ -35,6 +35,11 @@ export class LocalLivestreamManager extends EventEmitter {
     this.serial_number = camera.device.getSerial();
     this.log = camera.log;
 
+    const deviceModel = camera.device.getPropertyValue(PropertyName.DeviceModel);
+    const deviceType = camera.device.getDeviceType();
+    this.log.debug(`LocalLivestreamManager initialized for device: ${camera.device.getName()} ` +
+      `(serial: ${this.serial_number}, model: ${deviceModel}, type: ${deviceType})`);
+
     this.initialize();
 
     this.eufyClient.on('station livestream start', this.onStationLivestreamStart.bind(this));
@@ -68,18 +73,31 @@ export class LocalLivestreamManager extends EventEmitter {
   // Start and get the local livestream.
   private async startAndGetLocalLiveStream(): Promise<StationStream> {
     return new Promise((resolve, reject) => {
-      this.log.debug('Start new station livestream...');
+      this.log.debug(`Start new station livestream for serial: ${this.serial_number}...`);
       if (!this.livestreamIsStarting) { // prevent multiple stream starts from eufy station
         this.livestreamIsStarting = true;
-        this.eufyClient.startStationLivestream(this.serial_number);
+        this.log.debug(`Calling eufyClient.startStationLivestream('${this.serial_number}')...`);
+        try {
+          this.eufyClient.startStationLivestream(this.serial_number);
+          this.log.debug('startStationLivestream call completed (awaiting P2P stream event).');
+        } catch (err) {
+          this.log.error(`startStationLivestream threw an error: ${err}`);
+          this.livestreamIsStarting = false;
+          reject(err);
+          return;
+        }
       } else {
         this.log.debug('stream is already starting. waiting...');
       }
 
       // Hard stop
+      const startTime = Date.now();
       const hardStop = setTimeout(
         () => {
-          this.log.error('Livestream timeout: No livestream emitted within the expected timeframe.');
+          const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
+          this.log.error(`Livestream timeout after ${elapsed}s: No 'station livestream start' event received for serial ${this.serial_number}.`);
+          this.log.error(`This means the P2P connection to the station was not established or the station did not respond.`);
+          this.log.debug(`livestreamIsStarting: ${this.livestreamIsStarting}, stationStream: ${this.stationStream !== null}`);
           const problematicNodeVersions = ['18.19.1', '20.11.1', '21.6.2'];
           this.log.warn(`If you are using Node.js version ${problematicNodeVersions.join(', ')} or newer, this might be related to RSA_PKCS1_PADDING support removal.`);
           this.log.warn('Please try enabling "Embedded PKCS1 Support" in the plugin settings to resolve this issue.');
@@ -126,6 +144,10 @@ export class LocalLivestreamManager extends EventEmitter {
     videostream: Readable,
     audiostream: Readable,
   ) {
+    this.log.debug(`Received 'station livestream start' event - station: ${station.getName()}, ` +
+      `device: ${device.getName()} (serial: ${device.getSerial()}), ` +
+      `expected serial: ${this.serial_number}, match: ${device.getSerial() === this.serial_number}`);
+
     if (device.getSerial() === this.serial_number) {
       if (this.stationStream) {
         const diff = (Date.now() - this.stationStream.createdAt) / 1000;
@@ -140,7 +162,8 @@ export class LocalLivestreamManager extends EventEmitter {
       this.livestreamStartedAt = Date.now();
       const createdAt = Date.now();
       this.stationStream = { station, device, metadata, videostream, audiostream, createdAt };
-      this.log.debug('Stream metadata: ', this.stationStream.metadata);
+      this.log.debug('Stream metadata: ', JSON.stringify(this.stationStream.metadata));
+      this.log.debug(`Video stream readable: ${videostream.readable}, Audio stream readable: ${audiostream.readable}`);
 
       this.emit('livestream start');
     }
