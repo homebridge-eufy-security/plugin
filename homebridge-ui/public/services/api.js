@@ -22,6 +22,18 @@ const Api = {
   },
 
   /**
+   * Remove a previously registered listener for an event.
+   * Views can call this on teardown to explicitly detach their callbacks.
+   * @param {string} event
+   */
+  _off(event) {
+    if (this._listeners[event]) {
+      homebridge.removeEventListener(event, this._listeners[event]);
+      delete this._listeners[event];
+    }
+  },
+
+  /**
    * Login with credentials, TFA code, or captcha
    * @param {object} options - { username, password, country, deviceName } | { verifyCode } | { captcha: { captchaCode, captchaId } }
    * @returns {Promise<{success: boolean, failReason?: number, data?: any}>}
