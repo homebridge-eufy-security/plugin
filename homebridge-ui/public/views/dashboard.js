@@ -37,13 +37,25 @@ const DashboardView = {
     if (warning && warning.affected) {
       const banner = document.createElement('div');
       banner.className = 'node-version-banner';
-      banner.innerHTML = `
-        <div class="node-version-banner__icon">⚠️</div>
-        <div class="node-version-banner__content">
-          <strong>Node.js ${Helpers.escHtml(warning.nodeVersion)} — Streaming Incompatible</strong>
-          <div class="node-version-banner__text">${Helpers.nodeVersionWarningHtml()}</div>
-        </div>
-      `;
+
+      const iconDiv = document.createElement('div');
+      iconDiv.className = 'node-version-banner__icon';
+      iconDiv.textContent = '⚠️';
+      banner.appendChild(iconDiv);
+
+      const contentDiv = document.createElement('div');
+      contentDiv.className = 'node-version-banner__content';
+
+      const title = document.createElement('strong');
+      title.textContent = `Node.js ${warning.nodeVersion} — Streaming Incompatible`;
+      contentDiv.appendChild(title);
+
+      const textDiv = document.createElement('div');
+      textDiv.className = 'node-version-banner__text';
+      Helpers.appendNodeVersionWarning(textDiv);
+      contentDiv.appendChild(textDiv);
+
+      banner.appendChild(contentDiv);
       container.appendChild(banner);
     }
 
