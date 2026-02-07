@@ -41,7 +41,7 @@ const DashboardView = {
         <div class="node-version-banner__icon">⚠️</div>
         <div class="node-version-banner__content">
           <strong>Node.js ${warning.nodeVersion} — Streaming Incompatible</strong>
-          <div class="node-version-banner__text">Your Node.js version has removed <code>RSA_PKCS1_PADDING</code> support, which breaks streaming features. The rest of the plugin works fine. Use <strong>Node.js v20.11.0</strong> or earlier, or upgrade to <strong>v24.5.0+</strong>. <a href="https://github.com/homebridge-eufy-security/plugin/wiki/Node.js-Compatibility-with-Eufy-Security-Plugin" target="_blank">Learn more</a></div>
+          <div class="node-version-banner__text">${Helpers.nodeVersionWarningHtml(warning.nodeVersion)}</div>
         </div>
       `;
       container.appendChild(banner);
