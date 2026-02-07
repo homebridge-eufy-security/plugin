@@ -116,7 +116,6 @@ class UiServer extends HomebridgePluginUiServer {
 
   async deleteFileIfExists(filePath) {
     try {
-      await fs.promises.access(filePath);
       await fs.promises.unlink(filePath);
     } catch (error) {
       if (error.code !== 'ENOENT') {
