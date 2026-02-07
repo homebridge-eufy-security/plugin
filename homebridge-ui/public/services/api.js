@@ -4,6 +4,23 @@
  */
 // eslint-disable-next-line no-unused-vars
 const Api = {
+  /** @private Track registered listeners to prevent stacking on re-render */
+  _listeners: {},
+
+  /**
+   * Register an event listener, replacing any previous listener for the same event.
+   * Prevents listener stacking when views re-render.
+   * @param {string} event
+   * @param {function} handler
+   */
+  _on(event, handler) {
+    if (this._listeners[event]) {
+      homebridge.removeEventListener(event, this._listeners[event]);
+    }
+    this._listeners[event] = handler;
+    homebridge.addEventListener(event, handler);
+  },
+
   /**
    * Login with credentials, TFA code, or captcha
    * @param {object} options - { username, password, country, deviceName } | { verifyCode } | { captcha: { captchaCode, captchaId } }
@@ -40,40 +57,44 @@ const Api = {
   /**
    * Register a listener for the 'addAccessory' push event.
    * Fired by server after batch processing completes (~45s after login).
+   * Replaces any previously registered listener.
    * @param {function} callback - receives array of L_Station objects
    */
   onAccessoriesReady(callback) {
-    homebridge.addEventListener('addAccessory', (event) => {
+    this._on('addAccessory', (event) => {
       callback(event.data);
     });
   },
 
   /**
    * Register a listener for admin account error.
+   * Replaces any previously registered listener.
    * @param {function} callback
    */
   onAdminAccountUsed(callback) {
-    homebridge.addEventListener('AdminAccountUsed', () => {
+    this._on('AdminAccountUsed', () => {
       callback();
     });
   },
 
   /**
-   * Register a listener for version mismatch
+   * Register a listener for version mismatch.
+   * Replaces any previously registered listener.
    * @param {function} callback - receives { currentVersion, storedVersion }
    */
   onVersionUnmatched(callback) {
-    homebridge.addEventListener('versionUnmatched', (event) => {
+    this._on('versionUnmatched', (event) => {
       callback(event.data);
     });
   },
 
   /**
-   * Register a listener for log download progress
+   * Register a listener for log download progress.
+   * Replaces any previously registered listener.
    * @param {function} callback - receives { progress, status }
    */
   onDownloadLogsProgress(callback) {
-    homebridge.addEventListener('downloadLogsProgress', (event) => {
+    this._on('downloadLogsProgress', (event) => {
       callback(event.data);
     });
   },
