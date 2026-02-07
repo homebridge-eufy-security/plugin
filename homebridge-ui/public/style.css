@@ -59,12 +59,6 @@
   transform: translateY(-2px);
 }
 
-.device-card--disabled {
-  opacity: 0.45;
-  cursor: not-allowed;
-  pointer-events: none;
-}
-
 .device-card--unsupported {
   opacity: 0.5;
   cursor: default;
@@ -115,11 +109,6 @@
 }
 
 /* ===== Badges ===== */
-.badge-battery {
-  font-size: 0.7rem;
-  font-weight: 500;
-}
-
 .badge-unsupported {
   font-size: 0.7rem;
   background-color: var(--eufy-warning) !important;
@@ -344,11 +333,6 @@
 .welcome-banner {
   text-align: center;
   padding: 24px 20px 16px;
-}
-
-.welcome-banner__icon {
-  font-size: 2.5rem;
-  margin-bottom: 12px;
 }
 
 .welcome-banner__title {
