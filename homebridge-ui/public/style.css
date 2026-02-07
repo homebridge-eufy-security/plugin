@@ -516,6 +516,14 @@ body.dark-mode .discovery-screen__subtitle {
   color: var(--eufy-muted);
 }
 
+body.dark-mode .discovery-screen__title {
+  color: rgba(255, 255, 255, 0.9);
+}
+
+body.dark-mode .discovery-screen .text-muted {
+  color: var(--eufy-muted) !important;
+}
+
 body.dark-mode .node-version-banner {
   background: rgba(255, 193, 7, 0.12);
   border-color: rgba(255, 193, 7, 0.3);
