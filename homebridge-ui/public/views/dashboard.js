@@ -40,7 +40,7 @@ const DashboardView = {
       banner.innerHTML = `
         <div class="node-version-banner__icon">⚠️</div>
         <div class="node-version-banner__content">
-          <strong>Node.js ${warning.nodeVersion} — Streaming Incompatible</strong>
+          <strong>Node.js ${Helpers.escHtml(warning.nodeVersion)} — Streaming Incompatible</strong>
           <div class="node-version-banner__text">${Helpers.nodeVersionWarningHtml()}</div>
         </div>
       `;
