@@ -1,3 +1,12 @@
+export enum SnapshotHandlingMethod {
+  /** Always fetch a fresh snapshot from the camera (highest battery drain) */
+  AlwaysFresh = 1,
+  /** Return cached snapshot if recent, otherwise fetch fresh */
+  Balanced = 2,
+  /** Always return cached/cloud snapshot (lowest battery drain) */
+  CloudOnly = 3,
+}
+
 export type CameraConfig = {
   name?: string;
   manufacturer?: string;
@@ -16,7 +25,7 @@ export type CameraConfig = {
   rtsp: boolean;
   enableCamera: boolean;
   refreshSnapshotIntervalMinutes?: number;
-  snapshotHandlingMethod?: number;
+  snapshotHandlingMethod?: SnapshotHandlingMethod;
   immediateRingNotificationWithoutSnapshot?: boolean;
   delayCameraSnapshot?: boolean;
   talkback?: boolean;
@@ -40,7 +49,7 @@ export const DEFAULT_CAMERACONFIG_VALUES: CameraConfig = {
   rtsp: false,
   enableCamera: true,
   refreshSnapshotIntervalMinutes: 0,
-  snapshotHandlingMethod: 3,
+  snapshotHandlingMethod: SnapshotHandlingMethod.CloudOnly,
   immediateRingNotificationWithoutSnapshot: false,
   delayCameraSnapshot: false,
   indoorChimeButton: false,
