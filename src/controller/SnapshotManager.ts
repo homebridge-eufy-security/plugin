@@ -1,4 +1,4 @@
-import { EventEmitter, Readable } from 'stream';
+import { Readable } from 'stream';
 
 import { Camera, Device, DeviceEvents, Picture, PropertyName } from 'eufy-security-client';
 
@@ -49,7 +49,7 @@ type StreamSource = {
  * Drawbacks: elapsed time in homekit might be wrong
  */
 
-export class SnapshotManager extends EventEmitter {
+export class SnapshotManager {
 
   private static instanceCount = 0;
 
@@ -60,7 +60,7 @@ export class SnapshotManager extends EventEmitter {
   private currentSnapshot?: Snapshot;
   private readonly placeholders = new Map<PlaceholderKey, Buffer>();
 
-  private refreshProcessRunning = false;
+  private pendingFetch?: Promise<void>;
   private lastRingEvent = 0;
   private isDeviceOffline = false;
 
@@ -72,7 +72,6 @@ export class SnapshotManager extends EventEmitter {
     camera: CameraAccessory,
     private livestreamManager: LocalLivestreamManager,
   ) {
-    super();
 
     this.platform = camera.platform;
     this.device = camera.device;
@@ -273,53 +272,17 @@ export class SnapshotManager extends EventEmitter {
   }
 
   /**
-   * Retrieves the newest snapshot buffer asynchronously.
-   * @returns A Promise resolving to a Buffer containing the newest snapshot image.
+   * Retrieves the newest snapshot by awaiting the in-flight or new fetch.
    */
-  private getSnapshotFromStream(): Promise<Buffer> {
-    this.log.info(`Begin live streaming to access the most recent snapshot (significant battery drain on the device)`);
-    return new Promise((resolve, reject) => {
-      let settled = false;
+  private async getSnapshotFromStream(): Promise<Buffer> {
+    this.log.info('Begin live streaming to access the most recent snapshot (significant battery drain on the device)');
 
-      // Define a listener for the 'new snapshot' event
-      const snapshotListener = () => {
-        if (settled) {
-          return;
-        }
-        settled = true;
-        clearTimeout(requestTimeout);
-        if (this.currentSnapshot) {
-          resolve(this.currentSnapshot.image);
-        } else {
-          reject('getSnapshotFromStream error');
-        }
-      };
+    await this.fetchCurrentCameraSnapshot();
 
-      // Set a timeout for the snapshot request
-      const requestTimeout = setTimeout(() => {
-        if (settled) {
-          return;
-        }
-        settled = true;
-        this.removeListener('new snapshot', snapshotListener);
-        reject('getSnapshotFromStream timed out');
-      }, 4 * 1000);
-
-      // Register listener BEFORE starting fetch to avoid missing the event
-      this.once('new snapshot', snapshotListener);
-
-      // Fetch the current camera snapshot
-      this.fetchCurrentCameraSnapshot()
-        .catch((error) => {
-          if (settled) {
-            return;
-          }
-          settled = true;
-          clearTimeout(requestTimeout);
-          this.removeListener('new snapshot', snapshotListener);
-          reject(error);
-        });
-    });
+    if (this.currentSnapshot) {
+      return this.currentSnapshot.image;
+    }
+    throw new Error('Snapshot fetch completed but no snapshot stored');
   }
 
   /**
@@ -379,7 +342,6 @@ export class SnapshotManager extends EventEmitter {
           this.log.debug('Skipping cloud snapshot update, a recent stream snapshot already exists.');
         } else {
           this.storeSnapshotForCache(picture.data);
-          this.emit('new snapshot');
         }
       }
     }
@@ -407,21 +369,21 @@ export class SnapshotManager extends EventEmitter {
   }
 
   private async fetchCurrentCameraSnapshot(): Promise<void> {
-    if (this.refreshProcessRunning) {
-      return;
+    if (this.pendingFetch) {
+      return this.pendingFetch;
     }
-    this.refreshProcessRunning = true;
-    this.log.debug('Fetching new snapshot from camera.');
-    try {
-      const snapshotBuffer = await this.getCurrentCameraSnapshot();
-      this.refreshProcessRunning = false;
 
-      this.storeSnapshotForCache(snapshotBuffer);
-      this.emit('new snapshot');
-    } catch (error) {
-      this.refreshProcessRunning = false;
-      throw error;
-    }
+    this.log.debug('Fetching new snapshot from camera.');
+
+    this.pendingFetch = this.getCurrentCameraSnapshot()
+      .then((snapshotBuffer) => {
+        this.storeSnapshotForCache(snapshotBuffer);
+      })
+      .finally(() => {
+        this.pendingFetch = undefined;
+      });
+
+    return this.pendingFetch;
   }
 
   private async getCurrentCameraSnapshot(): Promise<Buffer> {
