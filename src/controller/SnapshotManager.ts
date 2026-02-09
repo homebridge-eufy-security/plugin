@@ -398,27 +398,18 @@ export class SnapshotManager {
   }
 
   private async getCameraSource(): Promise<StreamSource | null> {
-    if (is_rtsp_ready(this.device, this.cameraConfig)) {
-      try {
-        const url = this.device.getPropertyValue(PropertyName.DeviceRTSPStreamUrl);
+    try {
+      if (is_rtsp_ready(this.device, this.cameraConfig)) {
+        const url = this.device.getPropertyValue(PropertyName.DeviceRTSPStreamUrl) as string;
         this.log.debug('RTSP URL: ' + url);
-        return {
-          url: url as string,
-        };
-      } catch (error) {
-        this.log.warn('Could not get snapshot from rtsp stream!', error);
-        return null;
+        return { url };
       }
-    } else {
-      try {
-        const streamData = await this.livestreamManager.getLocalLivestream();
-        return {
-          stream: streamData.videostream,
-        };
-      } catch (error) {
-        this.log.warn('Could not get snapshot from livestream!', error);
-        return null;
-      }
+
+      const streamData = await this.livestreamManager.getLocalLivestream();
+      return { stream: streamData.videostream };
+    } catch (error) {
+      this.log.warn('Could not get camera source for snapshot:', error);
+      return null;
     }
   }
 
