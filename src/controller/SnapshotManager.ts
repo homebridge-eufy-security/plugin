@@ -320,37 +320,40 @@ export class SnapshotManager {
   }
 
   private async onPropertyValueChanged(device: Device, name: string): Promise<void> {
-    if (name === 'picture') {
-      const picture = device.getPropertyValue(PropertyName.DevicePicture) as Picture;
-      if (picture && picture.type) {
-        this.storeImage(`${device.getSerial()}.${picture.type.ext}`, picture.data);
-        // Don't overwrite a recent stream snapshot with a cloud image
-        if (this.currentSnapshot && (Date.now() - this.currentSnapshot.timestamp) < SNAPSHOT_CLOUD_SKIP_MS) {
-          this.log.debug('Skipping cloud snapshot update, a recent stream snapshot already exists.');
-        } else {
-          this.storeSnapshotForCache(picture.data);
+    switch (name) {
+      case 'picture': {
+        const picture = device.getPropertyValue(PropertyName.DevicePicture) as Picture;
+        if (picture && picture.type) {
+          this.storeImage(`${device.getSerial()}.${picture.type.ext}`, picture.data);
+          if (this.currentSnapshot && (Date.now() - this.currentSnapshot.timestamp) < SNAPSHOT_CLOUD_SKIP_MS) {
+            this.log.debug('Skipping cloud snapshot update, a recent stream snapshot already exists.');
+          } else {
+            this.storeSnapshotForCache(picture.data);
+          }
         }
+        break;
       }
-    }
 
-    if (name === 'enabled') {
-      const enabled = device.getPropertyValue(PropertyName.DeviceEnabled) as boolean;
-      this.log.info(`Device enabled state changed to: ${enabled}`);
-      if (enabled) {
-        // Clear stale snapshot so the next request fetches a fresh one
-        this.currentSnapshot = undefined;
+      case 'enabled': {
+        const enabled = device.getPropertyValue(PropertyName.DeviceEnabled) as boolean;
+        this.log.info(`Device enabled state changed to: ${enabled}`);
+        if (enabled) {
+          this.currentSnapshot = undefined;
+        }
+        break;
       }
-    }
 
-    if (name === 'state') {
-      const state = device.getPropertyValue(PropertyName.DeviceState) as number;
-      const wasOffline = this.isDeviceOffline;
-      this.isDeviceOffline = (state === 0 || state === 3);
-      if (this.isDeviceOffline && !wasOffline) {
-        this.log.warn(`Device went offline (state: ${state}).`);
-      } else if (!this.isDeviceOffline && wasOffline) {
-        this.log.info(`Device came back online (state: ${state}).`);
-        this.currentSnapshot = undefined;
+      case 'state': {
+        const state = device.getPropertyValue(PropertyName.DeviceState) as number;
+        const wasOffline = this.isDeviceOffline;
+        this.isDeviceOffline = (state === 0 || state === 3);
+        if (this.isDeviceOffline && !wasOffline) {
+          this.log.warn(`Device went offline (state: ${state}).`);
+        } else if (!this.isDeviceOffline && wasOffline) {
+          this.log.info(`Device came back online (state: ${state}).`);
+          this.currentSnapshot = undefined;
+        }
+        break;
       }
     }
   }
