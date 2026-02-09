@@ -7,13 +7,13 @@
     ],
     "sourceMap": true,
     "outDir": "./dist",
-    "rootDir": "./src/plugin",
+    "rootDir": "./src",
     "strict": true,
     "esModuleInterop": true,
     "noImplicitAny": false,
     "skipLibCheck": true
   },
   "include": [
-    "src/plugin/"
+    "src/"
   ]
 }

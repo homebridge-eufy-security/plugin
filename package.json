@@ -29,7 +29,7 @@
     "build": "npm run build-plugin && npm run postbuild",
     "build-plugin": "rimraf ./dist && tsc",
     "postbuild": "cp -r ./media ./dist/media",
-    "prebuild": "node -p \"'export const LIB_VERSION = ' + JSON.stringify(require('./package.json').version) + ';'\" > src/plugin/version.ts",
+    "prebuild": "node -p \"'export const LIB_VERSION = ' + JSON.stringify(require('./package.json').version) + ';'\" > src/version.ts",
     "prepublishOnly": "npm run lint && npm run build"
   },
   "keywords": [
