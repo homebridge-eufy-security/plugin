@@ -10,6 +10,7 @@ import {
   SNAPSHOT_CACHE_BALANCED_SECONDS,
   SNAPSHOT_CACHE_FRESH_SECONDS,
   SNAPSHOT_CLOUD_SKIP_MS,
+  SNAPSHOT_FETCH_TIMEOUT_MS,
   SNAPSHOT_MIN_REFRESH_INTERVAL_MINUTES,
   SNAPSHOT_RING_DEBOUNCE_SECONDS,
 } from '../settings';
@@ -377,7 +378,7 @@ export class SnapshotManager {
 
     this.log.debug('Fetching new snapshot from camera.');
 
-    this.pendingFetch = (async () => {
+    this.pendingFetch = this.withTimeout((async () => {
       const source = await this.getCameraSource();
 
       const isLocalStream = source.type === 'local';
@@ -398,7 +399,7 @@ export class SnapshotManager {
           this.livestreamManager.stopLocalLiveStream();
         }
       }
-    })().finally(() => {
+    })(), SNAPSHOT_FETCH_TIMEOUT_MS).finally(() => {
       this.pendingFetch = undefined;
     });
 
@@ -414,6 +415,13 @@ export class SnapshotManager {
 
     const streamData = await this.livestreamManager.getLocalLivestream();
     return { type: 'local', stream: streamData.videostream };
+  }
+
+  private withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
+    return new Promise<T>((resolve, reject) => {
+      const timer = setTimeout(() => reject(new Error(`Snapshot fetch timed out after ${ms}ms`)), ms);
+      promise.then(resolve, reject).finally(() => clearTimeout(timer));
+    });
   }
 
   private async resizeSnapshot(snapshot: Buffer, request: SnapshotRequest): Promise<Buffer> {
