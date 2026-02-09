@@ -1,17 +1,15 @@
 import { Readable } from 'stream';
+import * as fs from 'fs';
 
 import { Camera, Device, DeviceEvents, Picture, PropertyName } from 'eufy-security-client';
-
-import { CameraConfig } from '../utils/configTypes';
-import { EufySecurityPlatform } from '../platform';
-import { LocalLivestreamManager } from './LocalLivestreamManager';
-
-import { is_rtsp_ready } from '../utils/utils';
 import { SnapshotRequest } from 'homebridge';
-import { FFmpeg, FFmpegParameters } from '../utils/ffmpeg';
-import * as fs from 'fs';
-import { CameraAccessory } from '../accessories/CameraAccessory';
 import { ILogObj, Logger } from 'tslog';
+
+import { CameraAccessory } from '../accessories/CameraAccessory';
+import { CameraConfig } from '../utils/configTypes';
+import { FFmpeg, FFmpegParameters } from '../utils/ffmpeg';
+import { is_rtsp_ready } from '../utils/utils';
+import { LocalLivestreamManager } from './LocalLivestreamManager';
 
 type PlaceholderKey = 'black' | 'unavailable' | 'offline' | 'disabled';
 
@@ -53,7 +51,7 @@ export class SnapshotManager {
 
   private static instanceCount = 0;
 
-  private readonly platform: EufySecurityPlatform;
+  private readonly eufyPath: string;
   private readonly device: Camera;
   private cameraConfig: CameraConfig;
 
@@ -73,7 +71,7 @@ export class SnapshotManager {
     private livestreamManager: LocalLivestreamManager,
   ) {
 
-    this.platform = camera.platform;
+    this.eufyPath = camera.platform.eufyPath;
     this.device = camera.device;
     this.cameraConfig = camera.cameraConfig;
     this.log = camera.log;
@@ -305,7 +303,7 @@ export class SnapshotManager {
   }
 
   private storeImage(file: string, image: Buffer) {
-    const filePath = `${this.platform.eufyPath}/${file}`;
+    const filePath = `${this.eufyPath}/${file}`;
     try {
       fs.writeFileSync(filePath, image);
       this.log.debug(`Stored Image: ${filePath}`);
