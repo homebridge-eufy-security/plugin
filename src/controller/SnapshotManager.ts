@@ -78,9 +78,17 @@ export class SnapshotManager extends EventEmitter {
     this.cameraConfig = camera.cameraConfig;
     this.log = camera.log;
 
+    this.setupEventListeners();
+    this.setupAutomaticRefresh();
+    this.logSnapshotHandlingMethod();
+    this.loadPlaceholderImages();
+    this.initializeDeviceState();
+    this.loadInitialSnapshot();
+  }
+
+  private setupEventListeners(): void {
     this.device.on('property changed', this.onPropertyValueChanged.bind(this));
 
-    // Listen for all detection and ring events to pre-fetch a fresh snapshot
     const detectionEvents: (keyof DeviceEvents)[] = [
       'motion detected',
       'person detected',
@@ -98,19 +106,32 @@ export class SnapshotManager extends EventEmitter {
     detectionEvents.forEach(eventType => {
       this.device.on(eventType, this.onDeviceEvent.bind(this, eventType));
     });
+  }
 
-    if (this.cameraConfig.refreshSnapshotIntervalMinutes) {
-      if (this.cameraConfig.refreshSnapshotIntervalMinutes < 5) {
-        this.log.warn('The interval to automatically refresh snapshots is set too low. Minimum is 5 minutes.');
-        this.cameraConfig.refreshSnapshotIntervalMinutes = 5;
-      }
-      this.log.info('Setting up automatic snapshot refresh every ' + this.cameraConfig.refreshSnapshotIntervalMinutes + ' minutes. This may decrease battery life dramatically. The refresh process should begin in ' + MINUTES_TO_WAIT_FOR_AUTOMATIC_REFRESH_TO_BEGIN + ' minutes.');
-      setTimeout(() => { // give homebridge some time to start up
-        this.automaticSnapshotRefresh();
-      }, MINUTES_TO_WAIT_FOR_AUTOMATIC_REFRESH_TO_BEGIN * 60 * 1000);
-      MINUTES_TO_WAIT_FOR_AUTOMATIC_REFRESH_TO_BEGIN++;
+  private setupAutomaticRefresh(): void {
+    if (!this.cameraConfig.refreshSnapshotIntervalMinutes) {
+      return;
     }
 
+    if (this.cameraConfig.refreshSnapshotIntervalMinutes < 5) {
+      this.log.warn('The interval to automatically refresh snapshots is set too low. Minimum is 5 minutes.');
+      this.cameraConfig.refreshSnapshotIntervalMinutes = 5;
+    }
+
+    this.log.info(
+      'Setting up automatic snapshot refresh every ' + this.cameraConfig.refreshSnapshotIntervalMinutes +
+      ' minutes. This may decrease battery life dramatically. The refresh process should begin in ' +
+      MINUTES_TO_WAIT_FOR_AUTOMATIC_REFRESH_TO_BEGIN + ' minutes.',
+    );
+
+    setTimeout(() => {
+      this.automaticSnapshotRefresh();
+    }, MINUTES_TO_WAIT_FOR_AUTOMATIC_REFRESH_TO_BEGIN * 60 * 1000);
+
+    MINUTES_TO_WAIT_FOR_AUTOMATIC_REFRESH_TO_BEGIN++;
+  }
+
+  private logSnapshotHandlingMethod(): void {
     if (this.cameraConfig.snapshotHandlingMethod === 1) {
       this.log.info('is set to generate new snapshots on events every time. This might reduce homebridge performance and increase power consumption.');
       if (this.cameraConfig.refreshSnapshotIntervalMinutes) {
@@ -123,35 +144,30 @@ export class SnapshotManager extends EventEmitter {
     } else {
       this.log.warn('unknown snapshot handling method. Snapshots will not be generated.');
     }
+  }
 
-    try {
-      this.blackSnapshot = fs.readFileSync(SnapshotBlackPath);
-      if (this.cameraConfig.immediateRingNotificationWithoutSnapshot) {
-        this.log.info('Empty snapshot will be sent on ring events immediately to speed up homekit notifications.');
+  private loadPlaceholderImages(): void {
+    const placeholders = [
+      { name: 'black snapshot', path: SnapshotBlackPath, key: 'blackSnapshot' },
+      { name: 'unavailable snapshot', path: SnapshotUnavailable, key: 'unavailableSnapshot' },
+      { name: 'camera offline', path: CameraOffline, key: 'cameraOffline' },
+      { name: 'camera disabled', path: CameraDisabled, key: 'cameraDisabled' },
+    ] as const;
+
+    for (const { name, path, key } of placeholders) {
+      try {
+        this[key] = fs.readFileSync(path);
+      } catch (error) {
+        this.log.error(`Could not cache ${name} file for further use: ${error}`);
       }
-    } catch (error) {
-      this.log.error('could not cache black snapshot file for further use: ' + error);
     }
 
-    try {
-      this.unavailableSnapshot = fs.readFileSync(SnapshotUnavailable);
-    } catch (error) {
-      this.log.error('could not cache SnapshotUnavailable file for further use: ' + error);
+    if (this.cameraConfig.immediateRingNotificationWithoutSnapshot && this.blackSnapshot) {
+      this.log.info('Empty snapshot will be sent on ring events immediately to speed up homekit notifications.');
     }
+  }
 
-    try {
-      this.cameraOffline = fs.readFileSync(CameraOffline);
-    } catch (error) {
-      this.log.error('could not cache CameraOffline file for further use: ' + error);
-    }
-
-    try {
-      this.cameraDisabled = fs.readFileSync(CameraDisabled);
-    } catch (error) {
-      this.log.error('could not cache CameraDisabled file for further use: ' + error);
-    }
-
-    // Initialize device online/offline state
+  private initializeDeviceState(): void {
     try {
       const state = this.device.getPropertyValue(PropertyName.DeviceState) as number;
       this.isDeviceOffline = (state === 0 || state === 3);
@@ -161,7 +177,9 @@ export class SnapshotManager extends EventEmitter {
     } catch (error) {
       this.log.debug('Could not read initial device state: ' + error);
     }
+  }
 
+  private loadInitialSnapshot(): void {
     try {
       const picture = this.device.getPropertyValue(PropertyName.DevicePicture) as Picture;
       if (picture && picture.type) {
@@ -172,7 +190,6 @@ export class SnapshotManager extends EventEmitter {
     } catch (error) {
       this.log.error('could not fetch old snapshot: ' + error);
     }
-
   }
 
   private onDeviceEvent(eventType: keyof DeviceEvents, device: Device, state: boolean) {
