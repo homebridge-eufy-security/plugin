@@ -20,8 +20,9 @@ const DeviceImages = {
       case 23: return 'eufycam3c_large.jpg';
       case 24: return 'eufycame330_large.jpg';
       case 25: return 'minibase_chime_T8023_large.jpg';
+      case 26: return 'eufycam3pro_large.png';
+      case 28: return 'homebasemini_large.jpg';
       case 30: return 'indoorcamc120_large.png';
-      case 100: return 'indoorcammini_large.jpg';
       case 31: case 35: return 'indoorcamp24_large.png';
       case 32: case 33: return 'solocame20_large.jpg';
       case 34: return 'soloindoorcamc24_large.jpg';
@@ -37,10 +38,13 @@ const DeviceImages = {
       case 60: case 61: case 62: return 'solooutdoorcamc24_large.jpg';
       case 63: return 'solocams220_large.jpg';
       case 64: return 'solocamc210_large.jpg';
+      case 88: return 'solocame30_large.png';
       case 90: return 'smartdrop_t8790_large.jpg';
       case 93: return 'wireddoorbelldual_large.jpg';
       case 94: return 'batterydoorbell_e340_large.jpg';
+      case 100: return 'indoorcammini_large.jpg';
       case 104: return 'indoorcams350_large.jpg';
+      case 105: return 'indoorcamE30_large.png';
       case 101: case 102: case 110:
       case 131: case 132: case 133:
         return 'garage_camera_t8452_large.jpg';
@@ -48,9 +52,12 @@ const DeviceImages = {
       case 141: return 'smartsafe_s12_t7401_large.jpg';
       case 142: case 143: return 'smartsafe_s10_t7400_large.jpg';
       case 151: return 'walllight_s100_large.jpg';
-      case 10005: return 'walllight_s120_large.jpg';
       case 157: return 'smarttrack_link_t87B0_large.jpg';
       case 159: return 'smarttrack_card_t87B2_large.jpg';
+      case 10005: return 'walllight_s120_large.jpg';
+      case 10008: return 'indoorcamC220_large.png';
+      case 10009: return 'indoorcamC210_large.png';
+      case 10035: return 'solocamc35_large.png';
       default: return 'unknown.png';
     }
   },
