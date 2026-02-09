@@ -13,10 +13,14 @@ import * as fs from 'fs';
 import { CameraAccessory } from '../accessories/CameraAccessory';
 import { ILogObj, Logger } from 'tslog';
 
-const CameraOffline = require.resolve('../../media/camera-offline.png');
-const CameraDisabled = require.resolve('../../media/camera-disabled.png');
-const SnapshotBlackPath = require.resolve('../../media/Snapshot-black.png');
-const SnapshotUnavailable = require.resolve('../../media/Snapshot-Unavailable.png');
+type PlaceholderKey = 'black' | 'unavailable' | 'offline' | 'disabled';
+
+const PLACEHOLDER_PATHS: Record<PlaceholderKey, string> = {
+  offline: require.resolve('../../media/camera-offline.png'),
+  disabled: require.resolve('../../media/camera-disabled.png'),
+  black: require.resolve('../../media/Snapshot-black.png'),
+  unavailable: require.resolve('../../media/Snapshot-Unavailable.png'),
+};
 
 type Snapshot = {
   timestamp: number;
@@ -54,10 +58,7 @@ export class SnapshotManager extends EventEmitter {
   private cameraConfig: CameraConfig;
 
   private currentSnapshot?: Snapshot;
-  private blackSnapshot?: Buffer;
-  private cameraOffline?: Buffer;
-  private cameraDisabled?: Buffer;
-  private unavailableSnapshot?: Buffer;
+  private readonly placeholders = new Map<PlaceholderKey, Buffer>();
 
   private refreshProcessRunning = false;
   private lastRingEvent = 0;
@@ -147,24 +148,25 @@ export class SnapshotManager extends EventEmitter {
   }
 
   private loadPlaceholderImages(): void {
-    const placeholders = [
-      { name: 'black snapshot', path: SnapshotBlackPath, key: 'blackSnapshot' },
-      { name: 'unavailable snapshot', path: SnapshotUnavailable, key: 'unavailableSnapshot' },
-      { name: 'camera offline', path: CameraOffline, key: 'cameraOffline' },
-      { name: 'camera disabled', path: CameraDisabled, key: 'cameraDisabled' },
-    ] as const;
-
-    for (const { name, path, key } of placeholders) {
+    for (const [key, path] of Object.entries(PLACEHOLDER_PATHS) as [PlaceholderKey, string][]) {
       try {
-        this[key] = fs.readFileSync(path);
+        this.placeholders.set(key, fs.readFileSync(path));
       } catch (error) {
-        this.log.error(`Could not cache ${name} file for further use: ${error}`);
+        this.log.error(`Could not cache ${key} placeholder for further use: ${error}`);
       }
     }
 
-    if (this.cameraConfig.immediateRingNotificationWithoutSnapshot && this.blackSnapshot) {
+    if (this.cameraConfig.immediateRingNotificationWithoutSnapshot && this.placeholders.has('black')) {
       this.log.info('Empty snapshot will be sent on ring events immediately to speed up homekit notifications.');
     }
+  }
+
+  private getPlaceholder(key: PlaceholderKey): Buffer {
+    const buf = this.placeholders.get(key);
+    if (!buf) {
+      throw new Error(`Placeholder image '${key}' is not available.`);
+    }
+    return buf;
   }
 
   private initializeDeviceState(): void {
@@ -221,20 +223,12 @@ export class SnapshotManager extends EventEmitter {
     // Check device state first, before returning any cached snapshot
     if (!this.device.isEnabled()) {
       this.log.debug('Device is disabled, returning disabled snapshot.');
-      if (this.cameraDisabled) {
-        return this.cameraDisabled;
-      } else {
-        throw new Error('Something wrong with file systems. Looks like not enough rights!');
-      }
+      return this.getPlaceholder('disabled');
     }
 
     if (this.isDeviceOffline) {
       this.log.debug('Device is offline, returning offline snapshot.');
-      if (this.cameraOffline) {
-        return this.cameraOffline;
-      } else {
-        throw new Error('Device is offline and no offline placeholder available.');
-      }
+      return this.getPlaceholder('offline');
     }
 
     // return a new snapshot if it is recent enough (not more than 15 seconds)
@@ -248,11 +242,7 @@ export class SnapshotManager extends EventEmitter {
     const diff = (Date.now() - this.lastRingEvent) / 1000;
     if (this.cameraConfig.immediateRingNotificationWithoutSnapshot && diff < 5) {
       this.log.debug('Sending empty snapshot to speed up homekit notification for ring event.');
-      if (this.blackSnapshot) {
-        return this.blackSnapshot;
-      } else {
-        throw new Error('Prioritize ring notification over snapshot request. But could not supply empty snapshot.');
-      }
+      return this.getPlaceholder('black');
     }
 
     let snapshot: Buffer = Buffer.from([]);
@@ -277,11 +267,7 @@ export class SnapshotManager extends EventEmitter {
         return this.getSnapshotFromCache();
       } catch (error) {
         this.log.error(error);
-        if (this.unavailableSnapshot) {
-          return this.unavailableSnapshot;
-        } else {
-          throw (error);
-        }
+        return this.getPlaceholder('unavailable');
       }
     }
   }
@@ -346,12 +332,8 @@ export class SnapshotManager extends EventEmitter {
       return this.currentSnapshot.image;
     }
 
-    if (this.unavailableSnapshot) {
-      this.log.warn('No currentSnapshot available, using fallback unavailable snapshot image');
-      return this.unavailableSnapshot;
-    }
-
-    throw new Error('No currentSnapshot available');
+    this.log.warn('No currentSnapshot available, using fallback unavailable snapshot image');
+    return this.getPlaceholder('unavailable');
   }
 
   private async getBalancedSnapshot(): Promise<Buffer> {
