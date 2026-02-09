@@ -361,8 +361,13 @@ export class SnapshotManager extends EventEmitter {
       const picture = device.getPropertyValue(PropertyName.DevicePicture) as Picture;
       if (picture && picture.type) {
         this.storeImage(`${device.getSerial()}.${picture.type.ext}`, picture.data);
-        this.storeSnapshotForCache(picture.data);
-        this.emit('new snapshot');
+        // Don't overwrite a recent stream snapshot (less than 30s old) with a cloud image
+        if (this.currentSnapshot && (Date.now() - this.currentSnapshot.timestamp) < 30 * 1000) {
+          this.log.debug('Skipping cloud snapshot update, a recent stream snapshot already exists.');
+        } else {
+          this.storeSnapshotForCache(picture.data);
+          this.emit('new snapshot');
+        }
       }
     }
   }
