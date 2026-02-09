@@ -72,6 +72,7 @@ export class SnapshotManager {
   private readonly log: Logger<ILogObj>;
 
   private snapshotRefreshTimer?: NodeJS.Timeout;
+  private snapshotRefreshInterval?: NodeJS.Timeout;
 
   constructor(
     camera: CameraAccessory,
@@ -123,17 +124,24 @@ export class SnapshotManager {
       this.cameraConfig.refreshSnapshotIntervalMinutes = SNAPSHOT_MIN_REFRESH_INTERVAL_MINUTES;
     }
 
-    const delayMinutes = ++SnapshotManager.instanceCount;
+    const intervalMs = this.cameraConfig.refreshSnapshotIntervalMinutes * 60 * 1000;
+    const staggerMs = (++SnapshotManager.instanceCount) * 60 * 1000;
 
     this.log.info(
-      'Setting up automatic snapshot refresh every ' + this.cameraConfig.refreshSnapshotIntervalMinutes +
-      ' minutes. This may decrease battery life dramatically. The refresh process should begin in ' +
-      delayMinutes + ' minutes.',
+      `Setting up automatic snapshot refresh every ${this.cameraConfig.refreshSnapshotIntervalMinutes}` +
+      ` minutes. This may decrease battery life dramatically. First refresh in ~${Math.ceil(staggerMs / 60000)} minute(s).`,
     );
 
-    setTimeout(() => {
-      this.automaticSnapshotRefresh();
-    }, delayMinutes * 60 * 1000);
+    // Stagger first refresh per instance, then repeat at fixed interval
+    this.snapshotRefreshTimer = setTimeout(() => {
+      this.doAutomaticRefresh();
+      this.snapshotRefreshInterval = setInterval(() => this.doAutomaticRefresh(), intervalMs);
+    }, staggerMs);
+  }
+
+  private doAutomaticRefresh(): void {
+    this.log.debug('Automatic snapshot refresh triggered.');
+    this.fetchCurrentCameraSnapshot().catch((error) => this.log.warn('Automatic snapshot refresh failed:', error));
   }
 
   private logSnapshotHandlingMethod(): void {
@@ -304,19 +312,6 @@ export class SnapshotManager {
   private isCacheFresh(maxAgeSeconds: number): boolean {
     return !!this.currentSnapshot &&
       (Date.now() - this.currentSnapshot.timestamp) / 1000 <= maxAgeSeconds;
-  }
-
-  private automaticSnapshotRefresh() {
-    this.log.debug('Automatic snapshot refresh triggered.');
-    this.fetchCurrentCameraSnapshot().catch((error) => this.log.warn(error));
-    if (this.snapshotRefreshTimer) {
-      clearTimeout(this.snapshotRefreshTimer);
-    }
-    if (this.cameraConfig.refreshSnapshotIntervalMinutes) {
-      this.snapshotRefreshTimer = setTimeout(() => {
-        this.automaticSnapshotRefresh();
-      }, this.cameraConfig.refreshSnapshotIntervalMinutes * 60 * 1000);
-    }
   }
 
   private storeImage(file: string, image: Buffer) {
