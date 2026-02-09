@@ -368,6 +368,9 @@ export class SnapshotManager {
     }
   }
 
+  /**
+   * Fetches a snapshot from the camera, stores it in cache, and deduplicates concurrent calls.
+   */
   private async fetchCurrentCameraSnapshot(): Promise<void> {
     if (this.pendingFetch) {
       return this.pendingFetch;
@@ -375,44 +378,37 @@ export class SnapshotManager {
 
     this.log.debug('Fetching new snapshot from camera.');
 
-    this.pendingFetch = this.getCurrentCameraSnapshot()
-      .then((snapshotBuffer) => {
-        this.storeSnapshotForCache(snapshotBuffer);
-      })
-      .finally(() => {
-        this.pendingFetch = undefined;
-      });
+    this.pendingFetch = (async () => {
+      const source = await this.getCameraSource();
+      if (!source) {
+        throw new Error('No camera source detected.');
+      }
+
+      const isLocalStream = !!source.stream;
+      try {
+        const buffer = await this.runFFmpegSnapshot('[Snapshot Process]', async (params) => {
+          if (source.url) {
+            params.setInputSource(source.url);
+          } else if (source.stream) {
+            await params.setInputStream(source.stream);
+          } else {
+            throw new Error('No valid camera source detected.');
+          }
+          if (this.cameraConfig.delayCameraSnapshot) {
+            params.setDelayedSnapshot();
+          }
+        });
+        this.storeSnapshotForCache(buffer);
+      } finally {
+        if (isLocalStream) {
+          this.livestreamManager.stopLocalLiveStream();
+        }
+      }
+    })().finally(() => {
+      this.pendingFetch = undefined;
+    });
 
     return this.pendingFetch;
-  }
-
-  private async getCurrentCameraSnapshot(): Promise<Buffer> {
-    const source = await this.getCameraSource();
-
-    if (!source) {
-      throw new Error('No camera source detected.');
-    }
-
-    const isLocalStream = !!source.stream;
-
-    try {
-      return await this.runFFmpegSnapshot('[Snapshot Process]', async (params) => {
-        if (source.url) {
-          params.setInputSource(source.url);
-        } else if (source.stream) {
-          await params.setInputStream(source.stream);
-        } else {
-          throw new Error('No valid camera source detected.');
-        }
-        if (this.cameraConfig.delayCameraSnapshot) {
-          params.setDelayedSnapshot();
-        }
-      });
-    } finally {
-      if (isLocalStream) {
-        this.livestreamManager.stopLocalLiveStream();
-      }
-    }
   }
 
   private async getCameraSource(): Promise<StreamSource | null> {
