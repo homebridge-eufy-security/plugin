@@ -325,20 +325,16 @@ export class SnapshotManager extends EventEmitter {
    * @throws Error if there's no currentSnapshot available and no fallback image.
    */
   private getSnapshotFromCache(): Buffer {
-    // Check if there's a currentSnapshot available
     if (this.currentSnapshot) {
-      // If available, return the image data
       return this.currentSnapshot.image;
-    } else {
-      // If not available, try to use the unavailable snapshot image
-      if (this.unavailableSnapshot) {
-        this.log.warn('No currentSnapshot available, using fallback unavailable snapshot image');
-        return this.unavailableSnapshot;
-      } else {
-        // If fallback image is also not available, throw an error
-        throw new Error('No currentSnapshot available');
-      }
     }
+
+    if (this.unavailableSnapshot) {
+      this.log.warn('No currentSnapshot available, using fallback unavailable snapshot image');
+      return this.unavailableSnapshot;
+    }
+
+    throw new Error('No currentSnapshot available');
   }
 
   private async getBalancedSnapshot(): Promise<Buffer> {
@@ -370,7 +366,7 @@ export class SnapshotManager extends EventEmitter {
       fs.writeFileSync(filePath, image);
       this.log.debug(`Stored Image: ${filePath}`);
     } catch (error) {
-      this.log.debug(`Error: ${filePath} - ${error}`);
+      this.log.warn(`Failed to store image: ${filePath} - ${error}`);
     }
   }
 
@@ -416,19 +412,15 @@ export class SnapshotManager extends EventEmitter {
       return;
     }
     this.refreshProcessRunning = true;
-    this.log.debug('Locked refresh process.');
     this.log.debug('Fetching new snapshot from camera.');
     try {
       const snapshotBuffer = await this.getCurrentCameraSnapshot();
       this.refreshProcessRunning = false;
-      this.log.debug('Unlocked refresh process.');
 
-      this.log.debug('store new snapshot from camera in memory. Using this for future use.');
       this.storeSnapshotForCache(snapshotBuffer);
       this.emit('new snapshot');
     } catch (error) {
       this.refreshProcessRunning = false;
-      this.log.debug('Unlocked refresh process.');
       throw error;
     }
   }
