@@ -1,7 +1,6 @@
 import { EventEmitter, Readable } from 'stream';
 
 import { Camera, Device, DeviceEvents, Picture, PropertyName } from 'eufy-security-client';
-import ffmpegPath from 'ffmpeg-for-homebridge';
 
 import { CameraConfig } from '../utils/configTypes';
 import { EufySecurityPlatform } from '../platform';
@@ -24,7 +23,6 @@ let MINUTES_TO_WAIT_FOR_AUTOMATIC_REFRESH_TO_BEGIN = 1; // should be incremented
 type Snapshot = {
   timestamp: number;
   image: Buffer;
-  sourceUrl?: string;
 };
 
 type StreamSource = {
@@ -55,8 +53,6 @@ export class SnapshotManager extends EventEmitter {
   private readonly device: Camera;
   private cameraConfig: CameraConfig;
 
-  private readonly videoProcessor = ffmpegPath || 'ffmpeg';
-
   private currentSnapshot?: Snapshot;
   private blackSnapshot?: Buffer;
   private cameraOffline?: Buffer;
@@ -64,7 +60,6 @@ export class SnapshotManager extends EventEmitter {
   private unavailableSnapshot?: Buffer;
 
   private refreshProcessRunning = false;
-  private lastEvent = 0;
   private lastRingEvent = 0;
 
   public readonly log: Logger<ILogObj>;
@@ -84,9 +79,8 @@ export class SnapshotManager extends EventEmitter {
 
     this.device.on('property changed', this.onPropertyValueChanged.bind(this));
 
-    type DeviceEventType = keyof DeviceEvents;
-
-    const eventTypes: DeviceEventType[] = [
+    // Listen for all detection and ring events to pre-fetch a fresh snapshot
+    const detectionEvents: (keyof DeviceEvents)[] = [
       'motion detected',
       'person detected',
       'pet detected',
@@ -97,13 +91,12 @@ export class SnapshotManager extends EventEmitter {
       'dog lick detected',
       'dog poop detected',
       'stranger person detected',
+      'rings',
     ];
 
-    eventTypes.forEach(eventType => {
-      this.device.on(eventType, this.onEvent.bind(this));
+    detectionEvents.forEach(eventType => {
+      this.device.on(eventType, this.onDeviceEvent.bind(this, eventType));
     });
-
-    this.device.on('rings', this.onRingEvent.bind(this));
 
     if (this.cameraConfig.refreshSnapshotIntervalMinutes) {
       if (this.cameraConfig.refreshSnapshotIntervalMinutes < 5) {
@@ -170,18 +163,21 @@ export class SnapshotManager extends EventEmitter {
 
   }
 
-  private onRingEvent(device: Device, state: boolean) {
-    if (state) {
-      this.log.debug('Snapshot handler detected ring event.');
+  private onDeviceEvent(eventType: keyof DeviceEvents, device: Device, state: boolean) {
+    if (!state) {
+      return;
+    }
+
+    this.log.debug(`Snapshot handler detected event: ${eventType}`);
+
+    if (eventType === 'rings') {
       this.lastRingEvent = Date.now();
     }
-  }
 
-  private onEvent(device: Device, state: boolean) {
-    if (state) {
-      this.log.debug('Snapshot handler detected event.');
-      this.lastEvent = Date.now();
-    }
+    // Pre-fetch a fresh snapshot so it's ready when HomeKit asks
+    this.fetchCurrentCameraSnapshot().catch((error) =>
+      this.log.debug(`Background snapshot refresh on ${eventType} failed: ${error}`),
+    );
   }
 
   private storeSnapshotForCache(data: Buffer, time?: number): void {
