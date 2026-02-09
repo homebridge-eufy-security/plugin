@@ -193,20 +193,21 @@ export class SnapshotManager extends EventEmitter {
   }
 
   private async getSnapshotBuffer(): Promise<Buffer> {
+    // Check device state first, before returning any cached snapshot
+    if (!this.device.isEnabled()) {
+      this.log.debug('Device is disabled, returning disabled snapshot.');
+      if (this.cameraDisabled) {
+        return this.cameraDisabled;
+      } else {
+        return Promise.reject('Something wrong with file systems. Looks like not enough rights!');
+      }
+    }
+
     // return a new snapshot if it is recent enough (not more than 15 seconds)
     if (this.currentSnapshot) {
       const diff = Math.abs((Date.now() - this.currentSnapshot.timestamp) / 1000);
       if (diff <= 15) {
         return this.currentSnapshot.image;
-      }
-    }
-
-    // It should never happend since camera is disabled in HK but in case of...
-    if (!this.device.isEnabled()) {
-      if (this.cameraDisabled) {
-        return this.cameraDisabled;
-      } else {
-        return Promise.reject('Something wrong with file systems. Looks likes not enought rights!');
       }
     }
 
