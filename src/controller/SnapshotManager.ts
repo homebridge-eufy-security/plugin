@@ -393,39 +393,25 @@ export class SnapshotManager {
       throw new Error('No camera source detected.');
     }
 
-    const parameters = await FFmpegParameters.forSnapshot(this.cameraConfig.videoConfig?.debug);
-
-    if (source.url) {
-      parameters.setInputSource(source.url);
-    } else if (source.stream) {
-      await parameters.setInputStream(source.stream);
-    } else {
-      throw new Error('No valid camera source detected.');
-    }
-
-    if (this.cameraConfig.delayCameraSnapshot) {
-      parameters.setDelayedSnapshot();
-    }
-
     const isLocalStream = !!source.stream;
 
     try {
-      const ffmpeg = new FFmpeg(
-        `[Snapshot Process]`,
-        parameters,
-      );
-      const buffer = await ffmpeg.getResult();
-
+      return await this.runFFmpegSnapshot('[Snapshot Process]', async (params) => {
+        if (source.url) {
+          params.setInputSource(source.url);
+        } else if (source.stream) {
+          await params.setInputStream(source.stream);
+        } else {
+          throw new Error('No valid camera source detected.');
+        }
+        if (this.cameraConfig.delayCameraSnapshot) {
+          params.setDelayedSnapshot();
+        }
+      });
+    } finally {
       if (isLocalStream) {
         this.livestreamManager.stopLocalLiveStream();
       }
-
-      return buffer;
-    } catch (error) {
-      if (isLocalStream) {
-        this.livestreamManager.stopLocalLiveStream();
-      }
-      throw error;
     }
   }
 
@@ -455,14 +441,18 @@ export class SnapshotManager {
   }
 
   private async resizeSnapshot(snapshot: Buffer, request: SnapshotRequest): Promise<Buffer> {
+    return this.runFFmpegSnapshot('[Snapshot Resize]', (params) => {
+      params.setup(this.cameraConfig, request);
+    }, snapshot);
+  }
 
-    const parameters = await FFmpegParameters.forSnapshot(this.cameraConfig.videoConfig?.debug);
-    parameters.setup(this.cameraConfig, request);
-
-    const ffmpeg = new FFmpeg(
-      `[Snapshot Resize Process]`,
-      parameters,
-    );
-    return ffmpeg.getResult(snapshot);
+  private async runFFmpegSnapshot(
+    label: string,
+    configure: (params: FFmpegParameters) => void | Promise<void>,
+    input?: Buffer,
+  ): Promise<Buffer> {
+    const params = await FFmpegParameters.forSnapshot(this.cameraConfig.videoConfig?.debug);
+    await configure(params);
+    return new FFmpeg(label, params).getResult(input);
   }
 }
