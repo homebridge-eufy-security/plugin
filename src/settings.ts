@@ -56,3 +56,6 @@ export const SNAPSHOT_MIN_REFRESH_INTERVAL_MINUTES = 5;
 
 // Milliseconds – don't overwrite a recent stream snapshot with a cloud image.
 export const SNAPSHOT_CLOUD_SKIP_MS = 30 * 1000;
+
+// Milliseconds – maximum time to wait for a snapshot fetch before timing out.
+export const SNAPSHOT_FETCH_TIMEOUT_MS = 30 * 1000;
