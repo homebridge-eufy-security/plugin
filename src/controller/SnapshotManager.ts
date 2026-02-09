@@ -258,29 +258,45 @@ export class SnapshotManager extends EventEmitter {
   private getSnapshotFromStream(): Promise<Buffer> {
     this.log.info(`Begin live streaming to access the most recent snapshot (significant battery drain on the device)`);
     return new Promise((resolve, reject) => {
-      // Set a timeout for the snapshot request
-      const requestTimeout = setTimeout(() => {
-        reject('getSnapshotFromStream timed out');
-      }, 4 * 1000);
+      let settled = false;
 
       // Define a listener for the 'new snapshot' event
       const snapshotListener = () => {
-        clearTimeout(requestTimeout); // Clear the timeout if the snapshot is received
+        if (settled) {
+          return;
+        }
+        settled = true;
+        clearTimeout(requestTimeout);
         if (this.currentSnapshot) {
-          resolve(this.currentSnapshot.image); // Resolve the promise with the snapshot image
+          resolve(this.currentSnapshot.image);
         } else {
-          reject('getSnapshotFromStream error'); // Reject if there's an issue with the snapshot
+          reject('getSnapshotFromStream error');
         }
       };
 
-      // Fetch the current camera snapshot and attach the 'new snapshot' listener
+      // Set a timeout for the snapshot request
+      const requestTimeout = setTimeout(() => {
+        if (settled) {
+          return;
+        }
+        settled = true;
+        this.removeListener('new snapshot', snapshotListener);
+        reject('getSnapshotFromStream timed out');
+      }, 4 * 1000);
+
+      // Register listener BEFORE starting fetch to avoid missing the event
+      this.once('new snapshot', snapshotListener);
+
+      // Fetch the current camera snapshot
       this.fetchCurrentCameraSnapshot()
-        .then(() => {
-          this.once('new snapshot', snapshotListener); // Listen for the 'new snapshot' event
-        })
         .catch((error) => {
-          clearTimeout(requestTimeout); // Clear the timeout if an error occurs during fetching
-          reject(error); // Reject the promise with the error
+          if (settled) {
+            return;
+          }
+          settled = true;
+          clearTimeout(requestTimeout);
+          this.removeListener('new snapshot', snapshotListener);
+          reject(error);
         });
     });
   }
