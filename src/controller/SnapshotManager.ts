@@ -207,7 +207,7 @@ export class SnapshotManager extends EventEmitter {
       if (this.cameraDisabled) {
         return this.cameraDisabled;
       } else {
-        return Promise.reject('Something wrong with file systems. Looks like not enough rights!');
+        throw new Error('Something wrong with file systems. Looks like not enough rights!');
       }
     }
 
@@ -216,7 +216,7 @@ export class SnapshotManager extends EventEmitter {
       if (this.cameraOffline) {
         return this.cameraOffline;
       } else {
-        return Promise.reject('Device is offline and no offline placeholder available.');
+        throw new Error('Device is offline and no offline placeholder available.');
       }
     }
 
@@ -234,7 +234,7 @@ export class SnapshotManager extends EventEmitter {
       if (this.blackSnapshot) {
         return this.blackSnapshot;
       } else {
-        return Promise.reject('Prioritize ring notification over snapshot request. But could not supply empty snapshot.');
+        throw new Error('Prioritize ring notification over snapshot request. But could not supply empty snapshot.');
       }
     }
 
@@ -250,7 +250,7 @@ export class SnapshotManager extends EventEmitter {
         // fastest method with potentially old snapshots
         snapshot = await this.getSnapshotFromCache();
       } else {
-        return Promise.reject('No suitable handling method for snapshots defined');
+        throw new Error('No suitable handling method for snapshots defined');
       }
       return snapshot;
 
@@ -413,7 +413,7 @@ export class SnapshotManager extends EventEmitter {
 
   private async fetchCurrentCameraSnapshot(): Promise<void> {
     if (this.refreshProcessRunning) {
-      return Promise.resolve();
+      return;
     }
     this.refreshProcessRunning = true;
     this.log.debug('Locked refresh process.');
@@ -426,12 +426,10 @@ export class SnapshotManager extends EventEmitter {
       this.log.debug('store new snapshot from camera in memory. Using this for future use.');
       this.storeSnapshotForCache(snapshotBuffer);
       this.emit('new snapshot');
-
-      return Promise.resolve();
     } catch (error) {
       this.refreshProcessRunning = false;
       this.log.debug('Unlocked refresh process.');
-      return Promise.reject(error);
+      throw error;
     }
   }
 
@@ -439,7 +437,7 @@ export class SnapshotManager extends EventEmitter {
     const source = await this.getCameraSource();
 
     if (!source) {
-      return Promise.reject('No camera source detected.');
+      throw new Error('No camera source detected.');
     }
 
     const parameters = await FFmpegParameters.forSnapshot(this.cameraConfig.videoConfig?.debug);
@@ -449,7 +447,7 @@ export class SnapshotManager extends EventEmitter {
     } else if (source.stream) {
       await parameters.setInputStream(source.stream);
     } else {
-      return Promise.reject('No valid camera source detected.');
+      throw new Error('No valid camera source detected.');
     }
 
     if (this.cameraConfig.delayCameraSnapshot) {
@@ -469,12 +467,12 @@ export class SnapshotManager extends EventEmitter {
         this.livestreamManager.stopLocalLiveStream();
       }
 
-      return Promise.resolve(buffer);
+      return buffer;
     } catch (error) {
       if (isLocalStream) {
         this.livestreamManager.stopLocalLiveStream();
       }
-      return Promise.reject(error);
+      throw error;
     }
   }
 
