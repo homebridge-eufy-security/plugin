@@ -137,17 +137,27 @@ export class SnapshotManager {
   }
 
   private logSnapshotHandlingMethod(): void {
-    if (this.cameraConfig.snapshotHandlingMethod === SnapshotHandlingMethod.AlwaysFresh) {
-      this.log.info('is set to generate new snapshots on events every time. This might reduce homebridge performance and increase power consumption.');
-      if (this.cameraConfig.refreshSnapshotIntervalMinutes) {
-        this.log.warn('You have enabled automatic snapshot refreshing. It is recommended not to use this setting with forced snapshot refreshing.');
-      }
-    } else if (this.cameraConfig.snapshotHandlingMethod === SnapshotHandlingMethod.Balanced) {
-      this.log.info('is set to balanced snapshot handling.');
-    } else if (this.cameraConfig.snapshotHandlingMethod === SnapshotHandlingMethod.CloudOnly) {
-      this.log.info('is set to handle snapshots with cloud images. Snapshots might be older than they appear.');
-    } else {
-      this.log.warn('unknown snapshot handling method. Snapshots will not be generated.');
+    const method = this.cameraConfig.snapshotHandlingMethod;
+
+    switch (method) {
+      case SnapshotHandlingMethod.AlwaysFresh:
+        this.log.info('is set to generate new snapshots on events every time. This might reduce homebridge performance and increase power consumption.');
+        if (this.cameraConfig.refreshSnapshotIntervalMinutes) {
+          this.log.warn('You have enabled automatic snapshot refreshing. It is recommended not to use this setting with forced snapshot refreshing.');
+        }
+        break;
+      case SnapshotHandlingMethod.Balanced:
+        this.log.info('is set to balanced snapshot handling.');
+        break;
+      case SnapshotHandlingMethod.CloudOnly:
+        this.log.info('is set to handle snapshots with cloud images. Snapshots might be older than they appear.');
+        break;
+      default:
+        this.log.warn('unknown snapshot handling method. Snapshots will not be generated.');
+    }
+
+    if (this.cameraConfig.immediateRingNotificationWithoutSnapshot) {
+      this.log.info('Empty snapshot will be sent on ring events immediately to speed up homekit notifications.');
     }
   }
 
@@ -158,10 +168,6 @@ export class SnapshotManager {
       } catch (error) {
         this.log.error(`Could not cache ${key} placeholder for further use: ${error}`);
       }
-    }
-
-    if (this.cameraConfig.immediateRingNotificationWithoutSnapshot && this.placeholders.has('black')) {
-      this.log.info('Empty snapshot will be sent on ring events immediately to speed up homekit notifications.');
     }
   }
 
