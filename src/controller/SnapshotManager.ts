@@ -231,11 +231,8 @@ export class SnapshotManager {
     }
 
     // return a new snapshot if it is recent enough (not more than 15 seconds)
-    if (this.currentSnapshot) {
-      const diff = Math.abs((Date.now() - this.currentSnapshot.timestamp) / 1000);
-      if (diff <= 15) {
-        return this.currentSnapshot.image;
-      }
+    if (this.isCacheFresh(15)) {
+      return this.currentSnapshot!.image;
     }
 
     const diff = (Date.now() - this.lastRingEvent) / 1000;
@@ -244,31 +241,28 @@ export class SnapshotManager {
       return this.getPlaceholder('black');
     }
 
-    let snapshot: Buffer = Buffer.from([]);
     try {
-      if (this.cameraConfig.snapshotHandlingMethod === 1) {
-        // return a preferablly most recent snapshot every time
-        snapshot = await this.getSnapshotFromStream();
-      } else if (this.cameraConfig.snapshotHandlingMethod === 2) {
-        // balanced method
-        snapshot = await this.getBalancedSnapshot();
-      } else if (this.cameraConfig.snapshotHandlingMethod === 3) {
-        // fastest method with potentially old snapshots
-        snapshot = await this.getSnapshotFromCache();
-      } else {
-        throw new Error('No suitable handling method for snapshots defined');
+      switch (this.cameraConfig.snapshotHandlingMethod) {
+        case 1:
+          return await this.getSnapshotFromStream();
+        case 2:
+          return this.isCacheFresh(30)
+            ? this.currentSnapshot!.image
+            : await this.getSnapshotFromStream();
+        case 3:
+          return this.getSnapshotFromCache();
+        default:
+          throw new Error('No suitable handling method for snapshots defined');
       }
-      return snapshot;
-
     } catch (err) {
       this.log.warn('Snapshot retrieval failed, falling back to cache:', err);
-      try {
-        return this.getSnapshotFromCache();
-      } catch (error) {
-        this.log.error(error);
-        return this.getPlaceholder('unavailable');
-      }
+      return this.getSnapshotFromCache();
     }
+  }
+
+  private isCacheFresh(maxAgeSeconds: number): boolean {
+    return !!this.currentSnapshot &&
+      (Date.now() - this.currentSnapshot.timestamp) / 1000 <= maxAgeSeconds;
   }
 
   /**
@@ -286,9 +280,7 @@ export class SnapshotManager {
   }
 
   /**
-   * Retrieves the newest cloud snapshot's image data.
-   * @returns Buffer The image data as a Buffer.
-   * @throws Error if there's no currentSnapshot available and no fallback image.
+   * Returns cached snapshot or the unavailable placeholder.
    */
   private getSnapshotFromCache(): Buffer {
     if (this.currentSnapshot) {
@@ -297,16 +289,6 @@ export class SnapshotManager {
 
     this.log.warn('No currentSnapshot available, using fallback unavailable snapshot image');
     return this.getPlaceholder('unavailable');
-  }
-
-  private async getBalancedSnapshot(): Promise<Buffer> {
-    if (this.currentSnapshot) {
-      const diff = Math.abs((Date.now() - this.currentSnapshot.timestamp) / 1000);
-      if (diff <= 30) {
-        return this.currentSnapshot.image;
-      }
-    }
-    return this.getSnapshotFromStream();
   }
 
   private automaticSnapshotRefresh() {
