@@ -370,6 +370,15 @@ export class SnapshotManager extends EventEmitter {
         }
       }
     }
+
+    if (name === 'enabled') {
+      const enabled = device.getPropertyValue(PropertyName.DeviceEnabled) as boolean;
+      this.log.info(`Device enabled state changed to: ${enabled}`);
+      if (enabled) {
+        // Clear stale snapshot so the next request fetches a fresh one
+        this.currentSnapshot = undefined;
+      }
+    }
   }
 
   private async fetchCurrentCameraSnapshot(): Promise<void> {
