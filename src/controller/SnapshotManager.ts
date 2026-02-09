@@ -6,6 +6,13 @@ import { SnapshotRequest } from 'homebridge';
 import { ILogObj, Logger } from 'tslog';
 
 import { CameraAccessory } from '../accessories/CameraAccessory';
+import {
+  SNAPSHOT_CACHE_BALANCED_SECONDS,
+  SNAPSHOT_CACHE_FRESH_SECONDS,
+  SNAPSHOT_CLOUD_SKIP_MS,
+  SNAPSHOT_MIN_REFRESH_INTERVAL_MINUTES,
+  SNAPSHOT_RING_DEBOUNCE_SECONDS,
+} from '../settings';
 import { CameraConfig, SnapshotHandlingMethod } from '../utils/configTypes';
 import { FFmpeg, FFmpegParameters } from '../utils/ffmpeg';
 import { is_rtsp_ready } from '../utils/utils';
@@ -111,9 +118,9 @@ export class SnapshotManager {
       return;
     }
 
-    if (this.cameraConfig.refreshSnapshotIntervalMinutes < 5) {
-      this.log.warn('The interval to automatically refresh snapshots is set too low. Minimum is 5 minutes.');
-      this.cameraConfig.refreshSnapshotIntervalMinutes = 5;
+    if (this.cameraConfig.refreshSnapshotIntervalMinutes < SNAPSHOT_MIN_REFRESH_INTERVAL_MINUTES) {
+      this.log.warn(`The interval to automatically refresh snapshots is set too low. Minimum is ${SNAPSHOT_MIN_REFRESH_INTERVAL_MINUTES} minutes.`);
+      this.cameraConfig.refreshSnapshotIntervalMinutes = SNAPSHOT_MIN_REFRESH_INTERVAL_MINUTES;
     }
 
     const delayMinutes = ++SnapshotManager.instanceCount;
@@ -228,13 +235,13 @@ export class SnapshotManager {
       return this.getPlaceholder('offline');
     }
 
-    // return a new snapshot if it is recent enough (not more than 15 seconds)
-    if (this.isCacheFresh(15)) {
+    // return a new snapshot if it is recent enough
+    if (this.isCacheFresh(SNAPSHOT_CACHE_FRESH_SECONDS)) {
       return this.currentSnapshot!.image;
     }
 
     const diff = (Date.now() - this.lastRingEvent) / 1000;
-    if (this.cameraConfig.immediateRingNotificationWithoutSnapshot && diff < 5) {
+    if (this.cameraConfig.immediateRingNotificationWithoutSnapshot && diff < SNAPSHOT_RING_DEBOUNCE_SECONDS) {
       this.log.debug('Sending empty snapshot to speed up homekit notification for ring event.');
       return this.getPlaceholder('black');
     }
@@ -244,7 +251,7 @@ export class SnapshotManager {
         case SnapshotHandlingMethod.AlwaysFresh:
           return await this.getSnapshotFromStream();
         case SnapshotHandlingMethod.Balanced:
-          return this.isCacheFresh(30)
+          return this.isCacheFresh(SNAPSHOT_CACHE_BALANCED_SECONDS)
             ? this.currentSnapshot!.image
             : await this.getSnapshotFromStream();
         case SnapshotHandlingMethod.CloudOnly:
@@ -317,8 +324,8 @@ export class SnapshotManager {
       const picture = device.getPropertyValue(PropertyName.DevicePicture) as Picture;
       if (picture && picture.type) {
         this.storeImage(`${device.getSerial()}.${picture.type.ext}`, picture.data);
-        // Don't overwrite a recent stream snapshot (less than 30s old) with a cloud image
-        if (this.currentSnapshot && (Date.now() - this.currentSnapshot.timestamp) < 30 * 1000) {
+        // Don't overwrite a recent stream snapshot with a cloud image
+        if (this.currentSnapshot && (Date.now() - this.currentSnapshot.timestamp) < SNAPSHOT_CLOUD_SKIP_MS) {
           this.log.debug('Skipping cloud snapshot update, a recent stream snapshot already exists.');
         } else {
           this.storeSnapshotForCache(picture.data);
