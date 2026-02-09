@@ -55,14 +55,16 @@ jobs:
       matrix:
         node-version: [24]
     needs: build
+    permissions:
+      contents: write
     steps:
       - name: Push the change
         uses: actions/checkout@v4
         with:
           ref: ${{ github.event.inputs.branch }}
-          token: ${{ secrets.BUILD_SVC_PAT }}
-      - run: git config --global user.name '[GitHub Bot]'
-      - run: git config --global user.email '<>'
+          token: ${{ secrets.GITHUB_TOKEN }}
+      - run: git config --global user.name 'github-actions[bot]'
+      - run: git config --global user.email '41898282+github-actions[bot]@users.noreply.github.com'
       - run: npm version ${{ github.event.inputs.version }} ${{ github.event.inputs.release-tag != 'latest' && format('--preid={0}', github.event.inputs.release-tag) || '' }} -m "[${{ github.event.inputs.release-tag }}] %s"
       - run: npm update homebridge-eufy-security
       - run: git push --force
