@@ -32,10 +32,9 @@ type Snapshot = {
   image: Buffer;
 };
 
-type StreamSource = {
-  url?: string;
-  stream?: Readable;
-};
+type StreamSource =
+  | { type: 'rtsp'; url: string }
+  | { type: 'local'; stream: Readable };
 
 /**
  * possible performance settings:
@@ -380,19 +379,14 @@ export class SnapshotManager {
 
     this.pendingFetch = (async () => {
       const source = await this.getCameraSource();
-      if (!source) {
-        throw new Error('No camera source detected.');
-      }
 
-      const isLocalStream = !!source.stream;
+      const isLocalStream = source.type === 'local';
       try {
         const buffer = await this.runFFmpegSnapshot('[Snapshot Process]', async (params) => {
-          if (source.url) {
+          if (source.type === 'rtsp') {
             params.setInputSource(source.url);
-          } else if (source.stream) {
-            await params.setInputStream(source.stream);
           } else {
-            throw new Error('No valid camera source detected.');
+            await params.setInputStream(source.stream);
           }
           if (this.cameraConfig.delayCameraSnapshot) {
             params.setDelayedSnapshot();
@@ -411,20 +405,15 @@ export class SnapshotManager {
     return this.pendingFetch;
   }
 
-  private async getCameraSource(): Promise<StreamSource | null> {
-    try {
-      if (is_rtsp_ready(this.device, this.cameraConfig)) {
-        const url = this.device.getPropertyValue(PropertyName.DeviceRTSPStreamUrl) as string;
-        this.log.debug('RTSP URL: ' + url);
-        return { url };
-      }
-
-      const streamData = await this.livestreamManager.getLocalLivestream();
-      return { stream: streamData.videostream };
-    } catch (error) {
-      this.log.warn('Could not get camera source for snapshot:', error);
-      return null;
+  private async getCameraSource(): Promise<StreamSource> {
+    if (is_rtsp_ready(this.device, this.cameraConfig)) {
+      const url = this.device.getPropertyValue(PropertyName.DeviceRTSPStreamUrl) as string;
+      this.log.debug('RTSP URL: ' + url);
+      return { type: 'rtsp', url };
     }
+
+    const streamData = await this.livestreamManager.getLocalLivestream();
+    return { type: 'local', stream: streamData.videostream };
   }
 
   private async resizeSnapshot(snapshot: Buffer, request: SnapshotRequest): Promise<Buffer> {
