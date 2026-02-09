@@ -61,6 +61,7 @@ export class SnapshotManager extends EventEmitter {
 
   private refreshProcessRunning = false;
   private lastRingEvent = 0;
+  private isDeviceOffline = false;
 
   public readonly log: Logger<ILogObj>;
 
@@ -150,6 +151,17 @@ export class SnapshotManager extends EventEmitter {
       this.log.error('could not cache CameraDisabled file for further use: ' + error);
     }
 
+    // Initialize device online/offline state
+    try {
+      const state = this.device.getPropertyValue(PropertyName.DeviceState) as number;
+      this.isDeviceOffline = (state === 0 || state === 3);
+      if (this.isDeviceOffline) {
+        this.log.info('Device is currently offline (state: ' + state + ').');
+      }
+    } catch (error) {
+      this.log.debug('Could not read initial device state: ' + error);
+    }
+
     try {
       const picture = this.device.getPropertyValue(PropertyName.DevicePicture) as Picture;
       if (picture && picture.type) {
@@ -196,6 +208,15 @@ export class SnapshotManager extends EventEmitter {
         return this.cameraDisabled;
       } else {
         return Promise.reject('Something wrong with file systems. Looks like not enough rights!');
+      }
+    }
+
+    if (this.isDeviceOffline) {
+      this.log.debug('Device is offline, returning offline snapshot.');
+      if (this.cameraOffline) {
+        return this.cameraOffline;
+      } else {
+        return Promise.reject('Device is offline and no offline placeholder available.');
       }
     }
 
@@ -373,6 +394,18 @@ export class SnapshotManager extends EventEmitter {
       this.log.info(`Device enabled state changed to: ${enabled}`);
       if (enabled) {
         // Clear stale snapshot so the next request fetches a fresh one
+        this.currentSnapshot = undefined;
+      }
+    }
+
+    if (name === 'state') {
+      const state = device.getPropertyValue(PropertyName.DeviceState) as number;
+      const wasOffline = this.isDeviceOffline;
+      this.isDeviceOffline = (state === 0 || state === 3);
+      if (this.isDeviceOffline && !wasOffline) {
+        this.log.warn(`Device went offline (state: ${state}).`);
+      } else if (!this.isDeviceOffline && wasOffline) {
+        this.log.info(`Device came back online (state: ${state}).`);
         this.currentSnapshot = undefined;
       }
     }
