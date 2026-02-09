@@ -69,7 +69,7 @@ export class SnapshotManager {
   private lastRingEvent = 0;
   private isDeviceOffline = false;
 
-  public readonly log: Logger<ILogObj>;
+  private readonly log: Logger<ILogObj>;
 
   private snapshotRefreshTimer?: NodeJS.Timeout;
 
