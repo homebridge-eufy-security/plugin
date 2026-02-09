@@ -204,12 +204,38 @@ export class SnapshotManager {
       const picture = this.device.getPropertyValue(PropertyName.DevicePicture) as Picture;
       if (picture && picture.type) {
         this.storeSnapshotForCache(picture.data, 0);
-      } else {
-        throw new Error('No currentSnapshot');
+        return;
       }
     } catch (error) {
-      this.log.error('could not fetch old snapshot: ' + error);
+      this.log.debug('Could not fetch snapshot from device property: ' + error);
     }
+
+    // Fallback: try to load a previously cached snapshot from disk
+    this.loadSnapshotFromDisk();
+  }
+
+  private loadSnapshotFromDisk(): void {
+    const serial = this.device.getSerial();
+    const extensions = ['jpg', 'png', 'bmp'];
+
+    for (const ext of extensions) {
+      const filePath = `${this.eufyPath}/${serial}.${ext}`;
+      try {
+        if (fs.existsSync(filePath)) {
+          const data = fs.readFileSync(filePath);
+          if (data.length > 0) {
+            const mtime = fs.statSync(filePath).mtimeMs;
+            this.storeSnapshotForCache(data, mtime);
+            this.log.info(`Loaded cached snapshot from disk: ${filePath}`);
+            return;
+          }
+        }
+      } catch (error) {
+        this.log.debug(`Failed to load snapshot from ${filePath}: ${error}`);
+      }
+    }
+
+    this.log.warn('No cached snapshot found on disk for device ' + serial);
   }
 
   private onDeviceEvent(eventType: keyof DeviceEvents, device: Device, state: boolean) {
