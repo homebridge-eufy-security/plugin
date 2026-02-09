@@ -224,7 +224,6 @@ export class SnapshotManager {
   }
 
   private async getSnapshotBuffer(): Promise<Buffer> {
-    // Check device state first, before returning any cached snapshot
     if (!this.device.isEnabled()) {
       this.log.debug('Device is disabled, returning disabled snapshot.');
       return this.getPlaceholder('disabled');
@@ -235,47 +234,48 @@ export class SnapshotManager {
       return this.getPlaceholder('offline');
     }
 
-    // return a new snapshot if it is recent enough
     if (this.isCacheFresh(SNAPSHOT_CACHE_FRESH_SECONDS)) {
       return this.currentSnapshot!.image;
     }
 
-    const diff = (Date.now() - this.lastRingEvent) / 1000;
-    if (this.cameraConfig.immediateRingNotificationWithoutSnapshot && diff < SNAPSHOT_RING_DEBOUNCE_SECONDS) {
+    const ringAge = (Date.now() - this.lastRingEvent) / 1000;
+    if (this.cameraConfig.immediateRingNotificationWithoutSnapshot && ringAge < SNAPSHOT_RING_DEBOUNCE_SECONDS) {
       this.log.debug('Sending empty snapshot to speed up homekit notification for ring event.');
       return this.getPlaceholder('black');
     }
 
+    return this.resolveByHandlingMethod();
+  }
+
+  private async resolveByHandlingMethod(): Promise<Buffer> {
     try {
       switch (this.cameraConfig.snapshotHandlingMethod) {
         case SnapshotHandlingMethod.AlwaysFresh:
-          return await this.getSnapshotFromStream();
+          return await this.fetchSnapshotFromStream();
+
         case SnapshotHandlingMethod.Balanced:
-          return this.isCacheFresh(SNAPSHOT_CACHE_BALANCED_SECONDS)
-            ? this.currentSnapshot!.image
-            : await this.getSnapshotFromStream();
+          if (this.isCacheFresh(SNAPSHOT_CACHE_BALANCED_SECONDS)) {
+            return this.currentSnapshot!.image;
+          }
+          return await this.fetchSnapshotFromStream();
+
         case SnapshotHandlingMethod.CloudOnly:
-          return this.getSnapshotFromCache();
+          return this.getCachedOrPlaceholder();
+
         default:
           throw new Error('No suitable handling method for snapshots defined');
       }
     } catch (err) {
       this.log.warn('Snapshot retrieval failed, falling back to cache:', err);
-      return this.getSnapshotFromCache();
+      return this.getCachedOrPlaceholder();
     }
   }
 
-  private isCacheFresh(maxAgeSeconds: number): boolean {
-    return !!this.currentSnapshot &&
-      (Date.now() - this.currentSnapshot.timestamp) / 1000 <= maxAgeSeconds;
-  }
-
   /**
-   * Retrieves the newest snapshot by awaiting the in-flight or new fetch.
+   * Fetches a fresh snapshot from a live stream.
    */
-  private async getSnapshotFromStream(): Promise<Buffer> {
+  private async fetchSnapshotFromStream(): Promise<Buffer> {
     this.log.info('Begin live streaming to access the most recent snapshot (significant battery drain on the device)');
-
     await this.fetchCurrentCameraSnapshot();
 
     if (this.currentSnapshot) {
@@ -287,13 +287,17 @@ export class SnapshotManager {
   /**
    * Returns cached snapshot or the unavailable placeholder.
    */
-  private getSnapshotFromCache(): Buffer {
+  private getCachedOrPlaceholder(): Buffer {
     if (this.currentSnapshot) {
       return this.currentSnapshot.image;
     }
-
     this.log.warn('No currentSnapshot available, using fallback unavailable snapshot image');
     return this.getPlaceholder('unavailable');
+  }
+
+  private isCacheFresh(maxAgeSeconds: number): boolean {
+    return !!this.currentSnapshot &&
+      (Date.now() - this.currentSnapshot.timestamp) / 1000 <= maxAgeSeconds;
   }
 
   private automaticSnapshotRefresh() {
