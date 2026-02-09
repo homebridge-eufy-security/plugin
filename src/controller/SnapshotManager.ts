@@ -456,6 +456,8 @@ export class SnapshotManager extends EventEmitter {
       parameters.setDelayedSnapshot();
     }
 
+    const isLocalStream = !!source.stream;
+
     try {
       const ffmpeg = new FFmpeg(
         `[Snapshot Process]`,
@@ -463,11 +465,15 @@ export class SnapshotManager extends EventEmitter {
       );
       const buffer = await ffmpeg.getResult();
 
-      this.livestreamManager.stopLocalLiveStream();
+      if (isLocalStream) {
+        this.livestreamManager.stopLocalLiveStream();
+      }
 
       return Promise.resolve(buffer);
     } catch (error) {
-      this.livestreamManager.stopLocalLiveStream();
+      if (isLocalStream) {
+        this.livestreamManager.stopLocalLiveStream();
+      }
       return Promise.reject(error);
     }
   }
