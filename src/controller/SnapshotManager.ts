@@ -237,7 +237,8 @@ export class SnapshotManager extends EventEmitter {
       }
       return snapshot;
 
-    } catch {
+    } catch (err) {
+      this.log.warn('Snapshot retrieval failed, falling back to cache:', err);
       try {
         return this.getSnapshotFromCache();
       } catch (error) {
