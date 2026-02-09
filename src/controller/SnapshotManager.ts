@@ -6,7 +6,7 @@ import { SnapshotRequest } from 'homebridge';
 import { ILogObj, Logger } from 'tslog';
 
 import { CameraAccessory } from '../accessories/CameraAccessory';
-import { CameraConfig } from '../utils/configTypes';
+import { CameraConfig, SnapshotHandlingMethod } from '../utils/configTypes';
 import { FFmpeg, FFmpegParameters } from '../utils/ffmpeg';
 import { is_rtsp_ready } from '../utils/utils';
 import { LocalLivestreamManager } from './LocalLivestreamManager';
@@ -130,14 +130,14 @@ export class SnapshotManager {
   }
 
   private logSnapshotHandlingMethod(): void {
-    if (this.cameraConfig.snapshotHandlingMethod === 1) {
+    if (this.cameraConfig.snapshotHandlingMethod === SnapshotHandlingMethod.AlwaysFresh) {
       this.log.info('is set to generate new snapshots on events every time. This might reduce homebridge performance and increase power consumption.');
       if (this.cameraConfig.refreshSnapshotIntervalMinutes) {
         this.log.warn('You have enabled automatic snapshot refreshing. It is recommended not to use this setting with forced snapshot refreshing.');
       }
-    } else if (this.cameraConfig.snapshotHandlingMethod === 2) {
+    } else if (this.cameraConfig.snapshotHandlingMethod === SnapshotHandlingMethod.Balanced) {
       this.log.info('is set to balanced snapshot handling.');
-    } else if (this.cameraConfig.snapshotHandlingMethod === 3) {
+    } else if (this.cameraConfig.snapshotHandlingMethod === SnapshotHandlingMethod.CloudOnly) {
       this.log.info('is set to handle snapshots with cloud images. Snapshots might be older than they appear.');
     } else {
       this.log.warn('unknown snapshot handling method. Snapshots will not be generated.');
@@ -241,13 +241,13 @@ export class SnapshotManager {
 
     try {
       switch (this.cameraConfig.snapshotHandlingMethod) {
-        case 1:
+        case SnapshotHandlingMethod.AlwaysFresh:
           return await this.getSnapshotFromStream();
-        case 2:
+        case SnapshotHandlingMethod.Balanced:
           return this.isCacheFresh(30)
             ? this.currentSnapshot!.image
             : await this.getSnapshotFromStream();
-        case 3:
+        case SnapshotHandlingMethod.CloudOnly:
           return this.getSnapshotFromCache();
         default:
           throw new Error('No suitable handling method for snapshots defined');
