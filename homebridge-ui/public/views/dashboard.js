@@ -162,7 +162,7 @@ const DashboardView = {
         <div class="detail-section__title">Unsupported Devices</div>
         <p class="text-muted" style="font-size: 0.8rem;">
           These devices were detected but are not yet fully supported by the eufy-security-client library.
-          <a href="https://github.com/homebridge-eufy-security/plugin/issues" target="_blank">Request support on GitHub</a>
+          <a href="https://github.com/homebridge-plugins/homebridge-eufy-security/issues" target="_blank">Request support on GitHub</a>
         </p>
       `;
 

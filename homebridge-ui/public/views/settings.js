@@ -284,12 +284,12 @@ const SettingsView = {
       params.set('template', 'bug_report.yml');
       params.set('environment', envSection);
 
-      const url = 'https://github.com/homebridge-eufy-security/plugin/issues/new?' + params.toString();
+      const url = 'https://github.com/homebridge-plugins/homebridge-eufy-security/issues/new?' + params.toString();
       window.open(url, '_blank');
     } catch (e) {
       // Fallback: open without pre-fill
       homebridge.toast.error('Could not gather system info. Opening blank issue form.');
-      window.open('https://github.com/homebridge-eufy-security/plugin/issues/new?template=bug_report.yml', '_blank');
+      window.open('https://github.com/homebridge-plugins/homebridge-eufy-security/issues/new?template=bug_report.yml', '_blank');
     }
   },
 

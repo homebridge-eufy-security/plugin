@@ -63,7 +63,7 @@ const LoginView = {
           <input class="form-check-input" type="checkbox" id="ack-guest-admin">
           <label class="form-check-label" for="ack-guest-admin">
             <strong>Important:</strong> Use a <strong>dedicated guest admin account</strong> — not your primary Eufy account.
-            <a href="https://github.com/homebridge-eufy-security/plugin/wiki/Create-a-dedicated-admin-account-for-Homebridge-Eufy-Security-Plugin" target="_blank">Learn more</a>
+            <a href="https://github.com/homebridge-plugins/homebridge-eufy-security/wiki/Create-a-dedicated-admin-account-for-Homebridge-Eufy-Security-Plugin" target="_blank">Learn more</a>
           </label>
         </div>
       </div>

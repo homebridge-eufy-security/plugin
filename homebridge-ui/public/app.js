@@ -137,7 +137,7 @@ const App = {
         <hr>
         <p class="mb-0">
           Please create a dedicated admin account for this plugin.
-          <a href="https://github.com/homebridge-eufy-security/plugin/wiki/Create-a-dedicated-admin-account-for-Homebridge-Eufy-Security-Plugin" 
+          <a href="https://github.com/homebridge-plugins/homebridge-eufy-security/wiki/Create-a-dedicated-admin-account-for-Homebridge-Eufy-Security-Plugin" 
              target="_blank" class="alert-link">
             Follow this guide
           </a>

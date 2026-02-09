@@ -39,7 +39,7 @@ const Helpers = {
       }
     }
     const link = document.createElement('a');
-    link.href = 'https://github.com/homebridge-eufy-security/plugin/wiki/Node.js-Compatibility-with-Eufy-Security-Plugin';
+    link.href = 'https://github.com/homebridge-plugins/homebridge-eufy-security/wiki/Node.js-Compatibility-with-Eufy-Security-Plugin';
     link.target = '_blank';
     link.textContent = 'Learn more';
     parent.appendChild(link);
