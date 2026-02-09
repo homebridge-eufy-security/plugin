@@ -101,7 +101,7 @@ export class SnapshotManager extends EventEmitter {
 
     if (this.cameraConfig.refreshSnapshotIntervalMinutes) {
       if (this.cameraConfig.refreshSnapshotIntervalMinutes < 5) {
-        this.log.warn('The interval to automatically refresh snapshots is set too low. Minimum is one minute.');
+        this.log.warn('The interval to automatically refresh snapshots is set too low. Minimum is 5 minutes.');
         this.cameraConfig.refreshSnapshotIntervalMinutes = 5;
       }
       this.log.info('Setting up automatic snapshot refresh every ' + this.cameraConfig.refreshSnapshotIntervalMinutes + ' minutes. This may decrease battery life dramatically. The refresh process should begin in ' + MINUTES_TO_WAIT_FOR_AUTOMATIC_REFRESH_TO_BEGIN + ' minutes.');
@@ -114,14 +114,14 @@ export class SnapshotManager extends EventEmitter {
     if (this.cameraConfig.snapshotHandlingMethod === 1) {
       this.log.info('is set to generate new snapshots on events every time. This might reduce homebridge performance and increase power consumption.');
       if (this.cameraConfig.refreshSnapshotIntervalMinutes) {
-        this.log.warn('You have enabled automatic snapshot refreshing. It is recommened not to use this setting with forced snapshot refreshing.');
+        this.log.warn('You have enabled automatic snapshot refreshing. It is recommended not to use this setting with forced snapshot refreshing.');
       }
     } else if (this.cameraConfig.snapshotHandlingMethod === 2) {
       this.log.info('is set to balanced snapshot handling.');
     } else if (this.cameraConfig.snapshotHandlingMethod === 3) {
       this.log.info('is set to handle snapshots with cloud images. Snapshots might be older than they appear.');
     } else {
-      this.log.warn('unknown snapshot handling method. SNapshots will not be generated.');
+      this.log.warn('unknown snapshot handling method. Snapshots will not be generated.');
     }
 
     try {
