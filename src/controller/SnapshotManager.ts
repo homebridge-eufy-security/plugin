@@ -18,8 +18,6 @@ const CameraDisabled = require.resolve('../../media/camera-disabled.png');
 const SnapshotBlackPath = require.resolve('../../media/Snapshot-black.png');
 const SnapshotUnavailable = require.resolve('../../media/Snapshot-Unavailable.png');
 
-let MINUTES_TO_WAIT_FOR_AUTOMATIC_REFRESH_TO_BEGIN = 1; // should be incremented by 1 for every device
-
 type Snapshot = {
   timestamp: number;
   image: Buffer;
@@ -48,6 +46,8 @@ type StreamSource = {
  */
 
 export class SnapshotManager extends EventEmitter {
+
+  private static instanceCount = 0;
 
   private readonly platform: EufySecurityPlatform;
   private readonly device: Camera;
@@ -118,17 +118,17 @@ export class SnapshotManager extends EventEmitter {
       this.cameraConfig.refreshSnapshotIntervalMinutes = 5;
     }
 
+    const delayMinutes = ++SnapshotManager.instanceCount;
+
     this.log.info(
       'Setting up automatic snapshot refresh every ' + this.cameraConfig.refreshSnapshotIntervalMinutes +
       ' minutes. This may decrease battery life dramatically. The refresh process should begin in ' +
-      MINUTES_TO_WAIT_FOR_AUTOMATIC_REFRESH_TO_BEGIN + ' minutes.',
+      delayMinutes + ' minutes.',
     );
 
     setTimeout(() => {
       this.automaticSnapshotRefresh();
-    }, MINUTES_TO_WAIT_FOR_AUTOMATIC_REFRESH_TO_BEGIN * 60 * 1000);
-
-    MINUTES_TO_WAIT_FOR_AUTOMATIC_REFRESH_TO_BEGIN++;
+    }, delayMinutes * 60 * 1000);
   }
 
   private logSnapshotHandlingMethod(): void {
