@@ -54,7 +54,7 @@ type StreamSource =
  * Drawbacks: elapsed time in homekit might be wrong
  */
 
-export class SnapshotManager {
+export class snapshotDelegate {
 
   private static instanceCount = 0;
 
@@ -125,7 +125,7 @@ export class SnapshotManager {
     }
 
     const intervalMs = this.cameraConfig.refreshSnapshotIntervalMinutes * 60 * 1000;
-    const staggerMs = (++SnapshotManager.instanceCount) * 60 * 1000;
+    const staggerMs = (++snapshotDelegate.instanceCount) * 60 * 1000;
 
     this.log.info(
       `Setting up automatic snapshot refresh every ${this.cameraConfig.refreshSnapshotIntervalMinutes}` +
