@@ -38,10 +38,10 @@ export class StreamingDelegate implements CameraStreamingDelegate {
 
   private controller?: CameraController;
 
-  public readonly log: Logger<ILogObj>;
+  private readonly log: Logger<ILogObj>;
 
-  private localLivestreamManager: LocalLivestreamManager;
-  private snapshotManager: SnapshotManager;
+  private readonly localLivestreamManager: LocalLivestreamManager;
+  private readonly snapshotManager: SnapshotManager;
 
   // keep track of sessions
   private readonly pendingSessions = new Map<string, SessionInfo>();
