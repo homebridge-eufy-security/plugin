@@ -370,50 +370,43 @@ export class StreamingDelegate implements CameraStreamingDelegate {
   public stopStream(sessionId: string): void {
     this.log.debug('Stopping session with id: ' + sessionId);
 
-    const pendingSession = this.pendingSessions.get(sessionId);
-    if (pendingSession) {
-      this.pendingSessions.delete(sessionId);
-    }
+    this.pendingSessions.delete(sessionId);
 
     const session = this.ongoingSessions.get(sessionId);
-    if (session) {
-      if (session.timeout) {
-        clearTimeout(session.timeout);
-      }
-      try {
+    if (!session) {
+      this.log.debug('No session to stop.');
+      return;
+    }
+
+    if (session.timeout) {
+      clearTimeout(session.timeout);
+    }
+
+    const cleanupSteps: Array<[string, () => void]> = [
+      ['returnAudio FFmpeg process', () => {
         session.talkbackStream?.stopTalkbackStream();
         session.returnProcess?.stdout?.unpipe();
         session.returnProcess?.stop();
-      } catch (error) {
-        this.log.error('Error occurred terminating returnAudio FFmpeg process: ' + error);
-      }
-      try {
-        session.videoProcess?.stop();
-      } catch (error) {
-        this.log.error('Error occurred terminating video FFmpeg process: ' + error);
-      }
-      try {
-        session.audioProcess?.stop();
-      } catch (error) {
-        this.log.error('Error occurred terminating audio FFmpeg process: ' + error);
-      }
-      try {
-        session.socket?.close();
-      } catch (error) {
-        this.log.error('Error occurred closing socket: ' + error);
-      }
-      try {
+      }],
+      ['video FFmpeg process', () => session.videoProcess?.stop()],
+      ['audio FFmpeg process', () => session.audioProcess?.stop()],
+      ['socket', () => session.socket?.close()],
+      ['Eufy Station livestream', () => {
         if (!is_rtsp_ready(this.device, this.camera.cameraConfig)) {
           this.localLivestreamManager.stopLocalLiveStream();
         }
-      } catch (error) {
-        this.log.error('Error occurred terminating Eufy Station livestream: ' + error);
-      }
+      }],
+    ];
 
-      this.ongoingSessions.delete(sessionId);
-      this.log.info('Stopped video stream.');
-    } else {
-      this.log.debug('No session to stop.');
+    for (const [label, cleanup] of cleanupSteps) {
+      try {
+        cleanup();
+      } catch (error) {
+        this.log.error(`Error occurred terminating ${label}: ${error}`);
+      }
     }
+
+    this.ongoingSessions.delete(sessionId);
+    this.log.info('Stopped video stream.');
   }
 }
