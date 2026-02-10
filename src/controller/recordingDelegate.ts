@@ -139,20 +139,16 @@ export class RecordingDelegate implements CameraRecordingDelegate {
 
       this.session = await ffmpeg.startFragmentedMP4Session();
 
-      let timer = this.cameraConfig.hsvRecordingDuration ?? MAX_RECORDING_MINUTES * 60;
-      if (this.platform.config.CameraMaxLivestreamDuration < timer) {
-        timer = this.platform.config.CameraMaxLivestreamDuration;
-      }
+      const maxDuration = Math.min(
+        this.cameraConfig.hsvRecordingDuration ?? MAX_RECORDING_MINUTES * 60,
+        this.platform.config.CameraMaxLivestreamDuration,
+      );
 
-      if (timer > 0) {
+      if (maxDuration > 0) {
         this.forceStopTimeout = setTimeout(() => {
-          log.warn(
-            this.camera.getName(),
-            `The recording process has been running for ${timer} seconds and is now being forced closed!`,
-          );
-
+          log.warn(this.camera.getName(), `Recording force-stopped after ${maxDuration}s.`);
           this.resetMotionSensor();
-        }, timer * 1000);
+        }, maxDuration * 1000);
       }
 
       yield* this.generateFragments(this.session.generator);
