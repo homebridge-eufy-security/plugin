@@ -13,19 +13,18 @@ import {
   StreamRequestTypes,
 } from 'homebridge';
 import { createSocket, Socket } from 'dgram';
+import { Logger, ILogObj } from 'tslog';
+import { pickPort } from 'pick-port';
+import { Camera, PropertyName } from 'eufy-security-client';
+
+import { EufySecurityPlatform } from '../platform';
+import { CameraAccessory } from '../accessories/CameraAccessory';
 import { SessionInfo, VideoConfig } from '../utils/configTypes';
 import { FFmpeg, FFmpegParameters } from '../utils/ffmpeg';
-
-import { Camera, PropertyName } from 'eufy-security-client';
-import { EufySecurityPlatform } from '../platform';
-
-import { LocalLivestreamManager } from './LocalLivestreamManager';
-import { SnapshotManager } from './SnapshotManager';
 import { TalkbackStream } from '../utils/Talkback';
 import { HAP, is_rtsp_ready } from '../utils/utils';
-import { pickPort } from 'pick-port';
-import { CameraAccessory } from '../accessories/CameraAccessory';
-import { Logger, ILogObj } from 'tslog';
+import { LocalLivestreamManager } from './LocalLivestreamManager';
+import { SnapshotManager } from './SnapshotManager';
 
 // Re-export for backward compatibility
 export type { SessionInfo } from '../utils/configTypes';
@@ -87,11 +86,11 @@ export class StreamingDelegate implements CameraStreamingDelegate {
     this.log.debug('handleSnapshotRequest');
 
     try {
-      this.log.debug('Snapshot requested: ' + request.width + ' x ' + request.height, this.videoConfig.debug!);
+      this.log.debug(`Snapshot requested: ${request.width}x${request.height}`);
 
       const snapshot = await this.snapshotManager.getSnapshotBufferResized(request);
 
-      this.log.debug('snapshot byte lenght: ' + snapshot?.byteLength);
+      this.log.debug('Snapshot byte length: ' + snapshot?.byteLength);
 
       callback(undefined, snapshot);
     } catch (error) {
