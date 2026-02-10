@@ -43,7 +43,7 @@ export class RecordingDelegate implements CameraRecordingDelegate {
 
   private session?: {
     socket: net.Socket;
-    process?: ChildProcessWithoutNullStreams | undefined;
+    process?: ChildProcessWithoutNullStreams;
     generator: AsyncGenerator<{
       header: Buffer;
       length: number;
@@ -121,17 +121,12 @@ export class RecordingDelegate implements CameraRecordingDelegate {
       }
 
       const audioEnabled = this.controller?.recordingManagement?.recordingManagementService.getCharacteristic(CHAR.RecordingAudioActive).value;
-      if (audioEnabled) {
-        log.debug(this.camera.getName(), 'HKSV and plugin are set to record audio.');
-      } else {
-        log.debug(this.camera.getName(), 'HKSV and plugin are set to omit audio recording.');
-      }
+      log.debug(this.camera.getName(), `HKSV audio recording: ${audioEnabled ? 'enabled' : 'disabled'}.`);
 
       const videoParams = await FFmpegParameters.forVideoRecording();
       const audioParams = await FFmpegParameters.forAudioRecording();
 
       const videoConfig: VideoConfig = this.cameraConfig.videoConfig ?? {};
-
       videoParams.setupForRecording(videoConfig, this.configuration);
       audioParams.setupForRecording(videoConfig, this.configuration);
 
