@@ -36,9 +36,7 @@ type ActiveSession = {
 
 export class StreamingDelegate implements CameraStreamingDelegate {
 
-  private videoConfig: VideoConfig;
   private controller?: CameraController;
-  private device: Camera;
 
   public readonly log: Logger<ILogObj>;
 
@@ -49,13 +47,17 @@ export class StreamingDelegate implements CameraStreamingDelegate {
   pendingSessions: Map<string, SessionInfo> = new Map();
   ongoingSessions: Map<string, ActiveSession> = new Map();
 
+  private get device(): Camera {
+    return this.camera.device;
+  }
+
+  private get videoConfig(): VideoConfig {
+    return this.camera.cameraConfig.videoConfig!;
+  }
+
   constructor(
     private camera: CameraAccessory,
   ) {
-    this.device = camera.device;
-
-    this.videoConfig = camera.cameraConfig.videoConfig!;
-
     this.log = camera.log;
 
     this.localLivestreamManager = new LocalLivestreamManager(camera);
@@ -64,7 +66,6 @@ export class StreamingDelegate implements CameraStreamingDelegate {
       this.camera,
       this.localLivestreamManager,
     );
-
   }
 
   public setController(controller: CameraController) {
