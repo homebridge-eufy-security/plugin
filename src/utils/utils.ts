@@ -1,10 +1,5 @@
 import { Logger, ILogObj } from 'tslog';
 
-import net from 'net';
-import path from 'path';
-import { tmpdir } from 'os';
-import fse from 'fs-extra';
-
 import { HAP as HAPHB } from 'homebridge';
 import type { Characteristic, Service } from 'homebridge';
 
