@@ -434,7 +434,7 @@ export class SnapshotManager {
       return { type: 'rtsp', url };
     }
 
-    const streamData = await this.livestreamManager.getLocalLivestream();
+    const streamData = await this.livestreamManager.getLocalLiveStream();
     return { type: 'local', stream: streamData.videostream };
   }
 
