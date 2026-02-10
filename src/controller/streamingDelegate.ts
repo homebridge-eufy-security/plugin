@@ -340,22 +340,13 @@ export class StreamingDelegate implements CameraStreamingDelegate {
   handleStreamRequest(request: StreamingRequest, callback: StreamRequestCallback): void {
     switch (request.type) {
       case StreamRequestTypes.START:
-        this.log.debug(`Received request to start stream with id ${request.sessionID}`);
-        this.log.debug(`request data:`, request);
+        this.log.debug(`Received request to start stream with id ${request.sessionID}`, request);
         this.startStream(request, callback);
         break;
       case StreamRequestTypes.RECONFIGURE:
         this.log.debug(
-          'Received request to reconfigure: ' +
-          request.video.width +
-          ' x ' +
-          request.video.height +
-          ', ' +
-          request.video.fps +
-          ' fps, ' +
-          request.video.max_bit_rate +
-          ' kbps (Ignored)',
-          this.videoConfig.debug,
+          `Reconfigure request: ${request.video.width}x${request.video.height}, ` +
+          `${request.video.fps} fps, ${request.video.max_bit_rate} kbps (Ignored)`,
         );
         callback();
         break;
