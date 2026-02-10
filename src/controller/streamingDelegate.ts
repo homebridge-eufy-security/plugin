@@ -104,39 +104,44 @@ export class StreamingDelegate implements CameraStreamingDelegate {
     const videoSSRC = HAP.CameraController.generateSynchronisationSource();
     const audioSSRC = HAP.CameraController.generateSynchronisationSource();
 
+    const srtpBuffer = (m: PrepareStreamRequest['video']) => Buffer.concat([m.srtp_key, m.srtp_salt]);
+
     const sessionInfo: SessionInfo = {
       address: request.targetAddress,
       ipv6: request.addressVersion === 'ipv6',
       videoPort: request.video.port,
       videoReturnPort,
       videoCryptoSuite: request.video.srtpCryptoSuite,
-      videoSRTP: Buffer.concat([request.video.srtp_key, request.video.srtp_salt]),
+      videoSRTP: srtpBuffer(request.video),
       videoSSRC,
       audioPort: request.audio.port,
       audioReturnPort,
       audioCryptoSuite: request.audio.srtpCryptoSuite,
-      audioSRTP: Buffer.concat([request.audio.srtp_key, request.audio.srtp_salt]),
+      audioSRTP: srtpBuffer(request.audio),
       audioSSRC,
     };
 
     this.pendingSessions.set(request.sessionID, sessionInfo);
 
     const response: PrepareStreamResponse = {
-      video: {
-        port: videoReturnPort,
-        ssrc: videoSSRC,
-        srtp_key: request.video.srtp_key,
-        srtp_salt: request.video.srtp_salt,
-      },
-      audio: {
-        port: audioReturnPort,
-        ssrc: audioSSRC,
-        srtp_key: request.audio.srtp_key,
-        srtp_salt: request.audio.srtp_salt,
-      },
+      video: this.buildMediaResponse(videoReturnPort, videoSSRC, request.video),
+      audio: this.buildMediaResponse(audioReturnPort, audioSSRC, request.audio),
     };
 
     callback(undefined, response);
+  }
+
+  private buildMediaResponse(
+    returnPort: number,
+    ssrc: number,
+    media: PrepareStreamRequest['video'],
+  ): PrepareStreamResponse['video'] {
+    return {
+      port: returnPort,
+      ssrc,
+      srtp_key: media.srtp_key,
+      srtp_salt: media.srtp_salt,
+    };
   }
 
   private async startStream(request: StartStreamRequest, callback: StreamRequestCallback): Promise<void> {
