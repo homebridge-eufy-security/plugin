@@ -3,8 +3,7 @@ import { Station, Device, StreamMetadata, EufySecurity, PropertyName } from 'euf
 import { CameraAccessory } from '../accessories/CameraAccessory';
 import { ILogObj, Logger } from 'tslog';
 
-// Define a type for the station stream data.
-type StationStream = {
+export type StationStream = {
   station: Station;
   device: Device;
   metadata: StreamMetadata;
