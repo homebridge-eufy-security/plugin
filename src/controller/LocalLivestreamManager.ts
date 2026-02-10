@@ -116,10 +116,13 @@ export class LocalLivestreamManager {
     this.destroyStreams();
   }
 
+  /** True when the event belongs to this camera instance. */
+  private isOwnDevice(device: Device): boolean {
+    return device.getSerial() === this.serialNumber;
+  }
+
   private onStationLivestreamStop = (_station: Station, device: Device): void => {
-    if (device.getSerial() !== this.serialNumber) {
-      return;
-    }
+    if (!this.isOwnDevice(device)) return;
     this.log.debug(`Station livestream for ${device.getName()} has stopped.`);
     this.destroyStreams();
   };
@@ -131,9 +134,7 @@ export class LocalLivestreamManager {
     videostream: Readable,
     audiostream: Readable,
   ): void => {
-    if (device.getSerial() !== this.serialNumber) {
-      return;
-    }
+    if (!this.isOwnDevice(device)) return;
 
     // Guard against duplicate events fired in quick succession.
     if (this.stationStream) {
