@@ -48,13 +48,13 @@ export class LocalLivestreamManager {
   }
 
   /** Return the active livestream, or start a new one. Concurrent callers share the same pending request. */
-  public async getLocalLivestream(): Promise<LivestreamData> {
+  public async getLocalLiveStream(): Promise<LivestreamData> {
     if (this.stationStream) {
       const runtime = ((Date.now() - this.stationStream.createdAt) / 1000).toFixed(1);
       this.log.debug(`Reusing livestream started ${runtime}s ago.`);
       return this.stationStream;
     }
-    return this.startLocalLivestream();
+    return this.startLocalLiveStream();
   }
 
   /**
@@ -63,7 +63,7 @@ export class LocalLivestreamManager {
    * the caller piggy-backs on the existing promise instead of issuing a
    * duplicate request.
    */
-  private startLocalLivestream(): Promise<LivestreamData> {
+  private startLocalLiveStream(): Promise<LivestreamData> {
     if (this.pending) {
       this.log.debug('Livestream already starting — waiting on existing request.');
       return this.pending.deferred.promise;

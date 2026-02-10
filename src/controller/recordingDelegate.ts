@@ -102,7 +102,7 @@ export class RecordingDelegate implements CameraRecordingDelegate {
       videoParams.setInputSource(url);
       audioParams.setInputSource(url);
     } else {
-      const streamData = await this.localLivestreamManager.getLocalLivestream();
+      const streamData = await this.localLivestreamManager.getLocalLiveStream();
       await videoParams.setInputStream(streamData.videostream);
       await audioParams.setInputStream(streamData.audiostream);
     }
