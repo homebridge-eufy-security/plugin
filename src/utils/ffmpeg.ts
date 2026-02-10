@@ -19,7 +19,7 @@ import {
     SnapshotRequest,
     StartStreamRequest,
 } from 'homebridge';
-import { SessionInfo } from '../controller/streamingDelegate';
+import { SessionInfo } from './configTypes';
 import { ffmpegLogger } from './utils';
 
 class FFmpegProgress extends EventEmitter {
