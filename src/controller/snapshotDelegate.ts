@@ -16,7 +16,7 @@ import {
 } from '../settings';
 import { CameraConfig, SnapshotHandlingMethod } from '../utils/configTypes';
 import { FFmpeg, FFmpegParameters } from '../utils/ffmpeg';
-import { is_rtsp_ready } from '../utils/utils';
+import { isRtspReady } from '../utils/utils';
 import { LocalLivestreamManager } from './LocalLivestreamManager';
 
 type PlaceholderKey = 'black' | 'unavailable' | 'offline' | 'disabled';
@@ -428,7 +428,7 @@ export class snapshotDelegate {
   }
 
   private async getCameraSource(): Promise<StreamSource> {
-    if (is_rtsp_ready(this.device, this.cameraConfig)) {
+    if (isRtspReady(this.device, this.cameraConfig)) {
       const url = this.device.getPropertyValue(PropertyName.DeviceRTSPStreamUrl) as string;
       this.log.debug('RTSP URL: ' + url);
       return { type: 'rtsp', url };

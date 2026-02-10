@@ -43,7 +43,7 @@ import os from 'node:os';
 import { platform } from 'node:process';
 import { readFileSync } from 'node:fs';
 
-import { init_log, log, tsLogger, ffmpegLogger, HAP } from './utils/utils';
+import { initLog, log, tsLogger, ffmpegLogger, HAP } from './utils/utils';
 import { LIB_VERSION } from './version';
 
 export class EufySecurityPlatform implements DynamicPlatformPlugin {
@@ -190,7 +190,7 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
     }
 
     // Initialize the global logger with the configured options
-    init_log(logOptions);
+    initLog(logOptions);
 
     // Configures log streams for various log files
     this.configureLogStreams();
