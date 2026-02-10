@@ -23,7 +23,7 @@ import { FFmpeg, FFmpegParameters } from '../utils/ffmpeg';
 import { TalkbackStream } from '../utils/Talkback';
 import { HAP, is_rtsp_ready } from '../utils/utils';
 import { LocalLivestreamManager } from './LocalLivestreamManager';
-import { SnapshotManager } from './SnapshotManager';
+import { snapshotDelegate } from './snapshotDelegate';
 
 type ActiveSession = {
   videoProcess?: FFmpeg;
@@ -41,7 +41,7 @@ export class StreamingDelegate implements CameraStreamingDelegate {
   private readonly log: Logger<ILogObj>;
 
   private readonly localLivestreamManager: LocalLivestreamManager;
-  private readonly snapshotManager: SnapshotManager;
+  private readonly snapshotDelegate: snapshotDelegate;
 
   // keep track of sessions
   private readonly pendingSessions = new Map<string, SessionInfo>();
@@ -62,7 +62,7 @@ export class StreamingDelegate implements CameraStreamingDelegate {
 
     this.localLivestreamManager = new LocalLivestreamManager(camera);
 
-    this.snapshotManager = new SnapshotManager(
+    this.snapshotDelegate = new snapshotDelegate(
       this.camera,
       this.localLivestreamManager,
     );
@@ -80,7 +80,7 @@ export class StreamingDelegate implements CameraStreamingDelegate {
     this.log.debug(`Snapshot requested: ${request.width}x${request.height}`);
 
     try {
-      const snapshot = await this.snapshotManager.getSnapshotBufferResized(request);
+      const snapshot = await this.snapshotDelegate.getSnapshotBufferResized(request);
       this.log.debug('Snapshot byte length: ' + snapshot?.byteLength);
       callback(undefined, snapshot);
     } catch (error) {
