@@ -7,14 +7,13 @@ import {
   PrepareStreamResponse,
   SnapshotRequest,
   SnapshotRequestCallback,
-  SRTPCryptoSuites,
   StartStreamRequest,
   StreamingRequest,
   StreamRequestCallback,
   StreamRequestTypes,
 } from 'homebridge';
 import { createSocket, Socket } from 'dgram';
-import { VideoConfig } from '../utils/configTypes';
+import { SessionInfo, VideoConfig } from '../utils/configTypes';
 import { FFmpeg, FFmpegParameters } from '../utils/ffmpeg';
 
 import { Camera, PropertyName } from 'eufy-security-client';
@@ -28,22 +27,8 @@ import { pickPort } from 'pick-port';
 import { CameraAccessory } from '../accessories/CameraAccessory';
 import { Logger, ILogObj } from 'tslog';
 
-export type SessionInfo = {
-  address: string; // address of the HAP controller
-  ipv6: boolean;
-
-  videoPort: number;
-  videoReturnPort: number;
-  videoCryptoSuite: SRTPCryptoSuites; // should be saved if multiple suites are supported
-  videoSRTP: Buffer; // key and salt concatenated
-  videoSSRC: number; // rtp synchronisation source
-
-  audioPort: number;
-  audioReturnPort: number;
-  audioCryptoSuite: SRTPCryptoSuites;
-  audioSRTP: Buffer;
-  audioSSRC: number;
-};
+// Re-export for backward compatibility
+export type { SessionInfo } from '../utils/configTypes';
 
 type ActiveSession = {
   videoProcess?: FFmpeg;
