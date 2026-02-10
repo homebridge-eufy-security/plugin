@@ -21,7 +21,7 @@ import { CameraAccessory } from '../accessories/CameraAccessory';
 import { SessionInfo, VideoConfig } from '../utils/configTypes';
 import { FFmpeg, FFmpegParameters } from '../utils/ffmpeg';
 import { TalkbackStream } from '../utils/Talkback';
-import { HAP, is_rtsp_ready } from '../utils/utils';
+import { HAP, isRtspReady } from '../utils/utils';
 import { LocalLivestreamManager } from './LocalLivestreamManager';
 import { snapshotDelegate } from './snapshotDelegate';
 
@@ -237,7 +237,7 @@ export class StreamingDelegate implements CameraStreamingDelegate {
     videoParams: FFmpegParameters,
     audioParams?: FFmpegParameters,
   ): Promise<void> {
-    if (is_rtsp_ready(this.device, this.camera.cameraConfig)) {
+    if (isRtspReady(this.device, this.camera.cameraConfig)) {
       const url = this.device.getPropertyValue(PropertyName.DeviceRTSPStreamUrl) as string;
       this.log.debug('RTSP URL: ' + url);
       videoParams.setInputSource(url);
@@ -375,7 +375,7 @@ export class StreamingDelegate implements CameraStreamingDelegate {
       ['audio FFmpeg process', () => session.audioProcess?.stop()],
       ['socket', () => session.socket?.close()],
       ['Eufy Station livestream', () => {
-        if (!is_rtsp_ready(this.device, this.camera.cameraConfig)) {
+        if (!isRtspReady(this.device, this.camera.cameraConfig)) {
           this.localLivestreamManager.stopLocalLiveStream();
         }
       }],

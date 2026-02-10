@@ -20,7 +20,7 @@ export let log: Logger<ILogObj> = {} as Logger<ILogObj>;
 export let tsLogger: Logger<ILogObj> = {} as Logger<ILogObj>;
 export let ffmpegLogger: Logger<ILogObj> = {} as Logger<ILogObj>;
 
-export function init_log(logOptions: ILogObj) {
+export function initLog(logOptions: ILogObj) {
   log = new Logger(logOptions);
   tsLogger = new Logger({ ...logOptions, type: 'hidden' });
   ffmpegLogger = new Logger({ ...logOptions, type: 'hidden' });
@@ -44,7 +44,7 @@ export class Deferred<T> {
   });
 }
 
-export const is_rtsp_ready = function (device: Camera, cameraConfig: CameraConfig): boolean {
+export const isRtspReady = function (device: Camera, cameraConfig: CameraConfig): boolean {
 
   log.debug(device.getName(), 'RTSP rtspStream:', device.hasProperty('rtspStream'));
   if (!device.hasProperty('rtspStream')) {

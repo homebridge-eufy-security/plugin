@@ -13,7 +13,7 @@ import { EufySecurityPlatform } from '../platform';
 import { CameraConfig, VideoConfig } from '../utils/configTypes';
 import { FFmpeg, FFmpegParameters } from '../utils/ffmpeg';
 import net from 'net';
-import { CHAR, SERV, is_rtsp_ready, log } from '../utils/utils';
+import { CHAR, SERV, isRtspReady, log } from '../utils/utils';
 import { LocalLivestreamManager } from './LocalLivestreamManager';
 
 const MAX_RECORDING_MINUTES = 1; // should never be used
@@ -96,7 +96,7 @@ export class RecordingDelegate implements CameraRecordingDelegate {
     videoParams: FFmpegParameters,
     audioParams: FFmpegParameters,
   ): Promise<void> {
-    if (is_rtsp_ready(this.camera, this.cameraConfig)) {
+    if (isRtspReady(this.camera, this.cameraConfig)) {
       const url = this.camera.getPropertyValue(PropertyName.DeviceRTSPStreamUrl) as string;
       log.debug(this.camera.getName(), 'RTSP URL: ' + url);
       videoParams.setInputSource(url);
