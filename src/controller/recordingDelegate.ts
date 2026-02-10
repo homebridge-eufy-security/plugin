@@ -87,6 +87,22 @@ export class RecordingDelegate implements CameraRecordingDelegate {
     }
   }
 
+  private async configureInputSource(
+    videoParams: FFmpegParameters,
+    audioParams: FFmpegParameters,
+  ): Promise<void> {
+    if (is_rtsp_ready(this.camera, this.cameraConfig)) {
+      const url = this.camera.getPropertyValue(PropertyName.DeviceRTSPStreamUrl) as string;
+      log.debug(this.camera.getName(), 'RTSP URL: ' + url);
+      videoParams.setInputSource(url);
+      audioParams.setInputSource(url);
+    } else {
+      const streamData = await this.localLivestreamManager.getLocalLivestream();
+      await videoParams.setInputStream(streamData.videostream);
+      await audioParams.setInputStream(streamData.audiostream);
+    }
+  }
+
   async * handleRecordingStreamRequest(): AsyncGenerator<RecordingPacket, any, unknown> {
     this.handlingStreamingRequest = true;
     this.closeReason = undefined;
@@ -114,27 +130,10 @@ export class RecordingDelegate implements CameraRecordingDelegate {
 
       const videoConfig: VideoConfig = this.cameraConfig.videoConfig ?? {};
 
-      if (this.cameraConfig.videoConfig && this.cameraConfig.videoConfig.videoProcessor) {
-        videoConfig.videoProcessor = this.cameraConfig.videoConfig.videoProcessor;
-      }
-
       videoParams.setupForRecording(videoConfig, this.configuration);
       audioParams.setupForRecording(videoConfig, this.configuration);
 
-      const rtsp = is_rtsp_ready(this.camera, this.cameraConfig);
-
-      if (rtsp) {
-        const url = this.camera.getPropertyValue(PropertyName.DeviceRTSPStreamUrl);
-        log.debug(this.camera.getName(), 'RTSP URL: ' + url);
-        videoParams.setInputSource(url as string);
-        audioParams.setInputSource(url as string);
-      } else {
-        const streamData = await this.localLivestreamManager.getLocalLivestream().catch((error) => {
-          throw error;
-        });
-        await videoParams.setInputStream(streamData.videostream);
-        await audioParams.setInputStream(streamData.audiostream);
-      }
+      await this.configureInputSource(videoParams, audioParams);
 
       const ffmpeg = new FFmpeg(
         `[${this.camera.getName()}] [HSV Recording Process]`,
