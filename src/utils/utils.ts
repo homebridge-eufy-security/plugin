@@ -44,31 +44,22 @@ export class Deferred<T> {
   });
 }
 
-export const isRtspReady = function (device: Camera, cameraConfig: CameraConfig): boolean {
+export function isRtspReady(device: Camera, cameraConfig: CameraConfig): boolean {
+  const name = device.getName();
 
-  log.debug(device.getName(), 'RTSP rtspStream:', device.hasProperty('rtspStream'));
-  if (!device.hasProperty('rtspStream')) {
-    log.debug(device.getName(), 'Looks like not compatible with RTSP');
-    return false;
-  }
+  const checks: [boolean, string][] = [
+    [!device.hasProperty('rtspStream'), 'device not compatible with RTSP'],
+    [!cameraConfig.rtsp, 'RTSP not enabled in camera config'],
+    [!device.getPropertyValue(PropertyName.DeviceRTSPStream), 'RTSP capability not enabled on device'],
+    [device.getPropertyValue(PropertyName.DeviceRTSPStreamUrl) === '', 'RTSP URL is unknown'],
+  ];
 
-  log.debug(device.getName(), 'RTSP cameraConfig: ', cameraConfig.rtsp);
-  if (!cameraConfig.rtsp) {
-    log.debug(device.getName(), 'Looks like RTSP is not enabled on camera config');
-    return false;
-  }
-
-  log.debug(device.getName(), 'RTSP ', device.getPropertyValue(PropertyName.DeviceRTSPStream));
-  if (!device.getPropertyValue(PropertyName.DeviceRTSPStream)) {
-    log.debug(device.getName(), ': RTSP capabilities not enabled. You will need to do it manually!');
-    return false;
-  }
-
-  log.debug(device.getName(), 'RTSP ', device.getPropertyValue(PropertyName.DeviceRTSPStreamUrl));
-  if (device.getPropertyValue(PropertyName.DeviceRTSPStreamUrl) === '') {
-    log.debug(device.getName(), ': RTSP URL is unknow');
-    return false;
+  for (const [failed, reason] of checks) {
+    if (failed) {
+      log.debug(name, reason);
+      return false;
+    }
   }
 
   return true;
-};
+}
