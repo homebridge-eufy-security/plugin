@@ -6,9 +6,9 @@ import type { Characteristic, Service } from 'homebridge';
 import { CameraConfig } from './configTypes';
 import { Camera, PropertyName } from 'eufy-security-client';
 
-export let HAP: HAPHB;
-export let SERV: typeof Service;
-export let CHAR: typeof Characteristic;
+export let HAP!: HAPHB;
+export let SERV!: typeof Service;
+export let CHAR!: typeof Characteristic;
 
 export function setHap(hapInstance: HAPHB) {
   HAP = hapInstance;
@@ -16,9 +16,9 @@ export function setHap(hapInstance: HAPHB) {
   CHAR = hapInstance.Characteristic;
 }
 
-export let log: Logger<ILogObj> = {} as Logger<ILogObj>;
-export let tsLogger: Logger<ILogObj> = {} as Logger<ILogObj>;
-export let ffmpegLogger: Logger<ILogObj> = {} as Logger<ILogObj>;
+export let log!: Logger<ILogObj>;
+export let tsLogger!: Logger<ILogObj>;
+export let ffmpegLogger!: Logger<ILogObj>;
 
 export function initLog(logOptions: ILogObj) {
   log = new Logger(logOptions);
