@@ -77,15 +77,11 @@ export class StreamingDelegate implements CameraStreamingDelegate {
   }
 
   async handleSnapshotRequest(request: SnapshotRequest, callback: SnapshotRequestCallback): Promise<void> {
-    this.log.debug('handleSnapshotRequest');
+    this.log.debug(`Snapshot requested: ${request.width}x${request.height}`);
 
     try {
-      this.log.debug(`Snapshot requested: ${request.width}x${request.height}`);
-
       const snapshot = await this.snapshotManager.getSnapshotBufferResized(request);
-
       this.log.debug('Snapshot byte length: ' + snapshot?.byteLength);
-
       callback(undefined, snapshot);
     } catch (error) {
       this.log.error(error as string);
@@ -152,8 +148,6 @@ export class StreamingDelegate implements CameraStreamingDelegate {
       callback(new Error('Error finding session information'));
       return;
     }
-
-    this.log.debug('VIDEOCONFIG: ', this.videoConfig);
 
     try {
       const activeSession: ActiveSession = {};
