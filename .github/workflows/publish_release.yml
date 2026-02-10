@@ -6,7 +6,7 @@ on:
       version:
         description: "premajor/prerelease/prepatch/major/minor/patch"
         required: true
-        default: "patch"
+        default: "prerelease"
         type: choice
         options:
           - major
@@ -18,7 +18,7 @@ on:
       release-tag:
         description: "Release tag: latest/rc/beta/alpha"
         required: true
-        default: "latest"
+        default: "beta"
         type: choice
         options:
           - latest
@@ -28,7 +28,7 @@ on:
       branch:
         description: "branch: master/next/beta"
         required: true
-        default: "master"
+        default: "beta"
 
 jobs:
   build:
