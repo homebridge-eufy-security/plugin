@@ -25,7 +25,7 @@ export class LocalLivestreamManager {
   } | null = null;
 
   private readonly eufyClient: EufySecurity;
-  public readonly log: Logger<ILogObj>;
+  private readonly log: Logger<ILogObj>;
   private readonly serialNumber: string;
 
   constructor(camera: CameraAccessory) {
