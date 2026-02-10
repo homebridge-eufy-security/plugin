@@ -17,7 +17,8 @@ const DUPLICATE_STREAM_GUARD_S = 5;
 
 export class LocalLivestreamManager {
   private stationStream: StationStream | null = null;
-  private pendingStart: {
+  private pendingPromise: Promise<StationStream> | null = null;
+  private pendingCleanup: {
     resolve: (stream: StationStream) => void;
     reject: (reason: unknown) => void;
     timer: NodeJS.Timeout;
@@ -27,7 +28,7 @@ export class LocalLivestreamManager {
   public readonly log: Logger<ILogObj>;
   private readonly serialNumber: string;
 
-  constructor(private camera: CameraAccessory) {
+  constructor(camera: CameraAccessory) {
     this.eufyClient = camera.platform.eufyClient;
     this.serialNumber = camera.device.getSerial();
     this.log = camera.log;
@@ -66,27 +67,21 @@ export class LocalLivestreamManager {
    * duplicate request.
    */
   private startLocalLivestream(): Promise<StationStream> {
-    if (this.pendingStart) {
+    if (this.pendingPromise) {
       this.log.debug('Livestream already starting — waiting on existing request.');
-      return new Promise((resolve, reject) => {
-        const existing = this.pendingStart!;
-        const origResolve = existing.resolve;
-        const origReject = existing.reject;
-        existing.resolve = (stream) => { origResolve(stream); resolve(stream); };
-        existing.reject = (err) => { origReject(err); reject(err); };
-      });
+      return this.pendingPromise;
     }
 
     this.log.debug(`Starting station livestream for serial: ${this.serialNumber}...`);
 
-    return new Promise((resolve, reject) => {
+    this.pendingPromise = new Promise<StationStream>((resolve, reject) => {
       const timer = setTimeout(() => {
         this.log.error(`Livestream timeout: no P2P stream event received within ${P2P_TIMEOUT_MS / 1000}s for serial ${this.serialNumber}.`);
         this.log.warn('If using a recent Node.js version, try enabling "Embedded PKCS1 Support" in the plugin settings.');
         this.failPendingStart('Livestream timeout — try enabling Embedded PKCS1 Support in settings.');
       }, P2P_TIMEOUT_MS);
 
-      this.pendingStart = { resolve, reject, timer };
+      this.pendingCleanup = { resolve, reject, timer };
 
       try {
         this.eufyClient.startStationLivestream(this.serialNumber);
@@ -95,27 +90,36 @@ export class LocalLivestreamManager {
         this.failPendingStart(err);
       }
     });
+
+    return this.pendingPromise;
+  }
+
+  /** Clear the pending start state and timer. */
+  private consumePendingStart(): typeof this.pendingCleanup {
+    const pending = this.pendingCleanup;
+    if (pending) {
+      clearTimeout(pending.timer);
+    }
+    this.pendingCleanup = null;
+    this.pendingPromise = null;
+    return pending;
   }
 
   /** Reject the pending start promise and clean up. */
   private failPendingStart(reason: unknown): void {
-    if (!this.pendingStart) {
-      return;
+    const pending = this.consumePendingStart();
+    if (pending) {
+      pending.reject(reason);
     }
-    clearTimeout(this.pendingStart.timer);
-    this.pendingStart.reject(reason);
-    this.pendingStart = null;
     this.stopLocalLiveStream();
   }
 
   /** Resolve the pending start promise and clean up the timer. */
   private resolvePendingStart(stream: StationStream): void {
-    if (!this.pendingStart) {
-      return;
+    const pending = this.consumePendingStart();
+    if (pending) {
+      pending.resolve(stream);
     }
-    clearTimeout(this.pendingStart.timer);
-    this.pendingStart.resolve(stream);
-    this.pendingStart = null;
   }
 
   public stopLocalLiveStream(): void {
