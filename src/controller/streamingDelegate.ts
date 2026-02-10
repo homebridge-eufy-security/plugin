@@ -17,7 +17,6 @@ import { Logger, ILogObj } from 'tslog';
 import { pickPort } from 'pick-port';
 import { Camera, PropertyName } from 'eufy-security-client';
 
-import { EufySecurityPlatform } from '../platform';
 import { CameraAccessory } from '../accessories/CameraAccessory';
 import { SessionInfo, VideoConfig } from '../utils/configTypes';
 import { FFmpeg, FFmpegParameters } from '../utils/ffmpeg';
@@ -25,9 +24,6 @@ import { TalkbackStream } from '../utils/Talkback';
 import { HAP, is_rtsp_ready } from '../utils/utils';
 import { LocalLivestreamManager } from './LocalLivestreamManager';
 import { SnapshotManager } from './SnapshotManager';
-
-// Re-export for backward compatibility
-export type { SessionInfo } from '../utils/configTypes';
 
 type ActiveSession = {
   videoProcess?: FFmpeg;
@@ -42,7 +38,6 @@ export class StreamingDelegate implements CameraStreamingDelegate {
 
   private videoConfig: VideoConfig;
   private controller?: CameraController;
-  private platform: EufySecurityPlatform;
   private device: Camera;
 
   public readonly log: Logger<ILogObj>;
@@ -53,12 +48,10 @@ export class StreamingDelegate implements CameraStreamingDelegate {
   // keep track of sessions
   pendingSessions: Map<string, SessionInfo> = new Map();
   ongoingSessions: Map<string, ActiveSession> = new Map();
-  timeouts: Map<string, NodeJS.Timeout> = new Map();
 
   constructor(
     private camera: CameraAccessory,
   ) {
-    this.platform = camera.platform;
     this.device = camera.device;
 
     this.videoConfig = camera.cameraConfig.videoConfig!;
@@ -312,7 +305,7 @@ export class StreamingDelegate implements CameraStreamingDelegate {
       talkbackParams.setTalkbackChannels(this.camera.cameraConfig.talkbackChannels);
     }
 
-    activeSession.talkbackStream = new TalkbackStream(this.platform, this.device);
+    activeSession.talkbackStream = new TalkbackStream(this.camera.platform, this.device);
     activeSession.returnProcess = new FFmpeg('[Talkback Process]', talkbackParams);
     activeSession.returnProcess.on('error', (error) => {
       this.log.error('Talkback process ended with error: ' + error);
