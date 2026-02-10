@@ -3,16 +3,15 @@ import { Station, Device, StreamMetadata, EufySecurity } from 'eufy-security-cli
 import { CameraAccessory } from '../accessories/CameraAccessory';
 import { ILogObj, Logger } from 'tslog';
 
-/** Data returned to consumers — only the streams they need. */
-export type LivestreamData = {
+/** Internal state: streams plus a timestamp for dedup/reuse logic. */
+interface ActiveStream {
   videostream: Readable;
   audiostream: Readable;
-};
-
-/** Internal state: streams plus a timestamp for dedup/reuse logic. */
-type ActiveStream = LivestreamData & {
   createdAt: number;
-};
+}
+
+/** Data returned to consumers — only the streams they need. */
+export type LivestreamData = Pick<ActiveStream, 'videostream' | 'audiostream'>;
 
 const P2P_TIMEOUT_MS = 15_000;
 const DUPLICATE_STREAM_GUARD_S = 5;
