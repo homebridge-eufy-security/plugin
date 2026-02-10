@@ -87,6 +87,11 @@ export class RecordingDelegate implements CameraRecordingDelegate {
     }
   }
 
+  private isMotionDetected(): boolean {
+    return !!this.accessory
+      .getService(SERV.MotionSensor)?.getCharacteristic(CHAR.MotionDetected).value;
+  }
+
   private async configureInputSource(
     videoParams: FFmpegParameters,
     audioParams: FFmpegParameters,
@@ -107,9 +112,6 @@ export class RecordingDelegate implements CameraRecordingDelegate {
     this.handlingStreamingRequest = true;
     this.closeReason = undefined;
     log.info(this.camera.getName(), 'requesting recording for HomeKit Secure Video.');
-
-    let totalBytes = 0;
-    let fragmentCount = 0;
 
     try {
       if (!this.configuration) {
@@ -158,66 +160,7 @@ export class RecordingDelegate implements CameraRecordingDelegate {
         }, timer * 1000);
       }
 
-      // Properly handle fragmented MP4 structure for HKSV:
-      // 1. Initialization segment: accumulate ftyp + moov, yield once
-      // 2. Media fragments: yield each moof + mdat pair
-      let isInitializationSegment = true;
-      let initPending: Buffer[] = [];
-      let moofBuffer: Buffer | null = null;
-
-      for await (const box of this.session.generator) {
-
-        if (!this.handlingStreamingRequest) {
-          log.debug(this.camera.getName(), 'Recording was ended prematurely.');
-          break;
-        }
-
-        const { header, type, data } = box;
-
-        if (isInitializationSegment) {
-          // Accumulate ftyp + moov into initialization segment
-          initPending.push(header, data);
-
-          if (type === 'moov') {
-            const fragment = Buffer.concat(initPending);
-            totalBytes += fragment.length;
-            initPending = [];
-            isInitializationSegment = false;
-
-            log.debug(this.camera.getName(), `HKSV: Sending initialization segment, size: ${fragment.length}`);
-
-            yield {
-              data: fragment,
-              isLast: false,
-            };
-          }
-        } else {
-          // Media fragments: pair moof + mdat
-          if (type === 'moof') {
-            moofBuffer = Buffer.concat([header, data]);
-          } else if (type === 'mdat' && moofBuffer) {
-            const fragment = Buffer.concat([moofBuffer, header, data]);
-            moofBuffer = null;
-            fragmentCount++;
-            totalBytes += fragment.length;
-
-            log.debug(this.camera.getName(), `HKSV: Fragment #${fragmentCount}, size: ${fragment.length}`);
-
-            yield {
-              data: fragment,
-              isLast: false,
-            };
-
-            // Check if motion has stopped after yielding the fragment
-            const motionDetected = this.accessory
-              .getService(SERV.MotionSensor)?.getCharacteristic(CHAR.MotionDetected).value;
-            if (!motionDetected) {
-              log.debug(this.camera.getName(), 'Ending recording session due to motion stopped.');
-              break;
-            }
-          }
-        }
-      }
+      yield* this.generateFragments(this.session.generator);
     } catch (error) {
       if (!this.handlingStreamingRequest && this.closeReason && this.closeReason === HDSProtocolSpecificErrorReason.CANCELLED) {
         log.debug(this.camera.getName(),
@@ -241,13 +184,57 @@ export class RecordingDelegate implements CameraRecordingDelegate {
           'The recording process was canceled by the HomeKit Controller."',
         );
       }
-      if (totalBytes > 0) {
-        log.debug(this.camera.getName(), `Recording completed (HSV). Sent ${fragmentCount} fragments, ${totalBytes} bytes total.`);
-      }
-
       this.clearForceStopTimeout();
       this.resetMotionSensor();
       this.localLivestreamManager.stopLocalLiveStream();
+    }
+  }
+
+  /**
+   * Assembles fragmented MP4 boxes into HKSV-compatible recording packets.
+   * Yields an initialization segment (ftyp+moov), then paired moof+mdat fragments.
+   */
+  private async * generateFragments(
+    generator: AsyncGenerator<{ header: Buffer; length: number; type: string; data: Buffer }>,
+  ): AsyncGenerator<RecordingPacket> {
+    const cameraName = this.camera.getName();
+    let initPending: Buffer[] = [];
+    let moofBuffer: Buffer | null = null;
+    let isInit = true;
+    let fragmentCount = 0;
+
+    for await (const { header, type, data } of generator) {
+      if (!this.handlingStreamingRequest) {
+        log.debug(cameraName, 'Recording was ended prematurely.');
+        break;
+      }
+
+      if (isInit) {
+        initPending.push(header, data);
+        if (type === 'moov') {
+          const fragment = Buffer.concat(initPending);
+          initPending = [];
+          isInit = false;
+          log.debug(cameraName, `HKSV: Sending initialization segment, size: ${fragment.length}`);
+          yield { data: fragment, isLast: false };
+        }
+        continue;
+      }
+
+      if (type === 'moof') {
+        moofBuffer = Buffer.concat([header, data]);
+      } else if (type === 'mdat' && moofBuffer) {
+        const fragment = Buffer.concat([moofBuffer, header, data]);
+        moofBuffer = null;
+        fragmentCount++;
+        log.debug(cameraName, `HKSV: Fragment #${fragmentCount}, size: ${fragment.length}`);
+        yield { data: fragment, isLast: false };
+
+        if (!this.isMotionDetected()) {
+          log.debug(cameraName, 'Ending recording session due to motion stopped.');
+          break;
+        }
+      }
     }
   }
 
