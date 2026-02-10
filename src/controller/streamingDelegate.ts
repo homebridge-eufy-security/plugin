@@ -44,8 +44,8 @@ export class StreamingDelegate implements CameraStreamingDelegate {
   private snapshotManager: SnapshotManager;
 
   // keep track of sessions
-  pendingSessions: Map<string, SessionInfo> = new Map();
-  ongoingSessions: Map<string, ActiveSession> = new Map();
+  private readonly pendingSessions = new Map<string, SessionInfo>();
+  private readonly ongoingSessions = new Map<string, ActiveSession>();
 
   private get device(): Camera {
     return this.camera.device;
