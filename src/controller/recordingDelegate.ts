@@ -70,6 +70,23 @@ export class RecordingDelegate implements CameraRecordingDelegate {
     return this.handlingStreamingRequest;
   }
 
+  private resetMotionSensor(): void {
+    const motionDetected = this.accessory
+      .getService(SERV.MotionSensor)?.getCharacteristic(CHAR.MotionDetected).value;
+    if (motionDetected) {
+      this.accessory
+        .getService(SERV.MotionSensor)?.getCharacteristic(CHAR.MotionDetected)
+        .updateValue(false);
+    }
+  }
+
+  private clearForceStopTimeout(): void {
+    if (this.forceStopTimeout) {
+      clearTimeout(this.forceStopTimeout);
+      this.forceStopTimeout = undefined;
+    }
+  }
+
   async * handleRecordingStreamRequest(): AsyncGenerator<RecordingPacket, any, unknown> {
     this.handlingStreamingRequest = true;
     this.closeReason = undefined;
@@ -138,9 +155,7 @@ export class RecordingDelegate implements CameraRecordingDelegate {
             `The recording process has been running for ${timer} seconds and is now being forced closed!`,
           );
 
-          this.accessory
-            .getService(SERV.MotionSensor)?.getCharacteristic(CHAR.MotionDetected)
-            .updateValue(false);
+          this.resetMotionSensor();
         }, timer * 1000);
       }
 
@@ -197,9 +212,8 @@ export class RecordingDelegate implements CameraRecordingDelegate {
             // Check if motion has stopped after yielding the fragment
             const motionDetected = this.accessory
               .getService(SERV.MotionSensor)?.getCharacteristic(CHAR.MotionDetected).value;
-
             if (!motionDetected) {
-              log.debug(this.camera.getName(), 'Ending recording session due to motion stopped!');
+              log.debug(this.camera.getName(), 'Ending recording session due to motion stopped.');
               break;
             }
           }
@@ -232,20 +246,8 @@ export class RecordingDelegate implements CameraRecordingDelegate {
         log.debug(this.camera.getName(), `Recording completed (HSV). Sent ${fragmentCount} fragments, ${totalBytes} bytes total.`);
       }
 
-      if (this.forceStopTimeout) {
-        clearTimeout(this.forceStopTimeout);
-        this.forceStopTimeout = undefined;
-      }
-
-      // check whether motion is still in progress
-      const motionDetected = this.accessory
-        .getService(SERV.MotionSensor)?.getCharacteristic(CHAR.MotionDetected).value;
-      if (motionDetected) {
-        this.accessory
-          .getService(SERV.MotionSensor)?.getCharacteristic(CHAR.MotionDetected)
-          .updateValue(false);
-      }
-
+      this.clearForceStopTimeout();
+      this.resetMotionSensor();
       this.localLivestreamManager.stopLocalLiveStream();
     }
   }
@@ -270,19 +272,8 @@ export class RecordingDelegate implements CameraRecordingDelegate {
       log.warn('Recording session could not be closed gracefully.');
     }
 
-    if (this.forceStopTimeout) {
-      clearTimeout(this.forceStopTimeout);
-      this.forceStopTimeout = undefined;
-    }
-
-    // check whether motion is still in progress
-    const motionDetected = this.accessory
-      .getService(SERV.MotionSensor)?.getCharacteristic(CHAR.MotionDetected).value;
-    if (motionDetected) {
-      this.accessory
-        .getService(SERV.MotionSensor)?.getCharacteristic(CHAR.MotionDetected)
-        .updateValue(false);
-    }
+    this.clearForceStopTimeout();
+    this.resetMotionSensor();
 
     this.closeReason = reason;
     this.handlingStreamingRequest = false;
