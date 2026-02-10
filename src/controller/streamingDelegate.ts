@@ -101,13 +101,11 @@ export class StreamingDelegate implements CameraStreamingDelegate {
   }
 
   async prepareStream(request: PrepareStreamRequest, callback: PrepareStreamCallback): Promise<void> {
-    const ipv6 = request.addressVersion === 'ipv6';
-
     this.log.debug(`stream prepare request with session id ${request.sessionID} was received.`);
 
     const [videoReturnPort, audioReturnPort] = await Promise.all([
       pickPort({ type: 'udp' }),
-      pickPort({ type: 'udp' })
+      pickPort({ type: 'udp' }),
     ]);
 
     const videoSSRC = HAP.CameraController.generateSynchronisationSource();
@@ -115,39 +113,36 @@ export class StreamingDelegate implements CameraStreamingDelegate {
 
     const sessionInfo: SessionInfo = {
       address: request.targetAddress,
-      ipv6: ipv6,
-
+      ipv6: request.addressVersion === 'ipv6',
       videoPort: request.video.port,
-      videoReturnPort: videoReturnPort,
+      videoReturnPort,
       videoCryptoSuite: request.video.srtpCryptoSuite,
       videoSRTP: Buffer.concat([request.video.srtp_key, request.video.srtp_salt]),
-      videoSSRC: videoSSRC,
-
+      videoSSRC,
       audioPort: request.audio.port,
-      audioReturnPort: audioReturnPort,
+      audioReturnPort,
       audioCryptoSuite: request.audio.srtpCryptoSuite,
       audioSRTP: Buffer.concat([request.audio.srtp_key, request.audio.srtp_salt]),
-      audioSSRC: audioSSRC,
+      audioSSRC,
     };
+
+    this.pendingSessions.set(request.sessionID, sessionInfo);
 
     const response: PrepareStreamResponse = {
       video: {
         port: videoReturnPort,
         ssrc: videoSSRC,
-
         srtp_key: request.video.srtp_key,
         srtp_salt: request.video.srtp_salt,
       },
       audio: {
         port: audioReturnPort,
         ssrc: audioSSRC,
-
         srtp_key: request.audio.srtp_key,
         srtp_salt: request.audio.srtp_salt,
       },
     };
 
-    this.pendingSessions.set(request.sessionID, sessionInfo);
     callback(undefined, response);
   }
 
