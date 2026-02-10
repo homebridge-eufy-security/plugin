@@ -152,137 +152,188 @@ export class StreamingDelegate implements CameraStreamingDelegate {
     if (!sessionInfo) {
       this.log.error('Error finding session information.');
       callback(new Error('Error finding session information'));
+      return;
     }
 
     this.log.debug('VIDEOCONFIG: ', this.videoConfig);
 
     try {
       const activeSession: ActiveSession = {};
-      activeSession.socket = createSocket(sessionInfo!.ipv6 ? 'udp6' : 'udp4');
-      activeSession.socket.on('error', (err: Error) => {
-        this.log.error('Socket error: ' + err.message);
-        this.stopStream(request.sessionID);
-      });
-      activeSession.socket.on('message', () => {
-        if (activeSession.timeout) {
-          clearTimeout(activeSession.timeout);
-        }
-        activeSession.timeout = setTimeout(() => {
-          this.log.debug('Device appears to be inactive. Stopping video stream.');
-          this.controller?.forceStopStreamingSession(request.sessionID);
-          this.stopStream(request.sessionID);
-        }, request.video.rtcp_interval * 5 * 1000);
-      });
-      activeSession.socket.bind(sessionInfo!.videoReturnPort);
 
-      // get streams
-      const videoParams = await FFmpegParameters.forVideo(this.videoConfig.debug);
-      videoParams.setup(this.camera.cameraConfig, request);
-      videoParams.setRTPTarget(sessionInfo!, request);
+      activeSession.socket = this.createKeepAliveSocket(sessionInfo, request, activeSession);
 
-      const useAudio = (request.audio.codec === AudioStreamingCodecType.OPUS
-        || request.audio.codec === AudioStreamingCodecType.AAC_ELD)
-        && this.videoConfig.audio;
+      const { videoParams, audioParams } = await this.buildStreamParameters(sessionInfo, request);
 
-      if (!useAudio && this.videoConfig.audio) {
-        this.log.warn(`An unsupported audio codec (type: ${request.audio.codec}) was requested. Audio streaming will be omitted.`);
-      }
+      await this.configureStreamInput(videoParams, audioParams);
 
-      let audioParams: FFmpegParameters | undefined = undefined;
-      if (useAudio) {
-        audioParams = await FFmpegParameters.forAudio(this.videoConfig.debug);
-        audioParams.setup(this.camera.cameraConfig, request);
-        audioParams.setRTPTarget(sessionInfo!, request);
-      }
+      this.startFFmpegProcesses(activeSession, videoParams, audioParams, request, callback);
 
-      const rtsp = is_rtsp_ready(this.device, this.camera.cameraConfig);
+      await this.setupTalkback(activeSession, sessionInfo);
 
-      if (rtsp) {
-        const url = this.device.getPropertyValue(PropertyName.DeviceRTSPStreamUrl);
-        this.log.debug('RTSP URL: ' + url);
-        videoParams.setInputSource(url as string);
-        audioParams?.setInputSource(url as string);
-      } else {
-        this.log.debug(`Using P2P local livestream for ${this.device.getName()} (serial: ${this.device.getSerial()}, type: ${this.device.getDeviceType()})`);
-        try {
-          const streamData = await this.localLivestreamManager.getLocalLivestream().catch((error) => {
-            throw error;
-          });
-          this.log.debug(`Livestream obtained successfully. Setting up FFmpeg input streams...`);
-          await videoParams.setInputStream(streamData.videostream);
-          await audioParams?.setInputStream(streamData.audiostream);
-          this.log.debug('FFmpeg input streams configured.');
-        } catch (error) {
-          this.log.error(('Unable to start the livestream: ' + error) as string);
-          callback(error as Error);
-          this.pendingSessions.delete(request.sessionID);
-          return;
-        }
-      }
-
-      const useSeparateProcesses = this.videoConfig.useSeparateProcesses ??= false;
-
-      const videoProcess = new FFmpeg(
-        `[Video Process]`,
-        !useSeparateProcesses && audioParams ? [videoParams, audioParams] : videoParams,
-      );
-      videoProcess.on('started', () => {
-        callback();
-      });
-      videoProcess.on('error', (error) => {
-        this.log.error('Video process ended with error: ' + error);
-        this.stopStream(request.sessionID);
-      });
-      activeSession.videoProcess = videoProcess;
-      activeSession.videoProcess.start();
-
-      if (useSeparateProcesses && audioParams) {
-        const audioProcess = new FFmpeg(
-          `[Audio Process]`,
-          audioParams,
-        );
-        audioProcess.on('error', (error) => { // TODO: better reestablish connection
-          this.log.error('Audio process ended with error: ' + error);
-          this.stopStream(request.sessionID);
-        });
-        activeSession.audioProcess = audioProcess;
-        activeSession.audioProcess.start();
-      }
-
-      if (this.camera.cameraConfig.talkback) {
-        const talkbackParameters = await FFmpegParameters.forAudio(this.videoConfig.debug);
-        await talkbackParameters.setTalkbackInput(sessionInfo!);
-        if (this.camera.cameraConfig.talkbackChannels) {
-          talkbackParameters.setTalkbackChannels(this.camera.cameraConfig.talkbackChannels);
-        }
-        activeSession.talkbackStream = new TalkbackStream(this.platform, this.device);
-        activeSession.returnProcess = new FFmpeg(
-          `[Talkback Process]`,
-          talkbackParameters,
-        );
-        activeSession.returnProcess.on('error', (error) => {
-          this.log.error('Talkback process ended with error: ' + error);
-        });
-        activeSession.returnProcess.start();
-        activeSession.returnProcess.stdout?.pipe(activeSession.talkbackStream);
-      }
-
-      // Check if the pendingSession has been stopped before it was successfully started.
-      const pendingSession = this.pendingSessions.get(request.sessionID);
-      // pendingSession has not been deleted. Transfer it to ongoingSessions.
-      if (pendingSession) {
-        this.ongoingSessions.set(request.sessionID, activeSession);
-        this.pendingSessions.delete(request.sessionID);
-      } else { // pendingSession has been deleted. Add it to ongoingSession and end it immediately.
-        this.ongoingSessions.set(request.sessionID, activeSession);
-        this.log.info('pendingSession has been deleted. Add it to ongoingSession and end it immediately.');
-        this.stopStream(request.sessionID);
-      }
+      this.finalizeSession(request.sessionID, activeSession);
 
     } catch (error) {
       this.log.error('Stream could not be started: ' + error);
       callback(error as Error);
       this.pendingSessions.delete(request.sessionID);
+    }
+  }
+
+  /**
+   * Creates a UDP socket that monitors RTCP keep-alive messages.
+   * If no message is received within 5x the RTCP interval, the stream is considered inactive.
+   */
+  private createKeepAliveSocket(
+    sessionInfo: SessionInfo,
+    request: StartStreamRequest,
+    activeSession: ActiveSession,
+  ): Socket {
+    const socket = createSocket(sessionInfo.ipv6 ? 'udp6' : 'udp4');
+
+    socket.on('error', (err: Error) => {
+      this.log.error('Socket error: ' + err.message);
+      this.stopStream(request.sessionID);
+    });
+
+    socket.on('message', () => {
+      if (activeSession.timeout) {
+        clearTimeout(activeSession.timeout);
+      }
+      activeSession.timeout = setTimeout(() => {
+        this.log.debug('Device appears to be inactive. Stopping video stream.');
+        this.controller?.forceStopStreamingSession(request.sessionID);
+        this.stopStream(request.sessionID);
+      }, request.video.rtcp_interval * 5 * 1000);
+    });
+
+    socket.bind(sessionInfo.videoReturnPort);
+    return socket;
+  }
+
+  /**
+   * Builds FFmpeg parameters for video and (optionally) audio streams.
+   */
+  private async buildStreamParameters(
+    sessionInfo: SessionInfo,
+    request: StartStreamRequest,
+  ): Promise<{ videoParams: FFmpegParameters; audioParams?: FFmpegParameters }> {
+    const videoParams = await FFmpegParameters.forVideo(this.videoConfig.debug);
+    videoParams.setup(this.camera.cameraConfig, request);
+    videoParams.setRTPTarget(sessionInfo, request);
+
+    const isCodecSupported = request.audio.codec === AudioStreamingCodecType.OPUS
+      || request.audio.codec === AudioStreamingCodecType.AAC_ELD;
+
+    if (!isCodecSupported && this.videoConfig.audio) {
+      this.log.warn(`An unsupported audio codec (type: ${request.audio.codec}) was requested. Audio streaming will be omitted.`);
+    }
+
+    let audioParams: FFmpegParameters | undefined;
+    if (isCodecSupported && this.videoConfig.audio) {
+      audioParams = await FFmpegParameters.forAudio(this.videoConfig.debug);
+      audioParams.setup(this.camera.cameraConfig, request);
+      audioParams.setRTPTarget(sessionInfo, request);
+    }
+
+    return { videoParams, audioParams };
+  }
+
+  /**
+   * Configures the input source (RTSP URL or P2P livestream) for the FFmpeg parameters.
+   */
+  private async configureStreamInput(
+    videoParams: FFmpegParameters,
+    audioParams?: FFmpegParameters,
+  ): Promise<void> {
+    if (is_rtsp_ready(this.device, this.camera.cameraConfig)) {
+      const url = this.device.getPropertyValue(PropertyName.DeviceRTSPStreamUrl) as string;
+      this.log.debug('RTSP URL: ' + url);
+      videoParams.setInputSource(url);
+      audioParams?.setInputSource(url);
+    } else {
+      this.log.debug(
+        `Using P2P local livestream for ${this.device.getName()} ` +
+        `(serial: ${this.device.getSerial()}, type: ${this.device.getDeviceType()})`,
+      );
+      const streamData = await this.localLivestreamManager.getLocalLivestream();
+      this.log.debug('Livestream obtained successfully. Setting up FFmpeg input streams...');
+      await videoParams.setInputStream(streamData.videostream);
+      await audioParams?.setInputStream(streamData.audiostream);
+      this.log.debug('FFmpeg input streams configured.');
+    }
+  }
+
+  /**
+   * Starts the video (and optionally separate audio) FFmpeg processes.
+   */
+  private startFFmpegProcesses(
+    activeSession: ActiveSession,
+    videoParams: FFmpegParameters,
+    audioParams: FFmpegParameters | undefined,
+    request: StartStreamRequest,
+    callback: StreamRequestCallback,
+  ): void {
+    const useSeparateProcesses = this.videoConfig.useSeparateProcesses ?? false;
+
+    const videoProcess = new FFmpeg(
+      '[Video Process]',
+      !useSeparateProcesses && audioParams ? [videoParams, audioParams] : videoParams,
+    );
+    videoProcess.on('started', () => callback());
+    videoProcess.on('error', (error) => {
+      this.log.error('Video process ended with error: ' + error);
+      this.stopStream(request.sessionID);
+    });
+    activeSession.videoProcess = videoProcess;
+    videoProcess.start();
+
+    if (useSeparateProcesses && audioParams) {
+      const audioProcess = new FFmpeg('[Audio Process]', audioParams);
+      audioProcess.on('error', (error) => {
+        this.log.error('Audio process ended with error: ' + error);
+        this.stopStream(request.sessionID);
+      });
+      activeSession.audioProcess = audioProcess;
+      audioProcess.start();
+    }
+  }
+
+  /**
+   * Sets up talkback (return audio) if enabled in the camera config.
+   */
+  private async setupTalkback(activeSession: ActiveSession, sessionInfo: SessionInfo): Promise<void> {
+    if (!this.camera.cameraConfig.talkback) {
+      return;
+    }
+
+    const talkbackParams = await FFmpegParameters.forAudio(this.videoConfig.debug);
+    await talkbackParams.setTalkbackInput(sessionInfo);
+
+    if (this.camera.cameraConfig.talkbackChannels) {
+      talkbackParams.setTalkbackChannels(this.camera.cameraConfig.talkbackChannels);
+    }
+
+    activeSession.talkbackStream = new TalkbackStream(this.platform, this.device);
+    activeSession.returnProcess = new FFmpeg('[Talkback Process]', talkbackParams);
+    activeSession.returnProcess.on('error', (error) => {
+      this.log.error('Talkback process ended with error: ' + error);
+    });
+    activeSession.returnProcess.start();
+    activeSession.returnProcess.stdout?.pipe(activeSession.talkbackStream);
+  }
+
+  /**
+   * Transfers session from pending to ongoing, or stops it immediately if it was cancelled.
+   */
+  private finalizeSession(sessionId: string, activeSession: ActiveSession): void {
+    const pendingSession = this.pendingSessions.get(sessionId);
+    this.ongoingSessions.set(sessionId, activeSession);
+
+    if (pendingSession) {
+      this.pendingSessions.delete(sessionId);
+    } else {
+      this.log.info('Session was cancelled before start completed. Stopping immediately.');
+      this.stopStream(sessionId);
     }
   }
 
