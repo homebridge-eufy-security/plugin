@@ -35,8 +35,8 @@ export class LocalLivestreamManager {
 
     this.log.debug(`LocalLivestreamManager initialized for ${camera.device.getName()} (serial: ${this.serialNumber})`);
 
-    this.eufyClient.on('station livestream start', this.onStationLivestreamStart.bind(this));
-    this.eufyClient.on('station livestream stop', this.onStationLivestreamStop.bind(this));
+    this.eufyClient.on('station livestream start', this.onStationLivestreamStart);
+    this.eufyClient.on('station livestream stop', this.onStationLivestreamStop);
   }
 
   /** Destroy active streams and reset state. */
@@ -128,21 +128,21 @@ export class LocalLivestreamManager {
     this.destroyStreams();
   }
 
-  private onStationLivestreamStop(_station: Station, device: Device): void {
+  private onStationLivestreamStop = (_station: Station, device: Device): void => {
     if (device.getSerial() !== this.serialNumber) {
       return;
     }
     this.log.debug(`Station livestream for ${device.getName()} has stopped.`);
     this.destroyStreams();
-  }
+  };
 
-  private onStationLivestreamStart(
+  private onStationLivestreamStart = (
     station: Station,
     device: Device,
     metadata: StreamMetadata,
     videostream: Readable,
     audiostream: Readable,
-  ): void {
+  ): void => {
     if (device.getSerial() !== this.serialNumber) {
       return;
     }
@@ -166,5 +166,5 @@ export class LocalLivestreamManager {
     this.log.debug('Stream metadata:', JSON.stringify(metadata));
 
     this.resolvePendingStart(this.stationStream);
-  }
+  };
 }
