@@ -169,24 +169,25 @@ export class RecordingDelegate implements CameraRecordingDelegate {
         log.error(this.camera.getName(), 'Error while recording: ' + error);
       }
     } finally {
-      if (this.closeReason &&
-        this.closeReason !== HDSProtocolSpecificErrorReason.NORMAL && this.closeReason !== HDSProtocolSpecificErrorReason.CANCELLED) {
-
-        log.warn(
-          this.camera.getName(),
-          `The recording process was aborted by HSV with reason "${HKSVQuitReason[this.closeReason]}"`,
-        );
-      }
-      if (this.closeReason && this.closeReason === HDSProtocolSpecificErrorReason.CANCELLED) {
-
-        log.debug(
-          this.camera.getName(),
-          'The recording process was canceled by the HomeKit Controller."',
-        );
-      }
+      this.logCloseReason();
       this.clearForceStopTimeout();
       this.resetMotionSensor();
       this.localLivestreamManager.stopLocalLiveStream();
+    }
+  }
+
+  private logCloseReason(): void {
+    if (!this.closeReason) {
+      return;
+    }
+
+    if (this.closeReason === HDSProtocolSpecificErrorReason.CANCELLED) {
+      log.debug(this.camera.getName(), 'The recording process was canceled by the HomeKit Controller.');
+    } else if (this.closeReason !== HDSProtocolSpecificErrorReason.NORMAL) {
+      log.warn(
+        this.camera.getName(),
+        `The recording process was aborted by HSV with reason "${HKSVQuitReason[this.closeReason]}"`,
+      );
     }
   }
 
