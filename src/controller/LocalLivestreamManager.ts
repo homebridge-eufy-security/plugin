@@ -3,12 +3,14 @@ import { Station, Device, StreamMetadata, EufySecurity } from 'eufy-security-cli
 import { CameraAccessory } from '../accessories/CameraAccessory';
 import { ILogObj, Logger } from 'tslog';
 
-export type StationStream = {
-  station: Station;
-  device: Device;
-  metadata: StreamMetadata;
+/** Data returned to consumers — only the streams they need. */
+export type LivestreamData = {
   videostream: Readable;
   audiostream: Readable;
+};
+
+/** Internal state: streams plus a timestamp for dedup/reuse logic. */
+type ActiveStream = LivestreamData & {
   createdAt: number;
 };
 
@@ -16,10 +18,10 @@ const P2P_TIMEOUT_MS = 15_000;
 const DUPLICATE_STREAM_GUARD_S = 5;
 
 export class LocalLivestreamManager {
-  private stationStream: StationStream | null = null;
-  private pendingPromise: Promise<StationStream> | null = null;
+  private stationStream: ActiveStream | null = null;
+  private pendingPromise: Promise<LivestreamData> | null = null;
   private pendingCleanup: {
-    resolve: (stream: StationStream) => void;
+    resolve: (stream: LivestreamData) => void;
     reject: (reason: unknown) => void;
     timer: NodeJS.Timeout;
   } | null = null;
@@ -51,7 +53,7 @@ export class LocalLivestreamManager {
   }
 
   /** Return the active livestream, or start a new one. Concurrent callers share the same pending request. */
-  public async getLocalLivestream(): Promise<StationStream> {
+  public async getLocalLivestream(): Promise<LivestreamData> {
     if (this.stationStream) {
       const runtime = ((Date.now() - this.stationStream.createdAt) / 1000).toFixed(1);
       this.log.debug(`Reusing livestream started ${runtime}s ago.`);
@@ -66,7 +68,7 @@ export class LocalLivestreamManager {
    * the caller piggy-backs on the existing promise instead of issuing a
    * duplicate request.
    */
-  private startLocalLivestream(): Promise<StationStream> {
+  private startLocalLivestream(): Promise<LivestreamData> {
     if (this.pendingPromise) {
       this.log.debug('Livestream already starting — waiting on existing request.');
       return this.pendingPromise;
@@ -74,7 +76,7 @@ export class LocalLivestreamManager {
 
     this.log.debug(`Starting station livestream for serial: ${this.serialNumber}...`);
 
-    this.pendingPromise = new Promise<StationStream>((resolve, reject) => {
+    this.pendingPromise = new Promise<LivestreamData>((resolve, reject) => {
       const timer = setTimeout(() => {
         this.log.error(`Livestream timeout: no P2P stream event received within ${P2P_TIMEOUT_MS / 1000}s for serial ${this.serialNumber}.`);
         this.log.warn('If using a recent Node.js version, try enabling "Embedded PKCS1 Support" in the plugin settings.');
@@ -115,7 +117,7 @@ export class LocalLivestreamManager {
   }
 
   /** Resolve the pending start promise and clean up the timer. */
-  private resolvePendingStart(stream: StationStream): void {
+  private resolvePendingStart(stream: LivestreamData): void {
     const pending = this.consumePendingStart();
     if (pending) {
       pending.resolve(stream);
@@ -159,12 +161,10 @@ export class LocalLivestreamManager {
     // Tear down any prior stream before storing the new one.
     this.destroyStreams();
 
-    const createdAt = Date.now();
-    this.stationStream = { station, device, metadata, videostream, audiostream, createdAt };
-
     this.log.debug(`${station.getName()} P2P livestream for ${device.getName()} started.`);
     this.log.debug('Stream metadata:', JSON.stringify(metadata));
 
+    this.stationStream = { videostream, audiostream, createdAt: Date.now() };
     this.resolvePendingStart(this.stationStream);
   };
 }
