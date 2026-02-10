@@ -15,8 +15,6 @@ type StationStream = {
 
 // Define a class for the local livestream manager.
 export class LocalLivestreamManager extends EventEmitter {
-  private readonly CONNECTION_ESTABLISHED_TIMEOUT = 5;
-
   private stationStream: StationStream | null = null;
 
   private livestreamStartedAt: number | null = null;
@@ -35,10 +33,7 @@ export class LocalLivestreamManager extends EventEmitter {
     this.serial_number = camera.device.getSerial();
     this.log = camera.log;
 
-    const deviceModel = camera.device.getPropertyValue(PropertyName.Model);
-    const deviceType = camera.device.getDeviceType();
-    this.log.debug(`LocalLivestreamManager initialized for device: ${camera.device.getName()} ` +
-      `(serial: ${this.serial_number}, model: ${deviceModel}, type: ${deviceType})`);
+    this.log.debug(`LocalLivestreamManager initialized for ${camera.device.getName()} (serial: ${this.serial_number})`);
 
     this.initialize();
 
