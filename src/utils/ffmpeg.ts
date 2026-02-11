@@ -31,6 +31,11 @@ const PROCESS_RESULT_TIMEOUT_MS = 15_000;
 /** Grace period after SIGTERM before sending SIGKILL (ms) */
 const KILL_GRACE_PERIOD_MS = 2_000;
 
+/** Returns true when the value is a non-empty string (guards `undefined | ''`). */
+function isNonEmpty(value: string | undefined): value is string {
+    return !!value && value !== '';
+}
+
 /**
  * Creates a TCP server that accepts exactly one connection, then auto-closes.
  * If no connection arrives within the timeout, the server closes anyway.
@@ -234,7 +239,7 @@ export class FFmpegParameters {
     ) {
 
         const videoConfig = cameraConfig.videoConfig ??= {};
-        if (videoConfig.videoProcessor && videoConfig.videoProcessor !== '') {
+        if (isNonEmpty(videoConfig.videoProcessor)) {
             this.processor = videoConfig.videoProcessor;
         }
         if (videoConfig.readRate) {
@@ -252,7 +257,7 @@ export class FFmpegParameters {
 
         if (this.isVideo) {
             const req = request as StartStreamRequest | ReconfigureStreamRequest;
-            this.codec = (videoConfig.vcodec && videoConfig.vcodec !== '') ? videoConfig.vcodec : 'libx264';
+            this.codec = isNonEmpty(videoConfig.vcodec) ? videoConfig.vcodec : 'libx264';
             if (this.codec !== 'copy') {
                 this.fps = videoConfig.maxFPS ?? req.video.fps;
                 const bitrate = videoConfig.maxBitrate ?? req.video.max_bit_rate;
@@ -281,7 +286,7 @@ export class FFmpegParameters {
                     break;
             }
 
-            if (videoConfig.acodec && videoConfig.acodec !== '') {
+            if (isNonEmpty(videoConfig.acodec)) {
                 codec = videoConfig.acodec;
                 codecOptions = '';
             }
@@ -336,12 +341,12 @@ export class FFmpegParameters {
         this.movflags = 'frag_keyframe+empty_moov+default_base_moof+omit_tfhd_offset';
         this.maxMuxingQueueSize = 1024;
 
-        if (videoConfig.videoProcessor && videoConfig.videoProcessor !== '') {
+        if (isNonEmpty(videoConfig.videoProcessor)) {
             this.processor = videoConfig.videoProcessor;
         }
 
         if (this.isVideo) {
-            if (videoConfig.vcodec && videoConfig.vcodec !== '') {
+            if (isNonEmpty(videoConfig.vcodec)) {
                 this.codec = videoConfig.vcodec;
             } else {
                 this.codec = 'libx264';
@@ -380,7 +385,7 @@ export class FFmpegParameters {
                 this.processAudio = false;
             }
 
-            if (videoConfig.acodec && videoConfig.acodec !== '') {
+            if (isNonEmpty(videoConfig.acodec)) {
                 this.codec = videoConfig.acodec;
             } else {
                 this.codec = 'libfdk_aac';
@@ -498,7 +503,7 @@ export class FFmpegParameters {
     private applyVisualConfig(width: number, height: number, videoConfig: VideoConfig) {
         this.width = FFmpegParameters.clampDimension(width, videoConfig.maxWidth);
         this.height = FFmpegParameters.clampDimension(height, videoConfig.maxHeight);
-        if (videoConfig.videoFilter && videoConfig.videoFilter !== '') {
+        if (isNonEmpty(videoConfig.videoFilter)) {
             this.filters = videoConfig.videoFilter;
         }
         if (videoConfig.crop) {
