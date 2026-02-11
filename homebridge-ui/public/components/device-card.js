@@ -43,14 +43,17 @@ const DeviceCard = {
     if (isUnsupported) card.classList.add('device-card--unsupported');
     if (isIgnored) card.classList.add('device-card--ignored');
 
-    // Image
-    const imgWrap = document.createElement('div');
-    imgWrap.className = 'device-card__image-wrap';
-    const img = document.createElement('img');
-    img.src = DeviceImages.getPath(d.type);
-    img.alt = d.displayName;
-    img.loading = 'lazy';
-    imgWrap.appendChild(img);
+    // Image (skip for unsupported)
+    if (!isUnsupported) {
+      const imgWrap = document.createElement('div');
+      imgWrap.className = 'device-card__image-wrap';
+      const img = document.createElement('img');
+      img.src = DeviceImages.getPath(d.type);
+      img.alt = d.displayName;
+      img.loading = 'lazy';
+      imgWrap.appendChild(img);
+      card.appendChild(imgWrap);
+    }
 
     // Body
     const body = document.createElement('div');
@@ -65,7 +68,11 @@ const DeviceCard = {
     meta.className = 'device-card__meta';
 
     const metaParts = [];
-    if (d.typename) metaParts.push(d.typename);
+    if (isUnsupported) {
+      metaParts.push('Type ' + d.type);
+    } else if (d.typename) {
+      metaParts.push(d.typename);
+    }
     if (d.hasBattery && d.properties && d.properties.battery !== undefined) {
       metaParts.push('🔋 ' + d.properties.battery + '%');
     }
@@ -87,7 +94,6 @@ const DeviceCard = {
       const badge = document.createElement('span');
       badge.className = 'badge badge-unsupported';
       badge.textContent = 'Not Supported';
-      badge.title = 'This device was detected but is not yet fully supported. Visit GitHub to request support.';
       badgeArea.appendChild(badge);
     } else if (isIgnored) {
       const badge = document.createElement('span');
@@ -120,16 +126,13 @@ const DeviceCard = {
       footer.appendChild(switchWrap);
     }
 
-    card.appendChild(imgWrap);
     card.appendChild(body);
     card.appendChild(footer);
 
-    // Click handler — navigate to detail (not for unsupported)
-    if (!isUnsupported) {
-      card.addEventListener('click', () => {
-        if (opts.onClick) opts.onClick(d);
-      });
-    }
+    // Click handler — navigate to detail
+    card.addEventListener('click', () => {
+      if (opts.onClick) opts.onClick(d);
+    });
 
     col.appendChild(card);
     if (container) container.appendChild(col);
