@@ -221,6 +221,15 @@ class UiServer extends HomebridgePluginUiServer {
     this.eufyClient?.once('connect', () => resolveCallback({ success: true }));
   }
 
+  /**
+   * Parse a semver string into [major, minor, patch].
+   * @param {string} ver - e.g. '4.4.2-beta.18'
+   * @returns {number[]}
+   */
+  _parseSemver(ver) {
+    return (ver || '0.0.0').replace(/-.*$/, '').split('.').map(Number);
+  }
+
   async loadStoredAccessories() {
     try {
       if (!fs.existsSync(this.storedAccessories_file)) {
@@ -229,11 +238,41 @@ class UiServer extends HomebridgePluginUiServer {
       }
 
       const storedData = await fs.promises.readFile(this.storedAccessories_file, { encoding: 'utf-8' });
-      const { version: storedVersion, stations: storedAccessories } = JSON.parse(storedData);
+      const { version: storedVersion, storedAt, stations: storedAccessories } = JSON.parse(storedData);
 
-      if (storedVersion !== LIB_VERSION) {
-        this.pushEvent('versionUnmatched', { currentVersion: LIB_VERSION, storedVersion });
-        this.log.warn(`Stored version (${storedVersion}) does not match current version (${LIB_VERSION})`);
+      // --- Cache age check (30 days) ---
+      if (storedAt) {
+        const ageMs = Date.now() - new Date(storedAt).getTime();
+        const ageDays = Math.floor(ageMs / (1000 * 60 * 60 * 24));
+        if (ageDays >= 30) {
+          this.pushEvent('cacheWarning', { reason: 'stale', ageDays });
+          this.log.warn(`Stored accessories are ${ageDays} days old. User should re-login to refresh.`);
+        }
+      }
+
+      // --- Version branch check ---
+      if (storedVersion && storedVersion !== LIB_VERSION) {
+        const [curMajor, curMinor] = this._parseSemver(LIB_VERSION);
+        const [stoMajor, stoMinor] = this._parseSemver(storedVersion);
+
+        if (curMajor !== stoMajor || curMinor !== stoMinor) {
+          // Different minor (or major) branch → force re-login
+          this.pushEvent('cacheWarning', {
+            reason: 'versionForce',
+            currentVersion: LIB_VERSION,
+            storedVersion,
+          });
+          this.log.warn(`Stored version (${storedVersion}) is on a different branch than current (${LIB_VERSION}). Forcing re-login.`);
+          return []; // Return empty to force login flow
+        } else {
+          // Same minor branch, different patch → soft warning
+          this.pushEvent('cacheWarning', {
+            reason: 'versionWarn',
+            currentVersion: LIB_VERSION,
+            storedVersion,
+          });
+          this.log.warn(`Stored version (${storedVersion}) differs from current (${LIB_VERSION}) but same branch. Consider re-login.`);
+        }
       }
 
       return storedAccessories;
@@ -408,7 +447,7 @@ class UiServer extends HomebridgePluginUiServer {
   }
 
   storeAccessories() {
-    const dataToStore = { version: LIB_VERSION, stations: this.stations };
+    const dataToStore = { version: LIB_VERSION, storedAt: new Date().toISOString(), stations: this.stations };
     fs.writeFileSync(this.storedAccessories_file, JSON.stringify(dataToStore));
   }
 

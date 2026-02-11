@@ -90,12 +90,12 @@ const Api = {
   },
 
   /**
-   * Register a listener for version mismatch.
+   * Register a listener for cache warnings (stale, version mismatch).
    * Replaces any previously registered listener.
-   * @param {function} callback - receives { currentVersion, storedVersion }
+   * @param {function} callback - receives { reason, ageDays?, currentVersion?, storedVersion? }
    */
-  onVersionUnmatched(callback) {
-    this._on('versionUnmatched', (event) => {
+  onCacheWarning(callback) {
+    this._on('cacheWarning', (event) => {
       callback(event.data);
     });
   },

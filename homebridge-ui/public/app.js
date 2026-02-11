@@ -28,12 +28,29 @@ const App = {
       this._showAdminError();
     });
 
-    // Listen for version mismatch
-    Api.onVersionUnmatched(({ currentVersion, storedVersion }) => {
-      homebridge.toast.warning(
-        `Stored accessories version (${storedVersion}) differs from current (${currentVersion}). Please re-login to refresh.`,
-        'Version Mismatch'
-      );
+    // Listen for cache warnings (stale data, version mismatch)
+    Api.onCacheWarning((data) => {
+      switch (data.reason) {
+        case 'stale':
+          homebridge.toast.warning(
+            `Your cached devices are ${data.ageDays} days old. Please re-login to refresh.`,
+            'Stale Cache',
+          );
+          break;
+        case 'versionWarn':
+          homebridge.toast.warning(
+            `Plugin updated (${data.storedVersion} → ${data.currentVersion}). Consider re-logging in to refresh devices.`,
+            'Version Updated',
+          );
+          break;
+        case 'versionForce':
+          homebridge.toast.error(
+            `Plugin version changed significantly (${data.storedVersion} → ${data.currentVersion}). Please re-login.`,
+            'Re-login Required',
+          );
+          this.navigate('login');
+          break;
+      }
     });
 
     // Listen for hash changes
