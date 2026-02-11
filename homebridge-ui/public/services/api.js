@@ -43,6 +43,14 @@ const Api = {
   },
 
   /**
+   * Check if a valid persistent cache file exists on the server.
+   * @returns {Promise<{valid: boolean}>}
+   */
+  async checkCache() {
+    return homebridge.request('/checkCache');
+  },
+
+  /**
    * Load stored accessories from server (cached from last login)
    * @returns {Promise<Array>} Array of L_Station objects
    */
