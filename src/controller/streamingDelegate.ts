@@ -158,7 +158,7 @@ export class StreamingDelegate implements CameraStreamingDelegate {
 
       await this.configureStreamInput(videoParams, audioParams);
 
-      this.startFFmpegProcesses(activeSession, videoParams, audioParams, request, callback);
+      await this.startFFmpegProcesses(activeSession, videoParams, audioParams, request, callback);
 
       await this.setupTalkback(activeSession, sessionInfo);
 
@@ -258,13 +258,13 @@ export class StreamingDelegate implements CameraStreamingDelegate {
   /**
    * Starts the video (and optionally separate audio) FFmpeg processes.
    */
-  private startFFmpegProcesses(
+  private async startFFmpegProcesses(
     activeSession: ActiveSession,
     videoParams: FFmpegParameters,
     audioParams: FFmpegParameters | undefined,
     request: StartStreamRequest,
     callback: StreamRequestCallback,
-  ): void {
+  ): Promise<void> {
     const useSeparateProcesses = this.videoConfig.useSeparateProcesses ?? false;
 
     const videoProcess = new FFmpeg(
@@ -277,7 +277,7 @@ export class StreamingDelegate implements CameraStreamingDelegate {
       this.stopStream(request.sessionID);
     });
     activeSession.videoProcess = videoProcess;
-    videoProcess.start();
+    await videoProcess.start();
 
     if (useSeparateProcesses && audioParams) {
       const audioProcess = new FFmpeg('[Audio Process]', audioParams);
@@ -286,7 +286,7 @@ export class StreamingDelegate implements CameraStreamingDelegate {
         this.stopStream(request.sessionID);
       });
       activeSession.audioProcess = audioProcess;
-      audioProcess.start();
+      await audioProcess.start();
     }
   }
 
@@ -310,7 +310,7 @@ export class StreamingDelegate implements CameraStreamingDelegate {
     activeSession.returnProcess.on('error', (error) => {
       this.log.error('Talkback process ended with error: ' + error);
     });
-    activeSession.returnProcess.start();
+    await activeSession.returnProcess.start();
     activeSession.returnProcess.stdout?.pipe(activeSession.talkbackStream);
   }
 
