@@ -61,7 +61,92 @@
 
 .device-card--unsupported {
   opacity: 0.5;
-  cursor: default;
+  cursor: pointer;
+}
+
+/* ===== Unsupported Detail View ===== */
+.unsupported-detail {
+  padding: 16px 0;
+}
+
+.unsupported-detail__table {
+  width: 100%;
+  font-size: 0.85rem;
+  margin: 16px 0;
+  border-collapse: collapse;
+}
+
+.unsupported-detail__table td {
+  padding: 8px 12px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.unsupported-detail__table td:first-child {
+  font-weight: 600;
+  width: 40%;
+  color: var(--eufy-muted);
+}
+
+.unsupported-detail__actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 20px;
+}
+
+.unsupported-detail__actions .btn {
+  flex: 1;
+  text-align: center;
+}
+
+.unsupported-detail__info {
+  font-size: 0.82rem;
+  padding: 12px 14px;
+  margin: 16px 0;
+  background: rgba(45, 111, 247, 0.06);
+  border-left: 3px solid var(--eufy-primary);
+  border-radius: 4px;
+  line-height: 1.6;
+}
+
+.unsupported-detail__info a {
+  color: var(--eufy-primary);
+}
+
+.unsupported-detail__dump-wrap {
+  position: relative;
+}
+
+.unsupported-detail__copy-btn {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  padding: 3px 10px;
+  font-size: 0.72rem;
+  border: 1px solid rgba(0, 0, 0, 0.15);
+  border-radius: 6px;
+  background: var(--bs-body-bg, #fff);
+  color: var(--eufy-muted);
+  cursor: pointer;
+  transition: var(--eufy-transition);
+  z-index: 1;
+}
+
+.unsupported-detail__copy-btn:hover {
+  border-color: var(--eufy-primary);
+  color: var(--eufy-primary);
+}
+
+.unsupported-detail__dump {
+  background: rgba(0, 0, 0, 0.04);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+  padding: 12px 16px;
+  font-size: 0.78rem;
+  max-height: 300px;
+  overflow-y: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+  margin-bottom: 8px;
 }
 
 .device-card--ignored {

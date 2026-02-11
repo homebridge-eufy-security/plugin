@@ -94,7 +94,7 @@ const DashboardView = {
       if (standaloneDevice) {
         // Standalone: show as single card (the device IS the station)
         const item = { ...standaloneDevice, type: standaloneDevice.type };
-        if (station.unsupported) {
+        if (station.unsupported || item.unsupported) {
           item.unsupported = true;
           unsupported.push({ item, isStation: false, station });
         } else {
@@ -120,7 +120,7 @@ const DashboardView = {
 
         // Device cards for this station
         (station.devices || []).forEach((device) => {
-          if (station.unsupported) {
+          if (station.unsupported || device.unsupported) {
             unsupported.push({ item: { ...device, unsupported: true }, isStation: false, station });
           } else {
             supported.push({ item: device, isStation: false, station });
@@ -174,7 +174,9 @@ const DashboardView = {
           device: { ...item, unsupported: true },
           isStation: isStation,
           enabled: false,
-          onClick: () => {},
+          onClick: (d) => {
+            App.navigate('detail/device/' + d.uniqueId);
+          },
           onToggle: () => {},
         });
       });

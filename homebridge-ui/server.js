@@ -308,23 +308,35 @@ class UiServer extends HomebridgePluginUiServer {
         typename: DeviceType[stationType],
         disabled: false,
         devices: [],
+        properties: station.getProperties(),
       };
-      s.ignored = (this.config['ignoreStations'] ?? []).includes(s.uniqueId);
 
-      // Standalone Lock or Doorbell doesn't have Security Control
-      if (Device.isLock(s.type) || Device.isDoorbell(s.type)) {
-        s.disabled = true;
-        s.ignored = true;
+      try {
+        delete s.properties.picture;
+      } catch (error) {
+        // ignore
       }
 
-      // Check if this station should be marked as unsupported
-      const shouldCreate =
-        stationType === DeviceType.STATION ||
-        stationsWithDevices.has(stationSerial);
+      s.ignored = (this.config['ignoreStations'] ?? []).includes(s.uniqueId);
 
-      if (!shouldCreate) {
-        s.unsupported = true;
-        this.log.warn(`Station "${station.getName()}" has no devices and will be marked as unsupported`);
+      if (stationType !== DeviceType.STATION) {
+        // Non-HomeBase station — the station IS a device (station.type == device.type)
+        // Check if the matching device was emitted by the client
+        const hasMatchingDevice = this.pendingDevices.some(d => d.getSerial() === stationSerial);
+
+        if (hasMatchingDevice) {
+          s.standalone = true;
+          s.disabled = true; // No separate station card; settings accessible via device card
+
+          // Standalone Locks and Doorbells don't have Security Control
+          if (Device.isLock(s.type) || Device.isDoorbell(s.type)) {
+            s.noSecurityControl = true;
+          }
+        } else {
+          // Station exists but no device counterpart was emitted — unsupported
+          s.unsupported = true;
+          this.log.warn(`Station "${station.getName()}" (${DeviceType[stationType]}) has no matching device and will be marked as unsupported`);
+        }
       }
 
       this.stations.push(s);
@@ -332,16 +344,20 @@ class UiServer extends HomebridgePluginUiServer {
 
     // Process queued devices and attach them to stations
     for (const device of this.pendingDevices) {
+      const devType = device.getDeviceType();
       const d = {
         uniqueId: device.getSerial(),
         displayName: device.getName(),
-        type: device.getDeviceType(),
-        typename: DeviceType[device.getDeviceType()],
+        type: devType,
+        typename: DeviceType[devType],
         standalone: device.getSerial() === device.getStationSerial(),
         hasBattery: device.hasBattery(),
         isCamera: device.isCamera(),
         isDoorbell: device.isDoorbell(),
         isKeypad: device.isKeyPad(),
+        isMotionSensor: Device.isMotionSensor(devType),
+        isEntrySensor: Device.isEntrySensor(devType),
+        isLock: Device.isLock(devType),
         supportsRTSP: device.hasPropertyValue(PropertyName.DeviceRTSPStream),
         supportsTalkback: device.hasCommand(CommandName.DeviceStartTalkback),
         DeviceEnabled: device.hasProperty(PropertyName.DeviceEnabled),
@@ -351,6 +367,11 @@ class UiServer extends HomebridgePluginUiServer {
         disabled: false,
         properties: device.getProperties(),
       };
+
+      // Mark device as unsupported if it doesn't match any known accessory type
+      if (!device.isCamera() && !Device.isMotionSensor(devType) && !Device.isEntrySensor(devType) && !Device.isLock(devType)) {
+        d.unsupported = true;
+      }
 
       if (device.hasProperty(PropertyName.DeviceChargingStatus)) {
         d.chargingStatus = device.getPropertyValue(PropertyName.DeviceChargingStatus);

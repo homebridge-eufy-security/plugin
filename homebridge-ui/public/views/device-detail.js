@@ -33,20 +33,31 @@ const DeviceDetailView = {
       return;
     }
 
-    const accessory = type === 'station' ? station : device;
-    const accessoryConfig = type === 'station'
-      ? Config.getStationConfig(id)
-      : Config.getDeviceConfig(id);
+    // For unsupported standalone stations routed as 'device', the device is null — use station
+    const accessory = (type === 'station' ? station : device) || station;
+    const isUnsupported = accessory && accessory.unsupported === true;
 
-    // Header with back button + device image
-    this._renderHeader(container, accessory, type);
+    // Header with back button + device image (skip image for unsupported)
+    this._renderHeader(container, accessory, type, isUnsupported);
 
     // Main content area
     const content = document.createElement('div');
 
-    if (type === 'device' && device) {
+    if (isUnsupported) {
+      this._renderUnsupportedDetail(content, accessory);
+    } else if (type === 'device' && device) {
+      const accessoryConfig = type === 'station'
+        ? Config.getStationConfig(id)
+        : Config.getDeviceConfig(id);
       this._renderDeviceSettings(content, device, accessoryConfig || {}, config);
+
+      // For standalone devices, also show station settings (if station supports security control)
+      if (device.standalone && station && !station.noSecurityControl) {
+        const stationConfig = Config.getStationConfig(station.uniqueId) || {};
+        this._renderStandaloneStationSection(content, station, stationConfig, config);
+      }
     } else if (type === 'station' && station) {
+      const accessoryConfig = Config.getStationConfig(id);
       this._renderStationSettings(content, station, accessoryConfig || {}, config);
     }
 
@@ -56,7 +67,7 @@ const DeviceDetailView = {
   },
 
   // ===== Header =====
-  _renderHeader(container, accessory, type) {
+  _renderHeader(container, accessory, type, isUnsupported) {
     const header = document.createElement('div');
     header.className = 'detail-header';
 
@@ -66,20 +77,23 @@ const DeviceDetailView = {
     backBtn.style.textDecoration = 'none';
     backBtn.addEventListener('click', () => App.navigate('dashboard'));
 
-    const img = document.createElement('img');
-    img.className = 'detail-header__image';
-    img.src = DeviceImages.getPath(accessory.type);
-    img.alt = accessory.displayName;
-
     const info = document.createElement('div');
     info.className = 'detail-header__info';
     info.innerHTML = `
       <h5>${this._escHtml(accessory.displayName)}</h5>
-      <small>${accessory.typename || 'Unknown'} · ${accessory.uniqueId}</small>
+      <small>${accessory.typename || ('Type ' + accessory.type)} · ${accessory.uniqueId}</small>
     `;
 
     header.appendChild(backBtn);
-    header.appendChild(img);
+
+    if (!isUnsupported) {
+      const img = document.createElement('img');
+      img.className = 'detail-header__image';
+      img.src = DeviceImages.getPath(accessory.type);
+      img.alt = accessory.displayName;
+      header.appendChild(img);
+    }
+
     header.appendChild(info);
     container.appendChild(header);
   },
@@ -471,6 +485,224 @@ const DeviceDetailView = {
     });
 
     stationRest.appendChild(advSection);
+    content.appendChild(stationRest);
+  },
+
+  // ===== Unsupported Device Detail =====
+  _renderUnsupportedDetail(content, accessory) {
+    const REPO = 'homebridge-plugins/homebridge-eufy-security';
+    const UPSTREAM_REPO = 'bropat/eufy-security-client';
+    const LABEL = 'device-support';
+    const COMPAT_URL = 'https://bropat.github.io/eufy-security-client/#/supported_devices';
+
+    const section = document.createElement('div');
+    section.className = 'detail-section unsupported-detail';
+
+    // Badge
+    const badge = document.createElement('span');
+    badge.className = 'badge badge-unsupported mb-3';
+    badge.textContent = 'Not Supported';
+    badge.style.fontSize = '0.85rem';
+    section.appendChild(badge);
+
+    // Description
+    const desc = document.createElement('p');
+    desc.className = 'text-muted';
+    desc.textContent = 'This device was detected but is not yet supported.';
+    section.appendChild(desc);
+
+    // Info box about upstream dependency
+    const infoBox = document.createElement('div');
+    infoBox.className = 'unsupported-detail__info';
+    infoBox.innerHTML =
+      '<strong>ℹ️ Why is this not supported?</strong><br>' +
+      'New device support must first be added to the eufy-security-client library. If your device is not on the ' +
+      `<a href="${COMPAT_URL}" target="_blank" rel="noopener noreferrer">compatibility list</a>, ` +
+      `please open an issue on the upstream repository first.`;
+    section.appendChild(infoBox);
+
+    // Device info dump — all available data in one box
+    const props = accessory.properties || {};
+    const deviceInfo = {
+      uniqueId: accessory.uniqueId,
+      displayName: accessory.displayName,
+      type: accessory.type,
+      typename: accessory.typename || undefined,
+      ...props,
+    };
+    // Remove potentially large/sensitive fields
+    delete deviceInfo.picture;
+
+    const infoTitle = document.createElement('div');
+    infoTitle.className = 'detail-section__title';
+    infoTitle.textContent = 'Device Information';
+    section.appendChild(infoTitle);
+
+    // JSON dump with copy button overlay
+    const dumpWrap = document.createElement('div');
+    dumpWrap.className = 'unsupported-detail__dump-wrap';
+
+    const copyBtn = document.createElement('button');
+    copyBtn.className = 'unsupported-detail__copy-btn';
+    copyBtn.textContent = '📋 Copy';
+    copyBtn.addEventListener('click', () => {
+      navigator.clipboard.writeText(pre.textContent).then(() => {
+        copyBtn.textContent = '✓ Copied!';
+        setTimeout(() => { copyBtn.textContent = '📋 Copy'; }, 2000);
+      });
+    });
+
+    const pre = document.createElement('pre');
+    pre.className = 'unsupported-detail__dump';
+    pre.textContent = JSON.stringify(deviceInfo, null, 2);
+
+    dumpWrap.appendChild(copyBtn);
+    dumpWrap.appendChild(pre);
+    section.appendChild(dumpWrap);
+
+    // CTA buttons
+    const btnGroup = document.createElement('div');
+    btnGroup.className = 'unsupported-detail__actions';
+
+    // 1) Check compatibility list (primary)
+    const compatBtn = document.createElement('a');
+    compatBtn.href = COMPAT_URL;
+    compatBtn.target = '_blank';
+    compatBtn.rel = 'noopener noreferrer';
+    compatBtn.className = 'btn btn-primary';
+    compatBtn.textContent = 'Check Compatibility ↗';
+    btnGroup.appendChild(compatBtn);
+
+    // 2) Search existing issues with label (primary outline)
+    const searchQuery = encodeURIComponent(`is:issue label:${LABEL} ${accessory.type}`);
+    const searchBtn = document.createElement('a');
+    searchBtn.href = `https://github.com/${REPO}/issues?q=${searchQuery}`;
+    searchBtn.target = '_blank';
+    searchBtn.rel = 'noopener noreferrer';
+    searchBtn.className = 'btn btn-outline-primary';
+    searchBtn.textContent = 'Search Existing Issues ↗';
+    btnGroup.appendChild(searchBtn);
+
+    // 3) Create new issue using the device_support template (secondary)
+    const model = props.model || accessory.type;
+    const issueTitle = encodeURIComponent(`[Device Support] ${model} (Type ${accessory.type})`);
+    const deviceDump = JSON.stringify(deviceInfo, null, 2);
+    const templateParams = [
+      `template=device_support.yml`,
+      `title=${issueTitle}`,
+      `labels=${LABEL}`,
+      `device_info=${encodeURIComponent(deviceDump)}`,
+    ].join('&');
+    const createBtn = document.createElement('a');
+    createBtn.href = `https://github.com/${REPO}/issues/new?${templateParams}`;
+    createBtn.target = '_blank';
+    createBtn.rel = 'noopener noreferrer';
+    createBtn.className = 'btn btn-outline-secondary';
+    createBtn.textContent = 'Request Support ↗';
+    btnGroup.appendChild(createBtn);
+
+    section.appendChild(btnGroup);
+
+    // External links note
+    const extNote = document.createElement('p');
+    extNote.className = 'text-muted';
+    extNote.style.cssText = 'font-size: 0.75rem; text-align: right;';
+    extNote.textContent = '↗ These links open in a new browser tab on GitHub.';
+    section.appendChild(extNote);
+
+    content.appendChild(section);
+  },
+
+  // ===== Standalone Station Settings (shown in device detail for standalone devices) =====
+  _renderStandaloneStationSection(content, station, stationConfig, config) {
+    const ignoreStations = config.ignoreStations || [];
+    const isIgnored = ignoreStations.includes(station.uniqueId);
+
+    // Divider
+    const divider = document.createElement('hr');
+    divider.className = 'my-4';
+    content.appendChild(divider);
+
+    // Enable toggle section
+    const section = document.createElement('div');
+    section.className = 'detail-section';
+
+    const title = document.createElement('div');
+    title.className = 'detail-section__title';
+    title.textContent = 'Security Panel';
+    section.appendChild(title);
+
+    const helpText = document.createElement('p');
+    helpText.className = 'text-muted';
+    helpText.style.fontSize = '0.8rem';
+    helpText.textContent = 'This device acts as its own station. Configure the security panel independently from the device.';
+    section.appendChild(helpText);
+
+    Toggle.render(section, {
+      id: 'toggle-station-enable',
+      label: 'Enable Security Panel',
+      help: 'When disabled, the security panel will not appear in HomeKit. The device itself remains active.',
+      checked: !isIgnored,
+      onChange: async (checked) => {
+        await Config.toggleIgnore(station.uniqueId, !checked, 'station');
+        const rest = content.querySelector('#standalone-station-rest');
+        if (rest) rest.style.display = checked ? '' : 'none';
+      },
+    });
+
+    content.appendChild(section);
+
+    // Rest of station settings (hidden when disabled)
+    const stationRest = document.createElement('div');
+    stationRest.id = 'standalone-station-rest';
+    if (isIgnored) stationRest.style.display = 'none';
+
+    // Guard Mode Mapping
+    const guardSection = document.createElement('div');
+    guardSection.className = 'detail-section';
+
+    const guardTitle = document.createElement('div');
+    guardTitle.className = 'detail-section__title';
+    guardTitle.textContent = 'Guard Mode Mapping';
+    guardSection.appendChild(guardTitle);
+
+    const guardHelp = document.createElement('p');
+    guardHelp.className = 'text-muted';
+    guardHelp.style.fontSize = '0.8rem';
+    guardHelp.textContent = 'Map HomeKit security modes to Eufy guard modes.';
+    guardSection.appendChild(guardHelp);
+
+    GuardModes.render(guardSection, {
+      hkHome: stationConfig.hkHome ?? config.hkHome ?? 1,
+      hkAway: stationConfig.hkAway ?? config.hkAway ?? 0,
+      hkNight: stationConfig.hkNight ?? config.hkNight ?? 1,
+      hkOff: stationConfig.hkOff ?? config.hkOff ?? 63,
+      onChange: async (modes) => {
+        await Config.updateStationConfig(station.uniqueId, modes);
+      },
+    });
+
+    // Manual Alarm
+    const alarmTitle = document.createElement('div');
+    alarmTitle.className = 'detail-section__title mt-3';
+    alarmTitle.textContent = 'Manual Alarm';
+    guardSection.appendChild(alarmTitle);
+
+    NumberInput.render(guardSection, {
+      id: 'num-station-alarm-seconds',
+      label: 'Alarm Duration',
+      help: 'How long (in seconds) a manually triggered alarm should sound.',
+      value: stationConfig.manualAlarmSeconds || 30,
+      min: 5,
+      max: 300,
+      step: 5,
+      suffix: 'sec',
+      onChange: async (val) => {
+        await Config.updateStationConfig(station.uniqueId, { manualAlarmSeconds: val });
+      },
+    });
+
+    stationRest.appendChild(guardSection);
     content.appendChild(stationRest);
   },
 
