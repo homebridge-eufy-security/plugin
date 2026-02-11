@@ -289,22 +289,7 @@ export class FFmpegParameters {
                 this.codecOptions = encoderOptions;
                 this.pixFormat = 'yuv420p';
                 this.colorRange = 'mpeg';
-                let width = req.video.width;
-                if (videoConfig.maxWidth && videoConfig.maxWidth < width) {
-                    width = videoConfig.maxWidth;
-                }
-                let height = req.video.height;
-                if (videoConfig.maxHeight && videoConfig.maxHeight < height) {
-                    height = videoConfig.maxHeight;
-                }
-                this.width = width;
-                this.height = height;
-                if (videoConfig.videoFilter && videoConfig.videoFilter !== '') {
-                    this.filters = videoConfig.videoFilter;
-                }
-                if (videoConfig.crop) {
-                    this.crop = videoConfig.crop;
-                }
+                this.applyVisualConfig(req.video.width, req.video.height, videoConfig);
             }
         }
         if (this.isAudio) {
@@ -345,22 +330,7 @@ export class FFmpegParameters {
         }
         if (this.isSnapshot) {
             const req = request as SnapshotRequest;
-            let width = req.width;
-            if (videoConfig.maxWidth && videoConfig.maxWidth < width) {
-                width = videoConfig.maxWidth;
-            }
-            let height = req.height;
-            if (videoConfig.maxHeight && videoConfig.maxHeight < height) {
-                height = videoConfig.maxHeight;
-            }
-            this.width = width;
-            this.height = height;
-            if (videoConfig.videoFilter && videoConfig.videoFilter !== '') {
-                this.filters = videoConfig.videoFilter;
-            }
-            if (videoConfig.crop) {
-                this.crop = videoConfig.crop;
-            }
+            this.applyVisualConfig(req.width, req.height, videoConfig);
         }
     }
 
@@ -544,6 +514,23 @@ export class FFmpegParameters {
         params.push(this.isVideo ? '-an -sn -dn' : '');
         params.push(this.isAudio ? '-vn -sn -dn' : '');
         return params;
+    }
+
+    /** Clamp a requested dimension to an optional max from the video config. */
+    private static clampDimension(requested: number, max?: number): number {
+        return (max && max < requested) ? max : requested;
+    }
+
+    /** Apply common visual settings (dimensions, filters, crop) from the video config. */
+    private applyVisualConfig(width: number, height: number, videoConfig: VideoConfig) {
+        this.width = FFmpegParameters.clampDimension(width, videoConfig.maxWidth);
+        this.height = FFmpegParameters.clampDimension(height, videoConfig.maxHeight);
+        if (videoConfig.videoFilter && videoConfig.videoFilter !== '') {
+            this.filters = videoConfig.videoFilter;
+        }
+        if (videoConfig.crop) {
+            this.crop = videoConfig.crop;
+        }
     }
 
     /**
