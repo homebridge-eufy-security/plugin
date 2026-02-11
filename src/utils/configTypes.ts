@@ -73,7 +73,6 @@ export type VideoConfig = {
   stimeout?: number;
   videoFilter?: string;
   encoderOptions?: string;
-  audio?: boolean;
   audioSampleRate?: number;
   audioBitrate?: number;
   acodecHK?: string;
@@ -87,7 +86,6 @@ export type VideoConfig = {
 
 export const DEFAULT_VIDEOCONFIG_VALUES: VideoConfig = {
   probeSize: 16384,
-  audio: true,
   vcodec: 'copy',
   acodec: 'copy',
 };
