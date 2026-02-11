@@ -63,41 +63,19 @@ async function createOneShotTcpServer(
 }
 
 class FFmpegProgress extends EventEmitter {
-    private server: net.Server;
     private started = false;
 
-    constructor(port: number) {
+    private constructor() {
         super();
-        const { server } = this.initServer(port);
-        this.server = server;
     }
 
-    private initServer(port: number): { server: net.Server } {
-        // We can't use createOneShotTcpServer directly here since the constructor
-        // is synchronous, but we mirror its pattern with a pre-picked port.
-        let killTimeout: NodeJS.Timeout | undefined;
-
-        const server = net.createServer((socket) => {
-            if (killTimeout) {
-                clearTimeout(killTimeout);
-            }
-            server.close();
-            socket.on('error', () => { });
-            socket.on('data', this.analyzeProgress.bind(this));
-        });
-
-        server.on('error', () => { });
-
-        server.on('close', () => {
-            this.emit('progress stopped');
-        });
-
-        killTimeout = setTimeout(() => {
-            server.close();
-        }, TCP_SERVER_TIMEOUT_MS);
-
-        server.listen(port);
-        return { server };
+    static async create(port: number): Promise<FFmpegProgress> {
+        const instance = new FFmpegProgress();
+        const { server } = await createOneShotTcpServer((socket) => {
+            socket.on('data', instance.analyzeProgress.bind(instance));
+        }, port);
+        server.on('close', () => instance.emit('progress stopped'));
+        return instance;
     }
 
     private analyzeProgress(progressData: Buffer) {
@@ -730,11 +708,11 @@ export class FFmpeg extends EventEmitter {
         }
     }
 
-    public start() {
+    public async start() {
 
         this.starttime = Date.now();
 
-        this.progress = new FFmpegProgress(this.parameters[0].progressPort);
+        this.progress = await FFmpegProgress.create(this.parameters[0].progressPort);
         this.progress.on('progress started', this.onProgressStarted.bind(this));
 
         const processArgs = FFmpegParameters.getCombinedArguments(this.parameters);
@@ -757,7 +735,7 @@ export class FFmpeg extends EventEmitter {
     public async getResult(input?: Buffer): Promise<Buffer> {
         this.starttime = Date.now();
 
-        this.progress = new FFmpegProgress(this.parameters[0].progressPort);
+        this.progress = await FFmpegProgress.create(this.parameters[0].progressPort);
         this.progress.on('progress started', this.onProgressStarted.bind(this));
 
         const processArgs = FFmpegParameters.getCombinedArguments(this.parameters);
@@ -811,7 +789,7 @@ export class FFmpeg extends EventEmitter {
     }> {
         this.starttime = Date.now();
 
-        this.progress = new FFmpegProgress(this.parameters[0].progressPort);
+        this.progress = await FFmpegProgress.create(this.parameters[0].progressPort);
         this.progress.on('progress started', this.onProgressStarted.bind(this));
 
         const port = await pickPort({ type: 'tcp' });
