@@ -578,10 +578,6 @@ export class FFmpegParameters {
         return params;
     }
 
-    public getProcessArguments(): string[] {
-        return this.buildParameters();
-    }
-
     static getRecordingArguments(parameters: FFmpegParameters[]): string[] {
         if (parameters.length === 0) {
             return [];
@@ -656,14 +652,6 @@ export class FFmpegParameters {
         }
         return 'Starting unknown stream';
     }
-
-    public hasCustomFfmpeg(): boolean {
-        return this.processor !== undefined;
-    }
-
-    public getCustomFfmpeg(): string {
-        return this.processor ?? '';
-    }
 }
 
 export class FFmpeg extends EventEmitter {
@@ -694,8 +682,8 @@ export class FFmpeg extends EventEmitter {
             this.parameters = [parameters];
         }
 
-        if (this.parameters[0].hasCustomFfmpeg()) {
-            this.ffmpegExec = this.parameters[0].getCustomFfmpeg();
+        if (this.parameters[0].processor) {
+            this.ffmpegExec = this.parameters[0].processor;
         }
     }
 
