@@ -5,10 +5,10 @@ import {
   Service,
   WithUUID,
 } from 'homebridge';
-import { EufySecurityPlatform } from '../platform';
-import { BaseAccessory } from './BaseAccessory';
+import { EufySecurityPlatform } from '../platform.js';
+import { BaseAccessory } from './BaseAccessory.js';
 import { Device, PropertyName } from 'eufy-security-client';
-import { CHAR, SERV } from '../utils/utils';
+import { CHAR, SERV } from '../utils/utils.js';
 
 export type CharacteristicType = WithUUID<{ new(): Characteristic }>;
 export type ServiceType = WithUUID<typeof Service> | Service;

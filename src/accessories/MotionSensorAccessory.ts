@@ -1,11 +1,11 @@
 import { PlatformAccessory } from 'homebridge';
-import { EufySecurityPlatform } from '../platform';
-import { DeviceAccessory } from './Device';
+import { EufySecurityPlatform } from '../platform.js';
+import { DeviceAccessory } from './Device.js';
 
  
 // @ts-ignore  
 import { MotionSensor, PropertyName } from 'eufy-security-client';
-import { CHAR, SERV } from '../utils/utils';
+import { CHAR, SERV } from '../utils/utils.js';
 
 /**
  * MotionSensorAccessory Class

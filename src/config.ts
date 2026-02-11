@@ -1,6 +1,6 @@
 import { PlatformConfig } from 'homebridge';
 
-import { CameraConfig, StationConfig } from './utils/configTypes';
+import { CameraConfig, StationConfig } from './utils/configTypes.js';
 
 /**
  * HomebridgePlatform

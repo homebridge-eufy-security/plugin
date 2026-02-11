@@ -1,7 +1,7 @@
 import { Readable } from 'stream';
 import { Station, Device, StreamMetadata, EufySecurity } from 'eufy-security-client';
-import { CameraAccessory } from '../accessories/CameraAccessory';
-import { Deferred } from '../utils/utils';
+import { CameraAccessory } from '../accessories/CameraAccessory.js';
+import { Deferred } from '../utils/utils.js';
 import { ILogObj, Logger } from 'tslog';
 
 /** Internal state: streams plus a timestamp for dedup/reuse logic. */

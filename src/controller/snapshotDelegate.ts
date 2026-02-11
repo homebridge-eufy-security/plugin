@@ -5,7 +5,7 @@ import { Camera, Device, DeviceEvents, Picture, PropertyName } from 'eufy-securi
 import { SnapshotRequest } from 'homebridge';
 import { ILogObj, Logger } from 'tslog';
 
-import { CameraAccessory } from '../accessories/CameraAccessory';
+import { CameraAccessory } from '../accessories/CameraAccessory.js';
 import {
   SNAPSHOT_CACHE_BALANCED_SECONDS,
   SNAPSHOT_CACHE_FRESH_SECONDS,
@@ -13,19 +13,25 @@ import {
   SNAPSHOT_FETCH_TIMEOUT_MS,
   SNAPSHOT_MIN_REFRESH_INTERVAL_MINUTES,
   SNAPSHOT_RING_DEBOUNCE_SECONDS,
-} from '../settings';
-import { CameraConfig, SnapshotHandlingMethod } from '../utils/configTypes';
-import { FFmpeg, FFmpegParameters } from '../utils/ffmpeg';
-import { isRtspReady } from '../utils/utils';
-import { LocalLivestreamManager } from './LocalLivestreamManager';
+} from '../settings.js';
+import { CameraConfig, SnapshotHandlingMethod } from '../utils/configTypes.js';
+import { FFmpeg, FFmpegParameters } from '../utils/ffmpeg.js';
+import { isRtspReady } from '../utils/utils.js';
+import { LocalLivestreamManager } from './LocalLivestreamManager.js';
 
 type PlaceholderKey = 'black' | 'unavailable' | 'offline' | 'disabled';
 
+import { fileURLToPath } from 'url';
+import path from 'path';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
 const PLACEHOLDER_PATHS: Record<PlaceholderKey, string> = {
-  offline: require.resolve('../../media/camera-offline.png'),
-  disabled: require.resolve('../../media/camera-disabled.png'),
-  black: require.resolve('../../media/Snapshot-black.png'),
-  unavailable: require.resolve('../../media/Snapshot-Unavailable.png'),
+  offline: path.resolve(__dirname, '../../media/camera-offline.png'),
+  disabled: path.resolve(__dirname, '../../media/camera-disabled.png'),
+  black: path.resolve(__dirname, '../../media/Snapshot-black.png'),
+  unavailable: path.resolve(__dirname, '../../media/Snapshot-Unavailable.png'),
 };
 
 type Snapshot = {

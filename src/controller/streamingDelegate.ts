@@ -17,13 +17,13 @@ import { Logger, ILogObj } from 'tslog';
 import { pickPort } from 'pick-port';
 import { Camera, PropertyName } from 'eufy-security-client';
 
-import { CameraAccessory } from '../accessories/CameraAccessory';
-import { SessionInfo, VideoConfig } from '../utils/configTypes';
-import { FFmpeg, FFmpegParameters } from '../utils/ffmpeg';
-import { TalkbackStream } from '../utils/Talkback';
-import { HAP, isRtspReady } from '../utils/utils';
-import { LocalLivestreamManager } from './LocalLivestreamManager';
-import { snapshotDelegate } from './snapshotDelegate';
+import { CameraAccessory } from '../accessories/CameraAccessory.js';
+import { SessionInfo, VideoConfig } from '../utils/configTypes.js';
+import { FFmpeg, FFmpegParameters } from '../utils/ffmpeg.js';
+import { TalkbackStream } from '../utils/Talkback.js';
+import { HAP, isRtspReady } from '../utils/utils.js';
+import { LocalLivestreamManager } from './LocalLivestreamManager.js';
+import { snapshotDelegate } from './snapshotDelegate.js';
 
 type ActiveSession = {
   videoProcess?: FFmpeg;

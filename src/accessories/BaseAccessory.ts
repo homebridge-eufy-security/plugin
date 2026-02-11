@@ -5,10 +5,10 @@ import {
   Service,
   WithUUID,
 } from 'homebridge';
-import { EufySecurityPlatform } from '../platform';
+import { EufySecurityPlatform } from '../platform.js';
 import { DeviceType, DeviceEvents, PropertyValue, Device, Station, StationEvents } from 'eufy-security-client';
 import { EventEmitter } from 'events';
-import { CHAR, SERV, log } from '../utils/utils';
+import { CHAR, SERV, log } from '../utils/utils.js';
 import { ILogObj, Logger } from 'tslog';
 
 /**

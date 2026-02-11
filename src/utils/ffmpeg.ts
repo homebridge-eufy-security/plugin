@@ -7,7 +7,7 @@ import ffmpegPath from 'ffmpeg-for-homebridge';
 import { pickPort } from 'pick-port';
 
 import EventEmitter from 'events';
-import { CameraConfig, VideoConfig } from './configTypes';
+import { CameraConfig, VideoConfig } from './configTypes.js';
 import {
     AudioRecordingCodecType,
     AudioRecordingSamplerate,
@@ -19,8 +19,8 @@ import {
     SnapshotRequest,
     StartStreamRequest,
 } from 'homebridge';
-import { SessionInfo } from './configTypes';
-import { ffmpegLogger } from './utils';
+import { SessionInfo } from './configTypes.js';
+import { ffmpegLogger } from './utils.js';
 
 class FFmpegProgress extends EventEmitter {
     private server: net.Server;

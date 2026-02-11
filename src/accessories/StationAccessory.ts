@@ -1,12 +1,12 @@
 import { Characteristic, PlatformAccessory, CharacteristicValue } from 'homebridge';
 
-import { EufySecurityPlatform } from '../platform';
-import { BaseAccessory } from './BaseAccessory';
+import { EufySecurityPlatform } from '../platform.js';
+import { BaseAccessory } from './BaseAccessory.js';
  
 // @ts-ignore  
 import { Station, DeviceType, PropertyName, PropertyValue, AlarmEvent, GuardMode } from 'eufy-security-client';
-import { StationConfig } from '../utils/configTypes';
-import { CHAR, SERV, log } from '../utils/utils';
+import { StationConfig } from '../utils/configTypes.js';
+import { CHAR, SERV, log } from '../utils/utils.js';
 
 export enum HKGuardMode {
   STAY_ARM = 0,
