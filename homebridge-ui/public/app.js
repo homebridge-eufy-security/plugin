@@ -7,6 +7,7 @@ const App = {
   /** Global state shared across views */
   state: {
     stations: [],
+    cacheDate: null, // ISO string of when accessories were last fetched
     initialized: false,
     nodeVersionWarning: null, // { nodeVersion, affected, acknowledged }
   },
@@ -66,8 +67,11 @@ const App = {
       }
 
       const stored = await Api.loadStoredAccessories();
-      if (stored && stored.length > 0) {
-        this.state.stations = stored;
+      const stations = stored.stations || stored;
+      const cacheDate = stored.storedAt || null;
+      if (stations && stations.length > 0) {
+        this.state.stations = stations;
+        this.state.cacheDate = cacheDate;
         // Check Node.js version for returning users (skipping login)
         await this.checkNodeVersion();
         if (!window.location.hash || window.location.hash === '#/') {

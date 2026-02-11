@@ -263,7 +263,7 @@ class UiServer extends HomebridgePluginUiServer {
             storedVersion,
           });
           this.log.warn(`Stored version (${storedVersion}) is on a different branch than current (${LIB_VERSION}). Forcing re-login.`);
-          return []; // Return empty to force login flow
+          return { stations: [], storedAt: null }; // Return empty to force login flow
         } else {
           // Same minor branch, different patch → soft warning
           this.pushEvent('cacheWarning', {
@@ -275,10 +275,10 @@ class UiServer extends HomebridgePluginUiServer {
         }
       }
 
-      return storedAccessories;
+      return { stations: storedAccessories, storedAt: storedAt || null };
     } catch (error) {
       this.log.error('Could not get stored accessories. Most likely no stored accessories yet: ' + error);
-      return [];
+      return { stations: [], storedAt: null };
     }
   }
 

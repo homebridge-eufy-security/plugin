@@ -37,6 +37,18 @@
   font-size: 1.25rem;
 }
 
+.eufy-header__right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.eufy-cache-date {
+  font-size: 0.75rem;
+  color: #888;
+  white-space: nowrap;
+}
+
 .eufy-header .btn-group .btn {
   padding: 6px 10px;
   font-size: 0.85rem;
