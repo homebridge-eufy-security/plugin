@@ -8,6 +8,13 @@ import { pickPort } from 'pick-port';
 
 import EventEmitter from 'events';
 import { CameraConfig, VideoConfig } from './configTypes.js';
+
+/** Timeout for one-shot TCP servers waiting for a connection (ms) */
+const TCP_SERVER_TIMEOUT_MS = 30_000;
+/** Timeout for ffmpeg getResult() before force-killing the process (ms) */
+const PROCESS_RESULT_TIMEOUT_MS = 15_000;
+/** Grace period after SIGTERM before sending SIGKILL (ms) */
+const KILL_GRACE_PERIOD_MS = 2_000;
 import {
     AudioRecordingCodecType,
     AudioRecordingSamplerate,
@@ -42,7 +49,7 @@ class FFmpegProgress extends EventEmitter {
 
         killTimeout = setTimeout(() => {
             this.server.close();
-        }, 30 * 1000); // TBC for variable
+        }, TCP_SERVER_TIMEOUT_MS);
 
         this.server.on('close', () => {
             this.emit('progress stopped');
@@ -209,7 +216,7 @@ export class FFmpegParameters {
 
         killTimeout = setTimeout(() => {
             server.close();
-        }, 30 * 1000);
+        }, TCP_SERVER_TIMEOUT_MS);
 
         this.setInputSource(`tcp://127.0.0.1:${port}`);
     }
@@ -498,7 +505,7 @@ export class FFmpegParameters {
 
         killTimeout = setTimeout(() => {
             server.close();
-        }, 30 * 1000);
+        }, TCP_SERVER_TIMEOUT_MS);
         this.setInputSource(`tcp://127.0.0.1:${port}`);
     }
 
@@ -826,7 +833,7 @@ export class FFmpeg extends EventEmitter {
             const killTimeout = setTimeout(() => {
                 this.stop();
                 reject('ffmpeg process timed out.');
-            }, 15 * 1000);
+            }, PROCESS_RESULT_TIMEOUT_MS);
 
             this.process.on('error', (error) => {
                 reject(error);
@@ -985,7 +992,7 @@ export class FFmpeg extends EventEmitter {
 
         this.killTimeout = setTimeout(() => {
             this.process?.kill('SIGKILL');
-        }, 2 * 1000);
+        }, KILL_GRACE_PERIOD_MS);
     }
 
     private onProgressStarted() {
