@@ -216,12 +216,12 @@ export class StreamingDelegate implements CameraStreamingDelegate {
     const isCodecSupported = request.audio.codec === AudioStreamingCodecType.OPUS
       || request.audio.codec === AudioStreamingCodecType.AAC_ELD;
 
-    if (!isCodecSupported && this.videoConfig.audio) {
+    if (!isCodecSupported) {
       this.log.warn(`An unsupported audio codec (type: ${request.audio.codec}) was requested. Audio streaming will be omitted.`);
     }
 
     let audioParams: FFmpegParameters | undefined;
-    if (isCodecSupported && this.videoConfig.audio) {
+    if (isCodecSupported) {
       audioParams = await FFmpegParameters.forAudio(this.videoConfig.debug);
       audioParams.setup(this.camera.cameraConfig, request);
       audioParams.setRTPTarget(sessionInfo, request);
