@@ -314,23 +314,17 @@ export class FFmpegParameters {
     }
 
     public setRTPTarget(sessionInfo: SessionInfo, request: StartStreamRequest) {
+        const isVideo = this.isVideo;
+        const mediaRequest = isVideo ? request.video : request.audio;
+        const port = isVideo ? sessionInfo.videoPort : sessionInfo.audioPort;
+        const pktSize = isVideo ? 1128 : 188;
 
-        if (this.isVideo) {
-            this.payloadType = request.video.pt;
-            this.ssrc = sessionInfo.videoSSRC;
-            this.srtpParams = sessionInfo.videoSRTP.toString('base64');
-            this.srtpSuite = 'AES_CM_128_HMAC_SHA1_80';
-            this.format = 'rtp';
-            this.output = `srtp://${sessionInfo.address}:${sessionInfo.videoPort}?rtcpport=${sessionInfo.videoPort}&pkt_size=1128`;
-        }
-        if (this.isAudio) {
-            this.payloadType = request.audio.pt;
-            this.ssrc = sessionInfo.audioSSRC;
-            this.srtpParams = sessionInfo.audioSRTP.toString('base64');
-            this.srtpSuite = 'AES_CM_128_HMAC_SHA1_80';
-            this.format = 'rtp';
-            this.output = `srtp://${sessionInfo.address}:${sessionInfo.audioPort}?rtcpport=${sessionInfo.audioPort}&pkt_size=188`;
-        }
+        this.payloadType = mediaRequest.pt;
+        this.ssrc = isVideo ? sessionInfo.videoSSRC : sessionInfo.audioSSRC;
+        this.srtpParams = (isVideo ? sessionInfo.videoSRTP : sessionInfo.audioSRTP).toString('base64');
+        this.srtpSuite = 'AES_CM_128_HMAC_SHA1_80';
+        this.format = 'rtp';
+        this.output = `srtp://${sessionInfo.address}:${port}?rtcpport=${port}&pkt_size=${pktSize}`;
     }
 
     public setOutput(output: string) {
