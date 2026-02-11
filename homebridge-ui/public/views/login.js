@@ -488,8 +488,7 @@ const LoginView = {
         <div class="discovery-screen__icon">📡</div>
         <div class="discovery-screen__title">Discovering your devices...</div>
         <div class="discovery-screen__subtitle">
-          Connecting to Eufy servers and detecting all your stations and devices.<br>
-          This usually takes about <strong>45 seconds</strong>. Hang tight!
+          Connecting to Eufy servers and detecting all your stations and devices. Hang tight!
         </div>
         <div class="progress mt-4" style="max-width: 300px; margin: 0 auto; height: 6px;">
           <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar"
@@ -499,7 +498,7 @@ const LoginView = {
       </div>
     `;
 
-    // Animate progress bar over ~45 seconds
+    // Animate progress bar
     let progress = 0;
     const progressBar = wrap.querySelector('#discovery-progress');
     const statusEl = wrap.querySelector('#discovery-status');
