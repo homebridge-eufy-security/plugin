@@ -44,6 +44,7 @@ import { platform } from 'node:process';
 import { readFileSync } from 'node:fs';
 
 import { initLog, log, tsLogger, ffmpegLogger, HAP } from './utils/utils.js';
+import { hasFdkAac } from './utils/ffmpeg.js';
 import { LIB_VERSION } from './version.js';
 
 export class EufySecurityPlatform implements DynamicPlatformPlugin {
@@ -306,6 +307,9 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
     log.debug('plugin data store:', this.eufyPath);
     log.debug('OS is', this.hostSystem);
     log.debug('Using bropats @homebridge-eufy-security/eufy-security-client library in version ', libVersion);
+
+    // Probe ffmpeg for libfdk_aac support early so the warning shows at boot.
+    hasFdkAac();
 
     // Log the final configuration object for debugging purposes
     log.debug('The config is:', this.config);
