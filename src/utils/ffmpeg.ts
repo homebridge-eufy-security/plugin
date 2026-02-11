@@ -699,59 +699,63 @@ export class FFmpeg extends EventEmitter {
         }
     }
 
-    public async start() {
-
+    /**
+     * Shared initialisation: timestamps the start, creates the progress monitor,
+     * spawns the ffmpeg process, and wires up stderr logging.
+     */
+    private async spawnProcess(
+        processArgs: string[],
+        label: string,
+        opts?: { attachLifecycle?: boolean },
+    ): Promise<ChildProcessWithoutNullStreams> {
         this.starttime = Date.now();
 
         this.progress = await FFmpegProgress.create(this.parameters[0].progressPort);
         this.progress.on('progress started', this.onProgressStarted.bind(this));
 
+        ffmpegLogger.debug(this.name, `${label}: ${this.ffmpegExec} ${processArgs.join(' ')}`);
+        this.parameters.forEach((p) => ffmpegLogger.info(this.name, p.getStreamStartText()));
+
+        const child = spawn(this.ffmpegExec, processArgs.join(' ').split(/\s+/), { env: process.env });
+        child.stderr.on('data', this.handleStderrData.bind(this));
+
+        if (opts?.attachLifecycle) {
+            child.on('error', this.onProcessError.bind(this));
+            child.on('exit', this.onProcessExit.bind(this));
+        }
+
+        this.process = child;
+        this.stdin = child.stdin;
+        this.stdout = child.stdout;
+        return child;
+    }
+
+    public async start() {
         const processArgs = FFmpegParameters.getCombinedArguments(this.parameters);
-
-        ffmpegLogger.debug(this.name, 'Stream command: ' + this.ffmpegExec + ' ' + processArgs.join(' '));
-        this.parameters.forEach((p) => {
-            ffmpegLogger.info(this.name, p.getStreamStartText());
-        });
-
-        this.process = spawn(this.ffmpegExec, processArgs.join(' ').split(/\s+/), { env: process.env });
-        this.stdin = this.process.stdin;
-        this.stdout = this.process.stdout;
-
-        this.process.stderr.on('data', this.handleStderrData.bind(this));
-
-        this.process.on('error', this.onProcessError.bind(this));
-        this.process.on('exit', this.onProcessExit.bind(this));
+        await this.spawnProcess(processArgs, 'Stream command', { attachLifecycle: true });
     }
 
     public async getResult(input?: Buffer): Promise<Buffer> {
-        this.starttime = Date.now();
-
-        this.progress = await FFmpegProgress.create(this.parameters[0].progressPort);
-        this.progress.on('progress started', this.onProgressStarted.bind(this));
-
         const processArgs = FFmpegParameters.getCombinedArguments(this.parameters);
-        ffmpegLogger.debug(this.name, 'Process command: ' + this.ffmpegExec + ' ' + processArgs.join(' '));
 
-        return new Promise((resolve, reject) => {
-            this.process = spawn(this.ffmpegExec, processArgs.join(' ').split(/\s+/), { env: process.env });
-
-            this.process.stderr.on('data', this.handleStderrData.bind(this));
+        return new Promise(async (resolve, reject) => {
+            const child = await this.spawnProcess(processArgs, 'Process command');
 
             const killTimeout = setTimeout(() => {
                 this.stop();
                 reject('ffmpeg process timed out.');
             }, PROCESS_RESULT_TIMEOUT_MS);
 
-            this.process.on('error', (error) => {
+            child.on('error', (error) => {
                 reject(error);
                 this.onProcessError(error);
             });
 
             let resultBuffer = Buffer.alloc(0);
-            this.process.stdout.on('data', (data) => {
+            child.stdout.on('data', (data) => {
                 resultBuffer = Buffer.concat([resultBuffer, data]);
             });
-            this.process.on('exit', () => {
+            child.on('exit', () => {
                 if (killTimeout) {
                     clearTimeout(killTimeout);
                 }
@@ -763,7 +767,7 @@ export class FFmpeg extends EventEmitter {
                 }
             });
             if (input) {
-                this.process.stdin.end(input);
+                child.stdin.end(input);
             }
         });
     }
@@ -778,11 +782,6 @@ export class FFmpeg extends EventEmitter {
             data: Buffer;
         }>;
     }> {
-        this.starttime = Date.now();
-
-        this.progress = await FFmpegProgress.create(this.parameters[0].progressPort);
-        this.progress.on('progress started', this.onProgressStarted.bind(this));
-
         const port = await pickPort({ type: 'tcp' });
 
         return new Promise((resolve) => {
@@ -796,23 +795,10 @@ export class FFmpeg extends EventEmitter {
                 });
             });
 
-            server.listen(port, () => {
+            server.listen(port, async () => {
                 this.parameters[0].setOutput(`tcp://127.0.0.1:${port}`);
                 const processArgs = FFmpegParameters.getRecordingArguments(this.parameters);
-
-                ffmpegLogger.debug(this.name, 'Stream command: ' + this.ffmpegExec + ' ' + processArgs.join(' '));
-                this.parameters.forEach((p) => {
-                    ffmpegLogger.info(this.name, p.getStreamStartText());
-                });
-
-                this.process = spawn(this.ffmpegExec, processArgs.join(' ').split(/\s+/), { env: process.env });
-                this.stdin = this.process.stdin;
-                this.stdout = this.process.stdout;
-
-                this.process.stderr.on('data', this.handleStderrData.bind(this));
-
-                this.process.on('error', this.onProcessError.bind(this));
-                this.process.on('exit', this.onProcessExit.bind(this));
+                await this.spawnProcess(processArgs, 'Stream command', { attachLifecycle: true });
             });
         });
     }
