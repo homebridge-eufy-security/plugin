@@ -58,10 +58,13 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
   public readonly eufyPath: string;
 
   private activeAccessoryIds: string[] = [];
-  private cleanCachedAccessoriesTimeout?: NodeJS.Timeout;
+  private discoveryDebounceTimeout?: NodeJS.Timeout;
 
   private pendingStations: Station[] = [];
   private pendingDevices: Device[] = [];
+
+  /** Seconds to wait after the last station/device event before processing. */
+  private static readonly DISCOVERY_DEBOUNCE_SEC = 10;
 
   private _hostSystem: string = '';
 
@@ -423,14 +426,7 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
       return;
     }
 
-    log.info('Connected to Eufy. Discovering stations and devices... This may take up to 45 seconds.');
-
-    // give the connection 45 seconds to discover all devices
-    // then process pending stations and devices, and clean old accessories after that
-    this.cleanCachedAccessoriesTimeout = setTimeout(async () => {
-      await this.processPendingDevices();
-      this.cleanCachedAccessories();
-    }, 45 * 1000);
+    log.info('Connected to Eufy. Waiting for stations and devices to be discovered...');
 
     if (this.config.CameraMaxLivestreamDuration > 86400) {
       this.config.CameraMaxLivestreamDuration = 86400;
@@ -569,6 +565,7 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
       // Store station for batch processing later
       this.pendingStations.push(station);
       log.debug(`${station.getName()}: Station queued for processing`);
+      this.resetDiscoveryDebounce();
 
     } catch (error) {
       log.error(`Error in stationAdded:, ${error}`);
@@ -592,6 +589,7 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
       // Store device for batch processing later
       this.pendingDevices.push(device);
       log.debug(`${device.getName()}: Device queued for processing`);
+      this.resetDiscoveryDebounce();
 
     } catch (error) {
       log.error(`Error in deviceAdded: ${error}`);
@@ -616,6 +614,26 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
    * 
    * All discovered devices are processed since they are already verified by bropat/eufy-security-client.
    */
+  /**
+   * Resets the discovery debounce timer.
+   * Each time a station or device is emitted, the timer restarts.
+   * Processing begins once no new events arrive for DISCOVERY_DEBOUNCE_SEC seconds.
+   */
+  private resetDiscoveryDebounce(): void {
+    if (this.discoveryDebounceTimeout) {
+      clearTimeout(this.discoveryDebounceTimeout);
+    }
+    const delaySec = EufySecurityPlatform.DISCOVERY_DEBOUNCE_SEC;
+    log.debug(
+      `Discovery debounce reset — will process in ${delaySec}s if no more devices arrive ` +
+      `(${this.pendingStations.length} station(s), ${this.pendingDevices.length} device(s) queued)`,
+    );
+    this.discoveryDebounceTimeout = setTimeout(async () => {
+      await this.processPendingDevices();
+      this.cleanCachedAccessories();
+    }, delaySec * 1000);
+  }
+
   private async processPendingDevices(): Promise<void> {
     log.debug(`[PROCESSING START] Processing ${this.pendingStations.length} stations and ${this.pendingDevices.length} devices`);
 
@@ -712,8 +730,8 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
 
     this.already_shutdown = true;
 
-    if (this.cleanCachedAccessoriesTimeout) {
-      clearTimeout(this.cleanCachedAccessoriesTimeout);
+    if (this.discoveryDebounceTimeout) {
+      clearTimeout(this.discoveryDebounceTimeout);
     }
 
     try {
