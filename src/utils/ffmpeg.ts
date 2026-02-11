@@ -270,23 +270,15 @@ export class FFmpegParameters {
 
         if (this.isVideo) {
             const req = request as StartStreamRequest | ReconfigureStreamRequest;
-            let codec = 'libx264';
-            if (videoConfig.vcodec && videoConfig.vcodec !== '') {
-                codec = videoConfig.vcodec;
-            }
-            this.codec = codec;
-            if (codec !== 'copy') {
-                const fps = videoConfig.maxFPS ? videoConfig.maxFPS : req.video.fps;
-                this.fps = fps;
-                const bitrate = videoConfig.maxBitrate ? videoConfig.maxBitrate : req.video.max_bit_rate;
+            this.codec = (videoConfig.vcodec && videoConfig.vcodec !== '') ? videoConfig.vcodec : 'libx264';
+            if (this.codec !== 'copy') {
+                this.fps = videoConfig.maxFPS ?? req.video.fps;
+                const bitrate = videoConfig.maxBitrate ?? req.video.max_bit_rate;
                 this.bitrate = bitrate;
                 this.bufsize = bitrate * 2;
                 this.maxrate = bitrate;
-                let encoderOptions = codec === 'libx264' ? '-preset ultrafast -tune zerolatency' : '';
-                if (videoConfig.encoderOptions) {
-                    encoderOptions = videoConfig.encoderOptions;
-                }
-                this.codecOptions = encoderOptions;
+                this.codecOptions = videoConfig.encoderOptions
+                    ?? (this.codec === 'libx264' ? '-preset ultrafast -tune zerolatency' : '');
                 this.pixFormat = 'yuv420p';
                 this.colorRange = 'mpeg';
                 this.applyVisualConfig(req.video.width, req.video.height, videoConfig);
@@ -683,24 +675,23 @@ export class FFmpegParameters {
     }
 
     public getStreamStartText(): string {
-        let message = '';
         if (this.isVideo) {
-            message = this.codec === 'copy' ? 'native' : `${this.width}x${this.height}, ${this.fps} fps, ${this.bitrate} kbps`;
-            return `Starting video stream: ${message}`;
+            const detail = this.codec === 'copy' ? 'native' : `${this.width}x${this.height}, ${this.fps} fps, ${this.bitrate} kbps`;
+            return `Starting video stream: ${detail}`;
         }
         if (this.isAudio) {
-            message = this.codec === 'copy' ? 'native' : `${this.sampleRate} kHz, ${this.bitrate} kbps, codec: ${this.codec}`;
-            return `Starting audio stream: ${message}`;
+            const detail = this.codec === 'copy' ? 'native' : `${this.sampleRate} kHz, ${this.bitrate} kbps, codec: ${this.codec}`;
+            return `Starting audio stream: ${detail}`;
         }
         return 'Starting unknown stream';
     }
 
     public hasCustomFfmpeg(): boolean {
-        return (this.processor !== undefined);
+        return this.processor !== undefined;
     }
 
     public getCustomFfmpeg(): string {
-        return (this.hasCustomFfmpeg()) ? this.processor! : '';
+        return this.processor ?? '';
     }
 }
 
@@ -911,12 +902,7 @@ export class FFmpeg extends EventEmitter {
     }
 
     public stop(): void {
-        let usesStdIn = false;
-        this.parameters.forEach(p => {
-            if (p.usesStdInAsInput()) {
-                usesStdIn = true;
-            }
-        });
+        const usesStdIn = this.parameters.some(p => p.usesStdInAsInput());
 
         if (usesStdIn) {
             this.process?.stdin.destroy();
