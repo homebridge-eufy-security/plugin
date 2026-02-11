@@ -525,6 +525,17 @@ const LoginView = {
     // Listen for the batch-processed accessories
     Api.onAccessoriesReady((stations) => {
       clearInterval(interval);
+
+      // If no stations or no devices were discovered, show an error instead of navigating
+      const totalDevices = (stations || []).reduce((sum, s) => sum + (s.devices ? s.devices.length : 0), 0);
+      if (!stations || stations.length === 0 || totalDevices === 0) {
+        const detail = !stations || stations.length === 0
+          ? 'No stations were found on your Eufy account.'
+          : 'Stations were found but no devices were detected.';
+        this._renderDiscoveryError(wrap, `${detail} Please verify your Eufy account has devices and try again.`);
+        return;
+      }
+
       progressBar.style.width = '100%';
       statusEl.textContent = 'Done!';
 
@@ -540,6 +551,27 @@ const LoginView = {
         App.state.cacheDate = new Date().toISOString();
         App.navigate('dashboard');
       }, 500);
+    });
+  },
+
+  /**
+   * Replaces the discovery screen content with an error message and a retry button.
+   */
+  _renderDiscoveryError(wrap, message) {
+    wrap.innerHTML = `
+      <div class="discovery-screen">
+        <div class="discovery-screen__icon">⚠️</div>
+        <div class="discovery-screen__title">Discovery Failed</div>
+        <div class="discovery-screen__subtitle" style="color: var(--bs-danger, #dc3545);">
+          ${message}
+        </div>
+        <button class="btn btn-primary mt-4" id="btn-retry-login">Retry Login</button>
+      </div>
+    `;
+    wrap.querySelector('#btn-retry-login').addEventListener('click', () => {
+      this._credentials = null;
+      this._currentStep = this.STEP.CREDENTIALS;
+      this._renderStep();
     });
   },
 

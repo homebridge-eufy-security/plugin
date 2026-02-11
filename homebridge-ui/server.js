@@ -349,6 +349,13 @@ class UiServer extends HomebridgePluginUiServer {
   async processPendingAccessories() {
     this.log.debug(`Processing ${this.pendingStations.length} stations and ${this.pendingDevices.length} devices`);
 
+    if (this.pendingStations.length === 0 || this.pendingDevices.length === 0) {
+      this.log.warn(
+        `Discovery finished with ${this.pendingStations.length} station(s) and ${this.pendingDevices.length} device(s). ` +
+        'If this is unexpected, please verify your Eufy account has devices and the credentials used are for a guest admin account.',
+      );
+    }
+
     // Build set of stations that have at least one device
     const stationsWithDevices = new Set();
     for (const device of this.pendingDevices) {
@@ -461,8 +468,12 @@ class UiServer extends HomebridgePluginUiServer {
     this.pendingStations = [];
     this.pendingDevices = [];
 
-    // Store and send the final list to the UI
-    this.storeAccessories();
+    // Always send the final list to the UI, even if empty
+    try {
+      this.storeAccessories();
+    } catch (error) {
+      this.log.error('Error storing accessories:', error);
+    }
     this.pushEvent('addAccessory', this.stations);
   }
 

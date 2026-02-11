@@ -615,6 +615,13 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
   private async processPendingDevices(): Promise<void> {
     log.debug(`[PROCESSING START] Processing ${this.pendingStations.length} stations and ${this.pendingDevices.length} devices`);
 
+    if (this.pendingStations.length === 0 || this.pendingDevices.length === 0) {
+      log.warn(
+        `[DISCOVERY WARNING] Discovery finished with ${this.pendingStations.length} station(s) and ${this.pendingDevices.length} devices(s). ` +
+        'If this is unexpected, please verify your Eufy account has devices and the credentials used are for a guest admin account.',
+      );
+    }
+
     // Build set of stations that have at least one device
     const stationsWithDevices = new Set<string>();
 
