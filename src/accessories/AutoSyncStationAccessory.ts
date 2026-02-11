@@ -1,8 +1,8 @@
 import { PlatformAccessory } from 'homebridge';
-import { EufySecurityPlatform } from '../platform';
+import { EufySecurityPlatform } from '../platform.js';
 import { AlarmEvent, GuardMode, Station } from 'eufy-security-client';
-import { StationAccessory } from './StationAccessory';
-import { CHAR, SERV, log } from '../utils/utils';
+import { StationAccessory } from './StationAccessory.js';
+import { CHAR, SERV, log } from '../utils/utils.js';
 
 /**
  * Platform Auto Accessory

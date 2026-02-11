@@ -9,12 +9,12 @@ import {
   PlatformAccessory,
   RecordingPacket,
 } from 'homebridge';
-import { EufySecurityPlatform } from '../platform';
-import { CameraConfig, VideoConfig } from '../utils/configTypes';
-import { FFmpeg, FFmpegParameters } from '../utils/ffmpeg';
+import { EufySecurityPlatform } from '../platform.js';
+import { CameraConfig, VideoConfig } from '../utils/configTypes.js';
+import { FFmpeg, FFmpegParameters } from '../utils/ffmpeg.js';
 import net from 'net';
-import { CHAR, SERV, isRtspReady, log } from '../utils/utils';
-import { LocalLivestreamManager } from './LocalLivestreamManager';
+import { CHAR, SERV, isRtspReady, log } from '../utils/utils.js';
+import { LocalLivestreamManager } from './LocalLivestreamManager.js';
 
 const MAX_RECORDING_MINUTES = 1; // should never be used
 
@@ -151,7 +151,7 @@ export class RecordingDelegate implements CameraRecordingDelegate {
         }, maxDuration * 1000);
       }
 
-      yield* this.generateFragments(this.session.generator);
+      yield* this.generateFragments(this.session!.generator);
     } catch (error) {
       if (!this.handlingStreamingRequest && this.closeReason && this.closeReason === HDSProtocolSpecificErrorReason.CANCELLED) {
         log.debug(this.camera.getName(),

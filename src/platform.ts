@@ -6,18 +6,18 @@ import {
   APIEvent,
 } from 'homebridge';
 
-import { PLATFORM_NAME, PLUGIN_NAME } from './settings';
+import { PLATFORM_NAME, PLUGIN_NAME } from './settings.js';
 
-import { DEFAULT_CONFIG_VALUES, EufySecurityPlatformConfig } from './config';
+import { DEFAULT_CONFIG_VALUES, EufySecurityPlatformConfig } from './config.js';
 
-import { DeviceIdentifier, StationContainer, DeviceContainer } from './interfaces';
+import { DeviceIdentifier, StationContainer, DeviceContainer } from './interfaces.js';
 
-import { StationAccessory } from './accessories/StationAccessory';
-import { EntrySensorAccessory } from './accessories/EntrySensorAccessory';
-import { MotionSensorAccessory } from './accessories/MotionSensorAccessory';
-import { CameraAccessory } from './accessories/CameraAccessory';
-import { LockAccessory } from './accessories/LockAccessory';
-import { AutoSyncStationAccessory } from './accessories/AutoSyncStationAccessory';
+import { StationAccessory } from './accessories/StationAccessory.js';
+import { EntrySensorAccessory } from './accessories/EntrySensorAccessory.js';
+import { MotionSensorAccessory } from './accessories/MotionSensorAccessory.js';
+import { CameraAccessory } from './accessories/CameraAccessory.js';
+import { LockAccessory } from './accessories/LockAccessory.js';
+import { AutoSyncStationAccessory } from './accessories/AutoSyncStationAccessory.js';
 
 import {
   EufySecurity,
@@ -43,8 +43,8 @@ import os from 'node:os';
 import { platform } from 'node:process';
 import { readFileSync } from 'node:fs';
 
-import { initLog, log, tsLogger, ffmpegLogger, HAP } from './utils/utils';
-import { LIB_VERSION } from './version';
+import { initLog, log, tsLogger, ffmpegLogger, HAP } from './utils/utils.js';
+import { LIB_VERSION } from './version.js';
 
 export class EufySecurityPlatform implements DynamicPlatformPlugin {
   public eufyClient: EufySecurity = {} as EufySecurity;

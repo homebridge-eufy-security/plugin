@@ -15,17 +15,17 @@ import {
   AudioRecordingSamplerate,
 } from 'homebridge';
 
-import { EufySecurityPlatform } from '../platform';
-import { DeviceAccessory } from './Device';
+import { EufySecurityPlatform } from '../platform.js';
+import { DeviceAccessory } from './Device.js';
 
  
 // @ts-ignore  
 import { Camera, DeviceEvents, PropertyName, CommandName, StreamMetadata, PropertyValue } from 'eufy-security-client';
 
-import { CameraConfig, DEFAULT_CAMERACONFIG_VALUES } from '../utils/configTypes';
-import { CHAR, SERV } from '../utils/utils';
-import { StreamingDelegate } from '../controller/streamingDelegate';
-import { RecordingDelegate } from '../controller/recordingDelegate';
+import { CameraConfig, DEFAULT_CAMERACONFIG_VALUES } from '../utils/configTypes.js';
+import { CHAR, SERV } from '../utils/utils.js';
+import { StreamingDelegate } from '../controller/streamingDelegate.js';
+import { RecordingDelegate } from '../controller/recordingDelegate.js';
 
 // A semi-complete description of the UniFi Protect camera channel JSON.
 export interface ProtectCameraChannelConfig {

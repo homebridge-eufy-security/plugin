@@ -1,8 +1,8 @@
 import { Duplex, Writable } from 'stream';
 
-import { EufySecurityPlatform } from '../platform';
+import { EufySecurityPlatform } from '../platform.js';
 import { Device, EufySecurity, Station } from 'eufy-security-client';
-import { log } from './utils';
+import { log } from './utils.js';
 
 export class TalkbackStream extends Duplex {
 

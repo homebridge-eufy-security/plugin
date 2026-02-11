@@ -3,7 +3,7 @@ import { Logger, ILogObj } from 'tslog';
 import { HAP as HAPHB } from 'homebridge';
 import type { Characteristic, Service } from 'homebridge';
 
-import { CameraConfig } from './configTypes';
+import { CameraConfig } from './configTypes.js';
 import { Camera, PropertyName } from 'eufy-security-client';
 
 export let HAP!: HAPHB;
