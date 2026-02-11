@@ -97,7 +97,7 @@ class UiServer extends HomebridgePluginUiServer {
 
   initTransportStreams() {
     if (!fs.existsSync(this.storagePath)) {
-      fs.mkdirSync(this.storagePath);
+      fs.mkdirSync(this.storagePath, { recursive: true });
     }
     const pluginLogStream = createStream('configui-server.log', { path: this.storagePath, interval: '1d', rotate: 3, maxSize: '200M' });
     const pluginLogLibStream = createStream('configui-lib.log', { path: this.storagePath, interval: '1d', rotate: 3, maxSize: '200M' });
@@ -478,6 +478,9 @@ class UiServer extends HomebridgePluginUiServer {
   }
 
   storeAccessories() {
+    if (!fs.existsSync(this.storagePath)) {
+      fs.mkdirSync(this.storagePath, { recursive: true });
+    }
     const dataToStore = { version: LIB_VERSION, storedAt: new Date().toISOString(), stations: this.stations };
     fs.writeFileSync(this.storedAccessories_file, JSON.stringify(dataToStore));
   }
