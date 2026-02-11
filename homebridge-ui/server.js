@@ -35,7 +35,7 @@ class UiServer extends HomebridgePluginUiServer {
   processingTimeout;
 
   /** Seconds to wait after the last station/device event before processing. */
-  static DISCOVERY_DEBOUNCE_SEC = 10;
+  static DISCOVERY_DEBOUNCE_SEC = 15;
 
   config = {
     username: '',

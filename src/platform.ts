@@ -64,7 +64,7 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
   private pendingDevices: Device[] = [];
 
   /** Seconds to wait after the last station/device event before processing. */
-  private static readonly DISCOVERY_DEBOUNCE_SEC = 10;
+  private static readonly DISCOVERY_DEBOUNCE_SEC = 15;
 
   private _hostSystem: string = '';
 
