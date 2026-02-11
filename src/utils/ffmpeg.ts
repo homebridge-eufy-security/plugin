@@ -36,6 +36,16 @@ function isNonEmpty(value: string | undefined): value is string {
     return !!value && value !== '';
 }
 
+/** Map HomeKit audio samplerate enum values to kHz strings for ffmpeg `-ar`. */
+const SAMPLERATE_MAP: ReadonlyMap<AudioRecordingSamplerate, string> = new Map([
+    [AudioRecordingSamplerate.KHZ_8, '8'],
+    [AudioRecordingSamplerate.KHZ_16, '16'],
+    [AudioRecordingSamplerate.KHZ_24, '24'],
+    [AudioRecordingSamplerate.KHZ_32, '32'],
+    [AudioRecordingSamplerate.KHZ_44_1, '44.1'],
+    [AudioRecordingSamplerate.KHZ_48, '48'],
+]);
+
 /**
  * Creates a TCP server that accepts exactly one connection, then auto-closes.
  * If no connection arrives within the timeout, the server closes anyway.
@@ -150,7 +160,7 @@ export class FFmpegParameters {
     private crop = false;
 
     // audio options
-    private sampleRate?: number;
+    private sampleRate?: number | string;
     private channels?: number;
     private flagsGlobalHeader = false;
 
@@ -393,29 +403,9 @@ export class FFmpegParameters {
             }
 
             if (this.codec !== 'copy') {
-                let samplerate;
-
-                switch (configuration.audioCodec.samplerate) {
-                    case AudioRecordingSamplerate.KHZ_8:
-                        samplerate = '8';
-                        break;
-                    case AudioRecordingSamplerate.KHZ_16:
-                        samplerate = '16';
-                        break;
-                    case AudioRecordingSamplerate.KHZ_24:
-                        samplerate = '24';
-                        break;
-                    case AudioRecordingSamplerate.KHZ_32:
-                        samplerate = '32';
-                        break;
-                    case AudioRecordingSamplerate.KHZ_44_1:
-                        samplerate = '44.1';
-                        break;
-                    case AudioRecordingSamplerate.KHZ_48:
-                        samplerate = '48';
-                        break;
-                    default:
-                        throw new Error(`Unsupported audio samplerate: ${configuration.audioCodec.samplerate}`);
+                const samplerate = SAMPLERATE_MAP.get(configuration.audioCodec.samplerate);
+                if (!samplerate) {
+                    throw new Error(`Unsupported audio samplerate: ${configuration.audioCodec.samplerate}`);
                 }
                 this.sampleRate = samplerate;
                 this.bitrate = configuration.audioCodec.bitrate;
