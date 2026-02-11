@@ -21,6 +21,19 @@ const DashboardView = {
     titleEl.textContent = 'Eufy Security';
     header.appendChild(titleEl);
 
+    const headerRight = document.createElement('div');
+    headerRight.className = 'eufy-header__right';
+
+    // Cache date label
+    if (App.state.cacheDate) {
+      const cacheLabel = document.createElement('span');
+      cacheLabel.className = 'eufy-cache-date';
+      const d = new Date(App.state.cacheDate);
+      cacheLabel.textContent = 'Cached: ' + d.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
+      cacheLabel.title = 'Last fetched: ' + d.toLocaleString();
+      headerRight.appendChild(cacheLabel);
+    }
+
     const btnGroup = document.createElement('div');
     btnGroup.className = 'btn-group';
 
@@ -29,7 +42,8 @@ const DashboardView = {
 
     btnGroup.appendChild(btnRefresh);
     btnGroup.appendChild(btnSettings);
-    header.appendChild(btnGroup);
+    headerRight.appendChild(btnGroup);
+    header.appendChild(headerRight);
     container.appendChild(header);
 
     // Node.js version warning banner (shown if affected)

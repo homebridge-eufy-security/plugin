@@ -450,6 +450,7 @@ const LoginView = {
       // Go to dashboard
       setTimeout(() => {
         App.state.stations = stations;
+        App.state.cacheDate = new Date().toISOString();
         App.navigate('dashboard');
       }, 500);
     });
