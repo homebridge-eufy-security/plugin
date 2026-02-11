@@ -167,22 +167,27 @@ export class FFmpegParameters {
         this.debug = debug;
     }
 
-    static async forAudio(debug = false): Promise<FFmpegParameters> {
+    /** Allocate a progress port and construct an instance. */
+    private static async create(
+        isVideo: boolean, isAudio: boolean, isSnapshot: boolean, debug: boolean,
+    ): Promise<FFmpegParameters> {
         const port = await pickPort({ type: 'tcp' });
-        const ffmpeg = new FFmpegParameters(port, false, true, false, debug);
+        return new FFmpegParameters(port, isVideo, isAudio, isSnapshot, debug);
+    }
+
+    static async forAudio(debug = false): Promise<FFmpegParameters> {
+        const ffmpeg = await FFmpegParameters.create(false, true, false, debug);
         ffmpeg.useWallclockAsTimestamp = false;
         ffmpeg.flagsGlobalHeader = true;
         return ffmpeg;
     }
 
     static async forVideo(debug = false): Promise<FFmpegParameters> {
-        const port = await pickPort({ type: 'tcp' });
-        return new FFmpegParameters(port, true, false, false, debug);
+        return FFmpegParameters.create(true, false, false, debug);
     }
 
     static async forSnapshot(debug = false): Promise<FFmpegParameters> {
-        const port = await pickPort({ type: 'tcp' });
-        const ffmpeg = new FFmpegParameters(port, false, false, true, debug);
+        const ffmpeg = await FFmpegParameters.create(false, false, true, debug);
         ffmpeg.useWallclockAsTimestamp = false;
         ffmpeg.numberFrames = 1;
         ffmpeg.format = 'image2';
@@ -190,16 +195,13 @@ export class FFmpegParameters {
     }
 
     static async forVideoRecording(debug = false): Promise<FFmpegParameters> {
-        const port = await pickPort({ type: 'tcp' });
-        const ffmpeg = new FFmpegParameters(port, true, false, false, debug);
+        const ffmpeg = await FFmpegParameters.create(true, false, false, debug);
         ffmpeg.useWallclockAsTimestamp = true;
         return ffmpeg;
     }
 
     static async forAudioRecording(debug = false): Promise<FFmpegParameters> {
-        const port = await pickPort({ type: 'tcp' });
-        const ffmpeg = new FFmpegParameters(port, false, true, false, debug);
-        return ffmpeg;
+        return FFmpegParameters.create(false, true, false, debug);
     }
 
     public setResolution(width: number, height: number) {
