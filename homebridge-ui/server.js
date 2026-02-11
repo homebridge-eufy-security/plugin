@@ -108,6 +108,7 @@ class UiServer extends HomebridgePluginUiServer {
 
   initEventListeners() {
     this.onRequest('/login', this.login.bind(this));
+    this.onRequest('/checkCache', this.checkCache.bind(this));
     this.onRequest('/storedAccessories', this.loadStoredAccessories.bind(this));
     this.onRequest('/reset', this.resetPlugin.bind(this));
     this.onRequest('/downloadLogs', this.downloadLogs.bind(this));
@@ -132,12 +133,31 @@ class UiServer extends HomebridgePluginUiServer {
     return this.deleteFileIfExists(this.storedAccessories_file);
   }
 
+  async checkCache() {
+    const persistentFile = this.storagePath + '/persistent.json';
+    try {
+      if (fs.existsSync(persistentFile)) {
+        const data = JSON.parse(await fs.promises.readFile(persistentFile, 'utf-8'));
+        // Basic validity check: ensure it has some expected content
+        if (data && Object.keys(data).length > 0) {
+          this.log.debug('Persistent cache file found and valid.');
+          return { valid: true };
+        }
+      }
+    } catch (error) {
+      this.log.warn('Error checking persistent cache: ' + error);
+    }
+    return { valid: false };
+  }
+
   async login(options) {
     try {
-      if (options && options.username && options.password) {
+      if (options && options.username && options.password && !options.reconnect) {
         this.log.info('deleting persistent.json and accessories due to new login');
         await this.resetAccessoryData();
         await this.resetPersistentData();
+      } else if (options && options.reconnect) {
+        this.log.info('Reconnecting using persistent cache (skipping data reset)');
       }
     } catch (error) {
       this.log.error('Could not delete persistent.json due to error: ' + error);

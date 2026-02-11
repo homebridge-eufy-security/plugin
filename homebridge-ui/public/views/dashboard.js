@@ -37,7 +37,7 @@ const DashboardView = {
     const btnGroup = document.createElement('div');
     btnGroup.className = 'btn-group';
 
-    const btnRefresh = this._headerBtn('🔄', 'Re-login / Re-fetch new devices', () => App.navigate('login'));
+    const btnRefresh = this._headerBtn('🔄', 'Re-login / Re-fetch', () => App.navigate('login'));
     const btnSettings = this._headerBtn('⚙️', 'Settings', () => App.navigate('settings'));
 
     btnGroup.appendChild(btnRefresh);

@@ -76,7 +76,13 @@ const LoginView = {
         </div>
       </div>
       <div id="node-version-warning" class="d-none"></div>
-      <button class="btn btn-primary w-100 mt-2" id="btn-start" disabled>Continue to Login</button>
+      <div class="d-flex gap-2 mt-2">
+        <button class="btn btn-primary flex-fill" id="btn-start" disabled>Continue to Login</button>
+        <button class="btn btn-outline-success flex-fill d-none" id="btn-reconnect" disabled>
+          <span class="spinner-border spinner-border-sm d-none me-1" id="reconnect-spinner"></span>
+          Reconnect from Cache
+        </button>
+      </div>
     `;
 
     const ack1 = body.querySelector('#ack-guest-admin');
@@ -127,6 +133,14 @@ const LoginView = {
         nodeWarningContainer.appendChild(formCheck);
         ack3 = nodeWarningContainer.querySelector('#ack-node-version');
         ack3.addEventListener('change', updateBtn);
+        // Also update reconnect button state when node version checkbox changes
+        ack3.addEventListener('change', () => {
+          const reconnectBtn = body.querySelector('#btn-reconnect');
+          if (reconnectBtn && !reconnectBtn.classList.contains('d-none')) {
+            const allChecked = ack1.checked && ack2.checked && (!ack3 || ack3.checked);
+            reconnectBtn.disabled = !allChecked;
+          }
+        });
         updateBtn();
       }
     });
@@ -134,6 +148,79 @@ const LoginView = {
     btnStart.addEventListener('click', () => {
       this._currentStep = this.STEP.CREDENTIALS;
       this._renderStep();
+    });
+
+    // Check for persistent cache and conditionally show "Reconnect" button
+    const btnReconnect = body.querySelector('#btn-reconnect');
+    Api.checkCache().then((result) => {
+      if (result && result.valid) {
+        btnReconnect.classList.remove('d-none');
+        const updateReconnectBtn = () => {
+          const allChecked = ack1.checked && ack2.checked && (!ack3 || ack3.checked);
+          btnReconnect.disabled = !allChecked;
+        };
+        ack1.addEventListener('change', updateReconnectBtn);
+        ack2.addEventListener('change', updateReconnectBtn);
+        updateReconnectBtn();
+      }
+    }).catch(() => { /* cache check failed — hide reconnect button */ });
+
+    btnReconnect.addEventListener('click', async () => {
+      btnReconnect.disabled = true;
+      btnStart.disabled = true;
+      const spinner = body.querySelector('#reconnect-spinner');
+      spinner.classList.remove('d-none');
+
+      try {
+        // Get saved credentials from plugin config
+        const config = await Config.get();
+        if (!config.username || !config.password) {
+          throw new Error('No saved credentials found.');
+        }
+
+        const result = await Api.login({
+          username: config.username,
+          password: config.password,
+          country: config.country || 'US',
+          deviceName: config.deviceName || '',
+          reconnect: true,
+        });
+
+        if (result.success) {
+          this._currentStep = this.STEP.DISCOVERY;
+          this._renderStep();
+        } else if (result.failReason === 2) {
+          this._currentStep = this.STEP.TFA;
+          this._renderStep();
+        } else if (result.failReason === 1) {
+          this._captchaData = result.data;
+          this._currentStep = this.STEP.CAPTCHA;
+          this._renderStep();
+        } else {
+          spinner.classList.add('d-none');
+          btnReconnect.disabled = false;
+          btnStart.disabled = false;
+          const errMsg = result.error || 'Reconnect failed. Please try a full login.';
+          const errEl = document.createElement('div');
+          errEl.className = 'alert alert-danger mt-2';
+          errEl.setAttribute('role', 'alert');
+          errEl.style.fontSize = '0.85rem';
+          errEl.textContent = errMsg;
+          btnReconnect.insertAdjacentElement('afterend', errEl);
+          setTimeout(() => errEl.remove(), 6000);
+        }
+      } catch (e) {
+        spinner.classList.add('d-none');
+        btnReconnect.disabled = false;
+        btnStart.disabled = false;
+        const errEl = document.createElement('div');
+        errEl.className = 'alert alert-danger mt-2';
+        errEl.setAttribute('role', 'alert');
+        errEl.style.fontSize = '0.85rem';
+        errEl.textContent = 'Connection error: ' + (e.message || e);
+        btnReconnect.insertAdjacentElement('afterend', errEl);
+        setTimeout(() => errEl.remove(), 6000);
+      }
     });
   },
 
