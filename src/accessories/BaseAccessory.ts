@@ -1,3 +1,6 @@
+// Servicing and caching strategy inspired 
+// by homebridge-ring — https://github.com/dgreif/ring
+
 import {
   PlatformAccessory,
   Characteristic,
