@@ -34,6 +34,20 @@ export abstract class BaseAccessory extends EventEmitter {
   public readonly name: string;
   public readonly log: Logger<ILogObj>;
 
+  /**
+   * Tracks characteristics with getValue for cache-based updates.
+   * Values are seeded once at registration and refreshed via
+   * the device's 'property changed' event (push-based).
+   */
+  private registeredGetters: {
+    getValue: (data: any, characteristic?: Characteristic, service?: Service) => any;
+    characteristic: Characteristic;
+    service: Service;
+    serviceTypeName: string;
+    characteristicTypeName: string;
+    lastValue: any;
+  }[] = [];
+
   constructor(
     public readonly platform: EufySecurityPlatform,
     public readonly accessory: PlatformAccessory,
@@ -94,12 +108,37 @@ export abstract class BaseAccessory extends EventEmitter {
       this.device.on('property changed', this.handlePropertyChange.bind(this));
     }
 
+    // Refresh cached characteristic values on any device property change.
+    // This keeps all getValue-based characteristics up-to-date via push
+    // without requiring HomeKit to poll through onGet.
+    this.device.on('property changed', this.refreshCachedValues.bind(this));
+
     this.logPropertyKeys();
   }
 
   // Function to extract and log keys
   private logPropertyKeys() {
     this.log.debug(`Property Keys:`, this.device.getProperties());
+  }
+
+  /**
+   * Re-evaluate every registered getValue and push updates to HomeKit
+   * only when the returned value has actually changed.
+   * Triggered by the device's 'property changed' event.
+   */
+  private refreshCachedValues(): void {
+    for (const reg of this.registeredGetters) {
+      try {
+        const newValue = reg.getValue(undefined, reg.characteristic, reg.service);
+        if (newValue !== reg.lastValue) {
+          reg.lastValue = newValue;
+          reg.characteristic.updateValue(newValue);
+          this.log.debug(`CACHE '${reg.serviceTypeName} / ${reg.characteristicTypeName}':`, newValue);
+        }
+      } catch {
+        // silently ignore errors during cache refresh
+      }
+    }
   }
 
    
@@ -156,11 +195,31 @@ export abstract class BaseAccessory extends EventEmitter {
     this.log.debug(`REGISTER CHARACTERISTIC (${service.UUID}) / (${characteristic.UUID})`);
 
     if (getValue) {
-      characteristic.onGet(async (data) => {
-        const value = getValue(data, characteristic, service);
-        this.log.debug(`GET '${serviceType.name} / ${characteristicType.name}':`, value);
-        return value;
+      // Seed initial value and track for property-change refresh.
+      // No onGet handler is registered — HomeKit uses the value set by
+      // updateValue(), making polls (every ~10s) zero-cost.
+      // Fresh values are pushed via 'property changed', onSimpleValue,
+      // onValue, and onMultipleValue events.
+      let initialValue: any;
+      try {
+        initialValue = getValue(undefined, characteristic, service);
+        this.log.debug(`SEED '${serviceType.name} / ${characteristicType.name}':`, initialValue);
+      } catch (e) {
+        this.log.debug(`SEED FAIL '${serviceType.name} / ${characteristicType.name}':`, e);
+      }
+
+      this.registeredGetters.push({
+        getValue,
+        characteristic,
+        service,
+        serviceTypeName: serviceType.name || 'unknown',
+        characteristicTypeName: characteristicType.name || 'unknown',
+        lastValue: initialValue,
       });
+
+      if (initialValue !== undefined && initialValue !== null) {
+        characteristic.updateValue(initialValue);
+      }
     }
 
     if (setValue && setValueDebounceTime) {
