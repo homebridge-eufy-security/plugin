@@ -725,10 +725,9 @@ export class FFmpeg extends EventEmitter {
 
     public async getResult(input?: Buffer): Promise<Buffer> {
         const processArgs = FFmpegParameters.getCombinedArguments(this.parameters);
+        const child = await this.spawnProcess(processArgs, 'Process command');
 
-        return new Promise(async (resolve, reject) => {
-            const child = await this.spawnProcess(processArgs, 'Process command');
-
+        return new Promise((resolve, reject) => {
             const killTimeout = setTimeout(() => {
                 this.stop();
                 reject('ffmpeg process timed out.');
