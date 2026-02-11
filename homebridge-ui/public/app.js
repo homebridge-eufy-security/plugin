@@ -125,6 +125,16 @@ const App = {
         break;
       }
 
+      case 'unsupported': {
+        const uid = parts[1];
+        if (uid) {
+          UnsupportedDetailView.render(this._root, uid);
+        } else {
+          this.navigate('dashboard');
+        }
+        break;
+      }
+
       case 'settings':
         SettingsView.render(this._root);
         break;

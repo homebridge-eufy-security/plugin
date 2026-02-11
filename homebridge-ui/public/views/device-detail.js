@@ -37,15 +37,19 @@ const DeviceDetailView = {
     const accessory = (type === 'station' ? station : device) || station;
     const isUnsupported = accessory && accessory.unsupported === true;
 
-    // Header with back button + device image (skip image for unsupported)
-    this._renderHeader(container, accessory, type, isUnsupported);
+    // Redirect unsupported devices to their dedicated view
+    if (isUnsupported) {
+      App.navigate('unsupported/' + accessory.uniqueId);
+      return;
+    }
+
+    // Header with back button + device image
+    this._renderHeader(container, accessory, type);
 
     // Main content area
     const content = document.createElement('div');
 
-    if (isUnsupported) {
-      this._renderUnsupportedDetail(content, accessory);
-    } else if (type === 'device' && device) {
+    if (type === 'device' && device) {
       const accessoryConfig = type === 'station'
         ? Config.getStationConfig(id)
         : Config.getDeviceConfig(id);
@@ -67,7 +71,7 @@ const DeviceDetailView = {
   },
 
   // ===== Header =====
-  _renderHeader(container, accessory, type, isUnsupported) {
+  _renderHeader(container, accessory, type) {
     const header = document.createElement('div');
     header.className = 'detail-header';
 
@@ -86,13 +90,11 @@ const DeviceDetailView = {
 
     header.appendChild(backBtn);
 
-    if (!isUnsupported) {
-      const img = document.createElement('img');
-      img.className = 'detail-header__image';
-      img.src = DeviceImages.getPath(accessory.type);
-      img.alt = accessory.displayName;
-      header.appendChild(img);
-    }
+    const img = document.createElement('img');
+    img.className = 'detail-header__image';
+    img.src = DeviceImages.getPath(accessory.type);
+    img.alt = accessory.displayName;
+    header.appendChild(img);
 
     header.appendChild(info);
     container.appendChild(header);
@@ -486,131 +488,6 @@ const DeviceDetailView = {
 
     stationRest.appendChild(advSection);
     content.appendChild(stationRest);
-  },
-
-  // ===== Unsupported Device Detail =====
-  _renderUnsupportedDetail(content, accessory) {
-    const REPO = 'homebridge-plugins/homebridge-eufy-security';
-    const UPSTREAM_REPO = 'bropat/eufy-security-client';
-    const LABEL = 'device-support';
-    const COMPAT_URL = 'https://bropat.github.io/eufy-security-client/#/supported_devices';
-
-    const section = document.createElement('div');
-    section.className = 'detail-section unsupported-detail';
-
-    // Badge
-    const badge = document.createElement('span');
-    badge.className = 'badge badge-unsupported mb-3';
-    badge.textContent = 'Not Supported';
-    badge.style.fontSize = '0.85rem';
-    section.appendChild(badge);
-
-    // Description
-    const desc = document.createElement('p');
-    desc.className = 'text-muted';
-    desc.textContent = 'This device was detected but is not yet supported.';
-    section.appendChild(desc);
-
-    // Info box about upstream dependency
-    const infoBox = document.createElement('div');
-    infoBox.className = 'unsupported-detail__info';
-    infoBox.innerHTML =
-      '<strong>ℹ️ Why is this not supported?</strong><br>' +
-      'New device support must first be added to the eufy-security-client library. If your device is not on the ' +
-      `<a href="${COMPAT_URL}" target="_blank" rel="noopener noreferrer">compatibility list</a>, ` +
-      `please open an issue on the upstream repository first.`;
-    section.appendChild(infoBox);
-
-    // Device info dump — all available data in one box
-    const props = accessory.properties || {};
-    const deviceInfo = {
-      uniqueId: accessory.uniqueId,
-      displayName: accessory.displayName,
-      type: accessory.type,
-      typename: accessory.typename || undefined,
-      ...props,
-    };
-    // Remove potentially large/sensitive fields
-    delete deviceInfo.picture;
-
-    const infoTitle = document.createElement('div');
-    infoTitle.className = 'detail-section__title';
-    infoTitle.textContent = 'Device Information';
-    section.appendChild(infoTitle);
-
-    // JSON dump with copy button overlay
-    const dumpWrap = document.createElement('div');
-    dumpWrap.className = 'unsupported-detail__dump-wrap';
-
-    const copyBtn = document.createElement('button');
-    copyBtn.className = 'unsupported-detail__copy-btn';
-    copyBtn.textContent = '📋 Copy';
-    copyBtn.addEventListener('click', () => {
-      navigator.clipboard.writeText(pre.textContent).then(() => {
-        copyBtn.textContent = '✓ Copied!';
-        setTimeout(() => { copyBtn.textContent = '📋 Copy'; }, 2000);
-      });
-    });
-
-    const pre = document.createElement('pre');
-    pre.className = 'unsupported-detail__dump';
-    pre.textContent = JSON.stringify(deviceInfo, null, 2);
-
-    dumpWrap.appendChild(copyBtn);
-    dumpWrap.appendChild(pre);
-    section.appendChild(dumpWrap);
-
-    // CTA buttons
-    const btnGroup = document.createElement('div');
-    btnGroup.className = 'unsupported-detail__actions';
-
-    // 1) Check compatibility list (primary)
-    const compatBtn = document.createElement('a');
-    compatBtn.href = COMPAT_URL;
-    compatBtn.target = '_blank';
-    compatBtn.rel = 'noopener noreferrer';
-    compatBtn.className = 'btn btn-primary';
-    compatBtn.textContent = 'Check Compatibility ↗';
-    btnGroup.appendChild(compatBtn);
-
-    // 2) Search existing issues with label (primary outline)
-    const searchQuery = encodeURIComponent(`is:issue label:${LABEL} ${accessory.type}`);
-    const searchBtn = document.createElement('a');
-    searchBtn.href = `https://github.com/${REPO}/issues?q=${searchQuery}`;
-    searchBtn.target = '_blank';
-    searchBtn.rel = 'noopener noreferrer';
-    searchBtn.className = 'btn btn-outline-primary';
-    searchBtn.textContent = 'Search Existing Issues ↗';
-    btnGroup.appendChild(searchBtn);
-
-    // 3) Create new issue using the device_support template (secondary)
-    const model = props.model || accessory.type;
-    const issueTitle = encodeURIComponent(`[Device Support] ${model} (Type ${accessory.type})`);
-    const deviceDump = JSON.stringify(deviceInfo, null, 2);
-    const templateParams = [
-      `template=device_support.yml`,
-      `title=${issueTitle}`,
-      `labels=${LABEL}`,
-      `device_info=${encodeURIComponent(deviceDump)}`,
-    ].join('&');
-    const createBtn = document.createElement('a');
-    createBtn.href = `https://github.com/${REPO}/issues/new?${templateParams}`;
-    createBtn.target = '_blank';
-    createBtn.rel = 'noopener noreferrer';
-    createBtn.className = 'btn btn-outline-secondary';
-    createBtn.textContent = 'Request Support ↗';
-    btnGroup.appendChild(createBtn);
-
-    section.appendChild(btnGroup);
-
-    // External links note
-    const extNote = document.createElement('p');
-    extNote.className = 'text-muted';
-    extNote.style.cssText = 'font-size: 0.75rem; text-align: right;';
-    extNote.textContent = '↗ These links open in a new browser tab on GitHub.';
-    section.appendChild(extNote);
-
-    content.appendChild(section);
   },
 
   // ===== Standalone Station Settings (shown in device detail for standalone devices) =====

@@ -175,7 +175,7 @@ const DashboardView = {
           isStation: isStation,
           enabled: false,
           onClick: (d) => {
-            App.navigate('detail/device/' + d.uniqueId);
+            App.navigate('unsupported/' + d.uniqueId);
           },
           onToggle: () => {},
         });
