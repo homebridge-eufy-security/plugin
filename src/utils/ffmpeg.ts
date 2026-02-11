@@ -764,17 +764,7 @@ export class FFmpeg extends EventEmitter {
         this.stdin = this.process.stdin;
         this.stdout = this.process.stdout;
 
-        this.process.stderr.on('data', (chunk) => {
-            const isError = chunk.toString().indexOf('[panic]') !== -1 ||
-                chunk.toString().indexOf('[error]') !== -1 ||
-                chunk.toString().indexOf('[fatal]') !== -1;
-
-            if (this.parameters[0].debug && !isError) {
-                ffmpegLogger.debug(this.name, 'ffmpeg log message:\n' + chunk.toString());
-            } else if (isError) {
-                ffmpegLogger.error(this.name, 'ffmpeg log message:\n' + chunk.toString());
-            }
-        });
+        this.process.stderr.on('data', this.handleStderrData.bind(this));
 
         this.process.on('error', this.onProcessError.bind(this));
         this.process.on('exit', this.onProcessExit.bind(this));
@@ -792,17 +782,7 @@ export class FFmpeg extends EventEmitter {
         return new Promise((resolve, reject) => {
             this.process = spawn(this.ffmpegExec, processArgs.join(' ').split(/\s+/), { env: process.env });
 
-            this.process.stderr.on('data', (chunk) => {
-                const isError = chunk.toString().indexOf('[panic]') !== -1 ||
-                    chunk.toString().indexOf('[error]') !== -1 ||
-                    chunk.toString().indexOf('[fatal]') !== -1;
-
-                if (this.parameters[0].debug && !isError) {
-                    ffmpegLogger.debug(this.name, 'ffmpeg log message:\n' + chunk.toString());
-                } else if (isError) {
-                    ffmpegLogger.error(this.name, 'ffmpeg log message:\n' + chunk.toString());
-                }
-            });
+            this.process.stderr.on('data', this.handleStderrData.bind(this));
 
             const killTimeout = setTimeout(() => {
                 this.stop();
@@ -876,17 +856,7 @@ export class FFmpeg extends EventEmitter {
                 this.stdin = this.process.stdin;
                 this.stdout = this.process.stdout;
 
-                this.process.stderr.on('data', (chunk) => {
-                    const isError = chunk.toString().indexOf('[panic]') !== -1 ||
-                        chunk.toString().indexOf('[error]') !== -1 ||
-                        chunk.toString().indexOf('[fatal]') !== -1;
-
-                    if (this.parameters[0].debug && !isError) {
-                        ffmpegLogger.debug(this.name, 'ffmpeg log message:\n' + chunk.toString());
-                    } else if (isError) {
-                        ffmpegLogger.error(this.name, 'ffmpeg log message:\n' + chunk.toString());
-                    }
-                });
+                this.process.stderr.on('data', this.handleStderrData.bind(this));
 
                 this.process.on('error', this.onProcessError.bind(this));
                 this.process.on('exit', this.onProcessExit.bind(this));
@@ -973,6 +943,17 @@ export class FFmpeg extends EventEmitter {
         this.emit('started');
         const runtime = this.starttime ? (Date.now() - this.starttime) / 1000 : undefined;
         ffmpegLogger.debug(this.name, `process started. Getting the first response took ${runtime} seconds.`);
+    }
+
+    private handleStderrData(chunk: Buffer) {
+        const output = chunk.toString();
+        const isError = output.includes('[panic]') || output.includes('[error]') || output.includes('[fatal]');
+
+        if (isError) {
+            ffmpegLogger.error(this.name, 'ffmpeg log message:\n' + output);
+        } else if (this.parameters[0].debug) {
+            ffmpegLogger.debug(this.name, 'ffmpeg log message:\n' + output);
+        }
     }
 
     private onProcessError(error: Error) {
