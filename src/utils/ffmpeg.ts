@@ -491,28 +491,27 @@ export class FFmpegParameters {
     private buildGenericParameters(): string[] {
         const params: string[] = [];
 
-        params.push(this.hideBanner ? '-hide_banner' : '');
-        params.push('-loglevel level+verbose'); // default log to stderr
-        params.push(this.useWallclockAsTimestamp ? '-use_wallclock_as_timestamps 1' : '');
+        if (this.hideBanner) params.push('-hide_banner');
+        params.push('-loglevel level+verbose');
+        if (this.useWallclockAsTimestamp) params.push('-use_wallclock_as_timestamps 1');
 
         return params;
     }
 
-    private buildInputParamters(): string[] {
+    private buildInputParameters(): string[] {
         const params: string[] = [];
 
-        // input
-        params.push(this.analyzeDuration ? `-analyzeduration ${this.analyzeDuration}` : '');
-        params.push(this.probeSize ? `-probesize ${this.probeSize}` : '');
-        params.push(this.stimeout ? `-stimeout ${this.stimeout * 10000000}` : '');
-        params.push(this.readrate ? '-re' : '');
-
-        params.push(this.protocolWhitelist ? `-protocol_whitelist ${this.protocolWhitelist}` : '');
-        params.push(this.inputFormat ? `-f ${this.inputFormat}` : '');
-        params.push(this.inputCodec ? `-c:a ${this.inputCodec}` : '');
+        if (this.analyzeDuration) params.push(`-analyzeduration ${this.analyzeDuration}`);
+        if (this.probeSize) params.push(`-probesize ${this.probeSize}`);
+        if (this.stimeout) params.push(`-stimeout ${this.stimeout * 10000000}`);
+        if (this.readrate) params.push('-re');
+        if (this.protocolWhitelist) params.push(`-protocol_whitelist ${this.protocolWhitelist}`);
+        if (this.inputFormat) params.push(`-f ${this.inputFormat}`);
+        if (this.inputCodec) params.push(`-c:a ${this.inputCodec}`);
         params.push(this.inputSource);
-        params.push(this.isVideo ? '-an -sn -dn' : '');
-        params.push(this.isAudio ? '-vn -sn -dn' : '');
+        if (this.isVideo) params.push('-an -sn -dn');
+        if (this.isAudio) params.push('-vn -sn -dn');
+
         return params;
     }
 
@@ -564,31 +563,30 @@ export class FFmpegParameters {
     private buildEncodingParameters(): string[] {
         const params: string[] = [];
         if (this.isVideo) {
-            params.push(this.fps ? '-r ' + this.fps : '');
-            params.push('-vcodec ' + this.codec);
-            params.push(this.pixFormat ? '-pix_fmt ' + this.pixFormat : '');
-            params.push(this.colorRange ? '-color_range ' + this.colorRange : '');
-            params.push(this.codecOptions ? this.codecOptions : '');
+            if (this.fps) params.push(`-r ${this.fps}`);
+            params.push(`-vcodec ${this.codec}`);
+            if (this.pixFormat) params.push(`-pix_fmt ${this.pixFormat}`);
+            if (this.colorRange) params.push(`-color_range ${this.colorRange}`);
+            if (this.codecOptions) params.push(this.codecOptions);
 
             params.push(...this.buildVideoFilterParams());
 
-            params.push(this.bitrate ? '-b:v ' + this.bitrate + 'k' : '');
-            params.push(this.bufsize ? '-bufsize ' + this.bufsize + 'k' : '');
-            params.push(this.maxrate ? `-maxrate ${this.maxrate}k` : '');
+            if (this.bitrate) params.push(`-b:v ${this.bitrate}k`);
+            if (this.bufsize) params.push(`-bufsize ${this.bufsize}k`);
+            if (this.maxrate) params.push(`-maxrate ${this.maxrate}k`);
         }
 
         if (this.isAudio && this.processAudio) {
-            // audio parameters
-            params.push('-acodec ' + this.codec);
-            params.push(this.codecOptions ? this.codecOptions : '');
-            params.push(this.bitrate ? `-b:a ${this.bitrate}k` : '');
-            params.push(this.sampleRate ? `-ar ${this.sampleRate}k` : '');
-            params.push(this.bitrate ? `-ac ${this.channels}` : '');
+            params.push(`-acodec ${this.codec}`);
+            if (this.codecOptions) params.push(this.codecOptions);
+            if (this.bitrate) params.push(`-b:a ${this.bitrate}k`);
+            if (this.sampleRate) params.push(`-ar ${this.sampleRate}k`);
+            if (this.channels) params.push(`-ac ${this.channels}`);
         }
 
         if (this.isSnapshot) {
-            params.push(this.numberFrames ? `-frames:v ${this.numberFrames}` : '');
-            params.push(this.delaySnapshot ? '-ss 00:00:00.500' : '');
+            if (this.numberFrames) params.push(`-frames:v ${this.numberFrames}`);
+            if (this.delaySnapshot) params.push('-ss 00:00:00.500');
 
             params.push(...this.buildVideoFilterParams());
         }
@@ -597,29 +595,23 @@ export class FFmpegParameters {
 
     private buildOutputParameters(): string[] {
         const params: string[] = [];
-        // output
-        params.push(this.payloadType ? `-payload_type ${this.payloadType}` : '');
-        params.push(this.ssrc ? `-ssrc ${this.ssrc}` : '');
-        params.push(this.format ? `-f ${this.format}` : '');
-        params.push(this.srtpSuite ? `-srtp_out_suite ${this.srtpSuite}` : '');
-        params.push(this.srtpParams ? `-srtp_out_params ${this.srtpParams}` : '');
-
+        if (this.payloadType) params.push(`-payload_type ${this.payloadType}`);
+        if (this.ssrc) params.push(`-ssrc ${this.ssrc}`);
+        if (this.format) params.push(`-f ${this.format}`);
+        if (this.srtpSuite) params.push(`-srtp_out_suite ${this.srtpSuite}`);
+        if (this.srtpParams) params.push(`-srtp_out_params ${this.srtpParams}`);
         params.push(this.output);
         return params;
     }
 
     private buildParameters(): string[] {
-        let params: string[] = [];
-
-        params = this.buildGenericParameters();
-        params = params.concat(this.buildInputParamters());
-        params = params.concat(this.buildEncodingParameters());
-        params = params.concat(this.buildOutputParameters());
-
-        params.push(`-progress tcp://127.0.0.1:${this.progressPort}`);
-
-        params = params.filter(x => x !== '');
-
+        const params = [
+            ...this.buildGenericParameters(),
+            ...this.buildInputParameters(),
+            ...this.buildEncodingParameters(),
+            ...this.buildOutputParameters(),
+            `-progress tcp://127.0.0.1:${this.progressPort}`,
+        ];
         return params;
     }
 
@@ -628,15 +620,15 @@ export class FFmpegParameters {
     }
 
     static getRecordingArguments(parameters: FFmpegParameters[]): string[] {
-        let params: string[] = [];
         if (parameters.length === 0) {
-            return params;
+            return [];
         }
 
-        params = parameters[0].buildGenericParameters();
+        const params = [...parameters[0].buildGenericParameters()];
+
         // input
         params.push(parameters[0].inputSource);
-        if (parameters.length > 1 && parameters[0].inputSource !== parameters[1].inputSource) { // don't include extra audio source for rtsp
+        if (parameters.length > 1 && parameters[0].inputSource !== parameters[1].inputSource) {
             if (parameters[1].processAudio) {
                 params.push(parameters[1].inputSource);
             } else {
@@ -649,44 +641,43 @@ export class FFmpegParameters {
         params.push('-sn -dn');
 
         // video encoding
-        params = params.concat(parameters[0].buildEncodingParameters());
-        params.push(parameters[0].iFrameInterval ? `-force_key_frames expr:gte(t,n_forced*${parameters[0].iFrameInterval / 1000})` : '');
+        params.push(...parameters[0].buildEncodingParameters());
+        if (parameters[0].iFrameInterval) {
+            params.push(`-force_key_frames expr:gte(t,n_forced*${parameters[0].iFrameInterval / 1000})`);
+        }
 
         // audio encoding
         if (parameters.length > 1) {
             if (parameters[1].processAudio) {
                 params.push('-bsf:a aac_adtstoasc');
             }
-            params = params.concat(parameters[1].buildEncodingParameters());
+            params.push(...parameters[1].buildEncodingParameters());
         }
 
         // fragmented mp4 options
-        params.push(parameters[0].movflags ? `-movflags ${parameters[0].movflags}` : '');
-        params.push(parameters[0].maxMuxingQueueSize ? `-max_muxing_queue_size ${parameters[0].maxMuxingQueueSize}` : '');
+        if (parameters[0].movflags) params.push(`-movflags ${parameters[0].movflags}`);
+        if (parameters[0].maxMuxingQueueSize) params.push(`-max_muxing_queue_size ${parameters[0].maxMuxingQueueSize}`);
 
         // output
         params.push('-f mp4');
         params.push(parameters[0].output);
         params.push(`-progress tcp://127.0.0.1:${parameters[0].progressPort}`);
-        params = params.filter(x => x !== '');
 
         return params;
     }
 
     static getCombinedArguments(parameters: FFmpegParameters[]): string[] {
-        let params: string[] = [];
         if (parameters.length === 0) {
-            return params;
+            return [];
         }
 
-        params = parameters[0].buildGenericParameters();
-        parameters.forEach((p) => {
-            params = params.concat(p.buildInputParamters());
-            params = params.concat(p.buildEncodingParameters());
-            params = params.concat(p.buildOutputParameters());
-        });
+        const params = [...parameters[0].buildGenericParameters()];
+        for (const p of parameters) {
+            params.push(...p.buildInputParameters());
+            params.push(...p.buildEncodingParameters());
+            params.push(...p.buildOutputParameters());
+        }
         params.push(`-progress tcp://127.0.0.1:${parameters[0].progressPort}`);
-        params = params.filter(x => x !== '');
 
         return params;
     }
