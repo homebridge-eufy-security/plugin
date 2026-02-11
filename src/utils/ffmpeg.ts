@@ -1,20 +1,12 @@
+// Node built-ins
 import { ChildProcessWithoutNullStreams, spawn } from 'child_process';
+import EventEmitter from 'events';
 import net from 'net';
 import os from 'os';
 import { Readable, Writable } from 'stream';
 
+// External packages
 import ffmpegPath from 'ffmpeg-for-homebridge';
-import { pickPort } from 'pick-port';
-
-import EventEmitter from 'events';
-import { CameraConfig, VideoConfig } from './configTypes.js';
-
-/** Timeout for one-shot TCP servers waiting for a connection (ms) */
-const TCP_SERVER_TIMEOUT_MS = 30_000;
-/** Timeout for ffmpeg getResult() before force-killing the process (ms) */
-const PROCESS_RESULT_TIMEOUT_MS = 15_000;
-/** Grace period after SIGTERM before sending SIGKILL (ms) */
-const KILL_GRACE_PERIOD_MS = 2_000;
 import {
     AudioRecordingCodecType,
     AudioRecordingSamplerate,
@@ -26,8 +18,18 @@ import {
     SnapshotRequest,
     StartStreamRequest,
 } from 'homebridge';
-import { SessionInfo } from './configTypes.js';
+import { pickPort } from 'pick-port';
+
+// Internal modules
+import { CameraConfig, SessionInfo, VideoConfig } from './configTypes.js';
 import { ffmpegLogger } from './utils.js';
+
+/** Timeout for one-shot TCP servers waiting for a connection (ms) */
+const TCP_SERVER_TIMEOUT_MS = 30_000;
+/** Timeout for ffmpeg getResult() before force-killing the process (ms) */
+const PROCESS_RESULT_TIMEOUT_MS = 15_000;
+/** Grace period after SIGTERM before sending SIGKILL (ms) */
+const KILL_GRACE_PERIOD_MS = 2_000;
 
 /**
  * Creates a TCP server that accepts exactly one connection, then auto-closes.
