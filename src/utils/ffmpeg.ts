@@ -1,5 +1,5 @@
 // Node built-ins
-import { ChildProcessWithoutNullStreams, spawn } from 'child_process';
+import { ChildProcessWithoutNullStreams, execFileSync, spawn } from 'child_process';
 import EventEmitter from 'events';
 import net from 'net';
 import os from 'os';
@@ -34,6 +34,74 @@ const KILL_GRACE_PERIOD_MS = 2_000;
 /** Returns true when the value is a non-empty string (guards `undefined | ''`). */
 function isNonEmpty(value: string | undefined): value is string {
     return !!value && value !== '';
+}
+
+/**
+ * Cached result of probing the ffmpeg binary for libfdk_aac support.
+ * `undefined` means we haven't checked yet.
+ */
+let _hasFdkAac: boolean | undefined;
+
+/**
+ * Returns true when the ffmpeg binary on this system supports the libfdk_aac
+ * encoder.  The result is cached after the first call.
+ */
+export function hasFdkAac(): boolean {
+    if (_hasFdkAac !== undefined) {
+        return _hasFdkAac;
+    }
+    const ffmpegExec: string = (ffmpegPath as unknown as string) || 'ffmpeg';
+    try {
+        const output = execFileSync(ffmpegExec, ['-encoders'], {
+            timeout: 5_000,
+            encoding: 'utf-8',
+            stdio: ['pipe', 'pipe', 'pipe'],
+        });
+        _hasFdkAac = output.includes('libfdk_aac');
+    } catch {
+        _hasFdkAac = false;
+    }
+    if (_hasFdkAac) {
+        ffmpegLogger.info('libfdk_aac encoder available.');
+    } else {
+        ffmpegLogger.warn(
+            'libfdk_aac encoder is NOT available — falling back to the native aac encoder (AAC-LC instead of AAC-ELD). ' +
+            'This usually means the ffmpeg-for-homebridge binary could not be installed on your platform. ' +
+            'You can install a compatible ffmpeg manually (built with --enable-libfdk-aac --enable-nonfree) ' +
+            'and set the path in your camera\'s videoConfig.videoProcessor setting.',
+        );
+    }
+    return _hasFdkAac;
+}
+
+/**
+ * Returns the preferred AAC encoder and codec options for AAC-ELD output.
+ * Falls back to the built-in `aac` encoder when `libfdk_aac` is absent.
+ */
+function getAacEldCodecAndOptions(): { codec: string; codecOptions: string } {
+    if (hasFdkAac()) {
+        return { codec: 'libfdk_aac', codecOptions: '-profile:a aac_eld' };
+    }
+    // The native aac encoder doesn't support ELD, but LC works with HomeKit.
+    return { codec: 'aac', codecOptions: '-profile:a aac_low' };
+}
+
+/**
+ * Returns the preferred AAC encoder for a given recording codec type.
+ * Falls back to the built-in `aac` encoder when `libfdk_aac` is absent.
+ */
+function getAacRecordingCodecAndOptions(codecType: AudioRecordingCodecType): { codec: string; codecOptions: string } {
+    const isLC = codecType === AudioRecordingCodecType.AAC_LC;
+    if (hasFdkAac()) {
+        return {
+            codec: 'libfdk_aac',
+            codecOptions: isLC ? '-profile:a aac_low' : '-profile:a aac_eld',
+        };
+    }
+    return {
+        codec: 'aac',
+        codecOptions: '-profile:a aac_low',
+    };
 }
 
 /** Map HomeKit audio samplerate enum values to kHz strings for ffmpeg `-ar`. */
@@ -283,17 +351,19 @@ export class FFmpegParameters {
         }
         if (this.isAudio) {
             const req = request as StartStreamRequest;
-            let codec = 'libfdk_aac';
-            let codecOptions = '-profile:a aac_eld';
+            let codec: string;
+            let codecOptions: string;
             switch (req.audio.codec) {
                 case AudioStreamingCodecType.OPUS:
                     codec = 'libopus';
                     codecOptions = '-application lowdelay';
                     break;
-                default:
-                    codec = 'libfdk_aac';
-                    codecOptions = '-profile:a aac_eld';
+                default: {
+                    const aac = getAacEldCodecAndOptions();
+                    codec = aac.codec;
+                    codecOptions = aac.codecOptions;
                     break;
+                }
             }
 
             if (isNonEmpty(videoConfig.acodec)) {
@@ -385,17 +455,15 @@ export class FFmpegParameters {
 
         if (this.isAudio) {
 
-            if (videoConfig.audio === false) {
-                this.processAudio = false;
-            }
-
             if (isNonEmpty(videoConfig.acodec)) {
                 this.codec = videoConfig.acodec;
             } else {
-                this.codec = 'libfdk_aac';
+                const aac = getAacRecordingCodecAndOptions(configuration.audioCodec.type);
+                this.codec = aac.codec;
+                this.codecOptions = aac.codecOptions + ' -flags +global_header';
             }
 
-            if (this.codec === 'libfdk_aac' || this.codec === 'aac') {
+            if (isNonEmpty(videoConfig.acodec) && (this.codec === 'libfdk_aac' || this.codec === 'aac')) {
                 this.codecOptions = (configuration.audioCodec.type === AudioRecordingCodecType.AAC_LC)
                     ? '-profile:a aac_low'
                     : '-profile:a aac_eld';
@@ -418,8 +486,9 @@ export class FFmpegParameters {
         this.useWallclockAsTimestamp = false;
         this.protocolWhitelist = 'pipe,udp,rtp,file,crypto,tcp';
         this.inputFormat = 'sdp';
-        this.inputCodec = 'libfdk_aac';
-        this.codec = 'libfdk_aac';
+        const talkbackCodec = hasFdkAac() ? 'libfdk_aac' : 'aac';
+        this.inputCodec = talkbackCodec;
+        this.codec = talkbackCodec;
         this.sampleRate = 16;
         this.channels = 1;
         this.bitrate = 20;
