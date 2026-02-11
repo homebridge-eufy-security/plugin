@@ -34,6 +34,9 @@ class UiServer extends HomebridgePluginUiServer {
   pendingDevices = [];
   processingTimeout;
 
+  /** Seconds to wait after the last station/device event before processing. */
+  static DISCOVERY_DEBOUNCE_SEC = 10;
+
   config = {
     username: '',
     password: '',
@@ -185,15 +188,6 @@ class UiServer extends HomebridgePluginUiServer {
         this.eufyClient = await EufySecurity.initialize(this.config, this.tsLog);
         this.eufyClient?.on('station added', this.addStation.bind(this));
         this.eufyClient?.on('device added', this.addDevice.bind(this));
-        // Wait for 45 seconds to gather all stations and devices, then process them
-        this.processingTimeout = setTimeout(() => {
-          this.processPendingAccessories().catch(error => this.log.error('Error processing pending accessories:', error));
-        }, 45 * 1000);
-        // Close connection after 50 seconds to allow processing time
-        this._closeTimeout = setTimeout(() => {
-          this.eufyClient?.removeAllListeners();
-          this.eufyClient?.close();
-        }, 50 * 1000);
       } catch (error) {
         this.log.error(error);
       }
@@ -328,6 +322,7 @@ class UiServer extends HomebridgePluginUiServer {
 
     this.pendingStations.push(station);
     this.log.debug(`${station.getName()}: Station queued for processing`);
+    this.resetDiscoveryDebounce();
   }
 
   async addDevice(device) {
@@ -344,6 +339,34 @@ class UiServer extends HomebridgePluginUiServer {
 
     this.pendingDevices.push(device);
     this.log.debug(`${device.getName()}: Device queued for processing`);
+    this.resetDiscoveryDebounce();
+  }
+
+  /**
+   * Resets the discovery debounce timer.
+   * Each time a station or device is emitted, the timer restarts.
+   * Processing begins once no new events arrive for DISCOVERY_DEBOUNCE_SEC seconds.
+   */
+  resetDiscoveryDebounce() {
+    if (this.processingTimeout) {
+      clearTimeout(this.processingTimeout);
+    }
+    if (this._closeTimeout) {
+      clearTimeout(this._closeTimeout);
+    }
+    const delaySec = UiServer.DISCOVERY_DEBOUNCE_SEC;
+    this.log.debug(
+      `Discovery debounce reset — will process in ${delaySec}s if no more devices arrive ` +
+      `(${this.pendingStations.length} station(s), ${this.pendingDevices.length} device(s) queued)`,
+    );
+    this.processingTimeout = setTimeout(() => {
+      this.processPendingAccessories().catch(error => this.log.error('Error processing pending accessories:', error));
+    }, delaySec * 1000);
+    // Close connection 5 seconds after processing is scheduled
+    this._closeTimeout = setTimeout(() => {
+      this.eufyClient?.removeAllListeners();
+      this.eufyClient?.close();
+    }, (delaySec + 5) * 1000);
   }
 
   async processPendingAccessories() {
