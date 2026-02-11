@@ -29,35 +29,73 @@ import {
 import { SessionInfo } from './configTypes.js';
 import { ffmpegLogger } from './utils.js';
 
+/**
+ * Creates a TCP server that accepts exactly one connection, then auto-closes.
+ * If no connection arrives within the timeout, the server closes anyway.
+ * @returns The port the server is listening on.
+ */
+async function createOneShotTcpServer(
+    onConnection: (socket: net.Socket) => void,
+    existingPort?: number,
+): Promise<{ port: number; server: net.Server }> {
+    const port = existingPort ?? await pickPort({ type: 'tcp' });
+    let killTimeout: NodeJS.Timeout | undefined;
+
+    const server = net.createServer((socket) => {
+        if (killTimeout) {
+            clearTimeout(killTimeout);
+        }
+        server.close();
+        socket.on('error', () => { }); // ignore — handled elsewhere
+        onConnection(socket);
+    });
+
+    server.on('error', () => { }); // ignore — handled elsewhere
+
+    killTimeout = setTimeout(() => {
+        server.close();
+    }, TCP_SERVER_TIMEOUT_MS);
+
+    server.listen(port);
+    return { port, server };
+}
+
 class FFmpegProgress extends EventEmitter {
     private server: net.Server;
     private started = false;
 
     constructor(port: number) {
         super();
-        let killTimeout: NodeJS.Timeout | undefined = undefined;
-        this.server = net.createServer((socket) => {
+        const { server } = this.initServer(port);
+        this.server = server;
+    }
+
+    private initServer(port: number): { server: net.Server } {
+        // We can't use createOneShotTcpServer directly here since the constructor
+        // is synchronous, but we mirror its pattern with a pre-picked port.
+        let killTimeout: NodeJS.Timeout | undefined;
+
+        const server = net.createServer((socket) => {
             if (killTimeout) {
                 clearTimeout(killTimeout);
             }
-            this.server.close(); // close server and terminate after connection is released
-
+            server.close();
+            socket.on('error', () => { });
             socket.on('data', this.analyzeProgress.bind(this));
-
-            socket.on('error', () => { }); // ignore since this is handled elsewhere
         });
 
-        killTimeout = setTimeout(() => {
-            this.server.close();
-        }, TCP_SERVER_TIMEOUT_MS);
+        server.on('error', () => { });
 
-        this.server.on('close', () => {
+        server.on('close', () => {
             this.emit('progress stopped');
         });
 
-        this.server.on('error', () => { }); // ignore since this is handled elsewhere
+        killTimeout = setTimeout(() => {
+            server.close();
+        }, TCP_SERVER_TIMEOUT_MS);
 
-        this.server.listen(port);
+        server.listen(port);
+        return { server };
     }
 
     private analyzeProgress(progressData: Buffer) {
@@ -198,26 +236,9 @@ export class FFmpegParameters {
     }
 
     public async setInputStream(input: Readable) {
-        const port = await pickPort({ type: 'tcp' });
-        let killTimeout: NodeJS.Timeout | undefined = undefined;
-        const server = net.createServer((socket) => {
-            if (killTimeout) {
-                clearTimeout(killTimeout);
-            }
-            server.close();
-
-            socket.on('error', () => { }); // ignore since this is handled elsewhere
-
+        const { port } = await createOneShotTcpServer((socket) => {
             input.pipe(socket);
         });
-        server.listen(port);
-
-        server.on('error', () => { }); // ignore since this is handled elsewhere
-
-        killTimeout = setTimeout(() => {
-            server.close();
-        }, TCP_SERVER_TIMEOUT_MS);
-
         this.setInputSource(`tcp://127.0.0.1:${port}`);
     }
 
@@ -487,25 +508,9 @@ export class FFmpegParameters {
             'config=F8F0212C00BC00\r\n' +
             'a=crypto:1 AES_CM_128_HMAC_SHA1_80 inline:' + sessionInfo.audioSRTP.toString('base64') + '\r\n';
 
-        const port = await pickPort({ type: 'tcp' });
-        let killTimeout: NodeJS.Timeout | undefined = undefined;
-        const server = net.createServer((socket) => {
-            if (killTimeout) {
-                clearTimeout(killTimeout);
-            }
-            server.close();
-
-            socket.on('error', () => { }); // ignore since this is handled elsewhere
-
+        const { port } = await createOneShotTcpServer((socket) => {
             socket.end(sdpInput);
         });
-        server.listen(port);
-
-        server.on('error', () => { }); // ignore since this is handled elsewhere
-
-        killTimeout = setTimeout(() => {
-            server.close();
-        }, TCP_SERVER_TIMEOUT_MS);
         this.setInputSource(`tcp://127.0.0.1:${port}`);
     }
 
