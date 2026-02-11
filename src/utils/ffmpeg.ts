@@ -82,7 +82,7 @@ export class FFmpegParameters {
     private hideBanner = true;
     private useWallclockAsTimestamp = true;
 
-    private inputSoure = '-i pipe:';
+    private inputSource = '-i pipe:';
     private protocolWhitelist?: string;
     private inputCodec?: string;
     private inputFormat?: string;
@@ -183,11 +183,11 @@ export class FFmpegParameters {
     }
 
     public usesStdInAsInput(): boolean {
-        return this.inputSoure === '-i pipe:';
+        return this.inputSource === '-i pipe:';
     }
 
     public setInputSource(value: string) {
-        this.inputSoure = `-i ${value}`;
+        this.inputSource = `-i ${value}`;
     }
 
     public async setInputStream(input: Readable) {
@@ -309,7 +309,7 @@ export class FFmpegParameters {
             }
             this.codec = codec;
             this.codecOptions = codecOptions;
-            if (this.codec !== ' copy') {
+            if (this.codec !== 'copy') {
                 this.sampleRate = req.audio.sample_rate;
                 this.channels = req.audio.channel;
                 this.bitrate = videoConfig.audioBitrate ? videoConfig.audioBitrate : req.audio.max_bit_rate;
@@ -528,7 +528,7 @@ export class FFmpegParameters {
         params.push(this.protocolWhitelist ? `-protocol_whitelist ${this.protocolWhitelist}` : '');
         params.push(this.inputFormat ? `-f ${this.inputFormat}` : '');
         params.push(this.inputCodec ? `-c:a ${this.inputCodec}` : '');
-        params.push(this.inputSoure);
+        params.push(this.inputSource);
         params.push(this.isVideo ? '-an -sn -dn' : '');
         params.push(this.isAudio ? '-vn -sn -dn' : '');
         return params;
@@ -654,10 +654,10 @@ export class FFmpegParameters {
 
         params = parameters[0].buildGenericParameters();
         // input
-        params.push(parameters[0].inputSoure);
-        if (parameters.length > 1 && parameters[0].inputSoure !== parameters[1].inputSoure) { // don't include extra audio source for rtsp
+        params.push(parameters[0].inputSource);
+        if (parameters.length > 1 && parameters[0].inputSource !== parameters[1].inputSource) { // don't include extra audio source for rtsp
             if (parameters[1].processAudio) {
-                params.push(parameters[1].inputSoure);
+                params.push(parameters[1].inputSource);
             } else {
                 params.push('-f lavfi -i anullsrc -shortest');
             }
