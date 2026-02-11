@@ -546,6 +546,34 @@ export class FFmpegParameters {
         return params;
     }
 
+    /**
+     * Builds scale/crop video filter arguments based on current width, height, crop settings,
+     * and any user-specified filters. Shared between video and snapshot encoding.
+     */
+    private buildVideoFilterParams(): string[] {
+        const filters: string[] = this.filters ? this.filters.split(',') : [];
+        const noneFilter = filters.indexOf('none');
+        if (noneFilter >= 0) {
+            filters.splice(noneFilter, 1);
+        }
+        if (noneFilter < 0 && this.width && this.height) {
+            if (this.crop) {
+                filters.push(`scale=${this.width}:${this.height}:force_original_aspect_ratio=increase`);
+                filters.push(`crop=${this.width}:${this.height}`);
+                filters.push(`scale='trunc(${this.width}/2)*2:trunc(${this.height}/2)*2'`);
+            } else {
+                filters.push(
+                    `scale='min(${this.width},iw)':'min(${this.height},ih)':force_original_aspect_ratio=decrease`,
+                );
+                filters.push('scale=\'trunc(iw/2)*2:trunc(ih/2)*2\'');
+            }
+        }
+        if (filters.length > 0) {
+            return ['-filter:v ' + filters.join(',')];
+        }
+        return [];
+    }
+
     private buildEncodingParameters(): string[] {
         const params: string[] = [];
         if (this.isVideo) {
@@ -555,31 +583,7 @@ export class FFmpegParameters {
             params.push(this.colorRange ? '-color_range ' + this.colorRange : '');
             params.push(this.codecOptions ? this.codecOptions : '');
 
-            // video filters
-            const filters: string[] = this.filters ? this.filters.split(',') : [];
-            const noneFilter = filters.indexOf('none');
-            if (noneFilter >= 0) {
-                filters.splice(noneFilter, 1);
-            }
-            if (noneFilter < 0 && this.width && this.height) {
-                if (this.crop) {
-                    const resizeFilter = `scale=${this.width}:${this.height}:force_original_aspect_ratio=increase`;
-                    filters.push(resizeFilter);
-                    filters.push(`crop=${this.width}:${this.height}`);
-                    filters.push(`scale='trunc(${this.width}/2)*2:trunc(${this.height}/2)*2'`); // Force to fit encoder restrictions
-                } else {
-                    const resizeFilter = 'scale=' +
-                        '\'min(' + this.width + ',iw)\'' +
-                        ':' +
-                        '\'min(' + this.height + ',ih)\'' +
-                        ':force_original_aspect_ratio=decrease';
-                    filters.push(resizeFilter);
-                    filters.push('scale=\'trunc(iw/2)*2:trunc(ih/2)*2\''); // Force to fit encoder restrictions
-                }
-            }
-            if (filters.length > 0) {
-                params.push('-filter:v ' + filters.join(','));
-            }
+            params.push(...this.buildVideoFilterParams());
 
             params.push(this.bitrate ? '-b:v ' + this.bitrate + 'k' : '');
             params.push(this.bufsize ? '-bufsize ' + this.bufsize + 'k' : '');
@@ -598,30 +602,8 @@ export class FFmpegParameters {
         if (this.isSnapshot) {
             params.push(this.numberFrames ? `-frames:v ${this.numberFrames}` : '');
             params.push(this.delaySnapshot ? '-ss 00:00:00.500' : '');
-            const filters: string[] = this.filters ? this.filters.split(',') : [];
-            const noneFilter = filters.indexOf('none');
-            if (noneFilter >= 0) {
-                filters.splice(noneFilter, 1);
-            }
-            if (noneFilter < 0 && this.width && this.height) {
-                if (this.crop) {
-                    const resizeFilter = `scale=${this.width}:${this.height}:force_original_aspect_ratio=increase`;
-                    filters.push(resizeFilter);
-                    filters.push(`crop=${this.width}:${this.height}`);
-                    filters.push(`scale='trunc(${this.width}/2)*2:trunc(${this.height}/2)*2'`); // Force to fit encoder restrictions
-                } else {
-                    const resizeFilter = 'scale=' +
-                        '\'min(' + this.width + ',iw)\'' +
-                        ':' +
-                        '\'min(' + this.height + ',ih)\'' +
-                        ':force_original_aspect_ratio=decrease';
-                    filters.push(resizeFilter);
-                    filters.push('scale=\'trunc(iw/2)*2:trunc(ih/2)*2\''); // Force to fit encoder restrictions
-                }
-            }
-            if (filters.length > 0) {
-                params.push('-filter:v ' + filters.join(','));
-            }
+
+            params.push(...this.buildVideoFilterParams());
         }
         return params;
     }
