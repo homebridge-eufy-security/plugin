@@ -68,7 +68,7 @@ const DiagnosticsView = {
 
     const btnDownload = document.createElement('button');
     btnDownload.className = 'btn btn-primary btn-sm';
-    btnDownload.innerHTML = ''; btnDownload.appendChild(Helpers.icon('copy.svg')); btnDownload.append(' Download Diagnostics');
+    btnDownload.innerHTML = ''; btnDownload.appendChild(Helpers.icon('download.svg')); btnDownload.append(' Download Diagnostics');
     btnDownload.addEventListener('click', () => this._downloadDiagnostics(container));
     step2.appendChild(btnDownload);
 
