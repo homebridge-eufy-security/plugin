@@ -650,6 +650,41 @@ body.dark-mode .settings-section {
   border-bottom-color: rgba(255, 255, 255, 0.08);
 }
 
+/* ===== Diagnostics Steps ===== */
+.diag-step {
+  padding: 16px;
+  margin-bottom: 12px;
+  border-left: 3px solid var(--eufy-primary);
+  background: rgba(0, 0, 0, 0.02);
+  border-radius: 0 var(--eufy-border-radius) var(--eufy-border-radius) 0;
+}
+
+.diag-step__header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.diag-step__badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: var(--eufy-primary);
+  color: #fff;
+  font-size: 0.8rem;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+body.dark-mode .diag-step {
+  background: rgba(255, 255, 255, 0.04);
+  border-left-color: var(--eufy-primary);
+}
+
 body.dark-mode .advanced-toggle {
   color: rgba(255, 255, 255, 0.5);
 }
