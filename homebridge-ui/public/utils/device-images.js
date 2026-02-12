@@ -54,6 +54,7 @@ const DeviceImages = {
       case 91: return 'batterydoorbell2kdual_large.jpg';
       case 93: return 'wireddoorbelldual_large.jpg';
       case 94: return 'batterydoorbell_e340_large.jpg';
+      case 95: case 96: return 'batterydoorbell2k_large.png';
       case 100: return 'indoorcammini_large.jpg';
       case 104: return 'indoorcams350_large.jpg';
       case 105: return 'indoorcamE30_large.png';
@@ -61,6 +62,7 @@ const DeviceImages = {
       case 131: case 132: case 133:
         return 'garage_camera_t8452_large.jpg';
       case 110: return '4g_lte_starlight_large.jpg';
+      case 126: return 'sensor_large.png';
       case 140: return 'smartsafe_s10_t7400_large.jpg';
       case 141: return 'smartsafe_s12_t7401_large.jpg';
       case 142: case 143: return 'smartsafe_s10_t7400_large.jpg';
