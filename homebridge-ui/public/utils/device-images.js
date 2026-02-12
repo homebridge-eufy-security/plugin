@@ -55,7 +55,7 @@ const DeviceImages = {
       case 91: return 'batterydoorbell2kdual_large.jpg';
       case 93: return 'wireddoorbelldual_large.jpg';
       case 94: return 'batterydoorbell_e340_large.jpg';
-      case 95: return 'BATTERY_DOORBELL_C30.webp';
+      case 95: return 'BATTERY_DOORBELL_C30.png';
       case 96: return 'BATTERY_DOORBELL_C31.png';
       case 100: return 'indoorcammini_large.jpg';
       case 104: return 'indoorcams350_large.jpg';
