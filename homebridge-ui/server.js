@@ -55,7 +55,7 @@ class UiServer extends HomebridgePluginUiServer {
 
     this.storagePath = this.homebridgeStoragePath + '/eufysecurity';
     this.storedAccessories_file = this.storagePath + '/accessories.json';
-    this.logZipFilePath = this.storagePath + '/logs.zip';
+    this.logZipFilePath = null; // generated dynamically with timestamp
     this.config.persistentDir = this.storagePath;
 
     this.initLogger();
@@ -562,6 +562,10 @@ class UiServer extends HomebridgePluginUiServer {
     }
 
     try {
+      const now = new Date();
+      const timestamp = now.toISOString().replace(/[:T]/g, '-').replace(/\..+/, '');
+      this.logZipFilePath = path.join(this.storagePath, `diagnostics-${timestamp}.zip`);
+
       this.pushEvent('downloadLogsProgress', { progress: 45, status: `Compressing ${numberOfFiles} files` });
       await zip.archive(this.logZipFilePath);
 
@@ -569,7 +573,7 @@ class UiServer extends HomebridgePluginUiServer {
       const fileBuffer = fs.readFileSync(this.logZipFilePath);
 
       this.pushEvent('downloadLogsProgress', { progress: 90, status: 'Returning zip file' });
-      return fileBuffer;
+      return { buffer: fileBuffer, filename: path.basename(this.logZipFilePath) };
     } catch (error) {
       this.log.error('Error while generating log files: ' + error);
       throw error;

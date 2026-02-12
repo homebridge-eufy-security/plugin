@@ -319,9 +319,12 @@ const SettingsView = {
     });
 
     try {
-      const buffer = await Api.downloadLogs();
+      const result = await Api.downloadLogs();
+      // Support both old (raw buffer) and new (object with filename) response formats
+      const rawBuffer = result.buffer || result;
+      const filename = result.filename || 'eufy-security-diagnostics.zip';
       // Convert to base64 data URI (blob: URLs are blocked by Homebridge CSP)
-      const bytes = new Uint8Array(buffer.data || buffer);
+      const bytes = new Uint8Array(rawBuffer.data || rawBuffer);
       let binary = '';
       for (let i = 0; i < bytes.length; i++) {
         binary += String.fromCharCode(bytes[i]);
@@ -329,7 +332,7 @@ const SettingsView = {
       const base64 = btoa(binary);
       const a = document.createElement('a');
       a.href = 'data:application/zip;base64,' + base64;
-      a.download = 'eufy-security-logs.zip';
+      a.download = filename;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
