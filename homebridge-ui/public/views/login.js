@@ -80,7 +80,7 @@ const LoginView = {
         <button class="btn btn-primary flex-fill" id="btn-start" disabled>Continue to Login</button>
         <button class="btn btn-outline-success flex-fill d-none" id="btn-reconnect" disabled>
           <span class="spinner-border spinner-border-sm d-none me-1" id="reconnect-spinner"></span>
-          Reconnect from Cache
+          Refresh Devices
         </button>
       </div>
     `;
@@ -200,7 +200,7 @@ const LoginView = {
           spinner.classList.add('d-none');
           btnReconnect.disabled = false;
           btnStart.disabled = false;
-          const errMsg = result.error || 'Reconnect failed. Please try a full login.';
+          const errMsg = result.error || 'Refresh failed. Please try a full login.';
           const errEl = document.createElement('div');
           errEl.className = 'alert alert-danger mt-2';
           errEl.setAttribute('role', 'alert');
