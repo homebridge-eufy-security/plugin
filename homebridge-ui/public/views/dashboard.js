@@ -204,7 +204,8 @@ const DashboardView = {
 
   _headerBtn(iconFile, label, btnClass, onClick) {
     const btn = document.createElement('button');
-    btn.className = 'btn ' + btnClass + ' btn-sm';
+    btn.className = 'btn ' + btnClass + ' btn-sm eufy-tooltip';
+    btn.setAttribute('data-tooltip', label);
     const img = document.createElement('img');
     img.src = 'assets/icons/' + iconFile;
     img.alt = label;
@@ -212,7 +213,6 @@ const DashboardView = {
     img.style.height = '24px';
     img.style.filter = 'brightness(0) invert(1)';
     btn.appendChild(img);
-    btn.title = label;
     btn.addEventListener('click', onClick);
     return btn;
   },
