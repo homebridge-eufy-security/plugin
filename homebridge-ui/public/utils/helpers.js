@@ -73,4 +73,15 @@ const Helpers = {
   iconHtml(name, size = 16, alt = '') {
     return `<img src="assets/icons/${name}" alt="${alt}" width="${size}" height="${size}" style="vertical-align:middle">`;
   },
+
+  /**
+   * Return the correct battery icon filename for a given percentage.
+   * Maps 0-100% to battery_0.svg … battery_6.svg (7 levels).
+   * @param {number} pct  Battery percentage (0-100)
+   * @returns {string}  e.g. 'battery_3.svg'
+   */
+  batteryIcon(pct) {
+    const level = Math.max(0, Math.min(6, Math.round((pct / 100) * 6)));
+    return 'battery_' + level + '.svg';
+  },
 };

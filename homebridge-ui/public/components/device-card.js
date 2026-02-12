@@ -67,19 +67,28 @@ const DeviceCard = {
     const meta = document.createElement('div');
     meta.className = 'device-card__meta';
 
-    const metaParts = [];
+    // Build meta line with DOM nodes so we can mix text and SVG icons
+    const metaFragments = [];
     if (isUnsupported) {
-      metaParts.push('Type ' + d.type);
+      metaFragments.push('Type ' + d.type);
     } else if (d.typename) {
-      metaParts.push(d.typename);
+      metaFragments.push(d.typename);
     }
     if (d.hasBattery && d.properties && d.properties.battery !== undefined) {
-      metaParts.push('🔋 ' + d.properties.battery + '%');
+      metaFragments.push({ icon: Helpers.batteryIcon(d.properties.battery), text: d.properties.battery + '%' });
     }
     if (d.chargingStatus && this.CHARGING_LABELS[d.chargingStatus]) {
-      metaParts.push('⚡ ' + this.CHARGING_LABELS[d.chargingStatus]);
+      metaFragments.push(this.CHARGING_LABELS[d.chargingStatus]);
     }
-    meta.textContent = metaParts.join(' · ');
+    metaFragments.forEach((frag, i) => {
+      if (i > 0) meta.append(' · ');
+      if (typeof frag === 'string') {
+        meta.append(frag);
+      } else {
+        meta.appendChild(Helpers.icon(frag.icon, 14, 'battery'));
+        meta.append(' ' + frag.text);
+      }
+    });
 
     body.appendChild(name);
     body.appendChild(meta);

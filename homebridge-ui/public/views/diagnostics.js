@@ -112,7 +112,7 @@ const DiagnosticsView = {
 
     const btnReset = document.createElement('button');
     btnReset.className = 'btn btn-outline-danger btn-sm';
-    btnReset.innerHTML = ''; btnReset.appendChild(Helpers.icon('delete.svg')); btnReset.append(' Reset Plugin');
+    btnReset.innerHTML = ''; btnReset.appendChild(Helpers.icon('settings_backup_restore.svg')); btnReset.append(' Reset Plugin');
     btnReset.addEventListener('click', () => this._confirmReset(container));
     resetSection.appendChild(btnReset);
 
