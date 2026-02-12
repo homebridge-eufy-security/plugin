@@ -46,7 +46,9 @@ const DeviceImages = {
       case 58: return 'smartlock_t8504_large.jpg';
       case 180: return 'smartlock_touch_and_wifi_t8502_large.jpg';
       case 184: return 'smartlock_touch_and_wifi_t8506_large.jpg';
-      case 60: case 61: case 62: return 'solooutdoorcamc24_large.jpg';
+      case 60: return 'solocaml20_large.jpg';
+      case 61: return 'solooutdoorcamc24_large.jpg';
+      case 62: return 'solocams40_large.jpg';
       case 63: return 'solocams220_large.jpg';
       case 64: return 'solocamc210_large.jpg';
       case 87: return 'floodlight2_large.jpg';
