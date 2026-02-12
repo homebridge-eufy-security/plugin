@@ -53,7 +53,7 @@ const DiagnosticsView = {
     const debugHint = document.createElement('div');
     debugHint.className = 'alert alert-warning mt-2 mb-2';
     debugHint.style.fontSize = '0.85rem';
-    debugHint.innerHTML = '⚠️ Remember to <strong>disable debug logging</strong> once done — it generates a lot of data and may impact performance.';
+    debugHint.innerHTML = Helpers.iconHtml('warning.svg') + ' Remember to <strong>disable debug logging</strong> once done — it generates a lot of data and may impact performance.';
     step1.appendChild(debugHint);
     stepsSection.appendChild(step1);
 
@@ -63,12 +63,12 @@ const DiagnosticsView = {
     const warning = document.createElement('div');
     warning.className = 'alert alert-warning mt-2 mb-2';
     warning.style.fontSize = '0.85rem';
-    warning.innerHTML = '⚠️ <strong>Security notice:</strong> Diagnostics may contain sensitive session data. If you share this archive with anyone, it is strongly recommended to reset your Eufy account password afterwards.';
+    warning.innerHTML = Helpers.iconHtml('warning.svg') + ' <strong>Security notice:</strong> Diagnostics may contain sensitive session data. If you share this archive with anyone, it is strongly recommended to reset your Eufy account password afterwards.';
     step2.appendChild(warning);
 
     const btnDownload = document.createElement('button');
     btnDownload.className = 'btn btn-primary btn-sm';
-    btnDownload.textContent = '📋 Download Diagnostics';
+    btnDownload.innerHTML = ''; btnDownload.appendChild(Helpers.icon('copy.svg')); btnDownload.append(' Download Diagnostics');
     btnDownload.addEventListener('click', () => this._downloadDiagnostics(container));
     step2.appendChild(btnDownload);
 
@@ -83,12 +83,12 @@ const DiagnosticsView = {
     const attachHint = document.createElement('div');
     attachHint.className = 'alert alert-info mb-2';
     attachHint.style.fontSize = '0.85rem';
-    attachHint.innerHTML = '📎 Don\'t forget to <strong>attach the diagnostics zip</strong> downloaded in step 2 to your GitHub issue.';
+    attachHint.innerHTML = Helpers.iconHtml('attach.svg') + ' Don\'t forget to <strong>attach the diagnostics zip</strong> downloaded in step 2 to your GitHub issue.';
     step3.appendChild(attachHint);
 
     const btnReport = document.createElement('button');
     btnReport.className = 'btn btn-outline-secondary btn-sm';
-    btnReport.textContent = '🐛 Report Issue';
+    btnReport.innerHTML = ''; btnReport.appendChild(Helpers.icon('bug-report.svg')); btnReport.append(' Report Issue');
     btnReport.addEventListener('click', () => this._reportIssue());
     step3.appendChild(btnReport);
     stepsSection.appendChild(step3);
@@ -112,7 +112,7 @@ const DiagnosticsView = {
 
     const btnReset = document.createElement('button');
     btnReset.className = 'btn btn-outline-danger btn-sm';
-    btnReset.textContent = '🗑️ Reset Plugin';
+    btnReset.innerHTML = ''; btnReset.appendChild(Helpers.icon('delete.svg')); btnReset.append(' Reset Plugin');
     btnReset.addEventListener('click', () => this._confirmReset(container));
     resetSection.appendChild(btnReset);
 

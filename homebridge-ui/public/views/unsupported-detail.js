@@ -72,7 +72,7 @@ const UnsupportedDetailView = {
     const desc = document.createElement('p');
     desc.className = 'text-muted';
     desc.innerHTML =
-      '<strong>ℹ️ This device was detected but is not yet supported.</strong><br />' +
+      '<strong>' + Helpers.iconHtml('info.svg') + ' This device was detected but is not yet supported.</strong><br />' +
       'New device support must first be added to the eufy-security-client library. ' +
       'If your device is not on the compatibility list, please <strong>search for existing issues first</strong> before opening a new one.';
     section.appendChild(desc);
@@ -176,11 +176,18 @@ const UnsupportedDetailView = {
 
     const copyBtn = document.createElement('button');
     copyBtn.className = 'unsupported-detail__copy-btn';
-    copyBtn.textContent = '📋 Copy';
+
+    const _setCopyLabel = (text) => {
+      copyBtn.innerHTML = '';
+      copyBtn.appendChild(Helpers.icon('copy.svg'));
+      copyBtn.append(' ' + text);
+    };
+    _setCopyLabel('Copy');
+
     copyBtn.addEventListener('click', () => {
       navigator.clipboard.writeText(pre.textContent).then(() => {
         copyBtn.textContent = '✓ Copied!';
-        setTimeout(() => { copyBtn.textContent = '📋 Copy'; }, 2000);
+        setTimeout(() => { _setCopyLabel('Copy'); }, 2000);
       });
     });
 

@@ -56,7 +56,7 @@ const DashboardView = {
 
       const iconDiv = document.createElement('div');
       iconDiv.className = 'node-version-banner__icon';
-      iconDiv.textContent = '⚠️';
+      iconDiv.appendChild(Helpers.icon('warning.svg', 24));
       banner.appendChild(iconDiv);
 
       const contentDiv = document.createElement('div');
@@ -81,7 +81,7 @@ const DashboardView = {
     if (stations.length === 0) {
       container.insertAdjacentHTML('beforeend', `
         <div class="text-center text-muted py-5">
-          <div style="font-size: 2rem; margin-bottom: 12px;">📦</div>
+          <div style="font-size: 2rem; margin-bottom: 12px;">${Helpers.iconHtml('inventory.svg', 32)}</div>
           <p>No devices found. Try logging in again to discover your devices.</p>
           <button class="btn btn-primary btn-sm mt-2" id="btn-go-login">Go to Login</button>
         </div>

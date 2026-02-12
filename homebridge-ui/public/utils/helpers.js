@@ -44,4 +44,33 @@ const Helpers = {
     link.textContent = 'Learn more';
     parent.appendChild(link);
   },
+
+  /**
+   * Create an inline SVG icon <img> element from the assets/icons/ folder.
+   * @param {string}  name  Icon filename without path, e.g. 'warning.svg'
+   * @param {number}  [size=16]  Width/height in px
+   * @param {string}  [alt='']   Alt text
+   * @returns {HTMLImageElement}
+   */
+  icon(name, size = 16, alt = '') {
+    const img = document.createElement('img');
+    img.src = 'assets/icons/' + name;
+    img.alt = alt;
+    img.width = size;
+    img.height = size;
+    img.style.verticalAlign = 'middle';
+    return img;
+  },
+
+  /**
+   * Return an HTML string for an inline SVG icon.
+   * Useful inside innerHTML / insertAdjacentHTML templates.
+   * @param {string}  name  Icon filename, e.g. 'warning.svg'
+   * @param {number}  [size=16]  Width/height in px
+   * @param {string}  [alt='']   Alt text
+   * @returns {string}
+   */
+  iconHtml(name, size = 16, alt = '') {
+    return `<img src="assets/icons/${name}" alt="${alt}" width="${size}" height="${size}" style="vertical-align:middle">`;
+  },
 };

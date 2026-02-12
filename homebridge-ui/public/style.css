@@ -721,6 +721,14 @@ body.dark-mode .discovery-screen .text-muted {
   color: var(--eufy-muted) !important;
 }
 
+body.dark-mode .text-muted {
+  color: rgba(255, 255, 255, 0.55) !important;
+}
+
+body.dark-mode .diag-step strong {
+  color: rgba(255, 255, 255, 0.9);
+}
+
 body.dark-mode .node-version-banner {
   background: rgba(255, 193, 7, 0.12);
   border-color: rgba(255, 193, 7, 0.3);
