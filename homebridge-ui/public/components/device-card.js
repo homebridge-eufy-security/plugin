@@ -78,14 +78,15 @@ const DeviceCard = {
       metaFragments.push({ icon: Helpers.batteryIcon(d.properties.battery), text: d.properties.battery + '%' });
     }
     if (d.chargingStatus && this.CHARGING_LABELS[d.chargingStatus]) {
-      metaFragments.push(this.CHARGING_LABELS[d.chargingStatus]);
+      const chargingIcon = d.chargingStatus === 4 ? 'solar_power.svg' : 'bolt.svg';
+      metaFragments.push({ icon: chargingIcon, text: this.CHARGING_LABELS[d.chargingStatus] });
     }
     metaFragments.forEach((frag, i) => {
       if (i > 0) meta.append(' · ');
       if (typeof frag === 'string') {
         meta.append(frag);
       } else {
-        meta.appendChild(Helpers.icon(frag.icon, 14, 'battery'));
+        meta.appendChild(Helpers.icon(frag.icon, 14, frag.text));
         meta.append(' ' + frag.text);
       }
     });
