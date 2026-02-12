@@ -1,4 +1,0 @@
-[submodule "lib/eufy-security-client"]
-	path = lib/eufy-security-client
-	url = https://github.com/lenoxys/eufy-security-client.git
-	branch = feat/e340-doorbell-support
