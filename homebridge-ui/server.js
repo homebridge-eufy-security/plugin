@@ -550,6 +550,12 @@ class UiServer extends HomebridgePluginUiServer {
       numberOfFiles++;
     });
 
+    // Include accessories.json for diagnostics
+    if (fs.existsSync(this.storedAccessories_file)) {
+      zip.addFile(this.storedAccessories_file);
+      numberOfFiles++;
+    }
+
     this.pushEvent('downloadLogsProgress', { progress: 40, status: 'No Log Files Found' });
     if (numberOfFiles === 0) {
       throw new Error('No log files were found');
