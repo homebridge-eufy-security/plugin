@@ -441,7 +441,7 @@ class UiServer extends HomebridgePluginUiServer {
         typename: DeviceType[devType],
         standalone: device.getSerial() === device.getStationSerial(),
         hasBattery: device.hasBattery(),
-        isCamera: device.isCamera() || Device.isLockWifiVideo(type),
+      isCamera: device.isCamera() || Device.isLockWifiVideo(devType),
         isDoorbell: device.isDoorbell(),
         isKeypad: device.isKeyPad(),
         isMotionSensor: Device.isMotionSensor(devType),
