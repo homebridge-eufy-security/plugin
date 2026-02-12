@@ -490,7 +490,7 @@ const LoginView = {
   _renderDiscovery(wrap) {
     wrap.innerHTML = `
       <div class="discovery-screen">
-        <div class="discovery-screen__icon">📡</div>
+        <div class="discovery-screen__icon">${Helpers.iconHtml('satellite_alt.svg', 32)}</div>
         <div class="discovery-screen__title">Discovering your devices...</div>
         <div class="discovery-screen__subtitle">
           Connecting to Eufy servers and detecting all your stations and devices. Hang tight!
