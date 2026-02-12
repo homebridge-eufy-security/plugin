@@ -826,7 +826,7 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
       new LockAccessory(this, accessory, device as Lock);
     }
 
-    if (Device.isCamera(type)) {
+    if (Device.isCamera(type) || Device.isLockWifiVideo(type)) {
       log.debug(accessory.displayName + ' isCamera!');
       new CameraAccessory(this, accessory, device as Camera);
     }
