@@ -12,13 +12,12 @@ const DeviceImages = {
       case 3: return 'floodlight_large.jpg';
       case 5: return 'wireddoorbell2k_large.jpg';
       case 7: case 16: return 'batterydoorbell2k_large.png';
-      case 91: return 'batterydoorbell2kdual_large.jpg';
       case 8: return 'eufycam2c_large.jpg';
       case 9: return 'eufycam2_large.png';
-      case 14: return 'eufycam2pro_large.jpg';
-      case 15: return 'eufycam2cpro_large.jpg';
       case 10: return 'motionsensor_large.png';
       case 11: return 'keypad_large.png';
+      case 14: return 'eufycam2pro_large.jpg';
+      case 15: return 'eufycam2cpro_large.jpg';
       case 18: return 'homebase3_large.png';
       case 19: return 'eufycam3_large.jpg';
       case 23: return 'eufycam3c_large.jpg';
@@ -44,8 +43,6 @@ const DeviceImages = {
       case 55: return 'smartlock_video_t8530_large.png';
       case 56: case 57: return 'smartlock_t8510P_t8520P_large.jpg';
       case 58: return 'smartlock_t8504_large.jpg';
-      case 180: return 'smartlock_touch_and_wifi_t8502_large.jpg';
-      case 184: return 'smartlock_touch_and_wifi_t8506_large.jpg';
       case 60: return 'solocaml20_large.jpg';
       case 61: return 'solooutdoorcamc24_large.jpg';
       case 62: return 'solocams40_large.jpg';
@@ -54,6 +51,7 @@ const DeviceImages = {
       case 87: return 'floodlight2_large.jpg';
       case 88: return 'solocame30_large.png';
       case 90: return 'smartdrop_t8790_large.jpg';
+      case 91: return 'batterydoorbell2kdual_large.jpg';
       case 93: return 'wireddoorbelldual_large.jpg';
       case 94: return 'batterydoorbell_e340_large.jpg';
       case 100: return 'indoorcammini_large.jpg';
@@ -69,6 +67,8 @@ const DeviceImages = {
       case 151: return 'walllight_s100_large.jpg';
       case 157: return 'smarttrack_link_t87B0_large.jpg';
       case 159: return 'smarttrack_card_t87B2_large.jpg';
+      case 180: return 'smartlock_touch_and_wifi_t8502_large.jpg';
+      case 184: return 'smartlock_touch_and_wifi_t8506_large.jpg';
       case 10005: return 'walllight_s120_large.jpg';
       case 10008: return 'indoorcamC220_large.png';
       case 10009: return 'indoorcamC210_large.png';
