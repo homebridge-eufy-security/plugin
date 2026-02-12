@@ -1,6 +1,6 @@
 /**
  * Settings View — global plugin settings with progressive disclosure.
- * Simple: re-login, download logs, reset.
+ * Simple: re-login, download diagnostics, reset.
  * Advanced: polling, livestream, guard modes, auto-sync, etc.
  */
 // eslint-disable-next-line no-unused-vars
@@ -53,10 +53,10 @@ const SettingsView = {
     btnLogin.addEventListener('click', () => App.navigate('login'));
     btnRow.appendChild(btnLogin);
 
-    // Download logs button
+    // Download diagnostics button
     const btnLogs = document.createElement('button');
     btnLogs.className = 'btn btn-outline-secondary btn-sm';
-    btnLogs.textContent = '📋 Download Logs';
+    btnLogs.textContent = '📋 Download Diagnostics';
     btnLogs.addEventListener('click', () => this._downloadLogs(container));
     btnRow.appendChild(btnLogs);
 
@@ -116,7 +116,7 @@ const SettingsView = {
     Toggle.render(debugSection, {
       id: 'toggle-detailed-log',
       label: 'Enable Debug Logging',
-      help: 'Enable verbose logging for troubleshooting. When reporting issues, enable this, reproduce the problem, then use the "Download Logs" button above to capture everything.',
+      help: 'Enable verbose logging for troubleshooting. When reporting issues, enable this, reproduce the problem, then use the "Download Diagnostics" button above to capture everything.',
       checked: !!config.enableDetailedLogging,
       onChange: async (checked) => {
         await Config.updateGlobal({ enableDetailedLogging: checked });
@@ -126,7 +126,7 @@ const SettingsView = {
     const debugHint = document.createElement('div');
     debugHint.className = 'text-muted mt-1';
     debugHint.style.fontSize = '0.8rem';
-    debugHint.innerHTML = '💡 After enabling, reproduce the issue, then click <strong>📋 Download Logs</strong> above to collect the debug output.<br>⚠️ Remember to disable debug logging once you\'re done — it generates a lot of data and may impact performance.';
+    debugHint.innerHTML = '💡 After enabling, reproduce the issue, then click <strong>📋 Download Diagnostics</strong> above to collect the debug output.<br>⚠️ Remember to disable debug logging once you\'re done — it generates a lot of data and may impact performance.';
     debugSection.appendChild(debugHint);
 
     container.appendChild(debugSection);
@@ -337,9 +337,9 @@ const SettingsView = {
       a.click();
       document.body.removeChild(a);
 
-      homebridge.toast.success('Logs downloaded.');
+      homebridge.toast.success('Diagnostics downloaded.');
     } catch (e) {
-      homebridge.toast.error('Failed to download logs: ' + (e.message || e));
+      homebridge.toast.error('Failed to download diagnostics: ' + (e.message || e));
     } finally {
       this._downloadInProgress = false;
       if (progressArea) progressArea.innerHTML = '';

@@ -538,10 +538,10 @@ class UiServer extends HomebridgePluginUiServer {
   }
 
   async downloadLogs() {
-    this.pushEvent('downloadLogsProgress', { progress: 10, status: 'Gets non-empty log files' });
+    this.pushEvent('downloadLogsProgress', { progress: 10, status: 'Collecting log files' });
     const finalLogFiles = await this.getLogs();
 
-    this.pushEvent('downloadLogsProgress', { progress: 30, status: 'Add Log Files to Zip' });
+    this.pushEvent('downloadLogsProgress', { progress: 30, status: 'Adding files to archive' });
     const zip = new Zip();
     let numberOfFiles = 0;
     finalLogFiles.forEach(logFile => {
@@ -556,9 +556,9 @@ class UiServer extends HomebridgePluginUiServer {
       numberOfFiles++;
     }
 
-    this.pushEvent('downloadLogsProgress', { progress: 40, status: 'No Log Files Found' });
+    this.pushEvent('downloadLogsProgress', { progress: 40, status: 'Checking archive content' });
     if (numberOfFiles === 0) {
-      throw new Error('No log files were found');
+      throw new Error('No diagnostic files were found');
     }
 
     try {
@@ -575,7 +575,7 @@ class UiServer extends HomebridgePluginUiServer {
       this.pushEvent('downloadLogsProgress', { progress: 90, status: 'Returning zip file' });
       return { buffer: fileBuffer, filename: path.basename(this.logZipFilePath) };
     } catch (error) {
-      this.log.error('Error while generating log files: ' + error);
+      this.log.error('Error while generating diagnostics archive: ' + error);
       throw error;
     } finally {
       this.removeCompressedLogs();
