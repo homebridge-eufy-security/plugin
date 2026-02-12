@@ -441,7 +441,7 @@ class UiServer extends HomebridgePluginUiServer {
         typename: DeviceType[devType],
         standalone: device.getSerial() === device.getStationSerial(),
         hasBattery: device.hasBattery(),
-        isCamera: device.isCamera(),
+        isCamera: device.isCamera() || Device.isLockWifiVideo(type),
         isDoorbell: device.isDoorbell(),
         isKeypad: device.isKeyPad(),
         isMotionSensor: Device.isMotionSensor(devType),
@@ -458,7 +458,7 @@ class UiServer extends HomebridgePluginUiServer {
       };
 
       // Mark device as unsupported if it doesn't match any known accessory type
-      if (!device.isCamera() && !Device.isMotionSensor(devType) && !Device.isEntrySensor(devType) && !Device.isLock(devType)) {
+      if (!device.isCamera() && !Device.isLockWifiVideo(devType) && !Device.isMotionSensor(devType) && !Device.isEntrySensor(devType) && !Device.isLock(devType)) {
         d.unsupported = true;
       }
 
