@@ -585,6 +585,10 @@
 
 /* ===== Responsive ===== */
 @media (max-width: 576px) {
+  .welcome-actions {
+    flex-direction: column;
+  }
+
   .guard-mode-grid {
     grid-template-columns: 1fr;
   }
