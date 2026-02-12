@@ -10,7 +10,9 @@ const DeviceImages = {
       case 1: case 4: return 'eufycam_large.jpg';
       case 2: return 'sensor_large.png';
       case 3: return 'floodlight_large.jpg';
-      case 5: case 7: case 16: case 91: return 'batterydoorbell2k_large.png';
+      case 5: return 'wireddoorbell2k_large.jpg';
+      case 7: case 16: return 'batterydoorbell2k_large.png';
+      case 91: return 'batterydoorbell2kdual_large.jpg';
       case 8: return 'eufycam2c_large.jpg';
       case 9: return 'eufycam2_large.png';
       case 14: return 'eufycam2pro_large.jpg';
