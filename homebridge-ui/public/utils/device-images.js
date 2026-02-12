@@ -34,6 +34,7 @@ const DeviceImages = {
       case 45: return 'solooutdoorcamc24_large.jpg';
       case 47: return 'floodlightcame340_large.jpg';
       case 48: return 'solocams340_large.png';
+      case 49: return 'solocame40_large.jpg';
       case 50: return 'smartlock_touch_t8510_large.jpg';
       case 51: return 'smartlock_touch_and_wifi_t8520_large.jpg';
       case 52: case 53: return 'smartlock_t8500_large.jpg';
@@ -46,6 +47,7 @@ const DeviceImages = {
       case 60: case 61: case 62: return 'solooutdoorcamc24_large.jpg';
       case 63: return 'solocams220_large.jpg';
       case 64: return 'solocamc210_large.jpg';
+      case 87: return 'floodlight2_large.jpg';
       case 88: return 'solocame30_large.png';
       case 90: return 'smartdrop_t8790_large.jpg';
       case 93: return 'wireddoorbelldual_large.jpg';
@@ -65,6 +67,7 @@ const DeviceImages = {
       case 10005: return 'walllight_s120_large.jpg';
       case 10008: return 'indoorcamC220_large.png';
       case 10009: return 'indoorcamC210_large.png';
+      case 10010: return 'indoorcamC220_large.png';
       case 10035: return 'solocamc35_large.png';
       default: return 'unknown.png';
     }
