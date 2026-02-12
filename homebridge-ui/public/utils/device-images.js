@@ -32,11 +32,15 @@ const DeviceImages = {
       case 45: return 'solooutdoorcamc24_large.jpg';
       case 47: return 'floodlightcame340_large.jpg';
       case 48: return 'solocams340_large.png';
-      case 50: case 51: case 52: case 53: case 54:
-      case 56: case 57: case 58: case 180: case 184:
-        return 'smartlock_t8500_large.jpg';
-      case 55:
-        return 'smartlock_video_t8530_large.png';
+      case 50: return 'smartlock_touch_t8510_large.jpg';
+      case 51: return 'smartlock_touch_and_wifi_t8520_large.jpg';
+      case 52: case 53: return 'smartlock_t8500_large.jpg';
+      case 54: return 'smartlock_t8503_large.jpg';
+      case 55: return 'smartlock_video_t8530_large.png';
+      case 56: case 57: return 'smartlock_t8510P_t8520P_large.jpg';
+      case 58: return 'smartlock_t8504_large.jpg';
+      case 180: return 'smartlock_touch_and_wifi_t8502_large.jpg';
+      case 184: return 'smartlock_touch_and_wifi_t8506_large.jpg';
       case 60: case 61: case 62: return 'solooutdoorcamc24_large.jpg';
       case 63: return 'solocams220_large.jpg';
       case 64: return 'solocamc210_large.jpg';
