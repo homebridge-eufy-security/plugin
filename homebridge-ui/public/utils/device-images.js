@@ -59,9 +59,10 @@ const DeviceImages = {
       case 100: return 'indoorcammini_large.jpg';
       case 104: return 'indoorcams350_large.jpg';
       case 105: return 'indoorcamE30_large.png';
-      case 101: case 102: case 110:
+      case 101: case 102:
       case 131: case 132: case 133:
         return 'garage_camera_t8452_large.jpg';
+      case 110: return '4g_lte_starlight_large.jpg';
       case 140: return 'smartsafe_s10_t7400_large.jpg';
       case 141: return 'smartsafe_s12_t7401_large.jpg';
       case 142: case 143: return 'smartsafe_s10_t7400_large.jpg';
