@@ -133,7 +133,7 @@ const LoginView = {
         nodeWarningContainer.appendChild(formCheck);
         ack3 = nodeWarningContainer.querySelector('#ack-node-version');
         ack3.addEventListener('change', updateBtn);
-        // Also update reconnect button state when node version checkbox changes
+        // Also update refresh button state when node version checkbox changes
         ack3.addEventListener('change', () => {
           const reconnectBtn = body.querySelector('#btn-reconnect');
           if (reconnectBtn && !reconnectBtn.classList.contains('d-none')) {
@@ -150,7 +150,7 @@ const LoginView = {
       this._renderStep();
     });
 
-    // Check for persistent cache and conditionally show "Reconnect" button
+    // Check for persistent cache and conditionally show "Refresh Devices" button
     const btnReconnect = body.querySelector('#btn-reconnect');
     Api.checkCache().then((result) => {
       if (result && result.valid) {
@@ -163,7 +163,7 @@ const LoginView = {
         ack2.addEventListener('change', updateReconnectBtn);
         updateReconnectBtn();
       }
-    }).catch(() => { /* cache check failed — hide reconnect button */ });
+    }).catch(() => { /* cache check failed — hide refresh button */ });
 
     btnReconnect.addEventListener('click', async () => {
       btnReconnect.disabled = true;
