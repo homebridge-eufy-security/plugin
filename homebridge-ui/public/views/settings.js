@@ -57,7 +57,7 @@ const SettingsView = {
     const btnLogs = document.createElement('button');
     btnLogs.className = 'btn btn-outline-secondary btn-sm';
     btnLogs.textContent = '📋 Download Diagnostics';
-    btnLogs.addEventListener('click', () => this._downloadLogs(container));
+    btnLogs.addEventListener('click', () => this._downloadDiagnostics(container));
     btnRow.appendChild(btnLogs);
 
     // Bug report button
@@ -293,8 +293,8 @@ const SettingsView = {
     }
   },
 
-  // ===== Log Download =====
-  async _downloadLogs(container) {
+  // ===== Diagnostics Download =====
+  async _downloadDiagnostics(container) {
     if (this._downloadInProgress) return;
     this._downloadInProgress = true;
 
@@ -311,7 +311,7 @@ const SettingsView = {
     }
 
     // Listen for progress events
-    Api.onDownloadLogsProgress((data) => {
+    Api.onDiagnosticsProgress((data) => {
       const bar = document.querySelector('#log-progress-bar');
       const status = document.querySelector('#log-progress-status');
       if (bar) bar.style.width = data.progress + '%';
@@ -319,7 +319,7 @@ const SettingsView = {
     });
 
     try {
-      const result = await Api.downloadLogs();
+      const result = await Api.downloadDiagnostics();
       // Support both old (raw buffer) and new (object with filename) response formats
       const rawBuffer = result.buffer || result;
       const filename = result.filename || 'eufy-security-diagnostics.zip';

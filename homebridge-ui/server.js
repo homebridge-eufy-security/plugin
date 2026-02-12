@@ -25,7 +25,7 @@ class UiServer extends HomebridgePluginUiServer {
   tsLog;
   storagePath;
   storedAccessories_file;
-  logZipFilePath;
+  diagnosticsZipFilePath;
 
   adminAccountUsed = false;
 
@@ -55,7 +55,7 @@ class UiServer extends HomebridgePluginUiServer {
 
     this.storagePath = this.homebridgeStoragePath + '/eufysecurity';
     this.storedAccessories_file = this.storagePath + '/accessories.json';
-    this.logZipFilePath = null; // generated dynamically with timestamp
+    this.diagnosticsZipFilePath = null; // generated dynamically with timestamp
     this.config.persistentDir = this.storagePath;
 
     this.initLogger();
@@ -114,7 +114,7 @@ class UiServer extends HomebridgePluginUiServer {
     this.onRequest('/checkCache', this.checkCache.bind(this));
     this.onRequest('/storedAccessories', this.loadStoredAccessories.bind(this));
     this.onRequest('/reset', this.resetPlugin.bind(this));
-    this.onRequest('/downloadLogs', this.downloadLogs.bind(this));
+    this.onRequest('/downloadDiagnostics', this.downloadDiagnostics.bind(this));
     this.onRequest('/systemInfo', this.getSystemInfo.bind(this));
   }
 
@@ -518,7 +518,7 @@ class UiServer extends HomebridgePluginUiServer {
     }
   }
 
-  async getLogs() {
+  async getLogFiles() {
     const files = await fs.promises.readdir(this.storagePath);
 
     const logFiles = files.filter(file => {
@@ -537,11 +537,11 @@ class UiServer extends HomebridgePluginUiServer {
     return nonEmptyLogFiles.filter(file => file !== null);
   }
 
-  async downloadLogs() {
-    this.pushEvent('downloadLogsProgress', { progress: 10, status: 'Collecting log files' });
-    const finalLogFiles = await this.getLogs();
+  async downloadDiagnostics() {
+    this.pushEvent('diagnosticsProgress', { progress: 10, status: 'Collecting log files' });
+    const finalLogFiles = await this.getLogFiles();
 
-    this.pushEvent('downloadLogsProgress', { progress: 30, status: 'Adding files to archive' });
+    this.pushEvent('diagnosticsProgress', { progress: 30, status: 'Adding files to archive' });
     const zip = new Zip();
     let numberOfFiles = 0;
     finalLogFiles.forEach(logFile => {
@@ -556,7 +556,7 @@ class UiServer extends HomebridgePluginUiServer {
       numberOfFiles++;
     }
 
-    this.pushEvent('downloadLogsProgress', { progress: 40, status: 'Checking archive content' });
+    this.pushEvent('diagnosticsProgress', { progress: 40, status: 'Checking archive content' });
     if (numberOfFiles === 0) {
       throw new Error('No diagnostic files were found');
     }
@@ -564,28 +564,28 @@ class UiServer extends HomebridgePluginUiServer {
     try {
       const now = new Date();
       const timestamp = now.toISOString().replace(/[:T]/g, '-').replace(/\..+/, '');
-      this.logZipFilePath = path.join(this.storagePath, `diagnostics-${timestamp}.zip`);
+      this.diagnosticsZipFilePath = path.join(this.storagePath, `diagnostics-${timestamp}.zip`);
 
-      this.pushEvent('downloadLogsProgress', { progress: 45, status: `Compressing ${numberOfFiles} files` });
-      await zip.archive(this.logZipFilePath);
+      this.pushEvent('diagnosticsProgress', { progress: 45, status: `Compressing ${numberOfFiles} files` });
+      await zip.archive(this.diagnosticsZipFilePath);
 
-      this.pushEvent('downloadLogsProgress', { progress: 80, status: 'Reading content' });
-      const fileBuffer = fs.readFileSync(this.logZipFilePath);
+      this.pushEvent('diagnosticsProgress', { progress: 80, status: 'Reading content' });
+      const fileBuffer = fs.readFileSync(this.diagnosticsZipFilePath);
 
-      this.pushEvent('downloadLogsProgress', { progress: 90, status: 'Returning zip file' });
-      return { buffer: fileBuffer, filename: path.basename(this.logZipFilePath) };
+      this.pushEvent('diagnosticsProgress', { progress: 90, status: 'Returning zip file' });
+      return { buffer: fileBuffer, filename: path.basename(this.diagnosticsZipFilePath) };
     } catch (error) {
       this.log.error('Error while generating diagnostics archive: ' + error);
       throw error;
     } finally {
-      this.removeCompressedLogs();
+      this.removeDiagnosticsArchive();
     }
   }
 
-  removeCompressedLogs() {
+  removeDiagnosticsArchive() {
     try {
-      if (fs.existsSync(this.logZipFilePath)) {
-        fs.unlinkSync(this.logZipFilePath);
+      if (fs.existsSync(this.diagnosticsZipFilePath)) {
+        fs.unlinkSync(this.diagnosticsZipFilePath);
       }
       return true;
     } catch {

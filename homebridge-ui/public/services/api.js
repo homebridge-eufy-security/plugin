@@ -67,11 +67,11 @@ const Api = {
   },
 
   /**
-   * Download compressed log files
-   * @returns {Promise<Buffer>}
+   * Download compressed diagnostics archive (logs + accessories)
+   * @returns {Promise<{buffer: Buffer, filename: string}>}
    */
-  async downloadLogs() {
-    return homebridge.request('/downloadLogs');
+  async downloadDiagnostics() {
+    return homebridge.request('/downloadDiagnostics');
   },
 
   /**
@@ -109,12 +109,12 @@ const Api = {
   },
 
   /**
-   * Register a listener for log download progress.
+   * Register a listener for diagnostics download progress.
    * Replaces any previously registered listener.
    * @param {function} callback - receives { progress, status }
    */
-  onDownloadLogsProgress(callback) {
-    this._on('downloadLogsProgress', (event) => {
+  onDiagnosticsProgress(callback) {
+    this._on('diagnosticsProgress', (event) => {
       callback(event.data);
     });
   },
