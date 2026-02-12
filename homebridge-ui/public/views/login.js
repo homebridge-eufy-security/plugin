@@ -76,7 +76,7 @@ const LoginView = {
         </div>
       </div>
       <div id="node-version-warning" class="d-none"></div>
-      <div class="d-flex gap-2 mt-2">
+      <div class="d-flex flex-wrap gap-2 mt-2 welcome-actions">
         <button class="btn btn-primary flex-fill" id="btn-start" disabled>Continue to Login</button>
         <button class="btn btn-outline-success flex-fill d-none" id="btn-reconnect" disabled>
           <span class="spinner-border spinner-border-sm d-none me-1" id="reconnect-spinner"></span>
@@ -155,6 +155,11 @@ const LoginView = {
     Api.checkCache().then((result) => {
       if (result && result.valid) {
         btnReconnect.classList.remove('d-none');
+        // Highlight Refresh as the primary action, demote Continue to Login
+        btnReconnect.classList.remove('btn-outline-success');
+        btnReconnect.classList.add('btn-success');
+        btnStart.classList.remove('btn-primary');
+        btnStart.classList.add('btn-outline-primary');
         const updateReconnectBtn = () => {
           const allChecked = ack1.checked && ack2.checked && (!ack3 || ack3.checked);
           btnReconnect.disabled = !allChecked;
