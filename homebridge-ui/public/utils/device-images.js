@@ -29,8 +29,9 @@ const DeviceImages = {
       case 31: case 35: return 'indoorcamp24_large.png';
       case 32: case 33: return 'solocame20_large.jpg';
       case 34: return 'soloindoorcamc24_large.jpg';
-      case 37: case 39: return 'floodlight_large.jpg';
+      case 37: return 'floodlight_large.jpg';
       case 38: return 'floodlight2pro_large.jpg';
+      case 39: return 'floodlight_large.jpg';
       case 44: case 46: return 'solooutdoorcamc22_large.png';
       case 45: return 'solooutdoorcamc24_large.jpg';
       case 47: return 'floodlightcame340_large.jpg';
@@ -54,7 +55,8 @@ const DeviceImages = {
       case 91: return 'batterydoorbell2kdual_large.jpg';
       case 93: return 'wireddoorbelldual_large.jpg';
       case 94: return 'batterydoorbell_e340_large.jpg';
-      case 95: case 96: return 'batterydoorbell2k_large.png';
+      case 95: return 'BATTERY_DOORBELL_C30.webp';
+      case 96: return 'BATTERY_DOORBELL_C31.png';
       case 100: return 'indoorcammini_large.jpg';
       case 104: return 'indoorcams350_large.jpg';
       case 105: return 'indoorcamE30_large.png';
