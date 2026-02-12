@@ -564,7 +564,7 @@ const LoginView = {
   _renderDiscoveryError(wrap, message) {
     wrap.innerHTML = `
       <div class="discovery-screen">
-        <div class="discovery-screen__icon">⚠️</div>
+        <div class="discovery-screen__icon">${Helpers.iconHtml('warning.svg', 32)}</div>
         <div class="discovery-screen__title">Discovery Failed</div>
         <div class="discovery-screen__subtitle" style="color: var(--bs-danger, #dc3545);">
           ${message}
