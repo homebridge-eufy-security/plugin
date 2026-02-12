@@ -35,12 +35,14 @@ const DashboardView = {
     }
 
     const btnGroup = document.createElement('div');
-    btnGroup.className = 'btn-group';
+    btnGroup.className = 'd-flex gap-2';
 
-    const btnRefresh = this._headerBtn('🔄', 'Re-login / Re-fetch', () => App.navigate('login'));
-    const btnSettings = this._headerBtn('⚙️', 'Settings', () => App.navigate('settings'));
+    const btnRefresh = this._headerBtn('refresh.svg', 'Re-login / Re-fetch', 'btn-success', () => App.navigate('login'));
+    const btnDiagnostic = this._headerBtn('bug-report.svg', 'Diagnostics', 'btn-warning', () => App.navigate('diagnostics'));
+    const btnSettings = this._headerBtn('settings.svg', 'Global Settings', 'btn-danger', () => App.navigate('settings'));
 
     btnGroup.appendChild(btnRefresh);
+    btnGroup.appendChild(btnDiagnostic);
     btnGroup.appendChild(btnSettings);
     headerRight.appendChild(btnGroup);
     header.appendChild(headerRight);
@@ -200,10 +202,16 @@ const DashboardView = {
     }
   },
 
-  _headerBtn(icon, label, onClick) {
+  _headerBtn(iconFile, label, btnClass, onClick) {
     const btn = document.createElement('button');
-    btn.className = 'btn btn-outline-secondary btn-sm';
-    btn.innerHTML = icon + ' <span class="d-none d-sm-inline">' + label + '</span>';
+    btn.className = 'btn ' + btnClass + ' btn-sm';
+    const img = document.createElement('img');
+    img.src = 'assets/icons/' + iconFile;
+    img.alt = label;
+    img.style.width = '24px';
+    img.style.height = '24px';
+    img.style.filter = 'brightness(0) invert(1)';
+    btn.appendChild(img);
     btn.title = label;
     btn.addEventListener('click', onClick);
     return btn;
