@@ -522,7 +522,7 @@ class UiServer extends HomebridgePluginUiServer {
     const files = await fs.promises.readdir(this.storagePath);
 
     const logFiles = files.filter(file => {
-      return file.endsWith('.log') || file.endsWith('.log.0');
+      return file.endsWith('.log');
     });
 
     const nonEmptyLogFiles = await Promise.all(logFiles.map(async file => {
