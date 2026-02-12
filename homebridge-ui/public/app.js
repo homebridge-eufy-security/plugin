@@ -143,6 +143,10 @@ const App = {
         SettingsView.render(this._root);
         break;
 
+      case 'diagnostics':
+        DiagnosticsView.render(this._root);
+        break;
+
       default:
         // Unknown route — try dashboard if we have stations, otherwise login
         if (this.state.stations.length > 0) {
