@@ -457,8 +457,8 @@ class UiServer extends HomebridgePluginUiServer {
         properties: device.getProperties(),
       };
 
-      // Mark device as unsupported if it doesn't match any known accessory type
-      if (!device.isCamera() && !Device.isLockWifiVideo(devType) && !Device.isMotionSensor(devType) && !Device.isEntrySensor(devType) && !Device.isLock(devType)) {
+      // Mark device as unsupported if eufy-security-client doesn't recognize this device type
+      if (!Device.isSupported(devType)) {
         d.unsupported = true;
       }
 
