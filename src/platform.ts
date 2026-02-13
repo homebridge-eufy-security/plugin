@@ -655,6 +655,13 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
 
       try {
         const deviceType = device.getDeviceType();
+
+        // Skip devices that the client declares as unsupported
+        if (!Device.isSupported(deviceType)) {
+          log.warn(`[DEVICE SKIP] "${device.getName()}" (type ${deviceType}) is unsupported by eufy-security-client — skipping accessory creation`);
+          continue;
+        }
+
         const deviceContainer: DeviceContainer = {
           deviceIdentifier: {
             uniqueId: device.getSerial(),
