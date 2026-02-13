@@ -410,21 +410,36 @@ class UiServer extends HomebridgePluginUiServer {
 
       if (stationType !== DeviceType.STATION) {
         // Non-HomeBase station — the station IS a device (station.type == device.type)
-        // Check if the matching device was emitted by the client
-        const hasMatchingDevice = this.pendingDevices.some(d => d.getSerial() === stationSerial);
 
-        if (hasMatchingDevice) {
-          s.standalone = true;
-          s.disabled = true; // No separate station card; settings accessible via device card
-
-          // Standalone Locks and Doorbells don't have Security Control
-          if (Device.isLock(s.type) || Device.isDoorbell(s.type)) {
-            s.noSecurityControl = true;
-          }
-        } else {
-          // Station exists but no device counterpart was emitted — unsupported
+        if (!Device.isSupported(stationType)) {
+          // Device type not recognized by eufy-security-client — truly unsupported
           s.unsupported = true;
-          this.log.warn(`Station "${station.getName()}" (${DeviceType[stationType]}) has no matching device and will be marked as unsupported`);
+          this.log.warn(`Station "${station.getName()}" (type ${stationType}) is not supported by eufy-security-client`);
+
+          // Immediately add the unsupported station and skip further processing
+          this.stations.push(s);
+          continue;
+        } else {
+          // Check if the matching device was emitted by the client
+          const hasMatchingDevice = this.pendingDevices.some(d => d.getSerial() === stationSerial);
+
+          if (hasMatchingDevice) {
+            s.standalone = true;
+            s.disabled = true; // No separate station card; settings accessible via device card
+
+            // Standalone Locks and Doorbells don't have Security Control
+            if (Device.isLock(s.type) || Device.isDoorbell(s.type)) {
+              s.noSecurityControl = true;
+            }
+          } else {
+            // Station exists but no device counterpart was emitted — unsupported
+            s.unsupported = true;
+            this.log.warn(`Station "${station.getName()}" (${DeviceType[stationType]}) has no matching device and will be marked as unsupported`);
+
+            // Short-circuit processing for unsupported station
+            this.stations.push(s);
+            continue;
+          }
         }
       }
 
@@ -478,6 +493,11 @@ class UiServer extends HomebridgePluginUiServer {
       const stationIndex = this.stations.findIndex(station => station.uniqueId === stationUniqueId);
 
       if (stationIndex !== -1) {
+        // If parent station is unsupported, propagate flag to device
+        if (this.stations[stationIndex].unsupported) {
+          d.unsupported = true;
+        }
+
         if (!this.stations[stationIndex].devices) {
           this.stations[stationIndex].devices = [];
         }
