@@ -206,25 +206,34 @@ const LoginView = {
           btnReconnect.disabled = false;
           btnStart.disabled = false;
           const errMsg = result.error || 'Refresh failed. Please try a full login.';
-          const errEl = document.createElement('div');
-          errEl.className = 'alert alert-danger mt-2';
-          errEl.setAttribute('role', 'alert');
-          errEl.style.fontSize = '0.85rem';
-          errEl.textContent = errMsg;
-          btnReconnect.insertAdjacentElement('afterend', errEl);
-          setTimeout(() => errEl.remove(), 6000);
+
+          // Show error as a hover tooltip on the Refresh button (consistent with other UI help)
+          btnReconnect.classList.add('eufy-tooltip');
+          btnReconnect.setAttribute('data-tooltip', errMsg);
+          btnReconnect.classList.add('btn-outline-danger');
+
+          // Remove tooltip and visual error state after a short period
+          setTimeout(() => {
+            btnReconnect.classList.remove('eufy-tooltip');
+            btnReconnect.removeAttribute('data-tooltip');
+            btnReconnect.classList.remove('btn-outline-danger');
+          }, 6000);
         }
       } catch (e) {
         spinner.classList.add('d-none');
         btnReconnect.disabled = false;
         btnStart.disabled = false;
-        const errEl = document.createElement('div');
-        errEl.className = 'alert alert-danger mt-2';
-        errEl.setAttribute('role', 'alert');
-        errEl.style.fontSize = '0.85rem';
-        errEl.textContent = 'Connection error: ' + (e.message || e);
-        btnReconnect.insertAdjacentElement('afterend', errEl);
-        setTimeout(() => errEl.remove(), 6000);
+
+        const errMsg = 'Connection error: ' + (e.message || e);
+        btnReconnect.classList.add('eufy-tooltip');
+        btnReconnect.setAttribute('data-tooltip', errMsg);
+        btnReconnect.classList.add('btn-outline-danger');
+
+        setTimeout(() => {
+          btnReconnect.classList.remove('eufy-tooltip');
+          btnReconnect.removeAttribute('data-tooltip');
+          btnReconnect.classList.remove('btn-outline-danger');
+        }, 6000);
       }
     });
   },
