@@ -326,7 +326,7 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
       persistentDir: this.eufyPath,
       p2pConnectionSetup: 0,
       pollingIntervalMinutes: this.config.pollingIntervalMinutes,
-      enableEmbeddedPKCS1Support:  this.config.enableEmbeddedPKCS1Support,
+      enableEmbeddedPKCS1Support: this.config.enableEmbeddedPKCS1Support,
       eventDurationSeconds: 10,
       logging: {
         level: (this.config.enableDetailedLogging) ? LogLevel.Debug : LogLevel.Info,
@@ -649,7 +649,7 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
 
     // Create all queued devices (they are already verified by bropat/eufy-security-client)
     log.debug(`[DEVICES PROCESSING] Starting to process ${this.pendingDevices.length} devices`);
-    
+
     for (const device of this.pendingDevices) {
       stationsWithDevices.add(device.getStationSerial());
 
@@ -678,20 +678,27 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
         log.error(`[DEVICE ERROR] Error processing device "${device.getName()}": ${error}`);
       }
     }
-    
+
     log.debug(`[DEVICES COMPLETE] All ${this.pendingDevices.length} devices processed`);
 
     // Create queued stations that should be created
     log.debug(`[STATIONS PROCESSING] Starting to process ${this.pendingStations.length} stations`);
     let stationsSkipped = 0;
-    
+
     for (const station of this.pendingStations) {
       const stationType = station.getDeviceType();
+
+      // Skip devices that the client declares as unsupported
+      if (!Device.isSupported(stationType)) {
+        log.warn(`[STATION SKIP] "${station.getName()}" (type ${stationType}) is unsupported by eufy-security-client — skipping accessory creation`);
+        continue;
+      }
+
       const stationSerial = station.getSerial();
 
       // Create if: it's a real HomeBase OR it has devices
-      const shouldCreate = 
-        stationType === DeviceType.STATION || 
+      const shouldCreate =
+        stationType === DeviceType.STATION ||
         stationsWithDevices.has(stationSerial);
 
       if (!shouldCreate) {
@@ -717,7 +724,7 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
         log.error(`[STATION ERROR] Error processing station "${station.getName()}": ${error}`);
       }
     }
-    
+
     log.debug(`[STATIONS COMPLETE] ${this.pendingStations.length - stationsSkipped} stations created, ${stationsSkipped} skipped`);
 
     // Clear pending queues
