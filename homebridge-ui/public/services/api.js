@@ -87,6 +87,75 @@ const Api = {
   },
 
   /**
+   * Register a listener for discovery warnings (e.g. extended discovery due to unsupported devices)
+   * @param {function} callback - receives { unsupportedCount, unsupportedNames, waitSeconds, message }
+   */
+  onDiscoveryWarning(callback) {
+    this._on('discoveryWarning', (event) => {
+      callback(event.data);
+    });
+  },
+
+  /**
+   * Register a listener for real-time discovery progress events.
+   * @param {function} callback - receives { phase, stations?, devices?, message }
+   */
+  onDiscoveryProgress(callback) {
+    this._on('discoveryProgress', (event) => {
+      callback(event.data);
+    });
+  },
+  /**
+   * Register a listener for TFA (two-factor auth) request from the server.
+   * Fired when the Eufy server requires a verification code.
+   * @param {function} callback - receives no arguments
+   */
+  onTfaRequest(callback) {
+    this._on('tfaRequest', () => callback());
+  },
+
+  /**
+   * Register a listener for Captcha request from the server.
+   * Fired when the Eufy server requires captcha verification.
+   * @param {function} callback - receives { id, captcha }
+   */
+  onCaptchaRequest(callback) {
+    this._on('captchaRequest', (event) => callback(event.data));
+  },
+
+  /**
+   * Register a listener for successful authentication.
+   * @param {function} callback - receives no arguments
+   */
+  onAuthSuccess(callback) {
+    this._on('authSuccess', () => callback());
+  },
+
+  /**
+   * Register a listener for authentication errors (timeout, bad credentials, etc.).
+   * @param {function} callback - receives { message }
+   */
+  onAuthError(callback) {
+    this._on('authError', (event) => callback(event.data));
+  },
+  /**
+   * Tell the server to skip the unsupported-device intel wait and proceed immediately.
+   * @returns {Promise<{ok: boolean}>}
+   */
+  async skipIntelWait() {
+    return homebridge.request('/skipIntelWait');
+  },
+
+  /**
+   * Get the current discovery state (phase + pending counts).
+   * Used by the discovery UI to catch up on events that fired during login.
+   * @returns {Promise<{phase: string, stations: number, devices: number}>}
+   */
+  async getDiscoveryState() {
+    return homebridge.request('/discoveryState');
+  },
+
+  /**
    * Register a listener for admin account error.
    * Replaces any previously registered listener.
    * @param {function} callback
