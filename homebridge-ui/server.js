@@ -408,8 +408,8 @@ class UiServer extends HomebridgePluginUiServer {
 
       s.ignored = (this.config['ignoreStations'] ?? []).includes(s.uniqueId);
 
-      if (stationType !== DeviceType.STATION) {
-        // Non-HomeBase station — the station IS a device (station.type == device.type)
+      if (!Device.isStation(stationType)) {
+        // Not a hub/base station — the station IS a standalone device (station.type == device.type)
 
         if (!Device.isSupported(stationType)) {
           // Device type not recognized by eufy-security-client — truly unsupported
