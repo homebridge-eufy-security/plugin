@@ -390,31 +390,6 @@
   padding: 24px 20px;
 }
 
-.login-step-indicator {
-  display: flex;
-  justify-content: center;
-  gap: 8px;
-  margin-bottom: 20px;
-}
-
-.login-step-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: rgba(0, 0, 0, 0.15);
-  transition: var(--eufy-transition);
-}
-
-.login-step-dot--active {
-  background: var(--eufy-primary);
-  width: 24px;
-  border-radius: 4px;
-}
-
-.login-step-dot--done {
-  background: var(--eufy-success);
-}
-
 /* ===== Detail View ===== */
 .detail-header {
   display: flex;
@@ -670,10 +645,6 @@ body.dark-mode .login-card .card {
 
 body.dark-mode .login-card .card-header {
   border-bottom-color: rgba(255, 255, 255, 0.08);
-}
-
-body.dark-mode .login-step-dot {
-  background: rgba(255, 255, 255, 0.2);
 }
 
 body.dark-mode .settings-section {
