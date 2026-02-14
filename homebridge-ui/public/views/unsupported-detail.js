@@ -145,7 +145,7 @@ const UnsupportedDetailView = {
     copyJsonBtn.className = 'btn btn-outline-warning';
     copyJsonBtn.textContent = 'Copy Device Info';
     copyJsonBtn.addEventListener('click', () => {
-      navigator.clipboard.writeText(deviceDump).then(() => {
+      this._copyToClipboard(deviceDump).then(() => {
         copyJsonBtn.textContent = '✓ Copied!';
         setTimeout(() => { copyJsonBtn.textContent = 'Copy Device Info'; }, 2000);
       });
@@ -212,7 +212,7 @@ const UnsupportedDetailView = {
     _setCopyLabel('Copy');
 
     copyBtn.addEventListener('click', () => {
-      navigator.clipboard.writeText(pre.textContent).then(() => {
+      this._copyToClipboard(pre.textContent).then(() => {
         copyBtn.textContent = '✓ Copied!';
         setTimeout(() => { _setCopyLabel('Copy'); }, 2000);
       });
@@ -230,6 +230,35 @@ const UnsupportedDetailView = {
   },
 
   // ===== Helpers =====
+
+  /**
+   * Copy text to clipboard with fallback for non-secure contexts (e.g. Homebridge iframe).
+   * @param {string} text
+   * @returns {Promise<void>}
+   */
+  _copyToClipboard(text) {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      return navigator.clipboard.writeText(text).catch(() => this._copyFallback(text));
+    }
+    return this._copyFallback(text);
+  },
+
+  _copyFallback(text) {
+    return new Promise((resolve, reject) => {
+      const textarea = document.createElement('textarea');
+      textarea.value = text;
+      textarea.style.cssText = 'position:fixed;left:-9999px;top:-9999px;opacity:0';
+      document.body.appendChild(textarea);
+      textarea.select();
+      try {
+        document.execCommand('copy') ? resolve() : reject(new Error('execCommand failed'));
+      } catch (err) {
+        reject(err);
+      } finally {
+        document.body.removeChild(textarea);
+      }
+    });
+  },
 
   /**
    * Find an accessory (device or station) by uniqueId across all stations.
