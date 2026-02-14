@@ -85,6 +85,7 @@ const UnsupportedDetailView = {
       type: accessory.type,
       typename: accessory.typename || undefined,
       ...props,
+      rawDevice: accessory.rawDevice || undefined,
     };
     // Remove potentially large/sensitive fields
     delete deviceInfo.picture;
@@ -170,6 +171,12 @@ const UnsupportedDetailView = {
     infoTitle.textContent = 'Device Information';
     section.appendChild(infoTitle);
 
+    const infoNote = document.createElement('p');
+    infoNote.className = 'text-muted';
+    infoNote.style.cssText = 'font-size: 0.75rem;';
+    infoNote.textContent = 'Diagnostic information below includes raw device properties from the client library.';
+    section.appendChild(infoNote);
+
     // JSON dump with copy button overlay
     const dumpWrap = document.createElement('div');
     dumpWrap.className = 'unsupported-detail__dump-wrap';
@@ -206,17 +213,20 @@ const UnsupportedDetailView = {
 
   /**
    * Find an accessory (device or station) by uniqueId across all stations.
-   * For unsupported standalone stations the device may be null, so we fall back to the station.
+   * For standalone devices the station and device share the same uniqueId —
+   * prefer the device because it carries richer data (rawDevice, etc.).
    * @param {string} id
    * @returns {object|null}
    */
   _findAccessory(id) {
     const stations = App.state.stations || [];
     for (const s of stations) {
-      if (s.uniqueId === id) return s;
+      // Check devices first — standalone devices have the same uniqueId as their station
+      // but carry richer data (rawDevice, rawProperties, etc.)
       for (const d of s.devices || []) {
         if (d.uniqueId === id) return d;
       }
+      if (s.uniqueId === id) return s;
     }
     return null;
   },
