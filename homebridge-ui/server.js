@@ -439,12 +439,33 @@ class UiServer extends HomebridgePluginUiServer {
     if (this._closeTimeout) {
       clearTimeout(this._closeTimeout);
     }
+    if (this._debounceTickInterval) {
+      clearInterval(this._debounceTickInterval);
+    }
     const delaySec = UiServer.DISCOVERY_DEBOUNCE_SEC;
     this.log.debug(
       `Discovery debounce reset — will process in ${delaySec}s if no more devices arrive ` +
       `(${this.pendingStations.length} station(s), ${this.pendingDevices.length} device(s) queued)`,
     );
+
+    // Tick progress from 30 → 95 during the debounce wait
+    const debounceStart = Date.now();
+    this._debounceTickInterval = setInterval(() => {
+      const elapsed = (Date.now() - debounceStart) / 1000;
+      const pct = Math.min(95, 30 + Math.floor((elapsed / delaySec) * 65));
+      const remaining = Math.max(0, Math.ceil(delaySec - elapsed));
+      this.pushEvent('discoveryProgress', {
+        phase: 'queuing',
+        progress: pct,
+        stations: this.pendingStations.length,
+        devices: this.pendingDevices.length,
+        message: `Discovered ${this.pendingStations.length} station(s), ${this.pendingDevices.length} device(s) — waiting for more... ${remaining}s`,
+      });
+    }, 1000);
+
     this.processingTimeout = setTimeout(() => {
+      clearInterval(this._debounceTickInterval);
+      this._debounceTickInterval = null;
       this.processPendingAccessories().catch(error => this.log.error('Error processing pending accessories:', error));
     }, delaySec * 1000);
     // Close connection after processing + potential 2-min unsupported intel wait
@@ -461,7 +482,7 @@ class UiServer extends HomebridgePluginUiServer {
     this._discoveryPhase = 'processing';
     this.pushEvent('discoveryProgress', {
       phase: 'processing',
-      progress: 50,
+      progress: 95,
       stations: this.pendingStations.length,
       devices: this.pendingDevices.length,
       message: `Processing ${this.pendingStations.length} station(s) and ${this.pendingDevices.length} device(s)...`,
@@ -505,12 +526,19 @@ class UiServer extends HomebridgePluginUiServer {
 
       this.log.info(`Unsupported intel: waiting up to ${UNSUPPORTED_INTEL_WAIT_MS / 1000}s for raw data (user can skip)`);
 
-      // Cancellable wait — check _skipIntelWait every second
+      // Cancellable wait — check _skipIntelWait every second, ticking progress 50 → 95
       const pollMs = 1000;
       let waited = 0;
       while (waited < UNSUPPORTED_INTEL_WAIT_MS && !this._skipIntelWait) {
         await this.delay(pollMs);
         waited += pollMs;
+        const pct = Math.min(95, 50 + Math.floor((waited / UNSUPPORTED_INTEL_WAIT_MS) * 45));
+        const remaining = Math.max(0, Math.ceil((UNSUPPORTED_INTEL_WAIT_MS - waited) / 1000));
+        this.pushEvent('discoveryProgress', {
+          phase: 'unsupportedWait',
+          progress: pct,
+          message: `Collecting data for ${unsupportedItems.length} unsupported device(s)... ${remaining}s`,
+        });
       }
 
       if (this._skipIntelWait) {
@@ -522,7 +550,7 @@ class UiServer extends HomebridgePluginUiServer {
 
     this.pushEvent('discoveryProgress', {
       phase: 'buildingStations',
-      progress: 65,
+      progress: 96,
       message: 'Building station list...',
     });
 
@@ -592,7 +620,7 @@ class UiServer extends HomebridgePluginUiServer {
 
     this.pushEvent('discoveryProgress', {
       phase: 'buildingDevices',
-      progress: 80,
+      progress: 98,
       message: 'Building device list...',
     });
 
