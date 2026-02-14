@@ -571,8 +571,8 @@ class UiServer extends HomebridgePluginUiServer {
             s.standalone = true;
             s.disabled = true; // No separate station card; settings accessible via device card
 
-            // Standalone Locks and Doorbells don't have Security Control
-            if (Device.isLock(s.type) || Device.isDoorbell(s.type)) {
+            // Standalone Locks, Doorbells and SmartDrops don't have Security Control
+            if (Device.isLock(s.type) || Device.isDoorbell(s.type) || Device.isSmartDrop(s.type)) {
               s.noSecurityControl = true;
             }
           } else {
@@ -613,6 +613,7 @@ class UiServer extends HomebridgePluginUiServer {
         isMotionSensor: Device.isMotionSensor(devType),
         isEntrySensor: Device.isEntrySensor(devType),
         isLock: Device.isLock(devType),
+        isSmartDrop: Device.isSmartDrop(devType),
         supportsRTSP: device.hasPropertyValue(PropertyName.DeviceRTSPStream),
         supportsTalkback: device.hasCommand(CommandName.DeviceStartTalkback),
         DeviceEnabled: device.hasProperty(PropertyName.DeviceEnabled),
