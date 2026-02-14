@@ -609,7 +609,7 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
   /**
    * Processes pending stations and devices in batch.
    * Only creates station entities if:
-   * 1. It's a real HomeBase (DeviceType.STATION) OR
+   * 1. It's a hub/base station (Device.isStation) OR
    * 2. It has at least one device attached
    * 
    * All discovered devices are processed since they are already verified by bropat/eufy-security-client.
@@ -696,9 +696,9 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
 
       const stationSerial = station.getSerial();
 
-      // Create if: it's a real HomeBase OR it has devices
+      // Create if: it's a hub/base station OR it has devices
       const shouldCreate =
-        stationType === DeviceType.STATION ||
+        Device.isStation(stationType) ||
         stationsWithDevices.has(stationSerial);
 
       if (!shouldCreate) {
@@ -802,7 +802,7 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
     const type = container.deviceIdentifier.type;
     const station = container.eufyDevice;
 
-    if (type !== DeviceType.STATION) {
+    if (!Device.isStation(type)) {
       // Standalone Lock or Doorbell doesn't have Security Control
       if (Device.isDoorbell(type) || Device.isLock(type)) {
         throw new Error(`looks station but it's not could imply some errors! Type: ${type}. You can ignore this message.`);
