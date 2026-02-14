@@ -686,19 +686,19 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
 
     for (const station of this.pendingStations) {
       const stationType = station.getDeviceType();
+      const stationSerial = station.getSerial();
 
-      // Skip devices that the client declares as unsupported
-      if (!Device.isSupported(stationType)) {
+      // Hub/base stations (type 0, HB3, etc.) are always valid — they don't
+      // appear in DeviceProperties so Device.isSupported() returns false for them.
+      // For standalone cameras acting as their own station, fall back to Device.isSupported().
+      const isKnownStation = Device.isStation(stationType);
+      if (!isKnownStation && !Device.isSupported(stationType)) {
         log.warn(`[STATION SKIP] "${station.getName()}" (type ${stationType}) is unsupported by eufy-security-client — skipping accessory creation`);
         continue;
       }
 
-      const stationSerial = station.getSerial();
-
       // Create if: it's a hub/base station OR it has devices
-      const shouldCreate =
-        Device.isStation(stationType) ||
-        stationsWithDevices.has(stationSerial);
+      const shouldCreate = isKnownStation || stationsWithDevices.has(stationSerial);
 
       if (!shouldCreate) {
         stationsSkipped++;
