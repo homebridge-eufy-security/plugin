@@ -177,6 +177,10 @@
   background: var(--bs-primary, #0d6efd);
 }
 
+.unsupported-stepper__circle--warning {
+  background: var(--bs-warning, #ffc107);
+}
+
 .unsupported-stepper__circle--danger {
   background: var(--bs-danger, #dc3545);
 }
@@ -206,6 +210,16 @@
 .unsupported-detail__actions .btn {
   flex: 1;
   text-align: center;
+}
+
+.unsupported-detail__paste-note {
+  font-size: 0.8rem;
+  color: var(--eufy-muted);
+  margin-top: 12px;
+  padding: 8px 12px;
+  background: rgba(255, 193, 7, 0.1);
+  border-left: 3px solid var(--bs-warning, #ffc107);
+  border-radius: 4px;
 }
 
 .unsupported-detail__info {
