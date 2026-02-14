@@ -17,6 +17,7 @@ import { EntrySensorAccessory } from './accessories/EntrySensorAccessory.js';
 import { MotionSensorAccessory } from './accessories/MotionSensorAccessory.js';
 import { CameraAccessory } from './accessories/CameraAccessory.js';
 import { LockAccessory } from './accessories/LockAccessory.js';
+import { SmartDropAccessory } from './accessories/SmartDropAccessory.js';
 import { AutoSyncStationAccessory } from './accessories/AutoSyncStationAccessory.js';
 
 import {
@@ -29,6 +30,7 @@ import {
   Camera,
   UserType,
   Lock,
+  SmartDrop,
   libVersion,
   LogLevel,
 } from 'eufy-security-client';
@@ -832,6 +834,11 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
     if (Device.isEntrySensor(type)) {
       log.debug(accessory.displayName + ' isEntrySensor!');
       new EntrySensorAccessory(this, accessory, device as EntrySensor);
+    }
+
+    if (Device.isSmartDrop(type)) {
+      log.debug(accessory.displayName + ' isSmartDrop!');
+      new SmartDropAccessory(this, accessory, device as SmartDrop);
     }
 
     if (Device.isLock(type)) {
