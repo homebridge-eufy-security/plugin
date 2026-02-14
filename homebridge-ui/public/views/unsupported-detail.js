@@ -100,7 +100,8 @@ const UnsupportedDetailView = {
     const steps = [
       { num: '1', label: 'Check', color: 'success' },
       { num: '2', label: 'Search', color: 'primary' },
-      { num: '3', label: 'Create', color: 'danger' },
+      { num: '3', label: 'Copy', color: 'warning' },
+      { num: '4', label: 'Create', color: 'danger' },
     ];
     steps.forEach((step, i) => {
       const stepEl = document.createElement('div');
@@ -138,15 +139,26 @@ const UnsupportedDetailView = {
     searchBtn.textContent = 'Search Existing Issues ↗';
     btnGroup.appendChild(searchBtn);
 
-    // 3) Create new issue using the device_support template
+    // 3) Copy device JSON to clipboard
+    const deviceDump = JSON.stringify(deviceInfo, null, 2);
+    const copyJsonBtn = document.createElement('button');
+    copyJsonBtn.className = 'btn btn-outline-warning';
+    copyJsonBtn.textContent = 'Copy Device Info';
+    copyJsonBtn.addEventListener('click', () => {
+      navigator.clipboard.writeText(deviceDump).then(() => {
+        copyJsonBtn.textContent = '✓ Copied!';
+        setTimeout(() => { copyJsonBtn.textContent = 'Copy Device Info'; }, 2000);
+      });
+    });
+    btnGroup.appendChild(copyJsonBtn);
+
+    // 4) Create new issue (without embedding JSON — user pastes it)
     const model = props.model || accessory.type;
     const issueTitle = encodeURIComponent(`[Device Support] ${model} (Type ${accessory.type})`);
-    const deviceDump = JSON.stringify(deviceInfo, null, 2);
     const templateParams = [
       `template=device_support.yml`,
       `title=${issueTitle}`,
       `labels=${LABEL}`,
-      `device_info=${encodeURIComponent(deviceDump)}`,
     ].join('&');
     const createBtn = document.createElement('a');
     createBtn.href = `https://github.com/${REPO}/issues/new?${templateParams}`;
@@ -157,6 +169,14 @@ const UnsupportedDetailView = {
     btnGroup.appendChild(createBtn);
 
     stepsWrap.appendChild(btnGroup);
+
+    // Paste reminder note
+    const pasteNote = document.createElement('p');
+    pasteNote.className = 'unsupported-detail__paste-note';
+    pasteNote.innerHTML = Helpers.iconHtml('info.svg', 14) +
+      ' Copy the <strong>Device Information</strong> below first, then paste it into the issue form on GitHub.';
+    stepsWrap.appendChild(pasteNote);
+
     section.appendChild(stepsWrap);
 
     // External links note
