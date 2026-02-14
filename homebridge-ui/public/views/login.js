@@ -10,6 +10,8 @@ const LoginView = {
   _captchaData: null,
   _credentials: null,
   _container: null,
+  /** @type {object|null} Login options to be consumed by _renderDiscovery for inline auth */
+  _loginOptions: null,
 
   render(container) {
     this._container = container;
@@ -173,62 +175,32 @@ const LoginView = {
     btnReconnect.addEventListener('click', async () => {
       btnReconnect.disabled = true;
       btnStart.disabled = true;
-      const spinner = body.querySelector('#reconnect-spinner');
-      spinner.classList.remove('d-none');
 
       try {
         // Get saved credentials from plugin config
         const config = await Config.get();
         if (!config.username || !config.password) {
-          throw new Error('No saved credentials found.');
+          throw new Error('No saved credentials found. Please log in manually.');
         }
 
-        const result = await Api.login({
+        // Go straight to discovery — auth will happen there
+        this._credentials = null; // reconnect uses existing config
+        this._loginOptions = {
           username: config.username,
           password: config.password,
           country: config.country || 'US',
           deviceName: config.deviceName || '',
           reconnect: true,
-        });
-
-        if (result.success) {
-          this._currentStep = this.STEP.DISCOVERY;
-          this._renderStep();
-        } else if (result.failReason === 2) {
-          this._currentStep = this.STEP.TFA;
-          this._renderStep();
-        } else if (result.failReason === 1) {
-          this._captchaData = result.data;
-          this._currentStep = this.STEP.CAPTCHA;
-          this._renderStep();
-        } else {
-          spinner.classList.add('d-none');
-          btnReconnect.disabled = false;
-          btnStart.disabled = false;
-          const errMsg = result.error || 'Refresh failed. Please try a full login.';
-
-          // Show error as a hover tooltip on the Refresh button (consistent with other UI help)
-          btnReconnect.classList.add('eufy-tooltip');
-          btnReconnect.setAttribute('data-tooltip', errMsg);
-          btnReconnect.classList.add('btn-outline-danger');
-
-          // Remove tooltip and visual error state after a short period
-          setTimeout(() => {
-            btnReconnect.classList.remove('eufy-tooltip');
-            btnReconnect.removeAttribute('data-tooltip');
-            btnReconnect.classList.remove('btn-outline-danger');
-          }, 6000);
-        }
+        };
+        this._currentStep = this.STEP.DISCOVERY;
+        this._renderStep();
       } catch (e) {
-        spinner.classList.add('d-none');
         btnReconnect.disabled = false;
         btnStart.disabled = false;
-
-        const errMsg = 'Connection error: ' + (e.message || e);
+        const errMsg = e.message || 'Failed to load credentials.';
         btnReconnect.classList.add('eufy-tooltip');
         btnReconnect.setAttribute('data-tooltip', errMsg);
         btnReconnect.classList.add('btn-outline-danger');
-
         setTimeout(() => {
           btnReconnect.classList.remove('eufy-tooltip');
           btnReconnect.removeAttribute('data-tooltip');
@@ -242,8 +214,6 @@ const LoginView = {
   _renderCredentials(wrap) {
     const card = this._card(wrap, 'Sign In');
     const body = card.querySelector('.card-body');
-
-    this._renderStepDots(body, 1);
 
     body.insertAdjacentHTML('beforeend', `
       <div class="mb-3">
@@ -317,51 +287,24 @@ const LoginView = {
       return;
     }
 
-    this._setLoading(body, true);
-    this._hideError(body);
+    // Stash credentials in memory — save only after full auth succeeds
+    this._credentials = { username: email, password: password, country: country, deviceName: deviceName };
 
-    try {
-      // Stash credentials in memory — save only after full auth succeeds
-      this._credentials = { username: email, password: password, country: country, deviceName: deviceName };
-
-      const result = await Api.login({
-        username: email,
-        password: password,
-        country: country,
-        deviceName: deviceName,
-      });
-
-      if (result.success) {
-        this._currentStep = this.STEP.DISCOVERY;
-        this._renderStep();
-      } else if (result.failReason === 2) {
-        // TFA required
-        this._currentStep = this.STEP.TFA;
-        this._renderStep();
-      } else if (result.failReason === 1) {
-        // Captcha required
-        this._captchaData = result.data;
-        this._currentStep = this.STEP.CAPTCHA;
-        this._renderStep();
-      } else if (result.failReason === 3) {
-        this._showError(body, 'Login timed out. Please try again.');
-        this._setLoading(body, false);
-      } else {
-        this._showError(body, 'Login failed. Please check your credentials.');
-        this._setLoading(body, false);
-      }
-    } catch (e) {
-      this._showError(body, 'Connection error: ' + (e.message || e));
-      this._setLoading(body, false);
-    }
+    // Go straight to discovery — auth will happen there
+    this._loginOptions = {
+      username: email,
+      password: password,
+      country: country,
+      deviceName: deviceName,
+    };
+    this._currentStep = this.STEP.DISCOVERY;
+    this._renderStep();
   },
 
   // ===== Step 2: TFA =====
   _renderTFA(wrap) {
     const card = this._card(wrap, 'Two-Factor Authentication');
     const body = card.querySelector('.card-body');
-
-    this._renderStepDots(body, 2);
 
     body.insertAdjacentHTML('beforeend', `
       <p class="text-muted" style="font-size: 0.85rem;">
@@ -394,30 +337,16 @@ const LoginView = {
       return;
     }
 
-    this._setLoading(body, true);
-    this._hideError(body);
-
-    try {
-      const result = await Api.login({ verifyCode: code });
-      if (result.success) {
-        this._currentStep = this.STEP.DISCOVERY;
-        this._renderStep();
-      } else {
-        this._showError(body, 'Invalid code. Please try again.');
-        this._setLoading(body, false);
-      }
-    } catch (e) {
-      this._showError(body, 'Error: ' + (e.message || e));
-      this._setLoading(body, false);
-    }
+    // Go straight to discovery — auth outcome arrives via push events
+    this._loginOptions = { verifyCode: code };
+    this._currentStep = this.STEP.DISCOVERY;
+    this._renderStep();
   },
 
   // ===== Step 3: Captcha =====
   _renderCaptcha(wrap) {
     const card = this._card(wrap, 'Captcha Verification');
     const body = card.querySelector('.card-body');
-
-    this._renderStepDots(body, 3);
 
     body.insertAdjacentHTML('beforeend', `
       <p class="text-muted" style="font-size: 0.85rem;">
@@ -457,87 +386,181 @@ const LoginView = {
       return;
     }
 
-    this._setLoading(body, true);
-    this._hideError(body);
-
-    try {
-      const result = await Api.login({
-        captcha: {
-          captchaCode: code,
-          captchaId: this._captchaData.id,
-        },
-      });
-      if (result.success) {
-        this._currentStep = this.STEP.DISCOVERY;
-        this._renderStep();
-      } else if (result.failReason === 2) {
-        // TFA required after captcha — Eufy sent an OTP
-        this._currentStep = this.STEP.TFA;
-        this._renderStep();
-      } else if (result.failReason === 1) {
-        // New captcha
-        this._captchaData = result.data;
-        this._showError(body, 'Incorrect captcha. Please try again.');
-        if (result.data && result.data.captcha) {
-          body.querySelector('#captcha-image').src = result.data.captcha;
-        }
-        this._setLoading(body, false);
-      } else if (result.failReason === 3) {
-        this._showError(body, 'Login timed out. Please try again.');
-        this._setLoading(body, false);
-      } else {
-        this._showError(body, 'Verification failed. Please try again.');
-        this._setLoading(body, false);
-      }
-    } catch (e) {
-      this._showError(body, 'Error: ' + (e.message || e));
-      this._setLoading(body, false);
-    }
+    // Go straight to discovery — auth outcome arrives via push events
+    this._loginOptions = {
+      captcha: {
+        captchaCode: code,
+        captchaId: this._captchaData.id,
+      },
+    };
+    this._currentStep = this.STEP.DISCOVERY;
+    this._renderStep();
   },
 
   // ===== Step 4: Discovery =====
   _renderDiscovery(wrap) {
+    // loginOptions may be set by the reconnect button or _doLogin before navigating here
+    const loginOptions = this._loginOptions || null;
+    this._loginOptions = null;
+
+    const isAuthNeeded = !!loginOptions;
+
     wrap.innerHTML = `
       <div class="discovery-screen">
         <div class="discovery-screen__icon">${Helpers.iconHtml('satellite_alt.svg', 32)}</div>
-        <div class="discovery-screen__title">Discovering your devices...</div>
+        <div class="discovery-screen__title">${isAuthNeeded ? 'Refreshing your devices...' : 'Discovering your devices...'}</div>
         <div class="discovery-screen__subtitle">
-          Connecting to Eufy servers and detecting all your stations and devices. Hang tight!
+          ${isAuthNeeded ? 'Authenticating and re-discovering all your stations and devices.' : 'Connecting to Eufy servers and detecting all your stations and devices. Hang tight!'}
         </div>
-        <div class="progress mt-4" style="max-width: 300px; margin: 0 auto; height: 6px;">
+        <div class="progress mt-4" style="margin: 0 auto; height: 6px;">
           <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar"
-               style="width: 0%" id="discovery-progress"></div>
+               style="width: 5%" id="discovery-progress"></div>
         </div>
-        <div class="text-muted mt-2" style="font-size: 0.8rem;" id="discovery-status">Initializing...</div>
+        <div class="text-muted mt-2" style="font-size: 0.8rem;" id="discovery-status">${isAuthNeeded ? 'Authenticating...' : 'Connecting to Eufy Cloud...'}</div>
+        <div id="discovery-warning" class="d-none mt-3" style="margin: 0 auto;"></div>
+        <div id="discovery-error" class="d-none mt-3" style="margin: 0 auto;"></div>
       </div>
     `;
 
-    // Animate progress bar
-    let progress = 0;
     const progressBar = wrap.querySelector('#discovery-progress');
     const statusEl = wrap.querySelector('#discovery-status');
+    const warningEl = wrap.querySelector('#discovery-warning');
+    const errorEl = wrap.querySelector('#discovery-error');
+    let warningActive = false;
 
-    const messages = [
-      { at: 5, text: 'Authenticating with Eufy Cloud...' },
-      { at: 15, text: 'Fetching station list...' },
-      { at: 30, text: 'Detecting devices...' },
-      { at: 50, text: 'Analyzing compatibility...' },
-      { at: 70, text: 'Processing device features...' },
-      { at: 85, text: 'Almost there...' },
-    ];
+    // --- Show auth error with a back-to-login button ---
+    const showAuthError = (message) => {
+      progressBar.classList.remove('progress-bar-animated');
+      progressBar.classList.add('bg-danger');
+      statusEl.textContent = '';
+      errorEl.className = 'mt-3';
+      errorEl.style.maxWidth = '400px';
+      errorEl.style.margin = '0 auto';
+      errorEl.innerHTML = `
+        <div class="alert alert-danger mb-2" role="alert" style="font-size: 0.82rem;">
+          ${Helpers.escHtml(message)}
+        </div>
+        <button class="btn btn-sm btn-primary" id="btn-back-login">Back to Login</button>
+      `;
+      errorEl.querySelector('#btn-back-login').addEventListener('click', () => {
+        this._credentials = null;
+        this._currentStep = this.STEP.WELCOME;
+        this._renderStep();
+      });
+    };
 
-    const interval = setInterval(() => {
-      progress += 2;
-      if (progress > 90) progress = 90; // Cap at 90% until event arrives
-      progressBar.style.width = progress + '%';
+    // --- Handler functions (shared by catch-up replay and live events) ---
+    const handleProgress = (data) => {
+      if (!data) return;
 
-      const msg = messages.filter((m) => m.at <= progress).pop();
-      if (msg) statusEl.textContent = msg.text;
-    }, 1000);
+      if (typeof data.progress === 'number' && data.progress > 0) {
+        progressBar.style.width = data.progress + '%';
+      }
+
+      // Only update status text when no warning is being shown
+      if (!warningActive && data.message) {
+        statusEl.textContent = data.message;
+      }
+    };
+
+    const handleWarning = (data) => {
+      if (!data) return;
+      warningActive = true;
+
+      // Update status to indicate we're waiting
+      statusEl.textContent = 'Waiting for extra device details...';
+
+      warningEl.className = 'mt-3';
+      warningEl.style.maxWidth = '400px';
+      warningEl.style.margin = '0 auto';
+      warningEl.innerHTML = `
+        <div class="alert alert-warning mb-2" role="alert" style="font-size: 0.82rem; text-align: left;">
+          <strong>${data.unsupportedCount || ''} unsupported device(s)</strong> detected.<br>
+          <span class="text-muted" style="font-size: 0.78rem;">${Helpers.escHtml(data.unsupportedNames || '')}</span>
+          <hr class="my-2">
+          Collecting raw device data for diagnostics. This may take up to <strong>${data.waitSeconds || 120}s</strong>.
+          <br>You can <strong>skip</strong> this step and proceed now, or <strong>wait</strong> for better diagnostic info.
+        </div>
+        <div class="d-flex gap-2 justify-content-center">
+          <button class="btn btn-sm btn-outline-secondary" id="btn-skip-intel">Skip &amp; Continue</button>
+          <button class="btn btn-sm btn-primary" id="btn-wait-intel" disabled>
+            Waiting... <span id="intel-countdown">${data.waitSeconds || 120}</span>s
+          </button>
+        </div>
+      `;
+
+      // Countdown timer on the wait button
+      let remaining = data.waitSeconds || 120;
+      const countdownEl = warningEl.querySelector('#intel-countdown');
+      const waitBtn = warningEl.querySelector('#btn-wait-intel');
+      const countdownInterval = setInterval(() => {
+        remaining--;
+        if (countdownEl) countdownEl.textContent = remaining;
+        if (remaining <= 0) {
+          clearInterval(countdownInterval);
+        }
+      }, 1000);
+
+      // Skip button — tell server to abort the wait
+      warningEl.querySelector('#btn-skip-intel').addEventListener('click', () => {
+        clearInterval(countdownInterval);
+        warningActive = false;
+        warningEl.innerHTML = '<div class="text-muted" style="font-size: 0.78rem;">Skipped — finalizing devices...</div>';
+        statusEl.textContent = 'Finalizing...';
+        Api.skipIntelWait().catch(() => { /* ignore */ });
+      });
+
+      // Wait button stays disabled — it's just a visual countdown
+      // When the server finishes (addAccessory event), it will proceed automatically
+    };
+
+    // Register live event listeners
+    Api.onDiscoveryProgress(handleProgress);
+    Api.onDiscoveryWarning(handleWarning);
+
+    // Auth outcome event listeners — all driven by server push events
+    Api.onAuthSuccess(() => {
+      // Server already sends discoveryProgress with "Authenticated" message
+      catchUpOnState();
+    });
+    Api.onAuthError((data) => {
+      showAuthError(data && data.message ? data.message : 'Authentication failed.');
+    });
+    Api.onTfaRequest(() => {
+      this._currentStep = this.STEP.TFA;
+      this._renderStep();
+    });
+    Api.onCaptchaRequest((data) => {
+      this._captchaData = data;
+      this._currentStep = this.STEP.CAPTCHA;
+      this._renderStep();
+    });
+
+    // Catch up on discovery events that fired during the login request.
+    const catchUpOnState = () => {
+      Api.getDiscoveryState().then((state) => {
+        if (state && state.progress > 0) {
+          handleProgress(state);
+        }
+      }).catch(() => { /* ignore — live events will still work */ });
+    };
+
+    // Fire login request — resolves immediately, outcomes arrive as push events
+    if (isAuthNeeded) {
+      Api.login(loginOptions).catch((e) => {
+        showAuthError('Connection error: ' + (e.message || e));
+      });
+    } else {
+      // Auth already done (came from _doTFA / _doCaptcha) — just catch up
+      catchUpOnState();
+    }
 
     // Listen for the batch-processed accessories
-    Api.onAccessoriesReady((stations) => {
-      clearInterval(interval);
+    Api.onAccessoriesReady((payload) => {
+      warningActive = false;
+
+      const stations = Array.isArray(payload) ? payload : (payload && payload.stations) || [];
+      const extended = payload && payload.extendedDiscovery;
 
       // If no stations or no devices were discovered, show an error instead of navigating
       const totalDevices = (stations || []).reduce((sum, s) => sum + (s.devices ? s.devices.length : 0), 0);
@@ -550,7 +573,13 @@ const LoginView = {
       }
 
       progressBar.style.width = '100%';
-      statusEl.textContent = 'Done!';
+      progressBar.classList.remove('progress-bar-animated');
+      statusEl.textContent = extended
+        ? `Done — ${totalDevices} device(s) discovered (collected extra details for unsupported).`
+        : `Done — ${totalDevices} device(s) discovered!`;
+
+      // Hide the warning area
+      warningEl.className = 'd-none';
 
       // Auth fully complete — save credentials to config
       if (this._credentials) {
@@ -599,19 +628,6 @@ const LoginView = {
     `;
     container.appendChild(card);
     return card;
-  },
-
-  _renderStepDots(body, activeStep) {
-    const dots = document.createElement('div');
-    dots.className = 'login-step-indicator';
-    for (let i = 1; i <= 3; i++) {
-      const dot = document.createElement('div');
-      dot.className = 'login-step-dot';
-      if (i === activeStep) dot.classList.add('login-step-dot--active');
-      if (i < activeStep) dot.classList.add('login-step-dot--done');
-      dots.appendChild(dot);
-    }
-    body.appendChild(dots);
   },
 
   _showError(body, msg) {
