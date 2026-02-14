@@ -23,7 +23,6 @@ import {
   EufySecurity,
   EufySecurityConfig,
   Device,
-  DeviceType,
   Station,
   EntrySensor,
   MotionSensor,
