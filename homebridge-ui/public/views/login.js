@@ -434,7 +434,6 @@ const LoginView = {
       progressBar.classList.add('bg-danger');
       statusEl.textContent = '';
       errorEl.className = 'mt-3';
-      errorEl.style.maxWidth = '400px';
       errorEl.style.margin = '0 auto';
       errorEl.innerHTML = `
         <div class="alert alert-danger mb-2" role="alert" style="font-size: 0.82rem;">
@@ -457,8 +456,8 @@ const LoginView = {
         progressBar.style.width = data.progress + '%';
       }
 
-      // Only update status text when no warning is being shown
-      if (!warningActive && data.message) {
+      // Update status text — allow unsupportedWait messages through even when warning banner is shown
+      if (data.message && (!warningActive || data.phase === 'unsupportedWait')) {
         statusEl.textContent = data.message;
       }
     };
@@ -471,46 +470,27 @@ const LoginView = {
       statusEl.textContent = 'Waiting for extra device details...';
 
       warningEl.className = 'mt-3';
-      warningEl.style.maxWidth = '400px';
       warningEl.style.margin = '0 auto';
       warningEl.innerHTML = `
         <div class="alert alert-warning mb-2" role="alert" style="font-size: 0.82rem; text-align: left;">
           <strong>${data.unsupportedCount || ''} unsupported device(s)</strong> detected.<br>
           <span class="text-muted" style="font-size: 0.78rem;">${Helpers.escHtml(data.unsupportedNames || '')}</span>
           <hr class="my-2">
-          Collecting raw device data for diagnostics. This may take up to <strong>${data.waitSeconds || 120}s</strong>.
-          <br>You can <strong>skip</strong> this step and proceed now, or <strong>wait</strong> for better diagnostic info.
+          Collecting raw device data for diagnostics.
         </div>
-        <div class="d-flex gap-2 justify-content-center">
+        <div class="d-flex justify-content-center">
           <button class="btn btn-sm btn-outline-secondary" id="btn-skip-intel">Skip &amp; Continue</button>
-          <button class="btn btn-sm btn-primary" id="btn-wait-intel" disabled>
-            Waiting... <span id="intel-countdown">${data.waitSeconds || 120}</span>s
-          </button>
         </div>
       `;
 
-      // Countdown timer on the wait button
-      let remaining = data.waitSeconds || 120;
-      const countdownEl = warningEl.querySelector('#intel-countdown');
-      const waitBtn = warningEl.querySelector('#btn-wait-intel');
-      const countdownInterval = setInterval(() => {
-        remaining--;
-        if (countdownEl) countdownEl.textContent = remaining;
-        if (remaining <= 0) {
-          clearInterval(countdownInterval);
-        }
-      }, 1000);
-
       // Skip button — tell server to abort the wait
       warningEl.querySelector('#btn-skip-intel').addEventListener('click', () => {
-        clearInterval(countdownInterval);
         warningActive = false;
         warningEl.innerHTML = '<div class="text-muted" style="font-size: 0.78rem;">Skipped — finalizing devices...</div>';
         statusEl.textContent = 'Finalizing...';
         Api.skipIntelWait().catch(() => { /* ignore */ });
       });
 
-      // Wait button stays disabled — it's just a visual countdown
       // When the server finishes (addAccessory event), it will proceed automatically
     };
 
