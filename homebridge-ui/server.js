@@ -475,11 +475,14 @@ class UiServer extends HomebridgePluginUiServer {
     }
 
     // --- Collect unsupported items (stations + devices) upfront ---
+    // Hub/base stations (type 0, HB3, etc.) are not in DeviceProperties so
+    // Device.isSupported() returns false for them — exclude known station types.
     const unsupportedItems = [];
 
     for (const station of this.pendingStations) {
       try {
-        if (!Device.isSupported(station.getDeviceType())) unsupportedItems.push(station);
+        const st = station.getDeviceType();
+        if (!Device.isStation(st) && !Device.isSupported(st)) unsupportedItems.push(station);
       } catch (e) { /* ignore */ }
     }
     for (const device of this.pendingDevices) {
