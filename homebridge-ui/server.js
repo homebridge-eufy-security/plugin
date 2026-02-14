@@ -10,12 +10,8 @@ import { createRequire } from 'module';
 const require = createRequire(import.meta.url);
 const { version: LIB_VERSION } = require('../package.json');
 
-const LoginFailReason = Object.freeze({
-  UNKNOWN: 0,
-  CAPTCHA: 1,
-  TFA: 2,
-  TIMEOUT: 3,
-});
+/** Max time (ms) to wait for the client to populate raw data on unsupported items. */
+const UNSUPPORTED_INTEL_WAIT_MS = 2 * 60 * 1000; // 2 minutes
 
 class UiServer extends HomebridgePluginUiServer {
 
@@ -34,6 +30,12 @@ class UiServer extends HomebridgePluginUiServer {
   pendingDevices = [];
   processingTimeout;
 
+  /** Set to true when the user clicks "Skip" in the UI to abort the unsupported intel wait. */
+  _skipIntelWait = false;
+
+  /** Current discovery phase — exposed via /discoveryState for UI catch-up. */
+  _discoveryPhase = 'idle';
+
   /** Seconds to wait after the last station/device event before processing. */
   static DISCOVERY_DEBOUNCE_SEC = 15;
 
@@ -45,7 +47,7 @@ class UiServer extends HomebridgePluginUiServer {
     trustedDeviceName: 'My Phone',
     persistentDir: '',
     p2pConnectionSetup: 0,
-    pollingIntervalMinutes: 99,
+    pollingIntervalMinutes: 1,
     eventDurationSeconds: 10,
     acceptInvitations: true,
   };
@@ -116,6 +118,20 @@ class UiServer extends HomebridgePluginUiServer {
     this.onRequest('/reset', this.resetPlugin.bind(this));
     this.onRequest('/downloadDiagnostics', this.downloadDiagnostics.bind(this));
     this.onRequest('/systemInfo', this.getSystemInfo.bind(this));
+    this.onRequest('/skipIntelWait', () => {
+      this._skipIntelWait = true;
+      this.log.info('User requested to skip unsupported intel wait');
+      return { ok: true };
+    });
+    this.onRequest('/discoveryState', () => ({
+      phase: this._discoveryPhase,
+      progress: this._discoveryPhase === 'queuing' ? 30 : this._discoveryPhase === 'processing' ? 50 : 0,
+      stations: this.pendingStations.length,
+      devices: this.pendingDevices.length,
+      message: this.pendingStations.length > 0 || this.pendingDevices.length > 0
+        ? `Discovered ${this.pendingStations.length} station(s), ${this.pendingDevices.length} device(s)...`
+        : '',
+    }));
   }
 
   async deleteFileIfExists(filePath) {
@@ -179,6 +195,7 @@ class UiServer extends HomebridgePluginUiServer {
       this.stations = [];
       this.pendingStations = [];
       this.pendingDevices = [];
+      this._discoveryPhase = 'authenticating';
       this.log.debug('init eufyClient');
       this.config.username = options.username;
       this.config.password = options.password;
@@ -188,51 +205,103 @@ class UiServer extends HomebridgePluginUiServer {
         this.eufyClient = await EufySecurity.initialize(this.config, this.tsLog);
         this.eufyClient?.on('station added', this.addStation.bind(this));
         this.eufyClient?.on('device added', this.addDevice.bind(this));
+        this.eufyClient?.on('push connect', () => this.log.debug('Push Connected!'));
+        this.eufyClient?.on('push close', () => this.log.debug('Push Closed!'));
+        this.eufyClient?.on('connect', () => this.log.debug('Connected!'));
+        this.eufyClient?.on('close', () => this.log.debug('Closed!'));
       } catch (error) {
         this.log.error(error);
       }
     }
 
-    return new Promise((resolve, reject) => {
-      setTimeout(() => {
-        resolve({ success: false, failReason: LoginFailReason.TIMEOUT });
-      }, 25 * 1000);
+    // Timeout — fire authError event after 25s if nothing else resolved
+    this._loginTimeout = setTimeout(() => {
+      this.pushEvent('authError', { message: 'Authentication timed out. Please try again.' });
+    }, 25 * 1000);
 
-      if (options && options.username && options.password && options.country) {
-        this.log.debug('login with credentials');
-        try {
-          this.loginHandlers(resolve);
-          this.eufyClient?.connect()
-            .then(() => this.log.debug('connected?: ' + this.eufyClient?.isConnected()))
-            .catch((error) => this.log.error(error));
-        } catch (error) {
-          this.log.error(error);
-          resolve({ success: false, failReason: LoginFailReason.UNKNOWN, data: { error } });
-        }
-      } else if (options && options.verifyCode) {
-        try {
-          this.loginHandlers(resolve);
-          this.eufyClient?.connect({ verifyCode: options.verifyCode, force: false });
-        } catch (error) {
-          resolve({ success: false, failReason: LoginFailReason.UNKNOWN, data: { error } });
-        }
-      } else if (options && options.captcha) {
-        try {
-          this.loginHandlers(resolve);
-          this.eufyClient?.connect({ captcha: { captchaCode: options.captcha.captchaCode, captchaId: options.captcha.captchaId }, force: false });
-        } catch (error) {
-          resolve({ success: false, failReason: LoginFailReason.UNKNOWN, data: { error } });
-        }
-      } else {
-        reject('unsupported login method');
+    if (options && options.username && options.password && options.country) {
+      this.log.debug('login with credentials');
+      try {
+        this._registerAuthHandlers();
+        this.eufyClient?.connect()
+          .then(() => this.log.debug('connected?: ' + this.eufyClient?.isConnected()))
+          .catch((error) => this.log.error(error));
+      } catch (error) {
+        this.log.error(error);
+        clearTimeout(this._loginTimeout);
+        this.pushEvent('authError', { message: 'Login error: ' + (error.message || error) });
       }
-    });
+    } else if (options && options.verifyCode) {
+      this.log.debug('login with TFA code');
+      this.pushEvent('discoveryProgress', {
+        phase: 'authenticating',
+        progress: 10,
+        message: 'Verifying TFA code...',
+      });
+      try {
+        this._registerAuthHandlers();
+        this.eufyClient?.connect({ verifyCode: options.verifyCode, force: false })
+          .then(() => this.log.debug('TFA connect resolved, connected?: ' + this.eufyClient?.isConnected()))
+          .catch((error) => {
+            this.log.error('TFA connect error: ' + error);
+            clearTimeout(this._loginTimeout);
+            this.pushEvent('authError', { message: 'TFA verification failed: ' + (error.message || error) });
+          });
+      } catch (error) {
+        clearTimeout(this._loginTimeout);
+        this.pushEvent('authError', { message: 'TFA verification error: ' + (error.message || error) });
+      }
+    } else if (options && options.captcha) {
+      this.log.debug('login with captcha');
+      this.pushEvent('discoveryProgress', {
+        phase: 'authenticating',
+        progress: 10,
+        message: 'Verifying captcha...',
+      });
+      try {
+        this._registerAuthHandlers();
+        this.eufyClient?.connect({ captcha: { captchaCode: options.captcha.captchaCode, captchaId: options.captcha.captchaId }, force: false })
+          .then(() => this.log.debug('Captcha connect resolved, connected?: ' + this.eufyClient?.isConnected()))
+          .catch((error) => {
+            this.log.error('Captcha connect error: ' + error);
+            clearTimeout(this._loginTimeout);
+            this.pushEvent('authError', { message: 'Captcha verification failed: ' + (error.message || error) });
+          });
+      } catch (error) {
+        clearTimeout(this._loginTimeout);
+        this.pushEvent('authError', { message: 'Captcha verification error: ' + (error.message || error) });
+      }
+    } else {
+      clearTimeout(this._loginTimeout);
+      this.pushEvent('authError', { message: 'Unsupported login method.' });
+    }
+
+    // Resolve immediately — all outcomes are delivered via push events
+    return { pending: true };
   }
 
-  loginHandlers(resolveCallback) {
-    this.eufyClient?.once('tfa request', () => resolveCallback({ success: false, failReason: LoginFailReason.TFA }));
-    this.eufyClient?.once('captcha request', (id, captcha) => resolveCallback({ success: false, failReason: LoginFailReason.CAPTCHA, data: { id, captcha } }));
-    this.eufyClient?.once('connect', () => resolveCallback({ success: true }));
+  /**
+   * Register one-time auth outcome handlers on the eufy client.
+   * All outcomes are delivered to the UI via push events.
+   */
+  _registerAuthHandlers() {
+    this.eufyClient?.once('tfa request', () => {
+      clearTimeout(this._loginTimeout);
+      this.pushEvent('tfaRequest', {});
+    });
+    this.eufyClient?.once('captcha request', (id, captcha) => {
+      clearTimeout(this._loginTimeout);
+      this.pushEvent('captchaRequest', { id, captcha });
+    });
+    this.eufyClient?.once('connect', () => {
+      clearTimeout(this._loginTimeout);
+      this.pushEvent('authSuccess', {});
+      this.pushEvent('discoveryProgress', {
+        phase: 'authenticating',
+        progress: 15,
+        message: 'Authenticated — waiting for devices...',
+      });
+    });
   }
 
   /**
@@ -322,6 +391,14 @@ class UiServer extends HomebridgePluginUiServer {
 
     this.pendingStations.push(station);
     this.log.debug(`${station.getName()}: Station queued for processing`);
+    this._discoveryPhase = 'queuing';
+    this.pushEvent('discoveryProgress', {
+      phase: 'queuing',
+      progress: 30,
+      stations: this.pendingStations.length,
+      devices: this.pendingDevices.length,
+      message: `Discovered ${this.pendingStations.length} station(s), ${this.pendingDevices.length} device(s)...`,
+    });
     this.resetDiscoveryDebounce();
   }
 
@@ -339,6 +416,14 @@ class UiServer extends HomebridgePluginUiServer {
 
     this.pendingDevices.push(device);
     this.log.debug(`${device.getName()}: Device queued for processing`);
+    this._discoveryPhase = 'queuing';
+    this.pushEvent('discoveryProgress', {
+      phase: 'queuing',
+      progress: 30,
+      stations: this.pendingStations.length,
+      devices: this.pendingDevices.length,
+      message: `Discovered ${this.pendingStations.length} station(s), ${this.pendingDevices.length} device(s)...`,
+    });
     this.resetDiscoveryDebounce();
   }
 
@@ -362,15 +447,25 @@ class UiServer extends HomebridgePluginUiServer {
     this.processingTimeout = setTimeout(() => {
       this.processPendingAccessories().catch(error => this.log.error('Error processing pending accessories:', error));
     }, delaySec * 1000);
-    // Close connection 5 seconds after processing is scheduled
+    // Close connection after processing + potential 2-min unsupported intel wait
+    const closeAfterSec = delaySec + (UNSUPPORTED_INTEL_WAIT_MS / 1000) + 15;
     this._closeTimeout = setTimeout(() => {
       this.eufyClient?.removeAllListeners();
       this.eufyClient?.close();
-    }, (delaySec + 5) * 1000);
+    }, closeAfterSec * 1000);
   }
 
   async processPendingAccessories() {
     this.log.debug(`Processing ${this.pendingStations.length} stations and ${this.pendingDevices.length} devices`);
+
+    this._discoveryPhase = 'processing';
+    this.pushEvent('discoveryProgress', {
+      phase: 'processing',
+      progress: 50,
+      stations: this.pendingStations.length,
+      devices: this.pendingDevices.length,
+      message: `Processing ${this.pendingStations.length} station(s) and ${this.pendingDevices.length} device(s)...`,
+    });
 
     if (this.pendingStations.length === 0 || this.pendingDevices.length === 0) {
       this.log.warn(
@@ -379,11 +474,54 @@ class UiServer extends HomebridgePluginUiServer {
       );
     }
 
-    // Build set of stations that have at least one device
-    const stationsWithDevices = new Set();
-    for (const device of this.pendingDevices) {
-      stationsWithDevices.add(device.getStationSerial());
+    // --- Collect unsupported items (stations + devices) upfront ---
+    const unsupportedItems = [];
+
+    for (const station of this.pendingStations) {
+      try {
+        if (!Device.isSupported(station.getDeviceType())) unsupportedItems.push(station);
+      } catch (e) { /* ignore */ }
     }
+    for (const device of this.pendingDevices) {
+      try {
+        if (!Device.isSupported(device.getDeviceType())) unsupportedItems.push(device);
+      } catch (e) { /* ignore */ }
+    }
+
+    // If unsupported items exist, notify UI and wait (user can skip via /skipIntelWait)
+    if (unsupportedItems.length > 0) {
+      const names = unsupportedItems.map(i => `${i.getName()} (type ${i.getDeviceType()})`).join(', ');
+      this._skipIntelWait = false;
+
+      this.pushEvent('discoveryWarning', {
+        unsupportedCount: unsupportedItems.length,
+        unsupportedNames: names,
+        waitSeconds: UNSUPPORTED_INTEL_WAIT_MS / 1000,
+        message: `${unsupportedItems.length} unsupported device(s) detected: ${names}`,
+      });
+
+      this.log.info(`Unsupported intel: waiting up to ${UNSUPPORTED_INTEL_WAIT_MS / 1000}s for raw data (user can skip)`);
+
+      // Cancellable wait — check _skipIntelWait every second
+      const pollMs = 1000;
+      let waited = 0;
+      while (waited < UNSUPPORTED_INTEL_WAIT_MS && !this._skipIntelWait) {
+        await this.delay(pollMs);
+        waited += pollMs;
+      }
+
+      if (this._skipIntelWait) {
+        this.log.info(`Unsupported intel wait skipped by user after ${waited / 1000}s`);
+      } else {
+        this.log.info(`Unsupported intel wait completed (${waited / 1000}s)`);
+      }
+    }
+
+    this.pushEvent('discoveryProgress', {
+      phase: 'buildingStations',
+      progress: 65,
+      message: 'Building station list...',
+    });
 
     // Process queued stations
     for (const station of this.pendingStations) {
@@ -398,6 +536,7 @@ class UiServer extends HomebridgePluginUiServer {
         disabled: false,
         devices: [],
         properties: station.getProperties(),
+        unsupported: false,
       };
 
       try {
@@ -414,6 +553,8 @@ class UiServer extends HomebridgePluginUiServer {
         if (!Device.isSupported(stationType)) {
           // Device type not recognized by eufy-security-client — truly unsupported
           s.unsupported = true;
+          s.rawDevice = station.getRawStation ? station.getRawStation() : undefined;
+
           this.log.warn(`Station "${station.getName()}" (type ${stationType}) is not supported by eufy-security-client`);
 
           // Immediately add the unsupported station and skip further processing
@@ -446,9 +587,16 @@ class UiServer extends HomebridgePluginUiServer {
       this.stations.push(s);
     }
 
+    this.pushEvent('discoveryProgress', {
+      phase: 'buildingDevices',
+      progress: 80,
+      message: 'Building device list...',
+    });
+
     // Process queued devices and attach them to stations
     for (const device of this.pendingDevices) {
       const devType = device.getDeviceType();
+
       const d = {
         uniqueId: device.getSerial(),
         displayName: device.getName(),
@@ -456,7 +604,7 @@ class UiServer extends HomebridgePluginUiServer {
         typename: DeviceType[devType],
         standalone: device.getSerial() === device.getStationSerial(),
         hasBattery: device.hasBattery(),
-      isCamera: device.isCamera() || Device.isLockWifiVideo(devType),
+        isCamera: device.isCamera() || Device.isLockWifiVideo(devType),
         isDoorbell: device.isDoorbell(),
         isKeypad: device.isKeyPad(),
         isMotionSensor: Device.isMotionSensor(devType),
@@ -470,11 +618,13 @@ class UiServer extends HomebridgePluginUiServer {
         DeviceChimeIndoor: device.hasProperty(PropertyName.DeviceChimeIndoor),
         disabled: false,
         properties: device.getProperties(),
+        unsupported: false,
       };
 
       // Mark device as unsupported if eufy-security-client doesn't recognize this device type
       if (!Device.isSupported(devType)) {
         d.unsupported = true;
+        d.rawDevice = device.getRawDevice ? device.getRawDevice() : undefined;
       }
 
       if (device.hasProperty(PropertyName.DeviceChargingStatus)) {
@@ -517,7 +667,14 @@ class UiServer extends HomebridgePluginUiServer {
     } catch (error) {
       this.log.error('Error storing accessories:', error);
     }
-    this.pushEvent('addAccessory', this.stations);
+
+    this.pushEvent('discoveryProgress', {
+      phase: 'done',
+      progress: 100,
+      message: 'Discovery complete!',
+    });
+
+    this.pushEvent('addAccessory', { stations: this.stations, extendedDiscovery: unsupportedItems.length > 0 });
   }
 
   storeAccessories() {
