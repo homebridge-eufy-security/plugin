@@ -102,8 +102,15 @@
 }
 
 .device-card--unsupported {
-  opacity: 0.5;
+  opacity: 0.65;
   cursor: pointer;
+}
+
+.device-card__hint {
+  font-size: 0.7rem;
+  color: var(--eufy-primary);
+  margin-top: 4px;
+  font-style: italic;
 }
 
 /* ===== Unsupported Detail View ===== */

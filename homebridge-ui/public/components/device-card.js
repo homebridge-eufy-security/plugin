@@ -105,6 +105,11 @@ const DeviceCard = {
       badge.className = 'badge badge-unsupported';
       badge.textContent = 'Not Supported';
       badgeArea.appendChild(badge);
+
+      const hint = document.createElement('div');
+      hint.className = 'device-card__hint';
+      hint.textContent = 'Click to help us add support';
+      badgeArea.appendChild(hint);
     } else if (isIgnored) {
       const badge = document.createElement('span');
       badge.className = 'badge bg-secondary';
