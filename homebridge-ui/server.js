@@ -68,7 +68,7 @@ class UiServer extends HomebridgePluginUiServer {
 
   initLogger() {
     const logOptions = {
-      name: '[EufySecurity]', // Name prefix for log messages
+      name: '[EufySecurity UI]', // Name prefix for log messages
       prettyLogTemplate: '[{{mm}}/{{dd}}/{{yyyy}}, {{hh}}:{{MM}}:{{ss}}]\t{{name}}\t{{logLevelName}}\t', // Template for pretty log output
       prettyErrorTemplate: '\n{{errorName}} {{errorMessage}}\nerror stack:\n{{errorStack}}', // Template for pretty error output
       prettyErrorStackTemplate: '  • {{fileName}}\t{{method}}\n\t{{fileNameWithLine}}', // Template for error stack trace
