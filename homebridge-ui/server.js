@@ -51,6 +51,9 @@ class UiServer extends HomebridgePluginUiServer {
     pollingIntervalMinutes: 1,
     eventDurationSeconds: 10,
     acceptInvitations: true,
+    logging: {
+      level: 1, // LogLevel.Debug — enables eufy-security-client internal logging to configui-lib.log
+    },
   };
 
   constructor() {
@@ -70,13 +73,13 @@ class UiServer extends HomebridgePluginUiServer {
   initLogger() {
     const logOptions = {
       name: `[EufySecurity-UI-${LIB_VERSION}]`, // Name prefix for log messages
-      prettyLogTemplate: '{{name}}\t{{logLevelName}}\t', // Template for pretty log output
+      prettyLogTemplate: '[{{mm}}/{{dd}}/{{yyyy}}, {{hh}}:{{MM}}:{{ss}}]\t{{name}}\t{{logLevelName}}\t', // Template for pretty log output
       prettyErrorTemplate: '\n{{errorName}} {{errorMessage}}\nerror stack:\n{{errorStack}}', // Template for pretty error output
       prettyErrorStackTemplate: '  • {{fileName}}\t{{method}}\n\t{{fileNameWithLine}}', // Template for error stack trace
       prettyErrorParentNamesSeparator: '', // Separator for parent names in error messages
       prettyErrorLoggerNameDelimiter: '\t', // Delimiter for logger name in error messages
       stylePrettyLogs: true, // Enable styling for logs
-      minLevel: 3, // Minimum log level to display (3 corresponds to INFO)
+      minLevel: 2, // Minimum log level to display (3 corresponds to INFO)
       prettyLogTimeZone: 'local', // Time zone for log timestamps
       prettyLogStyles: { // Styles for different log elements
         logLevelName: { // Styles for log level names
@@ -121,7 +124,7 @@ class UiServer extends HomebridgePluginUiServer {
         'pincode',
       ],
     };
-    this.log = new TsLogger(logOptions);
+    this.log = new TsLogger(...logOptions);
     this.tsLog = new TsLogger({ ...logOptions, type: 'hidden', minLevel: 2 });
   }
 
