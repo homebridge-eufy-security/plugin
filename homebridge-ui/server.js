@@ -132,10 +132,33 @@ class UiServer extends HomebridgePluginUiServer {
     if (!fs.existsSync(this.storagePath)) {
       fs.mkdirSync(this.storagePath, { recursive: true });
     }
-    const pluginLogStream = createStream('configui-server.log', { path: this.storagePath, interval: '1d', rotate: 3, maxSize: '200M' });
-    const pluginLogLibStream = createStream('configui-lib.log', { path: this.storagePath, interval: '1d', rotate: 3, maxSize: '200M' });
-    this.log.attachTransport((logObj) => pluginLogStream.write(JSON.stringify(logObj) + '\n'));
-    this.tsLog.attachTransport((logObj) => pluginLogLibStream.write(JSON.stringify(logObj) + '\n'));
+
+    const logStreams = [
+      { name: 'configui-server.log', logger: this.log },
+      { name: 'configui-lib.log', logger: this.tsLog },
+    ];
+
+    for (const { name, logger } of logStreams) {
+      const logStream = createStream(name, { path: this.storagePath, interval: '1d', rotate: 3, maxSize: '200M' });
+
+      logger.attachTransport((logObj) => {
+        const meta = logObj['_meta'];
+        const logName = meta.name;
+        const level = meta.logLevelName;
+        const date = meta.date.toISOString();
+        const fileNameWithLine = meta.path?.fileNameWithLine || 'UNKNOWN_FILE';
+
+        let message = '';
+        for (let i = 0; i <= 5; i++) {
+          if (logObj[i]) {
+            message += ' ' + (typeof logObj[i] === 'string' ? logObj[i] : JSON.stringify(logObj[i]));
+          }
+        }
+
+        logStream.write(date + '\t' + logName + '\t' + level + '\t' + fileNameWithLine + '\t' + message + '\n');
+      });
+    }
+
     this.log.debug('Using bropats eufy-security-client library in version ' + libVersion);
   }
 
