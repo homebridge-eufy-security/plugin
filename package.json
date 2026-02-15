@@ -44,7 +44,7 @@
   ],
   "dependencies": {
     "@homebridge/plugin-ui-utils": "^2.2.0",
-    "eufy-security-client": "^3.7.0",
+    "eufy-security-client": "^3.7.1",
     "ffmpeg-for-homebridge": "2.2.1",
     "fs-extra": "^11.3.3",
     "pick-port": "^2.2.0",
