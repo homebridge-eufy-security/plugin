@@ -211,6 +211,9 @@ class UiServer extends HomebridgePluginUiServer {
         this.eufyClient?.on('close', () => this.log.debug('Closed!'));
       } catch (error) {
         this.log.error(error);
+        this.pushEvent('authError', { message: `Initialization failed: ${error.message || error}` });
+        this._discoveryPhase = 'idle';
+        return { success: false };
       }
     }
 
