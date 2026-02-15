@@ -5,6 +5,7 @@ import { createStream } from 'rotating-file-stream';
 import { Zip } from 'zip-lib';
 import { HomebridgePluginUiServer } from '@homebridge/plugin-ui-utils';
 import path from 'path';
+import { fileURLToPath } from 'url';
 import { createRequire } from 'module';
 
 const require = createRequire(import.meta.url);
@@ -142,12 +143,32 @@ class UiServer extends HomebridgePluginUiServer {
     this.onRequest('/reset', this.resetPlugin.bind(this));
     this.onRequest('/downloadDiagnostics', this.downloadDiagnostics.bind(this));
     this.onRequest('/systemInfo', this.getSystemInfo.bind(this));
-    this.onRequest('/skipIntelWait', () => {
-      this._skipIntelWait = true;
-      this.log.info('User requested to skip unsupported intel wait');
-      return { ok: true };
-    });
-    this.onRequest('/discoveryState', () => ({
+    this.onRequest('/skipIntelWait', this.skipIntelWait.bind(this));
+    this.onRequest('/discoveryState', this.getDiscoveryState.bind(this));
+  }
+
+  skipIntelWait() {
+    this._skipIntelWait = true;
+    this.log.info('User requested to skip unsupported intel wait');
+    return { ok: true };
+  }
+
+  /**
+   * Load valid country codes from the shared countries.js file.
+   * Parsed lazily and cached for subsequent calls.
+   * @returns {Set<string>}
+   */
+  _getValidCountryCodes() {
+    if (!this._validCountryCodes) {
+      const __dirname = path.dirname(fileURLToPath(import.meta.url));
+      const source = fs.readFileSync(path.join(__dirname, 'public/utils/countries.js'), 'utf-8');
+      this._validCountryCodes = new Set(source.match(/\b[A-Z]{2}(?=\s*:)/g));
+    }
+    return this._validCountryCodes;
+  }
+
+  getDiscoveryState() {
+    return {
       phase: this._discoveryPhase,
       progress: this._discoveryPhase === 'queuing' ? 30 : this._discoveryPhase === 'processing' ? 50 : 0,
       stations: this.pendingStations.length,
@@ -155,7 +176,7 @@ class UiServer extends HomebridgePluginUiServer {
       message: this.pendingStations.length > 0 || this.pendingDevices.length > 0
         ? `Discovered ${this.pendingStations.length} station(s), ${this.pendingDevices.length} device(s)...`
         : '',
-    }));
+    };
   }
 
   async deleteFileIfExists(filePath) {
@@ -221,9 +242,20 @@ class UiServer extends HomebridgePluginUiServer {
       this.pendingDevices = [];
       this._discoveryPhase = 'authenticating';
       this.log.debug('init eufyClient');
+
+      // Validate country code against known list
+      const country = typeof options.country === 'string' ? options.country.trim().toUpperCase() : '';
+      if (!this._getValidCountryCodes().has(country)) {
+        const raw = typeof options.country === 'object' ? JSON.stringify(options.country) : String(options.country);
+        this.log.warn(`Invalid country code received: ${raw} — falling back to login.`);
+        this.pushEvent('authError', { message: `Invalid country code "${raw}". Please select a valid country and try again.` });
+        this._discoveryPhase = 'idle';
+        return { success: false };
+      }
+
       this.config.username = options.username;
       this.config.password = options.password;
-      this.config.country = options.country;
+      this.config.country = country;
       this.config.trustedDeviceName = options.deviceName;
       try {
         this.eufyClient = await EufySecurity.initialize(this.config, this.tsLog);
@@ -857,6 +889,8 @@ class UiServer extends HomebridgePluginUiServer {
     } catch {
       // ignore
     }
+
+    this.log.debug('System info requested by UI');
 
     return {
       pluginVersion: LIB_VERSION,
