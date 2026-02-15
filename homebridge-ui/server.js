@@ -124,7 +124,7 @@ class UiServer extends HomebridgePluginUiServer {
         'pincode',
       ],
     };
-    this.log = new TsLogger(...logOptions);
+    this.log = new TsLogger(logOptions);
     this.tsLog = new TsLogger({ ...logOptions, type: 'hidden', minLevel: 2 });
   }
 
