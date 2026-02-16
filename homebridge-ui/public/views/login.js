@@ -541,14 +541,27 @@ const LoginView = {
 
       const stations = Array.isArray(payload) ? payload : (payload && payload.stations) || [];
       const extended = payload && payload.extendedDiscovery;
+      const noDevices = payload && payload.noDevices;
 
-      // If no stations or no devices were discovered, show an error instead of navigating
+      // Save credentials even when no devices found — the account is valid
+      if (this._credentials) {
+        Config.updateGlobal(this._credentials).then(() => Config.save());
+        this._credentials = null;
+      }
+
+      // If no stations or no devices were discovered, go to dashboard with empty state
       const totalDevices = (stations || []).reduce((sum, s) => sum + (s.devices ? s.devices.length : 0), 0);
-      if (!stations || stations.length === 0 || totalDevices === 0) {
-        const detail = !stations || stations.length === 0
-          ? 'No stations were found on your Eufy account.'
-          : 'Stations were found but no devices were detected.';
-        this._renderDiscoveryError(wrap, `${detail} Please verify your Eufy account has devices and try again.`);
+      if (noDevices || !stations || stations.length === 0 || totalDevices === 0) {
+        progressBar.style.width = '100%';
+        progressBar.classList.remove('progress-bar-animated');
+        progressBar.classList.add('bg-warning');
+        statusEl.textContent = 'No devices found — redirecting to dashboard...';
+
+        setTimeout(() => {
+          App.state.stations = stations || [];
+          App.state.cacheDate = new Date().toISOString();
+          App.navigate('dashboard');
+        }, 1500);
         return;
       }
 
@@ -560,12 +573,6 @@ const LoginView = {
 
       // Hide the warning area
       warningEl.className = 'd-none';
-
-      // Auth fully complete — save credentials to config
-      if (this._credentials) {
-        Config.updateGlobal(this._credentials).then(() => Config.save());
-        this._credentials = null;
-      }
 
       // Go to dashboard
       setTimeout(() => {
