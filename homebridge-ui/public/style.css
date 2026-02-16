@@ -394,21 +394,12 @@
   margin: 0px auto;
 }
 
-.login-card .card {
-  border-radius: var(--eufy-border-radius);
-  box-shadow: var(--eufy-card-shadow);
-  border: 1px solid rgba(0, 0, 0, 0.1);
-}
-
-.login-card .card-header {
-  background: transparent;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+.login-section-title {
+  font-size: 1.2rem;
   font-weight: 600;
-  padding: 16px 20px;
-}
-
-.login-card .card-body {
-  padding: 24px 20px;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
 }
 
 /* ===== Detail View ===== */
@@ -659,13 +650,8 @@ body.dark-mode .detail-header {
   border-bottom-color: rgba(255, 255, 255, 0.1);
 }
 
-body.dark-mode .login-card .card {
-  border-color: rgba(255, 255, 255, 0.1);
-  background: rgba(255, 255, 255, 0.05);
-}
-
-body.dark-mode .login-card .card-header {
-  border-bottom-color: rgba(255, 255, 255, 0.08);
+body.dark-mode .login-section-title {
+  border-bottom-color: rgba(255, 255, 255, 0.1);
 }
 
 body.dark-mode .settings-section {

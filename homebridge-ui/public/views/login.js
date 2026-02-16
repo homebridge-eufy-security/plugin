@@ -49,10 +49,9 @@ const LoginView = {
 
   // ===== Step 0: Welcome =====
   _renderWelcome(wrap) {
-    const card = this._card(wrap, 'Welcome');
-
-    const body = card.querySelector('.card-body');
-    body.innerHTML = `
+    this._sectionTitle(wrap, 'Welcome');
+    const body = wrap;
+    body.insertAdjacentHTML('beforeend', `
       <div class="welcome-banner">
         <div class="welcome-banner__title">Eufy Security for HomeKit</div>
         <div class="welcome-banner__text">
@@ -85,7 +84,7 @@ const LoginView = {
           Refresh Devices
         </button>
       </div>
-    `;
+    `);
 
     const ack1 = body.querySelector('#ack-guest-admin');
     const ack2 = body.querySelector('#ack-stop-plugin');
@@ -212,8 +211,8 @@ const LoginView = {
 
   // ===== Step 1: Credentials =====
   _renderCredentials(wrap) {
-    const card = this._card(wrap, 'Sign In');
-    const body = card.querySelector('.card-body');
+    this._sectionTitle(wrap, 'Sign In');
+    const body = wrap;
 
     body.insertAdjacentHTML('beforeend', `
       <div class="mb-3">
@@ -303,8 +302,8 @@ const LoginView = {
 
   // ===== Step 2: TFA =====
   _renderTFA(wrap) {
-    const card = this._card(wrap, 'Two-Factor Authentication');
-    const body = card.querySelector('.card-body');
+    this._sectionTitle(wrap, 'Two-Factor Authentication');
+    const body = wrap;
 
     body.insertAdjacentHTML('beforeend', `
       <p class="text-muted" style="font-size: 0.85rem;">
@@ -345,8 +344,8 @@ const LoginView = {
 
   // ===== Step 3: Captcha =====
   _renderCaptcha(wrap) {
-    const card = this._card(wrap, 'Captcha Verification');
-    const body = card.querySelector('.card-body');
+    this._sectionTitle(wrap, 'Captcha Verification');
+    const body = wrap;
 
     body.insertAdjacentHTML('beforeend', `
       <p class="text-muted" style="font-size: 0.85rem;">
@@ -606,15 +605,11 @@ const LoginView = {
 
   // ===== Helpers =====
 
-  _card(container, title) {
-    const card = document.createElement('div');
-    card.className = 'card';
-    card.innerHTML = `
-      <div class="card-header">${title}</div>
-      <div class="card-body"></div>
-    `;
-    container.appendChild(card);
-    return card;
+  _sectionTitle(container, title) {
+    const header = document.createElement('div');
+    header.className = 'login-section-title';
+    header.textContent = title;
+    container.appendChild(header);
   },
 
   _showError(body, msg) {
