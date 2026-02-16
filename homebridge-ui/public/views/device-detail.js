@@ -105,17 +105,16 @@ const DeviceDetailView = {
     const ignoreDevices = config.ignoreDevices || [];
     const isIgnored = ignoreDevices.includes(device.uniqueId);
 
-    // ── Simple Settings ──
-    const simpleSection = document.createElement('div');
-    simpleSection.className = 'detail-section';
+    // ── Enable in HomeKit (always visible) ──
+    const enableSection = document.createElement('div');
+    enableSection.className = 'detail-section';
 
-    const simpleTitle = document.createElement('div');
-    simpleTitle.className = 'detail-section__title';
-    simpleTitle.textContent = 'Device Settings';
-    simpleSection.appendChild(simpleTitle);
+    const enableTitle = document.createElement('div');
+    enableTitle.className = 'detail-section__title';
+    enableTitle.textContent = 'Device Settings';
+    enableSection.appendChild(enableTitle);
 
-    // Enable in HomeKit
-    Toggle.render(simpleSection, {
+    Toggle.render(enableSection, {
       id: 'toggle-enable',
       label: 'Enable in HomeKit',
       help: 'When disabled, this device will not appear in the Home app.',
@@ -127,16 +126,22 @@ const DeviceDetailView = {
       },
     });
 
+    content.appendChild(enableSection);
+
     // Wrapper for all settings below Enable toggle — hidden when device is ignored
     const restSettings = document.createElement('div');
     restSettings.id = 'device-rest-settings';
     if (isIgnored) restSettings.style.display = 'none';
 
+    // ── Simple Settings ──
+    const simpleSection = document.createElement('div');
+    simpleSection.className = 'detail-section';
+
     // Camera-specific simple settings
     if (device.isCamera) {
       Toggle.render(simpleSection, {
         id: 'toggle-camera-enable',
-        label: 'Enable Camera',
+        label: 'Camera Feed',
         help: 'Show camera feed in HomeKit. Disable to expose only sensors.',
         checked: deviceConfig.enableCamera !== false,
         onChange: async (checked) => {
