@@ -82,8 +82,14 @@ const DashboardView = {
       container.insertAdjacentHTML('beforeend', `
         <div class="text-center text-muted py-5">
           <div style="font-size: 2rem; margin-bottom: 12px;">${Helpers.iconHtml('inventory.svg', 32)}</div>
-          <p>No devices found. Try logging in again to discover your devices.</p>
-          <button class="btn btn-primary btn-sm mt-2" id="btn-go-login">Go to Login</button>
+          <p><strong>Your account is connected but no devices were found.</strong></p>
+          <p style="font-size: 0.85rem; max-width: 480px; margin: 0 auto;">
+            If you are using a guest admin account, make sure you have:<br>
+            1. Logged into the <strong>official Eufy Security app</strong> with the guest account<br>
+            2. <strong>Accepted the invitation</strong> from the main account<br>
+            3. <strong>Logged out</strong> of the official app before refreshing here
+          </p>
+          <button class="btn btn-primary btn-sm mt-3" id="btn-go-login">Refresh Devices</button>
         </div>
       `);
       container.querySelector('#btn-go-login').addEventListener('click', () => App.navigate('login'));

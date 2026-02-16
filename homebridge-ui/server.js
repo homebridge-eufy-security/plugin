@@ -40,6 +40,9 @@ class UiServer extends HomebridgePluginUiServer {
   /** Seconds to wait after the last station/device event before processing. */
   static DISCOVERY_DEBOUNCE_SEC = 15;
 
+  /** Seconds to wait after auth before giving up on device discovery. */
+  static DISCOVERY_INACTIVITY_SEC = 30;
+
   config = {
     username: '',
     password: '',
@@ -385,7 +388,69 @@ class UiServer extends HomebridgePluginUiServer {
         progress: 15,
         message: 'Authenticated — waiting for devices...',
       });
+      this._startDiscoveryInactivityTimeout();
     });
+  }
+
+  /**
+   * Start the discovery inactivity timeout.
+   * If no station or device is discovered within DISCOVERY_INACTIVITY_SEC seconds
+   * after authentication, save the account and send an empty result to the UI.
+   */
+  _startDiscoveryInactivityTimeout() {
+    this._cancelDiscoveryInactivityTimeout();
+    const totalSec = UiServer.DISCOVERY_INACTIVITY_SEC;
+    const start = Date.now();
+
+    // Tick every second: progress 15 → 95 during the wait, with countdown
+    this._discoveryInactivityTickInterval = setInterval(() => {
+      const elapsed = Math.floor((Date.now() - start) / 1000);
+      const remaining = Math.max(0, totalSec - elapsed);
+      const pct = Math.min(95, 15 + Math.floor((elapsed / totalSec) * 80));
+      this.pushEvent('discoveryProgress', {
+        phase: 'waitingForDevices',
+        progress: pct,
+        message: `Authenticated — waiting for devices... ${remaining}s`,
+      });
+    }, 1000);
+
+    this._discoveryInactivityTimeout = setTimeout(() => {
+      clearInterval(this._discoveryInactivityTickInterval);
+      this._discoveryInactivityTickInterval = null;
+      this.log.warn(
+        `No stations or devices discovered within ${totalSec}s after authentication. ` +
+        'The account may have no devices or the guest invitation has not been accepted yet.',
+      );
+      this._discoveryPhase = 'done';
+      this.stations = [];
+      try {
+        this.storeAccessories();
+      } catch (error) {
+        this.log.error('Error storing empty accessories:', error);
+      }
+      this.pushEvent('discoveryProgress', {
+        phase: 'done',
+        progress: 100,
+        message: 'No devices found.',
+      });
+      this.pushEvent('addAccessory', { stations: [], noDevices: true });
+      this.eufyClient?.removeAllListeners();
+      this.eufyClient?.close();
+    }, totalSec * 1000);
+  }
+
+  /**
+   * Cancel the discovery inactivity timeout (called when a station or device is discovered).
+   */
+  _cancelDiscoveryInactivityTimeout() {
+    if (this._discoveryInactivityTickInterval) {
+      clearInterval(this._discoveryInactivityTickInterval);
+      this._discoveryInactivityTickInterval = null;
+    }
+    if (this._discoveryInactivityTimeout) {
+      clearTimeout(this._discoveryInactivityTimeout);
+      this._discoveryInactivityTimeout = null;
+    }
   }
 
   /**
@@ -473,6 +538,7 @@ class UiServer extends HomebridgePluginUiServer {
       return;
     }
 
+    this._cancelDiscoveryInactivityTimeout();
     this.pendingStations.push(station);
     this.log.debug(`${station.getName()}: Station queued for processing`);
     this._discoveryPhase = 'queuing';
@@ -498,6 +564,7 @@ class UiServer extends HomebridgePluginUiServer {
       return;
     }
 
+    this._cancelDiscoveryInactivityTimeout();
     this.pendingDevices.push(device);
     this.log.debug(`${device.getName()}: Device queued for processing`);
     this._discoveryPhase = 'queuing';
