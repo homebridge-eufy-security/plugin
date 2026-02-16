@@ -72,7 +72,7 @@ class UiServer extends HomebridgePluginUiServer {
 
   initLogger() {
     const logOptions = {
-      name: `[EufySecurity-UI-${LIB_VERSION}]`, // Name prefix for log messages
+      name: `[UI-${LIB_VERSION}]`, // Name prefix for log messages
       prettyLogTemplate: '[{{mm}}/{{dd}}/{{yyyy}}, {{hh}}:{{MM}}:{{ss}}]\t{{name}}\t{{logLevelName}}\t', // Template for pretty log output
       prettyErrorTemplate: '\n{{errorName}} {{errorMessage}}\nerror stack:\n{{errorStack}}', // Template for pretty error output
       prettyErrorStackTemplate: '  • {{fileName}}\t{{method}}\n\t{{fileNameWithLine}}', // Template for error stack trace
@@ -146,7 +146,6 @@ class UiServer extends HomebridgePluginUiServer {
         const logName = meta.name;
         const level = meta.logLevelName;
         const date = meta.date.toISOString();
-        const fileNameWithLine = meta.path?.fileNameWithLine || 'UNKNOWN_FILE';
 
         let message = '';
         for (let i = 0; i <= 5; i++) {
@@ -155,7 +154,7 @@ class UiServer extends HomebridgePluginUiServer {
           }
         }
 
-        logStream.write(date + '\t' + logName + '\t' + level + '\t' + fileNameWithLine + '\t' + message + '\n');
+        logStream.write(date + '\t' + logName + '\t' + level + '\t' + message + '\n');
       });
     }
 
