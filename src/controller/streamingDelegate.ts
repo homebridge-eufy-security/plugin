@@ -156,9 +156,9 @@ export class StreamingDelegate implements CameraStreamingDelegate {
 
       const { videoParams, audioParams } = await this.buildStreamParameters(sessionInfo, request);
 
-      await this.configureStreamInput(videoParams, audioParams);
+      const isP2P = await this.configureStreamInput(videoParams, audioParams);
 
-      await this.startFFmpegProcesses(activeSession, videoParams, audioParams, request, callback);
+      await this.startFFmpegProcesses(activeSession, videoParams, audioParams, request, callback, isP2P);
 
       await this.setupTalkback(activeSession, sessionInfo);
 
@@ -232,31 +232,50 @@ export class StreamingDelegate implements CameraStreamingDelegate {
 
   /**
    * Configures the input source (RTSP URL or P2P livestream) for the FFmpeg parameters.
+   *
+   * @returns `true` when the stream is a P2P livestream, `false` for RTSP.
    */
   private async configureStreamInput(
     videoParams: FFmpegParameters,
     audioParams?: FFmpegParameters,
-  ): Promise<void> {
+  ): Promise<boolean> {
     if (isRtspReady(this.device, this.camera.cameraConfig)) {
       const url = this.device.getPropertyValue(PropertyName.DeviceRTSPStreamUrl) as string;
       this.log.debug('RTSP URL: ' + url);
       videoParams.setInputSource(url);
       audioParams?.setInputSource(url);
-    } else {
-      this.log.debug(
-        `Using P2P local livestream for ${this.device.getName()} ` +
-        `(serial: ${this.device.getSerial()}, type: ${this.device.getDeviceType()})`,
-      );
-      const streamData = await this.localLivestreamManager.getLocalLiveStream();
-      this.log.debug('Livestream obtained successfully. Setting up FFmpeg input streams...');
-      await videoParams.setInputStream(streamData.videostream);
-      await audioParams?.setInputStream(streamData.audiostream);
-      this.log.debug('FFmpeg input streams configured.');
+      return false;
     }
+
+    this.log.debug(
+      `Using P2P local livestream for ${this.device.getName()} ` +
+      `(serial: ${this.device.getSerial()}, type: ${this.device.getDeviceType()})`,
+    );
+    const streamData = await this.localLivestreamManager.getLocalLiveStream();
+    this.log.debug('Livestream obtained successfully. Setting up FFmpeg input streams...');
+    await videoParams.setInputStream(streamData.videostream);
+    await audioParams?.setInputStream(streamData.audiostream);
+    this.log.debug('FFmpeg input streams configured.');
+    return true;
   }
+
+  /** Grace period for a P2P audio process before it is killed for inactivity (ms). */
+  private static readonly P2P_AUDIO_TIMEOUT_MS = 8_000;
 
   /**
    * Starts the video (and optionally separate audio) FFmpeg processes.
+   *
+   * For P2P streams the video and audio inputs arrive on separate TCP
+   * connections.  Some camera models advertise an audio codec in their
+   * stream metadata but never deliver any audio data.  When video and
+   * audio share a single FFmpeg process the stalled audio input blocks
+   * video output, causing HomeKit to time out the stream.
+   *
+   * To prevent that, P2P streams always use separate FFmpeg processes:
+   * the video process starts immediately and independently of the audio
+   * process.  If the audio process fails to produce output within
+   * {@link P2P_AUDIO_TIMEOUT_MS} it is killed silently so that resources
+   * are not wasted on a stalled input.
    */
   private async startFFmpegProcesses(
     activeSession: ActiveSession,
@@ -264,12 +283,11 @@ export class StreamingDelegate implements CameraStreamingDelegate {
     audioParams: FFmpegParameters | undefined,
     request: StartStreamRequest,
     callback: StreamRequestCallback,
+    isP2P = false,
   ): Promise<void> {
-    const useSeparateProcesses = this.videoConfig.useSeparateProcesses ?? false;
-
     const videoProcess = new FFmpeg(
       '[Video Process]',
-      !useSeparateProcesses && audioParams ? [videoParams, audioParams] : videoParams,
+      !isP2P && audioParams ? [videoParams, audioParams] : videoParams,
     );
     videoProcess.on('started', () => callback());
     videoProcess.on('error', (error) => {
@@ -279,12 +297,45 @@ export class StreamingDelegate implements CameraStreamingDelegate {
     activeSession.videoProcess = videoProcess;
     await videoProcess.start();
 
-    if (useSeparateProcesses && audioParams) {
+    if (isP2P && audioParams) {
       const audioProcess = new FFmpeg('[Audio Process]', audioParams);
-      audioProcess.on('error', (error) => {
-        this.log.error('Audio process ended with error: ' + error);
-        this.stopStream(request.sessionID);
-      });
+
+      if (isP2P) {
+        // For P2P, audio failure must not tear down the video stream.
+        // Set up a timeout: if FFmpeg never reports progress (i.e. the
+        // camera is not providing audio data), kill the process early.
+        let audioStarted = false;
+        const audioTimeout = setTimeout(() => {
+          if (!audioStarted) {
+            this.log.warn(
+              `No audio data received from ${this.device.getName()} — ` +
+              'killing audio process (video continues).',
+            );
+            audioProcess.stop();
+            activeSession.audioProcess = undefined;
+          }
+        }, StreamingDelegate.P2P_AUDIO_TIMEOUT_MS);
+
+        audioProcess.on('started', () => {
+          audioStarted = true;
+          clearTimeout(audioTimeout);
+        });
+
+        audioProcess.on('error', (error) => {
+          clearTimeout(audioTimeout);
+          if (audioStarted) {
+            // Audio was working but failed mid-stream — log but keep video.
+            this.log.warn('P2P audio process ended unexpectedly: ' + error);
+          }
+          activeSession.audioProcess = undefined;
+        });
+      } else {
+        audioProcess.on('error', (error) => {
+          this.log.error('Audio process ended with error: ' + error);
+          this.stopStream(request.sessionID);
+        });
+      }
+
       activeSession.audioProcess = audioProcess;
       await audioProcess.start();
     }
