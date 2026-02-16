@@ -212,43 +212,68 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
       return;
     }
 
-    // Log streams configuration
-    const logStreams = [
+    // Log streams configuration: main log keeps file info, lib logs omit it
+    const logStreamsWithFile = [
       { name: 'eufy-security.log', logger: log },
       { name: 'ffmpeg.log', logger: ffmpegLogger },
+    ];
+
+    const logStreamsWithoutFile = [
       { name: 'eufy-lib.log', logger: tsLogger },
     ];
 
-    // Iterate over log streams
-    for (const { name, logger } of logStreams) {
-      // Create a log stream with specific configurations
+    const parentName = log.settings.name;
+
+    // Attach transports for logs that include file info (eufy-security, ffmpeg)
+    for (const { name, logger } of logStreamsWithFile) {
       const logStream = createStream(name, {
-        path: this.eufyPath, // Log file path
-        interval: '1d', // Log rotation interval (1 day)
-        rotate: 3, // Number of rotated log files to keep
-        maxSize: '200M', // Maximum log file size
+        path: this.eufyPath,
+        interval: '1d',
+        rotate: 3,
+        maxSize: '200M',
       });
 
-      // Attach a transport function to write log messages to the log stream
       logger.attachTransport((logObj: ILogObjMeta) => {
         const meta = logObj['_meta'];
-        const name = meta.name;
+        const loggerName = meta.name || parentName;
         const level = meta.logLevelName;
         const date = meta.date.toISOString();
-        const fileNameWithLine = meta.path?.fileNameWithLine || 'UNKNOWN_FILE';
+        const fileNameWithLine = meta.path?.fileNameWithLine || '';
 
-        // Initialize the message
         let message = '';
-
-        // Loop through logObj from index 0 to 5 and append values to the message
         for (let i = 0; i <= 5; i++) {
           if (logObj[i]) {
-            message += ' ' + typeof logObj[i] === 'string' ? logObj[i] : JSON.stringify(logObj[i]);
+            message += ' ' + (typeof logObj[i] === 'string' ? logObj[i] : JSON.stringify(logObj[i]));
           }
         }
 
-        // Write formatted log message to the log stream
-        logStream.write(date + '\t' + name + '\t' + level + '\t' + fileNameWithLine + '\t' + message + '\n');
+        logStream.write(date + '\t' + loggerName + '\t' + level + '\t' + fileNameWithLine + '\t' + message + '\n');
+      });
+    }
+
+    // Attach transports for lib logs (no file column)
+    for (const { name, logger } of logStreamsWithoutFile) {
+      const logStream = createStream(name, {
+        path: this.eufyPath,
+        interval: '1d',
+        rotate: 3,
+        maxSize: '200M',
+      });
+
+      logger.attachTransport((logObj: ILogObjMeta) => {
+        const meta = logObj['_meta'];
+        const loggerName = meta.name;
+        const level = meta.logLevelName;
+        const date = meta.date.toISOString();
+
+        let message = '';
+        for (let i = 0; i <= 5; i++) {
+          if (logObj[i]) {
+            message += ' ' + (typeof logObj[i] === 'string' ? logObj[i] : JSON.stringify(logObj[i]));
+          }
+        }
+
+        logStream.write(date + '\t' + loggerName + '\t' + level + '\t' + message + '\n');
       });
     }
   }
