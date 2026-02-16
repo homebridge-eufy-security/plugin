@@ -79,7 +79,6 @@ export type VideoConfig = {
   acodecOptions?: string;
   debug?: boolean;
   debugReturn?: boolean;
-  useSeparateProcesses?: boolean;
   crop?: boolean;
   videoProcessor?: string;
 };
