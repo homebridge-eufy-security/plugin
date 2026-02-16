@@ -398,6 +398,11 @@ class UiServer extends HomebridgePluginUiServer {
    * after authentication, save the account and send an empty result to the UI.
    */
   _startDiscoveryInactivityTimeout() {
+    // If stations or devices were already discovered before connect fired, skip
+    if (this.pendingStations.length > 0 || this.pendingDevices.length > 0) {
+      this.log.debug('Devices already discovered before connect event — skipping inactivity timeout');
+      return;
+    }
     this._cancelDiscoveryInactivityTimeout();
     const totalSec = UiServer.DISCOVERY_INACTIVITY_SEC;
     const start = Date.now();
