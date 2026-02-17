@@ -1,6 +1,6 @@
 name: 📱 Device Support Request
 description: Request support for a new device type
-labels: ["device-support"]
+labels: ["device-support", "needs triage"]
 body:
   - type: checkboxes
     id: preflight
