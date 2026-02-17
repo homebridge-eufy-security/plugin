@@ -1,5 +1,6 @@
 name: 📱 Device Support Request
 description: Request support for a new device type
+type: Feature
 labels: ["device-support", "needs triage"]
 body:
   - type: checkboxes
