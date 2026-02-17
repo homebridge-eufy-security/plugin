@@ -118,6 +118,20 @@ In `accessories.json`, search for the reported device by type, model, serial, or
 
 **Scope determination**: If the device doesn't appear in `eufy-lib.log` or fails at the library level (API errors, P2P failures, missing property events), the issue is likely in `eufy-security-client`. If the device loads in the library but fails during accessory registration, HomeKit mapping, or service pruning, the issue is in `homebridge-eufy-security`.
 
+#### For livestream issues
+
+Livestream problems (video feed, P2P, RTSP) are often device-specific and hard to reproduce without access to the actual hardware. When logs alone aren't sufficient to diagnose the issue, offer to test against the user's device by requesting temporary device sharing:
+
+```
+To validate a fix and avoid back-and-forth log exchanges, I'd need to test against an actual <device model> device. Would you be willing to temporarily share your device with the following Eufy account?
+
+homebridge.eufy.sec@gmail.com
+
+Please also let me know which country your account is registered in.
+
+This is entirely optional — no obligation. I understand sharing device access requires trust. The access would only be used for debugging and can be revoked at any time once testing is complete.
+```
+
 #### For UI issues — check `configui-server.log` and `configui-lib.log`:
 - Login/authentication flow
 - Device listing errors
