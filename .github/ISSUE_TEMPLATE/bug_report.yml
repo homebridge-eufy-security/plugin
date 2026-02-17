@@ -1,7 +1,7 @@
 name: 🐛 Bug Report
 description: Report a bug or unexpected behavior
 type: Bug
-labels: ["bug", "needs triage"]
+labels: ["needs triage"]
 body:
   - type: checkboxes
     id: preflight
