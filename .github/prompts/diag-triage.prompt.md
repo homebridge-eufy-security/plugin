@@ -60,8 +60,19 @@ You can also confirm from the config dump in the log: `"enableDetailedLogging":t
 From the first lines of `eufy-security.log`, extract:
 - Plugin version (e.g. `4.4.2-beta.41`)
 - eufy-security-client library version
+- Node.js version
 - OS and architecture
 - Storage path
+
+#### Node.js version check
+
+Starting with version **4.4.2**, the plugin is compatible with **Node.js 20, 22, and 24**.
+
+This version works with the latest bropat `eufy-security-client` library, which includes significant fixes for Homebase communication.
+
+#### PKCS1 / Node.js 24.5+
+
+Node.js **24.5+** re-added native PKCS1 padding support. If the user is on Node.js 24.5+, the `enableEmbeddedPKCS1Support` workaround is no longer needed — advise them to disable it (`"enableEmbeddedPKCS1Support": false` or remove it from the plugin UI config) when testing. For users on Node.js 20 or 22, the embedded PKCS1 fallback remains necessary.
 
 **If the environment indicates HOOBS** (storage path, OS details, or user mentions it): label `hoobs` + `wontfix` and close the issue. The Plugin UI is known to not work properly on HOOBS and we do not support it. Comment on the issue:
 
