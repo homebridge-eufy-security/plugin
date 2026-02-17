@@ -121,19 +121,29 @@ Key source files:
 - `src/accessories/<Type>Accessory.ts` — device-specific HomeKit mapping
 - `homebridge-ui/server.js` — UI server logic, diagnostics generation
 
+## Issue Type
+
+GitHub issue types classify the issue at creation. Issue templates auto-assign these:
+
+| Template | Issue Type |
+|---|---|
+| Bug Report | `Bug` |
+| Device Support Request | `Feature` |
+| Feature Request | `Feature` |
+
+Issue types replace the old `bug` and `enhancement` labels — do **not** add those labels manually.
+
 ## Label Recommendations
 
 Based on triage findings, suggest one or more labels for the issue:
 
 | Label | When to use |
 |---|---|
-| `bug` | Something isn't working in the plugin |
 | `depends on eufy-security-client` | Issue originates in bropat's eufy-security-client library |
 | `device-support` | New device type support — requires both homebridge and/or upstream eufy-security-client changes |
 | `debug log missing` | Diagnostics lack logs or debug mode was disabled |
 | `configuration issue` | Problem caused by user config (ignored devices, wrong settings) |
 | `livestream` | Camera livestream, video feed, P2P, RTSP, streaming failures |
-| `enhancement` | New feature or improvement request |
 | `question` | Further information is requested |
 | `resolved in beta` | Fix or feature already in current beta, will ship in next release |
 | `needs triage` | New issue awaiting initial analysis |
