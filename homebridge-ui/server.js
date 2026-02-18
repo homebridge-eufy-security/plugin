@@ -317,9 +317,9 @@ class UiServer extends HomebridgePluginUiServer {
           if (data?.storedAt) {
             const ageMs = Date.now() - new Date(data.storedAt).getTime();
             if (ageMs < 90_000) {
-              this.log.warn('Plugin heartbeat is fresh — blocking UI login to avoid duplicate eufy client.');
+              this.log.warn('Plugin heartbeat is fresh — blocking UI login to avoid duplicate eufy client. Please wait 90sec before trying again!');
               this.pushEvent('authError', {
-                message: 'The plugin is currently running. Please stop it before logging in from the UI.',
+                message: 'The plugin is currently running. Please stop it before logging in from the UI. Please wait 90sec before trying again!',
               });
               return { success: false, pluginRunning: true };
             }
