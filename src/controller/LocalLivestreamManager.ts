@@ -57,6 +57,11 @@ export class LocalLivestreamManager {
     return this.startLocalLiveStream();
   }
 
+  /** True when a P2P livestream is currently active. */
+  public isStreamActive(): boolean {
+    return this.stationStream !== null;
+  }
+
   /**
    * Requests a P2P livestream from the eufy station and waits for the
    * 'station livestream start' event.  If a start is already in progress,
