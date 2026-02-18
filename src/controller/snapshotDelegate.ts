@@ -1,7 +1,7 @@
 import { Readable } from 'stream';
 import * as fs from 'fs';
 
-import { Camera, Device, DeviceEvents, Picture, PropertyName } from 'eufy-security-client';
+import { Camera, Device, Picture, PropertyName } from 'eufy-security-client';
 import { SnapshotRequest } from 'homebridge';
 import { ILogObj, Logger } from 'tslog';
 
@@ -11,15 +11,13 @@ import {
   SNAPSHOT_CACHE_FRESH_SECONDS,
   SNAPSHOT_CLOUD_SKIP_MS,
   SNAPSHOT_FETCH_TIMEOUT_MS,
-  SNAPSHOT_MIN_REFRESH_INTERVAL_MINUTES,
-  SNAPSHOT_RING_DEBOUNCE_SECONDS,
 } from '../settings.js';
 import { CameraConfig, SnapshotHandlingMethod } from '../utils/configTypes.js';
 import { FFmpeg, FFmpegParameters } from '../utils/ffmpeg.js';
 import { isRtspReady } from '../utils/utils.js';
 import { LocalLivestreamManager } from './LocalLivestreamManager.js';
 
-type PlaceholderKey = 'black' | 'unavailable' | 'offline' | 'disabled';
+type PlaceholderKey = 'unavailable' | 'offline' | 'disabled';
 
 import { fileURLToPath } from 'url';
 import path from 'path';
@@ -30,7 +28,6 @@ const __dirname = path.dirname(__filename);
 const PLACEHOLDER_PATHS: Record<PlaceholderKey, string> = {
   offline: path.resolve(__dirname, '../../media/camera-offline.png'),
   disabled: path.resolve(__dirname, '../../media/camera-disabled.png'),
-  black: path.resolve(__dirname, '../../media/Snapshot-black.png'),
   unavailable: path.resolve(__dirname, '../../media/Snapshot-Unavailable.png'),
 };
 
@@ -62,8 +59,6 @@ type StreamSource =
 
 export class snapshotDelegate {
 
-  private static instanceCount = 0;
-
   private readonly eufyPath: string;
   private readonly device: Camera;
   private cameraConfig: CameraConfig;
@@ -72,13 +67,9 @@ export class snapshotDelegate {
   private readonly placeholders = new Map<PlaceholderKey, Buffer>();
 
   private pendingFetch?: Promise<void>;
-  private lastRingEvent = 0;
   private isDeviceOffline = false;
 
   private readonly log: Logger<ILogObj>;
-
-  private snapshotRefreshTimer?: NodeJS.Timeout;
-  private snapshotRefreshInterval?: NodeJS.Timeout;
 
   constructor(
     camera: CameraAccessory,
@@ -91,7 +82,6 @@ export class snapshotDelegate {
     this.log = camera.log;
 
     this.setupEventListeners();
-    this.setupAutomaticRefresh();
     this.logSnapshotHandlingMethod();
     this.loadPlaceholderImages();
     this.initializeDeviceState();
@@ -100,54 +90,6 @@ export class snapshotDelegate {
 
   private setupEventListeners(): void {
     this.device.on('property changed', this.onPropertyValueChanged.bind(this));
-
-    const detectionEvents: (keyof DeviceEvents)[] = [
-      'motion detected',
-      'person detected',
-      'pet detected',
-      'sound detected',
-      'crying detected',
-      'vehicle detected',
-      'dog detected',
-      'dog lick detected',
-      'dog poop detected',
-      'stranger person detected',
-      'rings',
-    ];
-
-    detectionEvents.forEach(eventType => {
-      this.device.on(eventType, this.onDeviceEvent.bind(this, eventType));
-    });
-  }
-
-  private setupAutomaticRefresh(): void {
-    if (!this.cameraConfig.refreshSnapshotIntervalMinutes) {
-      return;
-    }
-
-    if (this.cameraConfig.refreshSnapshotIntervalMinutes < SNAPSHOT_MIN_REFRESH_INTERVAL_MINUTES) {
-      this.log.warn(`The interval to automatically refresh snapshots is set too low. Minimum is ${SNAPSHOT_MIN_REFRESH_INTERVAL_MINUTES} minutes.`);
-      this.cameraConfig.refreshSnapshotIntervalMinutes = SNAPSHOT_MIN_REFRESH_INTERVAL_MINUTES;
-    }
-
-    const intervalMs = this.cameraConfig.refreshSnapshotIntervalMinutes * 60 * 1000;
-    const staggerMs = (++snapshotDelegate.instanceCount) * 60 * 1000;
-
-    this.log.info(
-      `Setting up automatic snapshot refresh every ${this.cameraConfig.refreshSnapshotIntervalMinutes}` +
-      ` minutes. This may decrease battery life dramatically. First refresh in ~${Math.ceil(staggerMs / 60000)} minute(s).`,
-    );
-
-    // Stagger first refresh per instance, then repeat at fixed interval
-    this.snapshotRefreshTimer = setTimeout(() => {
-      this.doAutomaticRefresh();
-      this.snapshotRefreshInterval = setInterval(() => this.doAutomaticRefresh(), intervalMs);
-    }, staggerMs);
-  }
-
-  private doAutomaticRefresh(): void {
-    this.log.debug('Automatic snapshot refresh triggered.');
-    this.fetchCurrentCameraSnapshot().catch((error) => this.log.warn('Automatic snapshot refresh failed:', error));
   }
 
   private logSnapshotHandlingMethod(): void {
@@ -156,9 +98,6 @@ export class snapshotDelegate {
     switch (method) {
       case SnapshotHandlingMethod.AlwaysFresh:
         this.log.info('is set to generate new snapshots on events every time. This might reduce homebridge performance and increase power consumption.');
-        if (this.cameraConfig.refreshSnapshotIntervalMinutes) {
-          this.log.warn('You have enabled automatic snapshot refreshing. It is recommended not to use this setting with forced snapshot refreshing.');
-        }
         break;
       case SnapshotHandlingMethod.Balanced:
         this.log.info('is set to balanced snapshot handling.');
@@ -168,10 +107,6 @@ export class snapshotDelegate {
         break;
       default:
         this.log.warn('unknown snapshot handling method. Snapshots will not be generated.');
-    }
-
-    if (this.cameraConfig.immediateRingNotificationWithoutSnapshot) {
-      this.log.info('Empty snapshot will be sent on ring events immediately to speed up homekit notifications.');
     }
   }
 
@@ -244,23 +179,6 @@ export class snapshotDelegate {
     this.log.warn('No cached snapshot found on disk for device ' + serial);
   }
 
-  private onDeviceEvent(eventType: keyof DeviceEvents, device: Device, state: boolean) {
-    if (!state) {
-      return;
-    }
-
-    this.log.debug(`Snapshot handler detected event: ${eventType}`);
-
-    if (eventType === 'rings') {
-      this.lastRingEvent = Date.now();
-    }
-
-    // Pre-fetch a fresh snapshot so it's ready when HomeKit asks
-    this.fetchCurrentCameraSnapshot().catch((error) =>
-      this.log.debug(`Background snapshot refresh on ${eventType} failed: ${error}`),
-    );
-  }
-
   private storeSnapshotForCache(data: Buffer, time?: number): void {
     this.currentSnapshot = { timestamp: time ??= Date.now(), image: data };
   }
@@ -282,12 +200,6 @@ export class snapshotDelegate {
 
     if (this.isCacheFresh(SNAPSHOT_CACHE_FRESH_SECONDS)) {
       return this.currentSnapshot!.image;
-    }
-
-    const ringAge = (Date.now() - this.lastRingEvent) / 1000;
-    if (this.cameraConfig.immediateRingNotificationWithoutSnapshot && ringAge < SNAPSHOT_RING_DEBOUNCE_SECONDS) {
-      this.log.debug('Sending empty snapshot to speed up homekit notification for ring event.');
-      return this.getPlaceholder('black');
     }
 
     return this.resolveByHandlingMethod();
