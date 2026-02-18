@@ -76,6 +76,10 @@ export class StreamingDelegate implements CameraStreamingDelegate {
     return this.localLivestreamManager;
   }
 
+  public getSnapshotDelegate(): snapshotDelegate {
+    return this.snapshotDelegate;
+  }
+
   async handleSnapshotRequest(request: SnapshotRequest, callback: SnapshotRequestCallback): Promise<void> {
     this.log.debug(`Snapshot requested: ${request.width}x${request.height}`);
 
