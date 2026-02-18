@@ -304,10 +304,20 @@
   text-overflow: ellipsis;
 }
 
+.device-card__meta-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
 .device-card__meta {
   font-size: 0.75rem;
   color: var(--eufy-muted);
-  margin-bottom: 8px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
 }
 
 .device-card__footer {

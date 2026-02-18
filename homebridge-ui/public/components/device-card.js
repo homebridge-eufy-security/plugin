@@ -13,13 +13,6 @@
 // eslint-disable-next-line no-unused-vars
 const DeviceCard = {
 
-  CHARGING_LABELS: {
-    1: 'Charging',
-    2: 'Unplugged',
-    3: 'Plugged In',
-    4: 'Solar',
-  },
-
   /**
    * @param {HTMLElement} container
    * @param {object} opts
@@ -64,6 +57,10 @@ const DeviceCard = {
     name.textContent = d.displayName;
     name.title = d.displayName;
 
+    // Meta row: left side = battery/charging info, right side = toggle
+    const metaRow = document.createElement('div');
+    metaRow.className = 'device-card__meta-row';
+
     const meta = document.createElement('div');
     meta.className = 'device-card__meta';
 
@@ -71,15 +68,19 @@ const DeviceCard = {
     const metaFragments = [];
     if (isUnsupported) {
       metaFragments.push('Type ' + d.type);
-    } else if (d.typename) {
-      metaFragments.push(d.typename);
     }
-    if (d.hasBattery && d.properties && d.properties.battery !== undefined) {
-      metaFragments.push({ icon: Helpers.batteryIcon(d.properties.battery), text: d.properties.battery + '%' });
+
+    // Power info (pre-computed by server)
+    const pw = d.power || {};
+    if (pw.battery !== undefined) {
+      metaFragments.push({ icon: Helpers.batteryIcon(pw.battery), text: pw.battery + '%' });
+    } else if (pw.batteryLow === true) {
+      metaFragments.push({ icon: Helpers.batteryIcon(0), text: 'Low' });
+    } else if (pw.batteryLow === false) {
+      metaFragments.push({ icon: Helpers.batteryIcon(100), text: 'OK' });
     }
-    if (d.chargingStatus && this.CHARGING_LABELS[d.chargingStatus]) {
-      const chargingIcon = d.chargingStatus === 4 ? 'solar_power.svg' : 'bolt.svg';
-      metaFragments.push({ icon: chargingIcon, text: this.CHARGING_LABELS[d.chargingStatus] });
+    if (pw.icon && pw.label) {
+      metaFragments.push({ icon: pw.icon, text: pw.label });
     }
     metaFragments.forEach((frag, i) => {
       if (i > 0) meta.append(' · ');
@@ -91,35 +92,9 @@ const DeviceCard = {
       }
     });
 
-    body.appendChild(name);
-    body.appendChild(meta);
+    metaRow.appendChild(meta);
 
-    // Footer with badges + toggle
-    const footer = document.createElement('div');
-    footer.className = 'device-card__footer';
-
-    const badgeArea = document.createElement('div');
-
-    if (isUnsupported) {
-      const badge = document.createElement('span');
-      badge.className = 'badge badge-unsupported';
-      badge.textContent = 'Not Supported';
-      badgeArea.appendChild(badge);
-
-      const hint = document.createElement('div');
-      hint.className = 'device-card__hint';
-      hint.textContent = 'Click to help us add support';
-      badgeArea.appendChild(hint);
-    } else if (isIgnored) {
-      const badge = document.createElement('span');
-      badge.className = 'badge bg-secondary';
-      badge.textContent = 'Disabled';
-      badgeArea.appendChild(badge);
-    }
-
-    footer.appendChild(badgeArea);
-
-    // Toggle — only for non-unsupported devices
+    // Toggle — inline with meta, only for non-unsupported devices
     if (!isUnsupported) {
       const switchWrap = document.createElement('div');
       switchWrap.className = 'form-check form-switch mb-0';
@@ -138,11 +113,42 @@ const DeviceCard = {
       });
 
       switchWrap.appendChild(toggle);
-      footer.appendChild(switchWrap);
+      metaRow.appendChild(switchWrap);
     }
 
+    body.appendChild(name);
+    body.appendChild(metaRow);
+
+    // Footer with badges (unsupported / disabled)
+    const footer = document.createElement('div');
+    footer.className = 'device-card__footer';
+
+    const badgeArea = document.createElement('div');
+    let hasBadge = false;
+
+    if (isUnsupported) {
+      const badge = document.createElement('span');
+      badge.className = 'badge badge-unsupported';
+      badge.textContent = 'Not Supported';
+      badgeArea.appendChild(badge);
+
+      const hint = document.createElement('div');
+      hint.className = 'device-card__hint';
+      hint.textContent = 'Click to help us add support';
+      badgeArea.appendChild(hint);
+      hasBadge = true;
+    } else if (isIgnored) {
+      const badge = document.createElement('span');
+      badge.className = 'badge bg-secondary';
+      badge.textContent = 'Disabled';
+      badgeArea.appendChild(badge);
+      hasBadge = true;
+    }
+
+    footer.appendChild(badgeArea);
+
     card.appendChild(body);
-    card.appendChild(footer);
+    if (hasBadge) card.appendChild(footer);
 
     // Click handler — navigate to detail
     card.addEventListener('click', () => {
