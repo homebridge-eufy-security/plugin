@@ -73,6 +73,70 @@ class UiServer extends HomebridgePluginUiServer {
     this.ready();
   }
 
+  /**
+   * Compute a unified power descriptor from a properties object.
+   * Works for both devices and stations.
+   * @param {object} props - the properties object (from device.getProperties() or station.getProperties())
+   * @returns {{ source: string, icon: string, label: string, battery?: number, batteryLow?: boolean }}
+   *   source: 'battery' | 'solar' | 'plugged' | null
+   *   icon: icon filename for the UI
+   *   label: display text for the UI
+   *   battery: percentage (0-100) if available
+   *   batteryLow: true/false for simple sensors without percentage
+   */
+  _computePower(props) {
+    const power = { source: null, icon: null, label: null };
+
+    // Battery level
+    if (props.battery !== undefined) {
+      power.battery = props.battery;
+    } else if (props.batteryLow !== undefined) {
+      // Simple sensors only expose batteryLow boolean
+      power.batteryLow = props.batteryLow;
+    }
+
+    // Charging status (bitmask)
+    if (props.chargingStatus !== undefined) {
+      const cs = props.chargingStatus;
+      const isSolar = ((cs >> 2) & 1) === 1;
+      const isPlugSolar = ((cs >> 3) & 1) === 1;
+      const isUsb = (cs & 1) === 1;
+
+      if (isSolar || isPlugSolar) {
+        power.source = 'solar';
+        power.icon = 'solar_power.svg';
+        power.label = 'Solar Charging';
+        return power;
+      }
+      if (isUsb) {
+        power.source = 'plugged';
+        power.icon = 'bolt.svg';
+        power.label = 'Charging';
+        return power;
+      }
+    }
+
+    // PowerSource property (cameras with battery/solar panel)
+    // 0 = BATTERY, 1 = SOLAR_PANEL
+    if (props.powerSource === 1) {
+      power.source = 'solar';
+      power.icon = 'solar_power.svg';
+      power.label = 'Solar';
+    } else if (props.powerSource === 0) {
+      power.source = 'battery';
+    } else if (power.battery === undefined && power.batteryLow === undefined) {
+      // No battery info at all — AC powered (indoor cameras, stations)
+      power.source = 'plugged';
+      power.icon = 'bolt.svg';
+      power.label = 'Plugged In';
+    } else {
+      // Has battery/batteryLow but no powerSource — simple battery device (sensors)
+      power.source = 'battery';
+    }
+
+    return power;
+  }
+
   initLogger() {
     const logOptions = {
       name: `[UI-${LIB_VERSION}]`, // Name prefix for log messages
@@ -734,6 +798,9 @@ class UiServer extends HomebridgePluginUiServer {
 
       s.ignored = (this.config['ignoreStations'] ?? []).includes(s.uniqueId);
 
+      // Pre-compute power info for the UI
+      s.power = this._computePower(s.properties);
+
       if (!Device.isStation(stationType)) {
         // Not a hub/base station — the station IS a standalone device (station.type == device.type)
 
@@ -815,9 +882,8 @@ class UiServer extends HomebridgePluginUiServer {
         d.rawDevice = device.getRawDevice ? device.getRawDevice() : undefined;
       }
 
-      if (device.hasProperty(PropertyName.DeviceChargingStatus)) {
-        d.chargingStatus = device.getPropertyValue(PropertyName.DeviceChargingStatus);
-      }
+      // Pre-compute power info for the UI
+      d.power = this._computePower(d.properties);
 
       try {
         delete d.properties.picture;

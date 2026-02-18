@@ -132,6 +132,7 @@ const DashboardView = {
             typename: station.typename,
             unsupported: station.unsupported,
             ignored: station.ignored,
+            power: station.power,
           };
           if (station.unsupported) {
             unsupported.push({ item: stationItem, isStation: true, station });
