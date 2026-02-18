@@ -15,6 +15,7 @@ import { FFmpeg, FFmpegParameters } from '../utils/ffmpeg.js';
 import net from 'net';
 import { CHAR, SERV, isRtspReady, log } from '../utils/utils.js';
 import { LocalLivestreamManager } from './LocalLivestreamManager.js';
+import { snapshotDelegate } from './snapshotDelegate.js';
 
 const MAX_RECORDING_MINUTES = 1; // should never be used
 
@@ -52,12 +53,16 @@ export class RecordingDelegate implements CameraRecordingDelegate {
     }, any, unknown>;
   };
 
+  /** Delay before extracting a snapshot from a running HKSV recording (ms). */
+  private static readonly RECORDING_SNAPSHOT_DELAY_MS = 2_000;
+
   constructor(
     private platform: EufySecurityPlatform,
     private accessory: PlatformAccessory,
     private camera: Camera,
     private cameraConfig: CameraConfig,
     private localLivestreamManager: LocalLivestreamManager,
+    private snapshotDlg: snapshotDelegate,
   ) {
 
   }
@@ -131,6 +136,13 @@ export class RecordingDelegate implements CameraRecordingDelegate {
       audioParams.setupForRecording(videoConfig, this.configuration);
 
       await this.configureInputSource(videoParams, audioParams);
+
+      // Opportunistically capture a snapshot from the HKSV recording stream
+      setTimeout(() => {
+        this.snapshotDlg.captureSnapshotFromActiveLivestream().catch((error) => {
+          log.debug(this.camera.getName(), 'Snapshot capture from HKSV recording failed: ' + error);
+        });
+      }, RecordingDelegate.RECORDING_SNAPSHOT_DELAY_MS);
 
       const ffmpeg = new FFmpeg(
         `[${this.camera.getName()}] [HSV Recording Process]`,
