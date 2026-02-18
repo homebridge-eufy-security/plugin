@@ -1,5 +1,5 @@
 <p align="center">
-   <a href="https://github.com/homebridge-eufy-security/plugin"><img src="https://raw.githubusercontent.com/wiki/homebridge-eufy-security/plugin/img/homebridge-eufy-security.png" width="456px"></a>
+   <a href="https://github.com/homebridge-plugins/homebridge-eufy-security"><img src="https://raw.githubusercontent.com/wiki/homebridge-eufy-security/plugin/img/homebridge-eufy-security.png" width="456px"></a>
 </p>
 <span align="center">
 
@@ -8,12 +8,9 @@
 Homebridge plugin to control certain Eufy Security devices
 
 [![npm](https://img.shields.io/npm/v/homebridge-eufy-security?color=green)](https://www.npmjs.com/package/homebridge-eufy-security)
+[![npm](https://img.shields.io/npm/v/homebridge-eufy-security/beta?label=beta)](https://github.com/homebridge-plugins/homebridge-eufy-security/wiki/Special-Version-(BETA---RC---HKSV))
 [![verified-by-homebridge](https://badgen.net/badge/homebridge/verified/purple)](https://github.com/homebridge/homebridge/wiki/Verified-Plugins)
 [![npm](https://img.shields.io/npm/dt/homebridge-eufy-security)](https://www.npmjs.com/package/homebridge-eufy-security)
-
-[![npm](https://img.shields.io/npm/v/homebridge-eufy-security/rc?label=rc)](https://github.com/homebridge-eufy-security/plugin/wiki/Special-Version-(BETA---RC---HKSV))
-[![npm](https://img.shields.io/npm/v/homebridge-eufy-security/beta?label=beta)](https://github.com/homebridge-eufy-security/plugin/wiki/Special-Version-(BETA---RC---HKSV))
-[![npm](https://img.shields.io/npm/v/homebridge-eufy-security/hksv?label=hksv)](https://github.com/homebridge-eufy-security/plugin/wiki/Special-Version-(BETA---RC---HKSV))
 [![Discord](https://img.shields.io/discord/432663330281226270?color=728ED5&logo=discord&label=hb-discord)](https://discord.com/channels/432663330281226270/876907345962229791)
 
 </span>
@@ -30,24 +27,24 @@ Homebridge plugin to control certain Eufy Security devices
 - For configuration Homebridge UI is recommenend. If you have 2FA enabled it is mandatory.
 
 ### ⚠️ Warning
-Starting from Node.js versions `18.19.1`, `20.11.1`, and `21.6.2`, the removal of `RSA_PKCS1_PADDING` support breaks Eufy Security's livestream/P2P functionality. We advise against using Node.js versions beyond **v20.11.0** until compatibility with the plugin has been confirmed. If you encounter any issues, consider reverting to the recommended LTS version within the **v20** branch. See [here](https://github.com/homebridge-eufy-security/plugin/wiki/Node.js-Compatibility-with-Eufy-Security-Plugin) for more information.
+Starting from Node.js versions `18.19.1`, `20.11.1`, and `21.6.2`, the removal of `RSA_PKCS1_PADDING` support breaks Eufy Security's livestream/P2P functionality. We advise against using Node.js versions beyond **v20.11.0** until compatibility with the plugin has been confirmed. If you encounter any issues, consider reverting to the recommended LTS version within the **v20** branch. See [here](https://github.com/homebridge-plugins/homebridge-eufy-security/wiki/Node.js-Compatibility-with-Eufy-Security-Plugin) for more information.
 
 #### Setup
-* [Installation](https://github.com/homebridge-eufy-security/plugin/wiki/Installation-and-Configuration#installation)
-* [Configuration](https://github.com/homebridge-eufy-security/plugin/wiki/Installation-and-Configuration#configuration)
-* [Bridged and Unbridged Mode](https://github.com/homebridge-eufy-security/plugin/wiki/Bridged-and-Unbridged-Mode-and-Problems)
-* [Beta Version](https://github.com/homebridge-eufy-security/plugin/wiki/Special-Version-(BETA---RC---HKSV))
-* [Uninstallation](https://github.com/homebridge-eufy-security/plugin/wiki/Uninstallation)
+* [Installation](https://github.com/homebridge-plugins/homebridge-eufy-security/wiki/Installation-and-Configuration#installation)
+* [Configuration](https://github.com/homebridge-plugins/homebridge-eufy-security/wiki/Installation-and-Configuration#configuration)
+* [Bridged and Unbridged Mode](https://github.com/homebridge-plugins/homebridge-eufy-security/wiki/Bridged-and-Unbridged-Mode-and-Problems)
+* [Beta Version](https://github.com/homebridge-plugins/homebridge-eufy-security/wiki/Special-Version-(BETA---RC---HKSV))
+* [Uninstallation](https://github.com/homebridge-plugins/homebridge-eufy-security/wiki/Uninstallation)
 
 #### Features
-* [Streaming](https://github.com/homebridge-eufy-security/plugin/wiki/Streaming-Settings)
-* [HomeKit Secure Video](https://github.com/homebridge-eufy-security/plugin/wiki/HomeKit-Secure-Video)
+* [Streaming](https://github.com/homebridge-plugins/homebridge-eufy-security/wiki/Streaming-Settings)
+* [HomeKit Secure Video](https://github.com/homebridge-plugins/homebridge-eufy-security/wiki/HomeKit-Secure-Video)
 
 #### Help
-* [Basic Troubleshooting](https://github.com/homebridge-eufy-security/plugin/wiki/Basic-Troubleshooting)
-* [Common Issues](https://github.com/homebridge-eufy-security/plugin/wiki/Common-Issues)
-* [Support Request](https://github.com/homebridge-eufy-security/plugin/issues/new/choose)
-* [Changelog](https://github.com/homebridge-eufy-security/plugin/blob/master/CHANGELOG.md)
+* [Basic Troubleshooting](https://github.com/homebridge-plugins/homebridge-eufy-security/wiki/Basic-Troubleshooting)
+* [Common Issues](https://github.com/homebridge-plugins/homebridge-eufy-security/wiki/Common-Issues)
+* [Support Request](https://github.com/homebridge-plugins/homebridge-eufy-security/issues/new/choose)
+* [Changelog](https://github.com/homebridge-plugins/homebridge-eufy-security/blob/master/CHANGELOG.md)
 
 ### Supporting
 

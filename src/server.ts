@@ -272,7 +272,7 @@ class UiServer {
       #########################
       You're not using a guest admin account with this plugin! You must use a guest admin account!
       Please look here for more details: 
-      https://github.com/homebridge-eufy-security/plugin/wiki/Create-a-dedicated-admin-account-for-Homebridge-Eufy-Security-Plugin
+      https://github.com/homebridge-plugins/homebridge-eufy-security/wiki/Create-a-dedicated-admin-account-for-Homebridge-Eufy-Security-Plugin
       #########################
       `);
       return;

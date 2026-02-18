@@ -1,0 +1,49 @@
+name: 📱 Device Support Request
+description: Request support for a new device type
+type: Feature
+labels: ["device-support", "needs triage"]
+body:
+  - type: checkboxes
+    id: preflight
+    attributes:
+      label: Preflight Checklist
+      options:
+        - label: I have searched the [existing issues](https://github.com/homebridge-plugins/homebridge-eufy-security/issues?q=label%3Adevice-support) and this device has not been requested before.
+          required: true
+        - label: I have checked the [eufy-security-client compatibility list](https://bropat.github.io/eufy-security-client/#/supported_devices).
+          required: true
+
+  - type: textarea
+    id: device_info
+    attributes:
+      label: Device Information
+      description: "Paste the device info JSON from the plugin UI (click 'Copy to Clipboard' on the unsupported device page)."
+      render: json
+    validations:
+      required: true
+
+  - type: dropdown
+    id: upstream_status
+    attributes:
+      label: Upstream Compatibility
+      description: Is this device listed on the [eufy-security-client compatibility list](https://bropat.github.io/eufy-security-client/#/supported_devices)?
+      options:
+        - "Yes — listed as supported"
+        - "Yes — listed but partial support"
+        - "No — not listed"
+        - "Not sure"
+    validations:
+      required: true
+
+  - type: input
+    id: upstream_issue
+    attributes:
+      label: Upstream Issue
+      description: "If you've opened an issue on [bropat/eufy-security-client](https://github.com/bropat/eufy-security-client/issues), paste the link here."
+      placeholder: https://github.com/bropat/eufy-security-client/issues/...
+
+  - type: textarea
+    id: additional_context
+    attributes:
+      label: Additional Context
+      description: Any other details about this device — what it does, how it connects, etc.

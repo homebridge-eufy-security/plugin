@@ -1,0 +1,70 @@
+name: 🐛 Bug Report
+description: Report a bug or unexpected behavior
+type: Bug
+labels: ["needs triage"]
+body:
+  - type: checkboxes
+    id: preflight
+    attributes:
+      label: Preflight Checklist
+      options:
+        - label: I have searched the [existing issues](https://github.com/homebridge-plugins/homebridge-eufy-security/issues) and this bug has not been reported before.
+          required: true
+        - label: I am using a **dedicated guest admin account** (not my main Eufy account).
+          required: true
+        - label: I have restarted Homebridge and the issue persists.
+          required: true
+
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: "Use the **🐛 Report Issue** button in the plugin Settings page to auto-fill this."
+      value: |
+        - **Plugin Version**: 
+        - **Homebridge Version**: 
+        - **Node.js Version**: 
+        - **OS**: 
+        - **eufy-security-client**: 
+      render: markdown
+    validations:
+      required: true
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      description: Which area is affected?
+      options:
+        - Installation / Setup
+        - Login / Authentication
+        - Livestream / Streaming
+        - Events / Notifications
+        - Snapshots
+        - Recording
+        - Talkback
+        - Guard Modes / Security System
+        - Device Discovery
+        - HomeKit Integration
+        - Plugin UI
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: What happened?
+      description: Describe the bug, what you expected, and how to reproduce it. Attach logs or screenshots if possible.
+      placeholder: |
+        **What happened:**
+        Describe the issue...
+
+        **What I expected:**
+        ...
+
+        **Steps to reproduce:**
+        1. ...
+        2. ...
+    validations:
+      required: true

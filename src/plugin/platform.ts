@@ -301,7 +301,7 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
 
   private initSetup() {
 
-    log.debug('warning: planned changes, see https://github.com/homebridge-eufy-security/plugin/issues/1');
+    log.debug('warning: planned changes, see https://github.com/homebridge-plugins/homebridge-eufy-security/issues/1');
 
     log.debug('plugin data store:', this.eufyPath);
     log.debug('OS is', this.hostSystem);
@@ -376,7 +376,7 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
         Please abstain from any activities until this period elapses...
         Should your issue persist beyond this timeframe, you may need to consider setting up a new account.
         For more detailed instructions, please consult:
-        https://github.com/homebridge-eufy-security/plugin/wiki/Create-a-dedicated-admin-account-for-Homebridge-Eufy-Security-Plugin
+        https://github.com/homebridge-plugins/homebridge-eufy-security/wiki/Create-a-dedicated-admin-account-for-Homebridge-Eufy-Security-Plugin
         ***************************
         `);
         await this.pluginShutdown();
@@ -391,7 +391,7 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
         Kindly refrain from making any further attempts during this period...
         If your concern remains unresolved after 24 hours, you may need to consider creating a new account.
         For additional information, refer to:
-        https://github.com/homebridge-eufy-security/plugin/wiki/Create-a-dedicated-admin-account-for-Homebridge-Eufy-Security-Plugin
+        https://github.com/homebridge-plugins/homebridge-eufy-security/wiki/Create-a-dedicated-admin-account-for-Homebridge-Eufy-Security-Plugin
         ***************************
         `);
         await this.pluginShutdown();
@@ -549,7 +549,7 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
           #########################
           You're not using a guest admin account with this plugin! You must use a guest admin account!
           Please look here for more details: 
-          https://github.com/homebridge-eufy-security/plugin/wiki/Create-a-dedicated-admin-account-for-Homebridge-Eufy-Security-Plugin
+          https://github.com/homebridge-plugins/homebridge-eufy-security/wiki/Create-a-dedicated-admin-account-for-Homebridge-Eufy-Security-Plugin
           #########################
         `);
         return;

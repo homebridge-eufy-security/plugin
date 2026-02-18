@@ -132,3 +132,10 @@ src/plugin/version.ts
 src/version.ts
 
 TODO
+
+docker-compose.yml
+volumes
+
+.DS_Store
+
+diagnostics-*

@@ -1,21 +1,21 @@
 {
   "displayName": "Homebridge Eufy Security",
   "name": "homebridge-eufy-security",
-  "version": "4.3.7",
+  "version": "4.3.8",
   "description": "Control Eufy Security from homebridge.",
   "license": "Apache-2.0",
   "repository": {
     "type": "git",
-    "url": "git://github.com/homebridge-eufy-security/plugin.git"
+    "url": "git://github.com/homebridge-plugins/homebridge-eufy-security.git"
   },
   "funding": [
     {
       "type": "github",
-      "url": "https://github.com/sponsors/homebridge-eufy-security"
+      "url": "https://github.com/sponsors/lenoxys"
     }
   ],
   "bugs": {
-    "url": "https://github.com/homebridge-eufy-security/plugin/issues"
+    "url": "https://github.com/homebridge-plugins/homebridge-eufy-security/issues"
   },
   "engines": {
     "node": "20.11.0 || ^22",
@@ -103,6 +103,6 @@
       "ban-ts-comment": 0
     }
   },
-  "homepage": "https://github.com/homebridge-eufy-security/plugin/wiki",
+  "homepage": "https://github.com/homebridge-plugins/homebridge-eufy-security/wiki",
   "author": "homebridge-eufy-security"
 }
