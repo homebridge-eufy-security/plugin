@@ -102,11 +102,12 @@ export class snapshotDelegate {
       case SnapshotHandlingMethod.Balanced:
         this.log.info('is set to balanced snapshot handling.');
         break;
+      case SnapshotHandlingMethod.Auto:
       case SnapshotHandlingMethod.CloudOnly:
         this.log.info('is set to handle snapshots with cloud images. Snapshots might be older than they appear.');
         break;
       default:
-        this.log.warn('unknown snapshot handling method. Snapshots will not be generated.');
+        this.log.warn(`Unknown snapshot handling method (${method}), falling back to cloud-only.`);
     }
   }
 
@@ -217,11 +218,10 @@ export class snapshotDelegate {
           }
           return await this.fetchSnapshotFromStream();
 
+        case SnapshotHandlingMethod.Auto:
         case SnapshotHandlingMethod.CloudOnly:
-          return this.getCachedOrPlaceholder();
-
         default:
-          throw new Error('No suitable handling method for snapshots defined');
+          return this.getCachedOrPlaceholder();
       }
     } catch (err) {
       this.log.warn('Snapshot retrieval failed, falling back to cache:', err);
