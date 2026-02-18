@@ -160,18 +160,6 @@ const DeviceDetailView = {
           },
         });
       }
-
-      if (device.isDoorbell) {
-        Toggle.render(simpleSection, {
-          id: 'toggle-ring-notify',
-          label: 'Instant Ring Notification',
-          help: 'Get ring notifications immediately, without waiting for a snapshot.',
-          checked: !!deviceConfig.immediateRingNotificationWithoutSnapshot,
-          onChange: async (checked) => {
-            await Config.updateDeviceConfig(device.uniqueId, { immediateRingNotificationWithoutSnapshot: checked });
-          },
-        });
-      }
     }
 
     restSettings.appendChild(simpleSection);
@@ -269,20 +257,6 @@ const DeviceDetailView = {
         checked: !!deviceConfig.delayCameraSnapshot,
         onChange: async (checked) => {
           await Config.updateDeviceConfig(device.uniqueId, { delayCameraSnapshot: checked });
-        },
-      });
-
-      NumberInput.render(advSection, {
-        id: 'num-snapshot-refresh',
-        label: 'Snapshot Refresh Interval',
-        help: 'Periodically refresh the camera snapshot (0 = disabled).',
-        value: deviceConfig.refreshSnapshotIntervalMinutes || 0,
-        min: 0,
-        max: 120,
-        step: 5,
-        suffix: 'min',
-        onChange: async (val) => {
-          await Config.updateDeviceConfig(device.uniqueId, { refreshSnapshotIntervalMinutes: val });
         },
       });
 
