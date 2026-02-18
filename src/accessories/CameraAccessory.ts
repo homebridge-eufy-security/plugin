@@ -470,6 +470,7 @@ export class CameraAccessory extends DeviceAccessory {
         this.device,
         this.cameraConfig,
         this.streamingDelegate.getLivestreamManager(),
+        this.streamingDelegate.getSnapshotDelegate(),
       );
 
       this.log.debug(`Controller`);
