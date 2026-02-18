@@ -1,4 +1,6 @@
 export enum SnapshotHandlingMethod {
+  /** Let the plugin decide the best method (defaults to CloudOnly) */
+  Auto = 0,
   /** Always fetch a fresh snapshot from the camera (highest battery drain) */
   AlwaysFresh = 1,
   /** Return cached snapshot if recent, otherwise fetch fresh */
