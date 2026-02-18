@@ -46,6 +46,7 @@ import { readFileSync } from 'node:fs';
 
 import { initLog, log, tsLogger, ffmpegLogger, HAP } from './utils/utils.js';
 import { hasFdkAac } from './utils/ffmpeg.js';
+import { AccessoriesStore } from './utils/accessoriesStore.js';
 import { LIB_VERSION } from './version.js';
 
 export class EufySecurityPlatform implements DynamicPlatformPlugin {
@@ -68,6 +69,8 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
   private static readonly DISCOVERY_DEBOUNCE_SEC = 15;
 
   private _hostSystem: string = '';
+
+  private accessoriesStore?: AccessoriesStore;
 
   constructor(
     hblog: Logger,
@@ -386,6 +389,9 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
       this.eufyClient.on('station removed', this.stationRemoved.bind(this));
       this.eufyClient.on('device added', this.deviceAdded.bind(this));
       this.eufyClient.on('device removed', this.deviceRemoved.bind(this));
+
+      // Initialise the accessories store for UI consumption
+      this.accessoriesStore = new AccessoriesStore(this.eufyClient, this.config, this.eufyPath);
 
       this.eufyClient.on('push connect', () => {
         log.debug('Push Connected!');
@@ -753,6 +759,9 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
 
     log.debug(`[STATIONS COMPLETE] ${this.pendingStations.length - stationsSkipped} stations created, ${stationsSkipped} skipped`);
 
+    // Persist the discovered accessories for the UI (immediate, no debounce)
+    this.accessoriesStore?.persistNow();
+
     // Clear pending queues
     this.pendingStations = [];
     this.pendingDevices = [];
@@ -773,6 +782,8 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
     if (this.discoveryDebounceTimeout) {
       clearTimeout(this.discoveryDebounceTimeout);
     }
+
+    this.accessoriesStore?.cancelPending();
 
     try {
       if (this.eufyClient.isConnected()) {
