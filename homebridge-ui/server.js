@@ -307,6 +307,29 @@ class UiServer extends HomebridgePluginUiServer {
   }
 
   async login(options) {
+    // --- Plugin heartbeat safeguard ---
+    // If the plugin is running (accessories.json updated within the last 90s),
+    // block login to prevent a competing eufy-security-client instance.
+    if (!this.eufyClient) {
+      try {
+        if (fs.existsSync(this.storedAccessories_file)) {
+          const data = JSON.parse(fs.readFileSync(this.storedAccessories_file, 'utf-8'));
+          if (data?.storedAt) {
+            const ageMs = Date.now() - new Date(data.storedAt).getTime();
+            if (ageMs < 90_000) {
+              this.log.warn('Plugin heartbeat is fresh — blocking UI login to avoid duplicate eufy client.');
+              this.pushEvent('authError', {
+                message: 'The plugin is currently running. Please stop it before logging in from the UI.',
+              });
+              return { success: false, pluginRunning: true };
+            }
+          }
+        }
+      } catch (error) {
+        this.log.debug('Heartbeat check failed (non-blocking): ' + error);
+      }
+    }
+
     try {
       if (options && options.username && options.password && !options.reconnect) {
         this.log.info('deleting persistent.json and accessories due to new login');
