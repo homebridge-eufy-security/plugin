@@ -31,3 +31,11 @@ gh pr create --base beta --title "<concise title>" --body-file /tmp/pr-body.md
 - Use first person ("I")
 - Thank the user by @mention
 - Be formal and concise
+
+## Linting & Building
+
+- Run `npm run lint` before committing to ensure zero warnings/errors
+- The lint script runs: `eslint 'src/**/*.ts' --max-warnings=0`
+- `@typescript-eslint/no-explicit-any` is globally disabled — do **not** add `eslint-disable` comments for it
+- Fix all warnings; the build enforces `--max-warnings=0`
+- Run `npm run build` before pushing to ensure the project compiles without errors
