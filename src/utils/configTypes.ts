@@ -24,9 +24,7 @@ export type CameraConfig = {
   lightButton: boolean;
   rtsp: boolean;
   enableCamera: boolean;
-  refreshSnapshotIntervalMinutes?: number;
   snapshotHandlingMethod?: SnapshotHandlingMethod;
-  immediateRingNotificationWithoutSnapshot?: boolean;
   delayCameraSnapshot?: boolean;
   talkback?: boolean;
   talkbackChannels?: number;
@@ -48,9 +46,7 @@ export const DEFAULT_CAMERACONFIG_VALUES: CameraConfig = {
   hsvRecordingDuration: 90,
   rtsp: false,
   enableCamera: true,
-  refreshSnapshotIntervalMinutes: 0,
   snapshotHandlingMethod: SnapshotHandlingMethod.CloudOnly,
-  immediateRingNotificationWithoutSnapshot: false,
   delayCameraSnapshot: false,
   indoorChimeButton: false,
 };

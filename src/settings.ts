@@ -38,8 +38,6 @@ export const PROTECT_SNAPSHOT_CACHE_MAXAGE = 90;
 // How often, in seconds, should we heartbeat FFmpeg in two-way audio sessions. This should be less than 5 seconds, which is FFmpeg's input timeout interval.
 export const PROTECT_TWOWAY_HEARTBEAT_INTERVAL = 3;
 
-export const SnapshotBlackPath = '/media/Snapshot-black.png';
-
 export const SnapshotUnavailablePath = '/media/Snapshot-Unavailable.png';
 
 // Seconds – cache age threshold for the fast-path snapshot return.
@@ -47,12 +45,6 @@ export const SNAPSHOT_CACHE_FRESH_SECONDS = 15;
 
 // Seconds – balanced-mode cache age threshold before fetching a new snapshot.
 export const SNAPSHOT_CACHE_BALANCED_SECONDS = 30;
-
-// Seconds – window after a ring event where a black placeholder is sent.
-export const SNAPSHOT_RING_DEBOUNCE_SECONDS = 5;
-
-// Minutes – minimum allowed automatic snapshot refresh interval.
-export const SNAPSHOT_MIN_REFRESH_INTERVAL_MINUTES = 5;
 
 // Milliseconds – don't overwrite a recent stream snapshot with a cloud image.
 export const SNAPSHOT_CLOUD_SKIP_MS = 30 * 1000;
