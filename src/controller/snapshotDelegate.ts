@@ -451,6 +451,37 @@ export class snapshotDelegate {
     });
   }
 
+  /**
+   * Captures a single frame from an already-running livestream and stores it
+   * as the latest snapshot. Does NOT stop the livestream — safe to call while
+   * a HomeKit live view is active.
+   */
+  public async captureSnapshotFromActiveLivestream(): Promise<void> {
+    if (this.pendingFetch) {
+      this.log.debug('Snapshot fetch already in progress, skipping livestream capture.');
+      return;
+    }
+
+    try {
+      const source = await this.getCameraSource();
+      const buffer = await this.runFFmpegSnapshot('[Livestream Snapshot]', async (params) => {
+        if (source.type === 'rtsp') {
+          params.setInputSource(source.url);
+        } else {
+          await params.setInputStream(source.stream);
+        }
+        if (this.cameraConfig.delayCameraSnapshot) {
+          params.setDelayedSnapshot();
+        }
+      });
+      this.storeSnapshotForCache(buffer);
+      this.storeImage(`${this.device.getSerial()}.jpg`, buffer);
+      this.log.info('Snapshot captured from active livestream.');
+    } catch (error) {
+      this.log.debug('Failed to capture snapshot from active livestream: ' + error);
+    }
+  }
+
   private async resizeSnapshot(snapshot: Buffer, request: SnapshotRequest): Promise<Buffer> {
     return this.runFFmpegSnapshot('[Snapshot Resize]', (params) => {
       params.setup(this.cameraConfig, request);
