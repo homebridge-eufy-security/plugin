@@ -164,6 +164,9 @@ export class StreamingDelegate implements CameraStreamingDelegate {
 
       this.finalizeSession(request.sessionID, activeSession);
 
+      // Opportunistically capture a snapshot from the running livestream
+      this.captureSnapshotFromLivestream();
+
     } catch (error) {
       this.log.error('Stream could not be started: ' + error);
       callback(error as Error);
@@ -258,6 +261,9 @@ export class StreamingDelegate implements CameraStreamingDelegate {
     this.log.debug('FFmpeg input streams configured.');
     return true;
   }
+
+  /** Delay before extracting a snapshot from a running livestream (ms). */
+  private static readonly LIVESTREAM_SNAPSHOT_DELAY_MS = 2_000;
 
   /** Grace period for a P2P audio process before it is killed for inactivity (ms). */
   private static readonly P2P_AUDIO_TIMEOUT_MS = 8_000;
@@ -378,6 +384,18 @@ export class StreamingDelegate implements CameraStreamingDelegate {
       this.log.info('Session was cancelled before start completed. Stopping immediately.');
       this.stopStream(sessionId);
     }
+  }
+
+  /**
+   * Captures a snapshot from the currently running livestream after a brief
+   * delay to allow the stream to produce stable frames.
+   */
+  private captureSnapshotFromLivestream(): void {
+    setTimeout(() => {
+      this.snapshotDelegate.captureSnapshotFromActiveLivestream().catch((error) => {
+        this.log.debug('Snapshot capture from livestream failed: ' + error);
+      });
+    }, StreamingDelegate.LIVESTREAM_SNAPSHOT_DELAY_MS);
   }
 
   handleStreamRequest(request: StreamingRequest, callback: StreamRequestCallback): void {
