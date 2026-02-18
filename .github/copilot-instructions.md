@@ -21,7 +21,7 @@ gh pr create --base beta --title "<concise title>" --body-file /tmp/pr-body.md
 - Describe the **spirit** of the change, not the code diff
 
 ### PR body
-- Write to `/tmp/pr-body.md`
+- Write to `/tmp/pr-body-<branch>.md`
 - Reference the issue: `Closes #<number>`
 - Describe the **spirit** of the change, not the code diff
 - Concise description of the problem and fix
