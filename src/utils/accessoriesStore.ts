@@ -80,7 +80,6 @@ export class AccessoriesStore {
         devicesByStation.get(stationSN)!.push(device);
       }
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const storedStations: Record<string, any>[] = [];
 
       for (const station of stations) {
@@ -88,7 +87,6 @@ export class AccessoriesStore {
         const stationSerial = station.getSerial();
         const isKnownStation = Device.isStation(stationType);
 
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const stationRecord: Record<string, any> = {
           uniqueId: stationSerial,
           displayName: station.getName(),
@@ -127,7 +125,6 @@ export class AccessoriesStore {
         for (const device of stationDevices) {
           const devType = device.getDeviceType();
 
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const deviceRecord: Record<string, any> = {
             uniqueId: device.getSerial(),
             displayName: device.getName(),
@@ -184,9 +181,7 @@ export class AccessoriesStore {
  * Compute a unified power descriptor from a properties object.
  * Works for both devices and stations.
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function computePower(props: Record<string, any>): Record<string, any> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const power: Record<string, any> = { source: null, icon: null, label: null };
 
   if (props.battery !== undefined) {
