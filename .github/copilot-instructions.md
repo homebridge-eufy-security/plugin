@@ -32,6 +32,15 @@ gh pr create --base beta --title "<concise title>" --body-file /tmp/pr-body.md
 - Thank the user by @mention
 - Be formal and concise
 
+## Dependency Updates — `eufy-security-client`
+
+When updating the `eufy-security-client` version in `package.json`:
+
+1. Check the upstream changelog and README at https://github.com/bropat/eufy-security-client/blob/master/README.md
+2. Identify breaking changes, new features, or device support changes
+3. Summarize the impact concisely in the **PR body** so end users understand what changed and why the update matters (e.g. new device support, bug fixes, API changes)
+4. If there are breaking changes, note any required code adjustments in this plugin
+
 ## Linting & Building
 
 - Run `npm run lint` before committing to ensure zero warnings/errors
