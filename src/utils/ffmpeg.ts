@@ -124,6 +124,7 @@ async function createOneShotTcpServer(
     existingPort?: number,
 ): Promise<{ port: number; server: net.Server }> {
     const port = existingPort ?? await pickPort({ type: 'tcp' });
+    // eslint-disable-next-line prefer-const
     let killTimeout: NodeJS.Timeout | undefined;
 
     const server = net.createServer((socket) => {
