@@ -1,49 +1,18 @@
-import path from "node:path";
-import { fileURLToPath } from "node:url";
-import js from "@eslint/js";
-import { FlatCompat } from "@eslint/eslintrc";
+import eslint from "@eslint/js";
+import tseslint from "typescript-eslint";
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-const compat = new FlatCompat({
-    baseDirectory: __dirname,
-    recommendedConfig: js.configs.recommended,
-    allConfig: js.configs.all
-});
-
-export default [{
-    ignores: ["projects/**/*"],
-}, ...compat.extends(
-    "eslint:recommended",
-    "plugin:@typescript-eslint/recommended",
-    "plugin:@angular-eslint/recommended",
-    "plugin:@angular-eslint/template/process-inline-templates",
-).map(config => ({
-    ...config,
-    files: ["**/*.ts"],
-})), {
-    files: ["**/*.ts"],
-
+export default tseslint.config(
+  {
+    ignores: ["dist/**", "homebridge-ui/**"],
+  },
+  eslint.configs.recommended,
+  ...tseslint.configs.recommended,
+  {
+    files: ["src/**/*.ts"],
     rules: {
-        "@angular-eslint/directive-selector": ["error", {
-            type: "attribute",
-            prefix: "app",
-            style: "camelCase",
-        }],
-
-        "@angular-eslint/component-selector": ["error", {
-            type: "element",
-            prefix: "app",
-            style: "kebab-case",
-        }],
+      "@typescript-eslint/ban-ts-comment": "off",
+      "@typescript-eslint/no-explicit-any": "off",
+      "no-undef": "off", // TypeScript handles this
     },
-}, ...compat.extends(
-    "plugin:@angular-eslint/template/recommended",
-    "plugin:@angular-eslint/template/accessibility",
-).map(config => ({
-    ...config,
-    files: ["**/*.html"],
-})), {
-    files: ["**/*.html"],
-    rules: {},
-}];
+  },
+);

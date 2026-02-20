@@ -6,7 +6,7 @@ on:
       version:
         description: "premajor/prerelease/prepatch/major/minor/patch"
         required: true
-        default: "patch"
+        default: "prerelease"
         type: choice
         options:
           - major
@@ -18,7 +18,7 @@ on:
       release-tag:
         description: "Release tag: latest/rc/beta/alpha"
         required: true
-        default: "latest"
+        default: "beta"
         type: choice
         options:
           - latest
@@ -28,14 +28,14 @@ on:
       branch:
         description: "branch: master/next/beta"
         required: true
-        default: "master"
+        default: "beta"
 
 jobs:
   build:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        node-version: [20, 22]
+        node-version: [20, 22, 24]
     steps:
       - uses: actions/checkout@v4
         with:
@@ -53,7 +53,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        node-version: [22]
+        node-version: [24]
     needs: build
     permissions:
       contents: write
@@ -82,7 +82,7 @@ jobs:
           ref: ${{ github.event.inputs.branch }}
       - uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: 24
           registry-url: https://registry.npmjs.org/
       - run: npm ci
       - run: npm publish --access public --tag ${{ github.event.inputs.release-tag }}

@@ -1,23 +1,26 @@
 {
   "compilerOptions": {
-    "target": "ES2022",
-    "module": "commonjs",
-    "lib": [
-      "es2022",
-    ],
-    "declaration": true,
-    "declarationMap": true,
-    "sourceMap": true,
-    "outDir": "./dist",
-    "rootDir": "./src/plugin",
-    "strict": true,
+    /* Base Options */
     "esModuleInterop": true,
-    "noImplicitAny": false
+    "skipLibCheck": true,
+    "target": "es2022",
+    "allowJs": true,
+    "resolveJsonModule": true,
+    "moduleDetection": "force",
+
+    /* Strictness */
+    "strict": true,
+    "noImplicitAny": false,
+    "noImplicitOverride": true,
+
+    /* Transpiling with TypeScript */
+    "module": "NodeNext",
+    "outDir": "dist",
+    "rootDir": "src",
+    "sourceMap": true,
+
+    /* Not running in the DOM */
+    "lib": ["es2022"]
   },
-  "include": [
-    "src/plugin/"
-  ],
-  "exclude": [
-    "**/*.spec.ts"
-  ]
+  "include": ["src/"]
 }

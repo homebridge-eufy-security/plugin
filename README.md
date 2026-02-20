@@ -1,71 +1,67 @@
 <p align="center">
    <a href="https://github.com/homebridge-plugins/homebridge-eufy-security"><img src="https://raw.githubusercontent.com/wiki/homebridge-eufy-security/plugin/img/homebridge-eufy-security.png" width="456px"></a>
 </p>
-<span align="center">
 
-# homebridge-eufy-security
+<p align="center">
+  <strong>Control your Eufy Security devices from Apple HomeKit</strong>
+</p>
 
-Homebridge plugin to control certain Eufy Security devices
+<p align="center">
+  <a href="https://www.npmjs.com/package/homebridge-eufy-security"><img src="https://img.shields.io/npm/v/homebridge-eufy-security?color=green&label=stable" alt="stable"></a>
+  <a href="https://github.com/homebridge-plugins/homebridge-eufy-security/wiki/Special-Version-(BETA---RC---HKSV)"><img src="https://img.shields.io/npm/v/homebridge-eufy-security/beta?label=beta" alt="beta"></a>
+  <a href="https://github.com/homebridge/homebridge/wiki/Verified-Plugins"><img src="https://badgen.net/badge/homebridge/verified/purple" alt="verified"></a>
+  <a href="https://www.npmjs.com/package/homebridge-eufy-security"><img src="https://img.shields.io/npm/dt/homebridge-eufy-security" alt="downloads"></a>
+  <a href="https://discord.com/channels/432663330281226270/876907345962229791"><img src="https://img.shields.io/discord/432663330281226270?color=728ED5&logo=discord&label=discord" alt="discord"></a>
+</p>
 
-[![npm](https://img.shields.io/npm/v/homebridge-eufy-security?color=green)](https://www.npmjs.com/package/homebridge-eufy-security)
-[![npm](https://img.shields.io/npm/v/homebridge-eufy-security/beta?label=beta)](https://github.com/homebridge-plugins/homebridge-eufy-security/wiki/Special-Version-(BETA---RC---HKSV))
-[![verified-by-homebridge](https://badgen.net/badge/homebridge/verified/purple)](https://github.com/homebridge/homebridge/wiki/Verified-Plugins)
-[![npm](https://img.shields.io/npm/dt/homebridge-eufy-security)](https://www.npmjs.com/package/homebridge-eufy-security)
-[![Discord](https://img.shields.io/discord/432663330281226270?color=728ED5&logo=discord&label=hb-discord)](https://discord.com/channels/432663330281226270/876907345962229791)
+---
 
-</span>
+## ✨ Features
 
-### Plugin Information
+| | |
+|---|---|
+| 🎥 **Live Streaming** | P2P & RTSP livestream in the Home app |
+| 📹 **HomeKit Secure Video** | Record and review clips natively in HomeKit |
+| 🔔 **Doorbell & Sensors** | Ring notifications, motion & entry sensors |
+| 🔐 **Locks & Guard Modes** | Smart lock control, arm/disarm your station |
+| 🏠 **Bridged & Unbridged** | Run cameras as separate accessories for performance |
 
-- This plugin allows you to view and control your Eufy Security devices within HomeKit. The plugin:
-  - requires your Eufy Security credentials **(we highly recommend to use [Family/Guest Account](https://support.eufylife.com/s/article/Share-Your-eufySecurity-Devices-With-Your-Family) dedicated to the plugin)**
-  - we support Eufy Security OTP validation by email and captcha
+> **Supported devices** — Cameras, doorbells, floodlights, indoor cams, locks, sensors, stations & more.  
+> See the full [Supported Devices](https://github.com/homebridge-plugins/homebridge-eufy-security/wiki/Supported-Devices) list.
 
-### Prerequisites
+---
 
-- To use this plugin, you will need to already have [Homebridge](https://homebridge.io) (at least v1.6.1)  installed. Refer to the links for more information and installation instructions.
-- For configuration Homebridge UI is recommenend. If you have 2FA enabled it is mandatory.
+## 🚀 Getting Started
 
-### ⚠️ Warning
-Starting from Node.js versions `18.19.1`, `20.11.1`, and `21.6.2`, the removal of `RSA_PKCS1_PADDING` support breaks Eufy Security's livestream/P2P functionality. We advise against using Node.js versions beyond **v20.11.0** until compatibility with the plugin has been confirmed. If you encounter any issues, consider reverting to the recommended LTS version within the **v20** branch. See [here](https://github.com/homebridge-plugins/homebridge-eufy-security/wiki/Node.js-Compatibility-with-Eufy-Security-Plugin) for more information.
+| Requirement | |
+|---|---|
+| [Homebridge](https://homebridge.io) | `>=1.9.0` |
+| Node.js | `20`, `22` or `24` |
+| Eufy Account | A [dedicated guest account](https://support.eufylife.com/s/article/Share-Your-eufySecurity-Devices-With-Your-Family) is **mandatory** |
 
-#### Setup
-* [Installation](https://github.com/homebridge-plugins/homebridge-eufy-security/wiki/Installation-and-Configuration#installation)
-* [Configuration](https://github.com/homebridge-plugins/homebridge-eufy-security/wiki/Installation-and-Configuration#configuration)
-* [Bridged and Unbridged Mode](https://github.com/homebridge-plugins/homebridge-eufy-security/wiki/Bridged-and-Unbridged-Mode-and-Problems)
-* [Beta Version](https://github.com/homebridge-plugins/homebridge-eufy-security/wiki/Special-Version-(BETA---RC---HKSV))
-* [Uninstallation](https://github.com/homebridge-plugins/homebridge-eufy-security/wiki/Uninstallation)
+> **💡 Node.js & RSA_PKCS1_PADDING** — Node.js `18.19.1+`, `20.11.1+` and `21.6.2+` removed `RSA_PKCS1_PADDING` which affects P2P livestream on some devices. The plugin includes a built-in **Embedded PKCS1 Support** setting that works around this on Node.js 20 and 22. Node.js `24.5.0+` restores native support. See the [compatibility guide](https://github.com/homebridge-plugins/homebridge-eufy-security/wiki/Node.js-Compatibility-with-Eufy-Security-Plugin) for details.
 
-#### Features
-* [Streaming](https://github.com/homebridge-plugins/homebridge-eufy-security/wiki/Streaming-Settings)
-* [HomeKit Secure Video](https://github.com/homebridge-plugins/homebridge-eufy-security/wiki/HomeKit-Secure-Video)
+---
 
-#### Help
-* [Basic Troubleshooting](https://github.com/homebridge-plugins/homebridge-eufy-security/wiki/Basic-Troubleshooting)
-* [Common Issues](https://github.com/homebridge-plugins/homebridge-eufy-security/wiki/Common-Issues)
-* [Support Request](https://github.com/homebridge-plugins/homebridge-eufy-security/issues/new/choose)
-* [Changelog](https://github.com/homebridge-plugins/homebridge-eufy-security/blob/master/CHANGELOG.md)
+## 📖 Documentation
 
-### Supporting
+| Setup | Features | Help |
+|---|---|---|
+| [Installation](https://github.com/homebridge-plugins/homebridge-eufy-security/wiki/Installation-and-Configuration#installation) | [Streaming](https://github.com/homebridge-plugins/homebridge-eufy-security/wiki/Streaming-Settings) | [Troubleshooting](https://github.com/homebridge-plugins/homebridge-eufy-security/wiki/Basic-Troubleshooting) |
+| [Configuration](https://github.com/homebridge-plugins/homebridge-eufy-security/wiki/Installation-and-Configuration#configuration) | [HomeKit Secure Video](https://github.com/homebridge-plugins/homebridge-eufy-security/wiki/HomeKit-Secure-Video) | [Common Issues](https://github.com/homebridge-plugins/homebridge-eufy-security/wiki/Common-Issues) |
+| [Bridged & Unbridged](https://github.com/homebridge-plugins/homebridge-eufy-security/wiki/Bridged-and-Unbridged-Mode-and-Problems) | [Supported Devices](https://github.com/homebridge-plugins/homebridge-eufy-security/wiki/Supported-Devices) | [Report a Bug](https://github.com/homebridge-plugins/homebridge-eufy-security/issues/new/choose) |
+| [Beta Versions](https://github.com/homebridge-plugins/homebridge-eufy-security/wiki/Special-Version-(BETA---RC---HKSV)) | | [Changelog](https://github.com/homebridge-plugins/homebridge-eufy-security/blob/master/CHANGELOG.md) |
 
-If you appreciate this plugin and want to support the work we do, you can use one of the following links:
+---
 
-**Active Contributors**
+## 💛 Supporting
 
-- **[lenoxys](https://github.com/sponsors/lenoxys)**
-- **[schliemann](https://github.com/schliemann)**
-- **[thieren](https://ko-fi.com/thieren)**
+| Active Contributors |
+|---|
+| [Lenoxys](https://github.com/sponsors/lenoxys) |
 
-**The guy who started it all**
+**Founded by** [samemory](https://ko-fi.com/S6S24XCVJ) · **Powered by** [bropat](https://ko-fi.com/bropat)'s [eufy-security-client](https://github.com/bropat/eufy-security-client)
 
-- **[samemory](https://ko-fi.com/S6S24XCVJ)**
+---
 
-
-**And also**
-
-Big thanks to **[bropat](https://github.com/bropat)** who made this possible. You can support him [here](https://ko-fi.com/bropat)
-
-### Disclaimer
-
-- We are in no way affiliated with Eufy Security and this plugin is a personal project that we maintain in our free time.
-- Use this plugin entirely at your own risk - please see licence for more information.
+<sub>This project is not affiliated with Anker or Eufy Security. Use entirely at your own risk — see [LICENSE](LICENSE) for details.</sub>
