@@ -490,8 +490,8 @@ export class CameraAccessory extends DeviceAccessory {
       // accessory already has them (e.g. from a previous run), configureController
       // will throw a duplicate UUID error.
       const controllerManagedServiceUUIDs = [
-        '0000021A-0000-1000-8000-0026BB765291', // CameraOperatingMode
-        '00000129-0000-1000-8000-0026BB765291', // DataStreamTransportManagement
+        SERV.CameraOperatingMode.UUID,
+        SERV.DataStreamTransportManagement.UUID,
       ];
       for (const uuid of controllerManagedServiceUUIDs) {
         const existingService = this.accessory.services.find(s => s.UUID === uuid);
