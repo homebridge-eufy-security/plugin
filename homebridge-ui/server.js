@@ -970,6 +970,101 @@ class UiServer extends HomebridgePluginUiServer {
     fs.writeFileSync(this.storedAccessories_file, JSON.stringify(dataToStore));
   }
 
+  // ── Sensitive-field redaction ──────────────────────────────────────────────
+  // Keys whose string values must be partially masked before persisting to
+  // unsupported.json.  Values are [keepStart, keepEnd] — the number of
+  // characters to leave visible at the beginning and end of the string.
+  // An empty / falsy string is left as-is so we can tell the field is blank.
+
+  static SENSITIVE_KEYS = new Map([
+    // Serial numbers — keep model prefix (e.g. T8170)
+    ['station_sn',        [5, 0]],
+    ['device_sn',         [5, 0]],
+
+    // Network / connectivity
+    ['wifi_ssid',         [3, 0]],
+    ['wifi_mac',          [4, 0]],
+    ['ip_addr',           [3, 0]],
+    ['local_ip',          [3, 0]],
+
+    // Hardware identifiers
+    ['cpuid',             [4, 0]],
+
+    // P2P identifiers & key-exchange material
+    ['p2p_did',           [7, 0]],
+    ['push_did',          [7, 0]],
+    ['ndt_did',           [7, 0]],
+    ['query_server_did',  [7, 0]],
+    ['p2p_conn',          [4, 0]],
+    ['app_conn',          [4, 0]],
+    ['p2p_license',       [2, 0]],
+    ['push_license',      [2, 0]],
+    ['ndt_license',       [2, 0]],
+    ['wakeup_key',        [4, 0]],
+    ['dsk_key',           [4, 0]],
+    ['setup_code',        [2, 0]],
+    ['setup_id',          [2, 0]],
+
+    // User / account identifiers
+    ['account_id',        [4, 0]],
+    ['admin_user_id',     [4, 0]],
+    ['member_user_id',    [4, 0]],
+    ['action_user_id',    [4, 0]],
+    ['short_user_id',     [4, 0]],
+    ['email',             [3, 0]],
+    ['action_user_email', [3, 0]],
+    ['member_nick',       [3, 0]],
+    ['nick_name',         [3, 0]],
+    ['action_user_name',  [3, 0]],
+    ['avatar',            [0, 0]],
+    ['member_avatar',     [0, 0]],
+
+    // House / location
+    ['house_id',          [4, 0]],
+
+    // Misc identifiers
+    ['volume',            [6, 0]],
+  ]);
+
+  /**
+   * Partially mask a string value, keeping the first `keepStart` and last
+   * `keepEnd` characters visible.  Returns the original if it is empty or
+   * too short to meaningfully mask.
+   */
+  static _partialMask(value, keepStart, keepEnd) {
+    if (typeof value !== 'string' || !value) return value;
+    const minLen = keepStart + keepEnd + 1;
+    if (value.length <= minLen) return value.length <= 2 ? '***' : value[0] + '***';
+    return value.slice(0, keepStart) + '***' + (keepEnd > 0 ? value.slice(-keepEnd) : '');
+  }
+
+  /**
+   * Deep-walk an object and partially redact every value whose key appears
+   * in SENSITIVE_KEYS.  Returns a new object — the original is not mutated.
+   */
+  static _redactSensitiveFields(obj) {
+    if (Array.isArray(obj)) {
+      return obj.map(item => EufySecurityServer._redactSensitiveFields(item));
+    }
+    if (obj !== null && typeof obj === 'object') {
+      const out = {};
+      for (const [key, val] of Object.entries(obj)) {
+        const rule = EufySecurityServer.SENSITIVE_KEYS.get(key);
+        if (rule && typeof val === 'string') {
+          out[key] = EufySecurityServer._partialMask(val, rule[0], rule[1]);
+        } else if (typeof val === 'object' && val !== null) {
+          out[key] = EufySecurityServer._redactSensitiveFields(val);
+        } else {
+          out[key] = val;
+        }
+      }
+      return out;
+    }
+    return obj;
+  }
+
+  // ── Unsupported device storage ──────────────────────────────────────────
+
   /**
    * Collect raw intel for all unsupported devices/stations and write to unsupported.json.
    * This data is only used by the Plugin UI for triage and diagnostics.
@@ -1008,6 +1103,9 @@ class UiServer extends HomebridgePluginUiServer {
     const rawDevice = device.getRawDevice ? device.getRawDevice() : {};
     const rawProps = device.getRawProperties ? device.getRawProperties() : {};
 
+    const wifiSsid = rawDevice.wifi_ssid || undefined;
+    const localIp = rawDevice.ip_addr || rawDevice.local_ip || undefined;
+
     return {
       uniqueId: device.getSerial(),
       displayName: device.getName(),
@@ -1017,9 +1115,9 @@ class UiServer extends HomebridgePluginUiServer {
       model: rawDevice.device_model,
       hardwareVersion: rawDevice.main_hw_version,
       softwareVersion: rawDevice.main_sw_version,
-      wifiSsid: rawDevice.wifi_ssid || undefined,
-      localIp: rawDevice.ip_addr || rawDevice.local_ip || undefined,
-      rawDevice,
+      wifiSsid: wifiSsid ? EufySecurityServer._partialMask(wifiSsid, 3, 0) : undefined,
+      localIp: localIp ? EufySecurityServer._partialMask(localIp, 3, 0) : undefined,
+      rawDevice: EufySecurityServer._redactSensitiveFields(rawDevice),
       rawProperties: rawProps,
     };
   }
@@ -1031,6 +1129,9 @@ class UiServer extends HomebridgePluginUiServer {
     const rawStation = station.getRawStation ? station.getRawStation() : {};
     const rawProps = station.getRawProperties ? station.getRawProperties() : {};
 
+    const wifiSsid = rawStation.wifi_ssid || undefined;
+    const localIp = rawStation.ip_addr || undefined;
+
     return {
       uniqueId: station.getSerial(),
       displayName: station.getName(),
@@ -1040,9 +1141,9 @@ class UiServer extends HomebridgePluginUiServer {
       model: rawStation.station_model,
       hardwareVersion: rawStation.main_hw_version,
       softwareVersion: rawStation.main_sw_version,
-      wifiSsid: rawStation.wifi_ssid || undefined,
-      localIp: rawStation.ip_addr || undefined,
-      rawDevice: rawStation,
+      wifiSsid: wifiSsid ? EufySecurityServer._partialMask(wifiSsid, 3, 0) : undefined,
+      localIp: localIp ? EufySecurityServer._partialMask(localIp, 3, 0) : undefined,
+      rawDevice: EufySecurityServer._redactSensitiveFields(rawStation),
       rawProperties: rawProps,
     };
   }
