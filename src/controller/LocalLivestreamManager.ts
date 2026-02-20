@@ -85,12 +85,10 @@ export class LocalLivestreamManager {
 
     this.pending = { deferred, timer };
 
-    try {
-      this.eufyClient.startStationLivestream(this.serialNumber);
-    } catch (err) {
-      this.log.error(`startStationLivestream threw: ${err}`);
+    this.eufyClient.startStationLivestream(this.serialNumber).catch((err) => {
+      this.log.error(`startStationLivestream failed: ${err}`);
       this.settlePending('reject', err);
-    }
+    });
 
     return deferred.promise;
   }
@@ -117,7 +115,9 @@ export class LocalLivestreamManager {
 
   public stopLocalLiveStream(): void {
     this.log.debug('Stopping station livestream.');
-    this.eufyClient.stopStationLivestream(this.serialNumber);
+    this.eufyClient.stopStationLivestream(this.serialNumber).catch((err) => {
+      this.log.warn(`stopStationLivestream failed: ${err}`);
+    });
     this.destroyStreams();
   }
 
