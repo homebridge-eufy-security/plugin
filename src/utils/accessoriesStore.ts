@@ -105,7 +105,6 @@ export class AccessoriesStore {
         if (!isKnownStation) {
           if (!Device.isSupported(stationType)) {
             stationRecord.unsupported = true;
-            stationRecord.rawDevice = station.getRawStation();
           } else {
             const hasMatchingDevice = devicesByStation.has(stationSerial);
             if (hasMatchingDevice) {

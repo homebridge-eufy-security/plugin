@@ -32,7 +32,7 @@ const UnsupportedDetailView = {
 
     // Main content
     const content = document.createElement('div');
-    this._renderDetail(content, accessory);
+    await this._renderDetail(content, accessory);
     container.appendChild(content);
   },
 
@@ -60,7 +60,7 @@ const UnsupportedDetailView = {
   },
 
   // ===== Detail Content =====
-  _renderDetail(content, accessory) {
+  async _renderDetail(content, accessory) {
     const REPO = 'homebridge-plugins/homebridge-eufy-security';
     const LABEL = 'device-support';
     const COMPAT_URL = 'https://bropat.github.io/eufy-security-client/#/supported_devices';
@@ -79,13 +79,27 @@ const UnsupportedDetailView = {
 
     // Device info dump — all available data in one box
     const props = accessory.properties || {};
+
+    // Load raw intel from unsupported.json (served via /unsupportedDevices endpoint)
+    let unsupportedIntel = null;
+    try {
+      const unsupportedData = await Api.loadUnsupportedDevices();
+      const entries = unsupportedData.devices || [];
+      unsupportedIntel = entries.find(e => e.uniqueId === accessory.uniqueId) || null;
+    } catch (e) {
+      // ignore — will fall back to basic properties
+    }
+
     const deviceInfo = {
       uniqueId: accessory.uniqueId,
       displayName: accessory.displayName,
       type: accessory.type,
       typename: accessory.typename || undefined,
       ...props,
-      rawDevice: accessory.rawDevice || undefined,
+      ...(unsupportedIntel ? {
+        rawDevice: unsupportedIntel.rawDevice,
+        rawProperties: unsupportedIntel.rawProperties,
+      } : {}),
     };
     // Remove potentially large/sensitive fields
     delete deviceInfo.picture;
@@ -263,7 +277,7 @@ const UnsupportedDetailView = {
   /**
    * Find an accessory (device or station) by uniqueId across all stations.
    * For standalone devices the station and device share the same uniqueId —
-   * prefer the device because it carries richer data (rawDevice, etc.).
+   * prefer the device because it carries richer data.
    * @param {string} id
    * @returns {object|null}
    */
@@ -271,7 +285,7 @@ const UnsupportedDetailView = {
     const stations = App.state.stations || [];
     for (const s of stations) {
       // Check devices first — standalone devices have the same uniqueId as their station
-      // but carry richer data (rawDevice, rawProperties, etc.)
+      // but carry richer data
       for (const d of s.devices || []) {
         if (d.uniqueId === id) return d;
       }
