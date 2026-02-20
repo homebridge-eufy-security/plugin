@@ -3,9 +3,11 @@
 ## Git Workflow
 
 ```bash
-# Create dedicated branch from beta
+# Create dedicated branch from beta (stash first since changes are already in the working tree)
+git stash
 git checkout beta && git pull origin beta
 git checkout -b fix/<short-description>
+git stash pop
 
 # Stage and commit each change individually (concise, single-line, spirit-based)
 git add <file>
@@ -21,7 +23,7 @@ gh pr create --base beta --title "<concise title>" --body-file /tmp/pr-body.md
 - Describe the **spirit** of the change, not the code diff
 
 ### PR body
-- Write to `/tmp/pr-body-<branch>.md`
+- Write to `/tmp/pr-body-<branch>.md` using `create_file`, **never** use heredoc (`cat << EOF`) in the terminal — quotes and special characters in the body will break it
 - Reference the issue: `Closes #<number>`
 - Describe the **spirit** of the change, not the code diff
 - Concise description of the problem and fix
