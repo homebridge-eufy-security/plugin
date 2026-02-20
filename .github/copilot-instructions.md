@@ -2,12 +2,12 @@
 
 ## Git Workflow
 
+**IMPORTANT: Create the branch BEFORE editing any files.**
+
 ```bash
-# Create dedicated branch from beta (stash first since changes are already in the working tree)
-git stash
+# Create dedicated branch from beta before making any changes
 git checkout beta && git pull origin beta
-git checkout -b fix/<short-description>
-git stash pop
+git checkout -b [fix/feat/chore]/<short-description>
 
 # Stage and commit each change individually (concise, single-line, spirit-based)
 git add <file>
