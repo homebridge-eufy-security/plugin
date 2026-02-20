@@ -234,6 +234,7 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
         interval: '1d',
         rotate: 3,
         maxSize: '200M',
+        compress: 'gzip',
       });
 
       logger.attachTransport((logObj: ILogObjMeta) => {
@@ -261,6 +262,7 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
         interval: '1d',
         rotate: 3,
         maxSize: '200M',
+        compress: 'gzip',
       });
 
       logger.attachTransport((logObj: ILogObjMeta) => {
