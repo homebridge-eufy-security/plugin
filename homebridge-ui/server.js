@@ -234,6 +234,7 @@ class UiServer extends HomebridgePluginUiServer {
     this.onRequest('/storedAccessories', this.loadStoredAccessories.bind(this));
     this.onRequest('/reset', this.resetPlugin.bind(this));
     this.onRequest('/downloadDiagnostics', this.downloadDiagnostics.bind(this));
+    this.onRequest('/cleanStorage', this.cleanStorage.bind(this));
     this.onRequest('/systemInfo', this.getSystemInfo.bind(this));
     this.onRequest('/skipIntelWait', this.skipIntelWait.bind(this));
     this.onRequest('/discoveryState', this.getDiscoveryState.bind(this));
@@ -1045,6 +1046,33 @@ class UiServer extends HomebridgePluginUiServer {
     } catch {
       return false;
     }
+  }
+
+  async cleanStorage() {
+    const preserved = new Set([
+      'accessories.json',
+      'persistent.json',
+      'eufy-security.log',
+      'eufy-lib.log',
+      'ffmpeg.log',
+      'configui-server.log',
+      'configui-lib.log',
+    ]);
+    const files = await fs.promises.readdir(this.storagePath);
+    let deleted = 0;
+    for (const file of files) {
+      if (preserved.has(file)) continue;
+      const filePath = path.join(this.storagePath, file);
+      try {
+        await fs.promises.unlink(filePath);
+        deleted++;
+        this.log.debug(`Deleted: ${file}`);
+      } catch (error) {
+        this.log.warn(`Failed to delete ${file}: ${error}`);
+      }
+    }
+    this.log.info(`Cleaned ${deleted} file(s)`);
+    return { deleted };
   }
 
   async getSystemInfo() {

@@ -95,6 +95,36 @@ const DiagnosticsView = {
 
     container.appendChild(stepsSection);
 
+    // ── Clean Storage ──
+    const cleanSection = document.createElement('div');
+    cleanSection.className = 'settings-section';
+
+    const cleanTitle = document.createElement('div');
+    cleanTitle.className = 'detail-section__title';
+    cleanTitle.textContent = 'Clean Storage';
+    cleanSection.appendChild(cleanTitle);
+
+    const cleanDesc = document.createElement('p');
+    cleanDesc.className = 'text-muted';
+    cleanDesc.style.fontSize = '0.85rem';
+    cleanDesc.textContent = 'Delete rotated logs, cached snapshots, and diagnostic archives to free disk space. Current log files, persistent data, and accessories are preserved.';
+    cleanSection.appendChild(cleanDesc);
+
+    const btnClean = document.createElement('button');
+    btnClean.className = 'btn btn-outline-warning btn-sm';
+    btnClean.innerHTML = ''; btnClean.appendChild(Helpers.icon('settings_backup_restore.svg')); btnClean.append(' Clean Storage');
+    btnClean.addEventListener('click', async () => {
+      try {
+        const result = await Api.cleanStorage();
+        homebridge.toast.success(`Deleted ${result.deleted} file(s).`);
+      } catch (e) {
+        homebridge.toast.error('Failed to clean storage: ' + (e.message || e));
+      }
+    });
+    cleanSection.appendChild(btnClean);
+
+    container.appendChild(cleanSection);
+
     // ── Reset Plugin ──
     const resetSection = document.createElement('div');
     resetSection.className = 'settings-section';
