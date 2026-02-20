@@ -75,6 +75,14 @@ const Api = {
   },
 
   /**
+   * Delete all files except persistent data and accessories
+   * @returns {Promise<{deleted: number}>}
+   */
+  async cleanStorage() {
+    return homebridge.request('/cleanStorage');
+  },
+
+  /**
    * Register a listener for the 'addAccessory' push event.
    * Fired by server after batch processing completes (~45s after login).
    * Replaces any previously registered listener.
