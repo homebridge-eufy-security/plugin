@@ -1044,16 +1044,16 @@ class UiServer extends HomebridgePluginUiServer {
    */
   static _redactSensitiveFields(obj) {
     if (Array.isArray(obj)) {
-      return obj.map(item => EufySecurityServer._redactSensitiveFields(item));
+      return obj.map(item => UiServer._redactSensitiveFields(item));
     }
     if (obj !== null && typeof obj === 'object') {
       const out = {};
       for (const [key, val] of Object.entries(obj)) {
-        const rule = EufySecurityServer.SENSITIVE_KEYS.get(key);
+        const rule = UiServer.SENSITIVE_KEYS.get(key);
         if (rule && typeof val === 'string') {
-          out[key] = EufySecurityServer._partialMask(val, rule[0], rule[1]);
+          out[key] = UiServer._partialMask(val, rule[0], rule[1]);
         } else if (typeof val === 'object' && val !== null) {
-          out[key] = EufySecurityServer._redactSensitiveFields(val);
+          out[key] = UiServer._redactSensitiveFields(val);
         } else {
           out[key] = val;
         }
@@ -1115,9 +1115,9 @@ class UiServer extends HomebridgePluginUiServer {
       model: rawDevice.device_model,
       hardwareVersion: rawDevice.main_hw_version,
       softwareVersion: rawDevice.main_sw_version,
-      wifiSsid: wifiSsid ? EufySecurityServer._partialMask(wifiSsid, 3, 0) : undefined,
-      localIp: localIp ? EufySecurityServer._partialMask(localIp, 3, 0) : undefined,
-      rawDevice: EufySecurityServer._redactSensitiveFields(rawDevice),
+      wifiSsid: wifiSsid ? UiServer._partialMask(wifiSsid, 3, 0) : undefined,
+      localIp: localIp ? UiServer._partialMask(localIp, 3, 0) : undefined,
+      rawDevice: UiServer._redactSensitiveFields(rawDevice),
       rawProperties: rawProps,
     };
   }
@@ -1141,9 +1141,9 @@ class UiServer extends HomebridgePluginUiServer {
       model: rawStation.station_model,
       hardwareVersion: rawStation.main_hw_version,
       softwareVersion: rawStation.main_sw_version,
-      wifiSsid: wifiSsid ? EufySecurityServer._partialMask(wifiSsid, 3, 0) : undefined,
-      localIp: localIp ? EufySecurityServer._partialMask(localIp, 3, 0) : undefined,
-      rawDevice: EufySecurityServer._redactSensitiveFields(rawStation),
+      wifiSsid: wifiSsid ? UiServer._partialMask(wifiSsid, 3, 0) : undefined,
+      localIp: localIp ? UiServer._partialMask(localIp, 3, 0) : undefined,
+      rawDevice: UiServer._redactSensitiveFields(rawStation),
       rawProperties: rawProps,
     };
   }
