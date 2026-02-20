@@ -206,7 +206,7 @@ class UiServer extends HomebridgePluginUiServer {
     ];
 
     for (const { name, logger } of logStreams) {
-      const logStream = createStream(name, { path: this.storagePath, interval: '1d', rotate: 3, maxSize: '200M' });
+      const logStream = createStream(name, { path: this.storagePath, interval: '1d', rotate: 3, maxSize: '200M', compress: 'gzip' });
 
       logger.attachTransport((logObj) => {
         const meta = logObj['_meta'];
@@ -976,7 +976,7 @@ class UiServer extends HomebridgePluginUiServer {
     const files = await fs.promises.readdir(this.storagePath);
 
     const logFiles = files.filter(file => {
-      return file.endsWith('.log');
+      return file.endsWith('.log') || file.endsWith('.log.gz');
     });
 
     const nonEmptyLogFiles = await Promise.all(logFiles.map(async file => {
