@@ -32,7 +32,7 @@ export type ServiceType = WithUUID<typeof Service> | Service;
 
 export abstract class BaseAccessory extends EventEmitter {
 
-  protected servicesInUse: Service[] = [];
+  protected servicesInUse: Service[];
   public readonly SN: string;
   public readonly name: string;
   public readonly log: Logger<ILogObj>;
@@ -60,6 +60,15 @@ export abstract class BaseAccessory extends EventEmitter {
     super();
 
     this.device = device as Device | Station;
+
+    // Share servicesInUse across all BaseAccessory instances on the same
+    // PlatformAccessory so that pruneUnusedServices() won't remove services
+    // registered by a sibling accessor (e.g. LockAccessory + CameraAccessory
+    // on combo devices like the T8530).
+    if (!(accessory as any)._servicesInUse) {
+      (accessory as any)._servicesInUse = [];
+    }
+    this.servicesInUse = (accessory as any)._servicesInUse;
 
     this.SN = this.device.getSerial();
     this.name = this.device.getName();
