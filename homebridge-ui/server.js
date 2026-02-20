@@ -64,6 +64,7 @@ class UiServer extends HomebridgePluginUiServer {
 
     this.storagePath = this.homebridgeStoragePath + '/eufysecurity';
     this.storedAccessories_file = this.storagePath + '/accessories.json';
+    this.unsupported_file = this.storagePath + '/unsupported.json';
     this.diagnosticsZipFilePath = null; // generated dynamically with timestamp
     this.config.persistentDir = this.storagePath;
 
@@ -238,6 +239,7 @@ class UiServer extends HomebridgePluginUiServer {
     this.onRequest('/systemInfo', this.getSystemInfo.bind(this));
     this.onRequest('/skipIntelWait', this.skipIntelWait.bind(this));
     this.onRequest('/discoveryState', this.getDiscoveryState.bind(this));
+    this.onRequest('/unsupportedDevices', this.loadUnsupportedDevices.bind(this));
   }
 
   skipIntelWait() {
@@ -831,7 +833,6 @@ class UiServer extends HomebridgePluginUiServer {
         if (!Device.isSupported(stationType)) {
           // Device type not recognized by eufy-security-client — truly unsupported
           s.unsupported = true;
-          s.rawDevice = station.getRawStation ? station.getRawStation() : undefined;
 
           this.log.warn(`Station "${station.getName()}" (type ${stationType}) is not supported by eufy-security-client`);
 
@@ -903,7 +904,6 @@ class UiServer extends HomebridgePluginUiServer {
       // Mark device as unsupported if eufy-security-client doesn't recognize this device type
       if (!Device.isSupported(devType)) {
         d.unsupported = true;
-        d.rawDevice = device.getRawDevice ? device.getRawDevice() : undefined;
       }
 
       // Pre-compute power info for the UI
@@ -935,6 +935,13 @@ class UiServer extends HomebridgePluginUiServer {
       }
     }
 
+    // Write unsupported.json with raw device intel for triage (before clearing pending queues)
+    try {
+      this.storeUnsupportedDevices(this.pendingStations, this.pendingDevices);
+    } catch (error) {
+      this.log.error('Error storing unsupported devices:', error);
+    }
+
     // Clear pending queues
     this.pendingStations = [];
     this.pendingDevices = [];
@@ -961,6 +968,99 @@ class UiServer extends HomebridgePluginUiServer {
     }
     const dataToStore = { version: LIB_VERSION, storedAt: new Date().toISOString(), stations: this.stations };
     fs.writeFileSync(this.storedAccessories_file, JSON.stringify(dataToStore));
+  }
+
+  /**
+   * Collect raw intel for all unsupported devices/stations and write to unsupported.json.
+   * This data is only used by the Plugin UI for triage and diagnostics.
+   */
+  storeUnsupportedDevices(pendingStations, pendingDevices) {
+    const unsupportedEntries = [];
+
+    // Collect unsupported standalone stations
+    for (const station of pendingStations) {
+      const stationType = station.getDeviceType();
+      if (!Device.isStation(stationType) && !Device.isSupported(stationType)) {
+        unsupportedEntries.push(this._buildUnsupportedStationEntry(station));
+      }
+    }
+
+    // Collect unsupported devices
+    for (const device of pendingDevices) {
+      if (!Device.isSupported(device.getDeviceType())) {
+        unsupportedEntries.push(this._buildUnsupportedDeviceEntry(device));
+      }
+    }
+
+    if (!fs.existsSync(this.storagePath)) {
+      fs.mkdirSync(this.storagePath, { recursive: true });
+    }
+
+    const dataToStore = { version: LIB_VERSION, storedAt: new Date().toISOString(), devices: unsupportedEntries };
+    fs.writeFileSync(this.unsupported_file, JSON.stringify(dataToStore));
+    this.log.debug(`Persisted ${unsupportedEntries.length} unsupported device(s) to unsupported.json`);
+  }
+
+  /**
+   * Build a triage-ready intel object for an unsupported device.
+   */
+  _buildUnsupportedDeviceEntry(device) {
+    const rawDevice = device.getRawDevice ? device.getRawDevice() : {};
+    const rawProps = device.getRawProperties ? device.getRawProperties() : {};
+
+    return {
+      uniqueId: device.getSerial(),
+      displayName: device.getName(),
+      type: device.getDeviceType(),
+      typename: DeviceType[device.getDeviceType()] || undefined,
+      stationSerialNumber: device.getStationSerial(),
+      model: rawDevice.device_model,
+      hardwareVersion: rawDevice.main_hw_version,
+      softwareVersion: rawDevice.main_sw_version,
+      wifiSsid: rawDevice.wifi_ssid || undefined,
+      localIp: rawDevice.ip_addr || rawDevice.local_ip || undefined,
+      rawDevice,
+      rawProperties: rawProps,
+    };
+  }
+
+  /**
+   * Build a triage-ready intel object for an unsupported standalone station.
+   */
+  _buildUnsupportedStationEntry(station) {
+    const rawStation = station.getRawStation ? station.getRawStation() : {};
+    const rawProps = station.getRawProperties ? station.getRawProperties() : {};
+
+    return {
+      uniqueId: station.getSerial(),
+      displayName: station.getName(),
+      type: station.getDeviceType(),
+      typename: DeviceType[station.getDeviceType()] || undefined,
+      stationSerialNumber: station.getSerial(),
+      model: rawStation.station_model,
+      hardwareVersion: rawStation.main_hw_version,
+      softwareVersion: rawStation.main_sw_version,
+      wifiSsid: rawStation.wifi_ssid || undefined,
+      localIp: rawStation.ip_addr || undefined,
+      rawDevice: rawStation,
+      rawProperties: rawProps,
+    };
+  }
+
+  /**
+   * Load unsupported device intel from disk.
+   */
+  async loadUnsupportedDevices() {
+    try {
+      if (!fs.existsSync(this.unsupported_file)) {
+        return { devices: [] };
+      }
+      const data = JSON.parse(await fs.promises.readFile(this.unsupported_file, 'utf-8'));
+      return { devices: data.devices || [] };
+    } catch (error) {
+      this.log.error('Could not load unsupported devices: ' + error);
+      return { devices: [] };
+    }
   }
 
   async resetPlugin() {
@@ -1008,6 +1108,12 @@ class UiServer extends HomebridgePluginUiServer {
     // Include accessories.json for diagnostics
     if (fs.existsSync(this.storedAccessories_file)) {
       zip.addFile(this.storedAccessories_file);
+      numberOfFiles++;
+    }
+
+    // Include unsupported.json for diagnostics
+    if (fs.existsSync(this.unsupported_file)) {
+      zip.addFile(this.unsupported_file);
       numberOfFiles++;
     }
 

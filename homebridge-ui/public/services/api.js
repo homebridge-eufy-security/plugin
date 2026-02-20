@@ -59,6 +59,14 @@ const Api = {
   },
 
   /**
+   * Load unsupported device intel from server (raw properties for triage)
+   * @returns {Promise<{devices: Array}>} Array of unsupported device entries
+   */
+  async loadUnsupportedDevices() {
+    return homebridge.request('/unsupportedDevices');
+  },
+
+  /**
    * Reset plugin data (removes persistent storage)
    * @returns {Promise<{result: number}>}
    */
