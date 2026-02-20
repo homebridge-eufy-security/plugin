@@ -24,7 +24,6 @@ gh pr create --base beta --title "<concise title>" --body-file /tmp/pr-body.md
 
 ### PR body
 - Write to `/tmp/pr-body-<branch>.md` using `create_file`, **never** use heredoc (`cat << EOF`) in the terminal — quotes and special characters in the body will break it
-- Reference the issue: `Closes #<number>`
 - Describe the **spirit** of the change, not the code diff
 - Concise description of the problem and fix
 
