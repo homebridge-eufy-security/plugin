@@ -143,3 +143,4 @@ tsconfig.configui.server.json
 tsconfig.configui.spec.json
 tsconfig.plugin.json
 karma.conf.js
+.idea

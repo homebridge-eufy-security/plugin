@@ -6,7 +6,7 @@ export const PLATFORM_NAME = 'EufySecurity';
 /**
  * This must match the name of your plugin as defined the package.json
  */
-export const PLUGIN_NAME = 'homebridge-eufy-security';
+export const PLUGIN_NAME = '@homebridge-plugins/homebridge-eufy-security';
 
 // HomeKit Secure Video segment length, in milliseconds. HomeKit only supports this value currently.
 export const PROTECT_HKSV_SEGMENT_LENGTH = 4000;

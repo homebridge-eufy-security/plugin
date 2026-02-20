@@ -7,10 +7,10 @@
 </p>
 
 <p align="center">
-  <a href="https://www.npmjs.com/package/homebridge-eufy-security"><img src="https://img.shields.io/npm/v/homebridge-eufy-security?color=green&label=stable" alt="stable"></a>
-  <a href="https://github.com/homebridge-plugins/homebridge-eufy-security/wiki/Special-Version-(BETA---RC---HKSV)"><img src="https://img.shields.io/npm/v/homebridge-eufy-security/beta?label=beta" alt="beta"></a>
+  <a href="https://www.npmjs.com/package/@homebridge-plugins/homebridge-eufy-security"><img src="https://img.shields.io/npm/v/@homebridge-plugins/homebridge--eufy-security?color=green&label=stable" alt="stable"></a>
+  <a href="https://github.com/homebridge-plugins/homebridge-eufy-security/wiki/Special-Version-(BETA---RC---HKSV)"><img src="https://img.shields.io/npm/v/@homebridge-plugins/homebridge--eufy-security/beta?label=beta" alt="beta"></a>
   <a href="https://github.com/homebridge/homebridge/wiki/Verified-Plugins"><img src="https://badgen.net/badge/homebridge/verified/purple" alt="verified"></a>
-  <a href="https://www.npmjs.com/package/homebridge-eufy-security"><img src="https://img.shields.io/npm/dt/homebridge-eufy-security" alt="downloads"></a>
+  <a href="https://www.npmjs.com/package/@homebridge-plugins/homebridge-eufy-security"><img src="https://img.shields.io/npm/dt/@homebridge-plugins/homebridge--eufy-security" alt="downloads"></a>
   <a href="https://discord.com/channels/432663330281226270/876907345962229791"><img src="https://img.shields.io/discord/432663330281226270?color=728ED5&logo=discord&label=discord" alt="discord"></a>
 </p>
 

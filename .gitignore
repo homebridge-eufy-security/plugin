@@ -138,3 +138,4 @@ volumes
 .DS_Store
 
 diagnostics-*
+.idea
