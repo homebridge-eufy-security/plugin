@@ -111,14 +111,17 @@ const App = {
 
     switch (route) {
       case 'login':
+        homebridge.disableSaveButton();
         LoginView.render(this._root);
         break;
 
       case 'dashboard':
+        homebridge.enableSaveButton();
         DashboardView.render(this._root);
         break;
 
       case 'detail': {
+        homebridge.enableSaveButton();
         const type = parts[1]; // 'device' or 'station'
         const id = parts[2];   // uniqueId
         if (type && id) {
@@ -130,6 +133,7 @@ const App = {
       }
 
       case 'unsupported': {
+        homebridge.enableSaveButton();
         const uid = parts[1];
         if (uid) {
           UnsupportedDetailView.render(this._root, uid);
@@ -140,10 +144,12 @@ const App = {
       }
 
       case 'settings':
+        homebridge.enableSaveButton();
         SettingsView.render(this._root);
         break;
 
       case 'diagnostics':
+        homebridge.enableSaveButton();
         DiagnosticsView.render(this._root);
         break;
 
@@ -152,6 +158,7 @@ const App = {
         if (this.state.stations.length > 0) {
           this.navigate('dashboard');
         } else {
+          homebridge.disableSaveButton();
           this.navigate('login');
         }
         break;
