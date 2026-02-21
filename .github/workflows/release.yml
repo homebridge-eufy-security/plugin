@@ -18,12 +18,8 @@ permissions:
   contents: read
 
 jobs:
-  eslint:
-    uses: homebridge/.github/.github/workflows/eslint.yml@latest
-
   publish:
     if: ${{ github.repository == 'homebridge-plugins/homebridge-eufy-security' }}
-    needs: eslint
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
