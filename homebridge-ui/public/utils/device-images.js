@@ -51,6 +51,7 @@ const DeviceImages = {
       case 64: return 'solocamc210_large.jpg';
       case 87: return 'floodlight2_large.jpg';
       case 88: return 'solocame30_large.png';
+      case 89: return 'eufyCamS4_large.png';
       case 90: return 'smartdrop_t8790_large.png';
       case 91: return 'batterydoorbell2kdual_large.jpg';
       case 93: return 'wireddoorbelldual_large.jpg';
