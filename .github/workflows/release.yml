@@ -10,8 +10,8 @@ on:
     types: [published]
   push:
     branches:
-      - beta*
-      - alpha*
+      - beta-*.*.*
+      - alpha-*.*.*
 
 permissions:
   id-token: write
