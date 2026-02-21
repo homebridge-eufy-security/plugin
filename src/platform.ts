@@ -450,12 +450,12 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
 
     try {
       await this.eufyClient.connect();
-      log.debug('EufyClient connected ' + this.eufyClient.isConnected());
+      log.debug('EufyClient connected ' + this.eufyClient?.isConnected?.());
     } catch (e) {
       log.error(`Error authenticating Eufy: ${e}`);
     }
 
-    if (!this.eufyClient.isConnected()) {
+    if (!this.eufyClient?.isConnected?.()) {
       log.error('Not connected can\'t continue!');
       return;
     }
@@ -788,7 +788,7 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
     this.accessoriesStore?.cancelPending();
 
     try {
-      if (this.eufyClient.isConnected()) {
+      if (this.eufyClient?.isConnected?.()) {
         this.eufyClient.close();
       }
       log.info('Finished shutdown!');
