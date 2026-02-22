@@ -347,7 +347,7 @@ class UiServer extends HomebridgePluginUiServer {
 
     if (!this.eufyClient && options && options.username && options.password && options.country) {
       // Clear any pending timeouts from a previous login attempt
-      this._cancelAllTimers();
+      this._clearAllTimers();
       this.stations = [];
       this.pendingStations = [];
       this.pendingDevices = [];
@@ -370,8 +370,8 @@ class UiServer extends HomebridgePluginUiServer {
       this.config.trustedDeviceName = options.deviceName;
       try {
         this.eufyClient = await EufySecurity.initialize(this.config, this.tsLog);
-        this.eufyClient?.on('station added', this.addStation.bind(this));
-        this.eufyClient?.on('device added', this.addDevice.bind(this));
+        this.eufyClient?.on('station added', this._onStationDiscovered.bind(this));
+        this.eufyClient?.on('device added', this._onDeviceDiscovered.bind(this));
         this.eufyClient?.on('push connect', () => this.log.debug('Push Connected!'));
         this.eufyClient?.on('push close', () => this.log.debug('Push Closed!'));
         this.eufyClient?.on('connect', () => this.log.debug('Connected!'));
@@ -392,7 +392,7 @@ class UiServer extends HomebridgePluginUiServer {
     if (options && options.username && options.password && options.country) {
       this.log.debug('login with credentials');
       try {
-        this._registerAuthHandlers();
+        this._registerOneTimeAuthHandlers();
         this.eufyClient?.connect()
           .then(() => this.log.debug('connected?: ' + this.eufyClient?.isConnected()))
           .catch((error) => this.log.error(error));
@@ -409,7 +409,7 @@ class UiServer extends HomebridgePluginUiServer {
         message: 'Verifying TFA code...',
       });
       try {
-        this._registerAuthHandlers();
+        this._registerOneTimeAuthHandlers();
         this.eufyClient?.connect({ verifyCode: options.verifyCode, force: false })
           .then(() => this.log.debug('TFA connect resolved, connected?: ' + this.eufyClient?.isConnected()))
           .catch((error) => {
@@ -429,7 +429,7 @@ class UiServer extends HomebridgePluginUiServer {
         message: 'Verifying captcha...',
       });
       try {
-        this._registerAuthHandlers();
+        this._registerOneTimeAuthHandlers();
         this.eufyClient?.connect({ captcha: { captchaCode: options.captcha.captchaCode, captchaId: options.captcha.captchaId }, force: false })
           .then(() => this.log.debug('Captcha connect resolved, connected?: ' + this.eufyClient?.isConnected()))
           .catch((error) => {
@@ -454,7 +454,7 @@ class UiServer extends HomebridgePluginUiServer {
    * Register one-time auth outcome handlers on the eufy client.
    * All outcomes are delivered to the UI via push events.
    */
-  _registerAuthHandlers() {
+  _registerOneTimeAuthHandlers() {
     this.eufyClient?.once('tfa request', () => {
       clearTimeout(this._loginTimeout);
       this.pushEvent('tfaRequest', {});
@@ -474,7 +474,7 @@ class UiServer extends HomebridgePluginUiServer {
         progress: 15,
         message: 'Authenticated — waiting for devices...',
       });
-      this._startDiscoveryInactivityTimeout();
+      this._startDiscoveryInactivityTimer();
     });
   }
 
@@ -483,13 +483,13 @@ class UiServer extends HomebridgePluginUiServer {
    * If no station or device is discovered within DISCOVERY_INACTIVITY_SEC seconds
    * after authentication, save the account and send an empty result to the UI.
    */
-  _startDiscoveryInactivityTimeout() {
+  _startDiscoveryInactivityTimer() {
     // If stations or devices were already discovered before connect fired, skip
     if (this.pendingStations.length > 0 || this.pendingDevices.length > 0) {
       this.log.debug('Devices already discovered before connect event — skipping inactivity timeout');
       return;
     }
-    this._cancelDiscoveryInactivityTimeout();
+    this._clearDiscoveryInactivityTimer();
     const totalSec = UiServer.DISCOVERY_INACTIVITY_SEC;
     const start = Date.now();
 
@@ -535,7 +535,7 @@ class UiServer extends HomebridgePluginUiServer {
    * @param {object} station - eufy-security-client Station instance
    * @returns {boolean}
    */
-  _isNonGuestAdmin(station) {
+  _isMainAdminAccount(station) {
     const rawStation = station.getRawStation();
     return rawStation.member.member_type !== UserType.ADMIN;
   }
@@ -544,9 +544,9 @@ class UiServer extends HomebridgePluginUiServer {
    * Handle detection of a non-guest admin account.
    * Tears down the client, cancels all timers, notifies the UI, and resets the plugin.
    */
-  _handleNonGuestAdmin() {
+  _abortNonGuestAdminLogin() {
     this.adminAccountUsed = true;
-    this._cancelAllTimers();
+    this._clearAllTimers();
     this.eufyClient?.removeAllListeners();
     this.eufyClient?.close();
     this.pushEvent('AdminAccountUsed', true);
@@ -566,7 +566,7 @@ class UiServer extends HomebridgePluginUiServer {
    * Cancel all pending timers (processing, close, debounce tick, login, discovery inactivity).
    * Safe to call multiple times.
    */
-  _cancelAllTimers() {
+  _clearAllTimers() {
     clearTimeout(this._loginTimeout);
     this._loginTimeout = null;
     if (this.processingTimeout) {
@@ -581,13 +581,10 @@ class UiServer extends HomebridgePluginUiServer {
       clearInterval(this._debounceTickInterval);
       this._debounceTickInterval = null;
     }
-    this._cancelDiscoveryInactivityTimeout();
+    this._clearDiscoveryInactivityTimer();
   }
 
-  /**
-   * Cancel the discovery inactivity timeout (called when a station or device is discovered).
-   */
-  _cancelDiscoveryInactivityTimeout() {
+  _clearDiscoveryInactivityTimer() {
     if (this._discoveryInactivityTickInterval) {
       clearInterval(this._discoveryInactivityTickInterval);
       this._discoveryInactivityTickInterval = null;
@@ -663,18 +660,18 @@ class UiServer extends HomebridgePluginUiServer {
     return new Promise(resolve => setTimeout(resolve, ms));
   }
 
-  async addStation(station) {
+  async _onStationDiscovered(station) {
     if (this.adminAccountUsed) {
       return;
     }
 
     // Check if creds are guest admin
-    if (this._isNonGuestAdmin(station)) {
-      this._handleNonGuestAdmin();
+    if (this._isMainAdminAccount(station)) {
+      this._abortNonGuestAdminLogin();
       return;
     }
 
-    this._cancelDiscoveryInactivityTimeout();
+    this._clearDiscoveryInactivityTimer();
     this.pendingStations.push(station);
     this.log.debug(`${station.getName()}: Station queued for processing`);
     this._discoveryPhase = 'queuing';
@@ -685,10 +682,10 @@ class UiServer extends HomebridgePluginUiServer {
       devices: this.pendingDevices.length,
       message: `Discovered ${this.pendingStations.length} station(s), ${this.pendingDevices.length} device(s)...`,
     });
-    this.resetDiscoveryDebounce();
+    this._restartDiscoveryDebounce();
   }
 
-  async addDevice(device) {
+  async _onDeviceDiscovered(device) {
     if (this.adminAccountUsed) {
       this.pushEvent('AdminAccountUsed', true);
       return;
@@ -700,7 +697,7 @@ class UiServer extends HomebridgePluginUiServer {
       return;
     }
 
-    this._cancelDiscoveryInactivityTimeout();
+    this._clearDiscoveryInactivityTimer();
     this.pendingDevices.push(device);
     this.log.debug(`${device.getName()}: Device queued for processing`);
     this._discoveryPhase = 'queuing';
@@ -711,16 +708,11 @@ class UiServer extends HomebridgePluginUiServer {
       devices: this.pendingDevices.length,
       message: `Discovered ${this.pendingStations.length} station(s), ${this.pendingDevices.length} device(s)...`,
     });
-    this.resetDiscoveryDebounce();
+    this._restartDiscoveryDebounce();
   }
 
-  /**
-   * Resets the discovery debounce timer.
-   * Each time a station or device is emitted, the timer restarts.
-   * Processing begins once no new events arrive for DISCOVERY_DEBOUNCE_SEC seconds.
-   */
-  resetDiscoveryDebounce() {
-    this._cancelAllTimers();
+  _restartDiscoveryDebounce() {
+    this._clearAllTimers();
     const delaySec = UiServer.DISCOVERY_DEBOUNCE_SEC;
     this.log.debug(
       `Discovery debounce reset — will process in ${delaySec}s if no more devices arrive ` +
@@ -745,7 +737,7 @@ class UiServer extends HomebridgePluginUiServer {
     this.processingTimeout = setTimeout(() => {
       clearInterval(this._debounceTickInterval);
       this._debounceTickInterval = null;
-      this.processPendingAccessories().catch(error => this.log.error('Error processing pending accessories:', error));
+      this._processPendingAccessories().catch(error => this.log.error('Error processing pending accessories:', error));
     }, delaySec * 1000);
     // Close connection after processing + potential 2-min unsupported intel wait
     const closeAfterSec = delaySec + (UNSUPPORTED_INTEL_WAIT_MS / 1000) + 15;
@@ -755,7 +747,7 @@ class UiServer extends HomebridgePluginUiServer {
     }, closeAfterSec * 1000);
   }
 
-  async processPendingAccessories() {
+  async _processPendingAccessories() {
     this.log.debug(`Processing ${this.pendingStations.length} stations and ${this.pendingDevices.length} devices`);
 
     this._discoveryPhase = 'processing';
