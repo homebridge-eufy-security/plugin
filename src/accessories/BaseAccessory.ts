@@ -149,12 +149,11 @@ export abstract class BaseAccessory extends EventEmitter {
     // without requiring HomeKit to poll through onGet.
     this.device.on('property changed', this.refreshCachedValues.bind(this));
 
-    this.logPropertyKeys();
+    this.logDeviceProperties();
   }
 
-  // Function to extract and log keys
-  private logPropertyKeys() {
-    this.log.debug(`Property Keys:`, this.device.getProperties());
+  private logDeviceProperties() {
+    this.log.debug(`Device Properties:`, this.device.getProperties());
   }
 
   /**
