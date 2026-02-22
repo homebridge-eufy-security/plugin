@@ -26,6 +26,18 @@ gh pr create --base beta --title "<concise title>" --body-file /tmp/pr-body.md
 - Write to `/tmp/pr-body-<branch>.md` using `create_file`, **never** use heredoc (`cat << EOF`) in the terminal — quotes and special characters in the body will break it
 - Describe the **spirit** of the change, not the code diff
 - Concise description of the problem and fix
+- PR body is **not** the release note — keep it focused on the code change for reviewers
+
+### Release notes
+- Write to `/tmp/release-notes-<version>.md` using `create_file`
+- **Audience is end users** — focus on what matters to them: new devices, behaviour changes, removed settings, required actions
+- **Concise, bullet-driven** — no markdown tables, no verbose paragraphs. Short section intros (1–2 sentences max) followed by bullet lists
+- **No internal milestones** — don't mention "first GA since X" or beta iteration counts in the title/header
+- **Structure for a branch** (e.g., `4.4.x`), not a single version:
+  - Individual `## v4.4.x` entries at the top with version-specific changes
+  - A shared `## What's in 4.4.x` section below covering the full branch for users arriving at any point release
+- **Required actions front and center** — if users need to change config or upgrade Node.js, say so early and clearly
+- **Tone**: direct, no filler, no emojis. End with a short one-line thank-you to testers if applicable
 
 ### Issue comments
 - Use `gh issue comment <number> --repo homebridge-plugins/homebridge-eufy-security --body "<message>"`
