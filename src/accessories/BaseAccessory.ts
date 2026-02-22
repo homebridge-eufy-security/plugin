@@ -15,7 +15,9 @@ import { CHAR, SERV, log } from '../utils/utils.js';
 import { ILogObj, Logger } from 'tslog';
 
 /**
- * Determine if the serviceType is an instance of Service.
+ * Determine if the serviceType is an instance of Service (as opposed to a
+ * Service *constructor*).  Constructors are functions, while instances are
+ * objects that carry a `characteristics` array.
  *
  * @param {WithUUID<typeof Service> | Service} serviceType - The service type to be checked.
  * @returns {boolean} Returns true if the serviceType is an instance of Service, otherwise false.
@@ -23,8 +25,11 @@ import { ILogObj, Logger } from 'tslog';
 function isServiceInstance(
   serviceType: WithUUID<typeof Service> | Service,
 ): serviceType is Service {
-   
-  return typeof (serviceType as any) === 'object';
+  return (
+    typeof serviceType === 'object' &&
+    serviceType !== null &&
+    'characteristics' in serviceType
+  );
 }
 
 export type CharacteristicType = WithUUID<{ new(): Characteristic }>;
