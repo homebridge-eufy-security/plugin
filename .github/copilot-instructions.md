@@ -6,7 +6,7 @@
 
 ```bash
 # Create dedicated branch from beta before making any changes
-git checkout beta && git pull origin beta
+git checkout beta-*.*.* && git pull origin beta-*.*.*
 git checkout -b [fix/feat/chore]/<short-description>
 
 # Stage and commit each change individually (concise, single-line, spirit-based)
@@ -15,7 +15,7 @@ git commit -m "fix: <concise description of what changed and why>"
 
 # Push and create PR
 git push -u origin fix/<short-description>
-gh pr create --base beta --title "<concise title>" --body-file /tmp/pr-body.md
+gh pr create --base beta-*.*.* --title "<concise title>" --body-file /tmp/pr-body.md
 ```
 
 ### Commit message rules
