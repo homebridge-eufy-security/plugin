@@ -44,6 +44,20 @@ export abstract class BaseAccessory extends EventEmitter {
    */
   private static readonly MAX_DEVICE_LISTENERS = 30;
 
+  /**
+   * Service UUIDs managed by CameraController that must never be pruned.
+   * CameraController creates these automatically during configureController()
+   * and they are not tracked in servicesInUse.
+   */
+  private static readonly CAMERA_CONTROLLER_SERVICE_UUIDS = new Set([
+    SERV.CameraRTPStreamManagement.UUID,
+    SERV.CameraOperatingMode.UUID,
+    SERV.CameraRecordingManagement.UUID,
+    SERV.DataStreamTransportManagement.UUID,
+    SERV.Microphone.UUID,
+    SERV.Speaker.UUID,
+  ]);
+
   protected servicesInUse: Service[];
   public readonly SN: string;
   public readonly name: string;
@@ -333,22 +347,10 @@ export abstract class BaseAccessory extends EventEmitter {
   }
 
   protected pruneUnusedServices() {
-    // Services managed by CameraController must never be pruned.
-    // CameraController creates these automatically during configureController()
-    // and they are not tracked in servicesInUse.
-    const safeServiceUUIDs = [
-      SERV.CameraRTPStreamManagement.UUID,
-      SERV.CameraOperatingMode.UUID,
-      SERV.CameraRecordingManagement.UUID,
-      SERV.DataStreamTransportManagement.UUID,
-      SERV.Microphone.UUID,
-      SERV.Speaker.UUID,
-    ];
-
     this.accessory.services.forEach((service) => {
       if (
         !this.servicesInUse.includes(service) &&
-        !safeServiceUUIDs.includes(service.UUID)
+        !BaseAccessory.CAMERA_CONTROLLER_SERVICE_UUIDS.has(service.UUID)
       ) {
         this.log.debug(`Pruning unused service ${service.UUID} ${service.displayName || service.name}`);
         this.accessory.removeService(service);
