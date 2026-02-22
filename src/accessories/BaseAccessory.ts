@@ -37,6 +37,13 @@ export type ServiceType = WithUUID<typeof Service> | Service;
 
 export abstract class BaseAccessory extends EventEmitter {
 
+  /**
+   * Cameras accumulate many listeners (property changes, events, snapshots,
+   * streaming).  Raise the limit to prevent MaxListenersExceededWarning in
+   * Node 22+.
+   */
+  private static readonly MAX_DEVICE_LISTENERS = 30;
+
   protected servicesInUse: Service[];
   public readonly SN: string;
   public readonly name: string;
@@ -114,10 +121,8 @@ export abstract class BaseAccessory extends EventEmitter {
       getValue: () => this.device.getHardwareVersion() || 'Unknown',
     });
 
-    // Cameras accumulate many listeners (property changes, events, snapshots, streaming).
-    // Raise limit to prevent MaxListenersExceededWarning in Node 22+.
     if (typeof this.device.setMaxListeners === 'function') {
-      this.device.setMaxListeners(30);
+      this.device.setMaxListeners(BaseAccessory.MAX_DEVICE_LISTENERS);
     }
 
     if (this.platform.config.enableDetailedLogging) {
