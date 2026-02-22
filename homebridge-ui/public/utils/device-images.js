@@ -69,12 +69,12 @@ const DeviceImages = {
       case 140: return 'smartsafe_s10_t7400_large.png';
       case 141: return 'smartsafe_s12_t7401_large.png';
       case 142: case 143: return 'smartsafe_s10_t7400_large.png';
-      case 151: return 'walllight_s100_large.jpg';
+      case 151: return 'walllight_s100_large.png';
       case 157: return 'smarttrack_link_t87B0_large.png';
       case 159: return 'smarttrack_card_t87B2_large.png';
       case 180: return 'smartlock_touch_and_wifi_t8502_large.png';
       case 184: return 'smartlock_touch_and_wifi_t8506_large.png';
-      case 10005: return 'walllight_s120_large.jpg';
+      case 10005: return 'walllight_s120_large.png';
       case 10008: return 'indoorcamC220_large.png';
       case 10009: return 'indoorcamC210_large.png';
       case 10010: return 'indoorcamC220_large.png';
