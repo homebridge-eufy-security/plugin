@@ -256,7 +256,7 @@ export abstract class BaseAccessory extends EventEmitter {
 
     } else if (setValue) {
       characteristic.onSet(async (value: CharacteristicValue) => {
-        Promise.resolve(setValue(value, characteristic, service));
+        await setValue(value, characteristic, service);
       });
     }
 
