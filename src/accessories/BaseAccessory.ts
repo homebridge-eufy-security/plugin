@@ -48,15 +48,24 @@ export abstract class BaseAccessory extends EventEmitter {
    * Service UUIDs managed by CameraController that must never be pruned.
    * CameraController creates these automatically during configureController()
    * and they are not tracked in servicesInUse.
+   *
+   * Built lazily because SERV is only available after setHap() has been called,
+   * which happens after module import.
    */
-  private static readonly CAMERA_CONTROLLER_SERVICE_UUIDS = new Set([
-    SERV.CameraRTPStreamManagement.UUID,
-    SERV.CameraOperatingMode.UUID,
-    SERV.CameraRecordingManagement.UUID,
-    SERV.DataStreamTransportManagement.UUID,
-    SERV.Microphone.UUID,
-    SERV.Speaker.UUID,
-  ]);
+  private static _cameraControllerServiceUUIDs: Set<string> | undefined;
+  private static get CAMERA_CONTROLLER_SERVICE_UUIDS(): Set<string> {
+    if (!BaseAccessory._cameraControllerServiceUUIDs) {
+      BaseAccessory._cameraControllerServiceUUIDs = new Set([
+        SERV.CameraRTPStreamManagement.UUID,
+        SERV.CameraOperatingMode.UUID,
+        SERV.CameraRecordingManagement.UUID,
+        SERV.DataStreamTransportManagement.UUID,
+        SERV.Microphone.UUID,
+        SERV.Speaker.UUID,
+      ]);
+    }
+    return BaseAccessory._cameraControllerServiceUUIDs;
+  }
 
   protected servicesInUse: Service[];
   public readonly SN: string;
