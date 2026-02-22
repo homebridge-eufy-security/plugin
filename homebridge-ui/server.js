@@ -347,14 +347,7 @@ class UiServer extends HomebridgePluginUiServer {
 
     if (!this.eufyClient && options && options.username && options.password && options.country) {
       // Clear any pending timeouts from a previous login attempt
-      if (this.processingTimeout) {
-        clearTimeout(this.processingTimeout);
-        this.processingTimeout = null;
-      }
-      if (this._closeTimeout) {
-        clearTimeout(this._closeTimeout);
-        this._closeTimeout = null;
-      }
+      this._cancelAllTimers();
       this.stations = [];
       this.pendingStations = [];
       this.pendingDevices = [];
@@ -472,6 +465,9 @@ class UiServer extends HomebridgePluginUiServer {
     });
     this.eufyClient?.once('connect', () => {
       clearTimeout(this._loginTimeout);
+      if (this.adminAccountUsed) {
+        return;
+      }
       this.pushEvent('authSuccess', {});
       this.pushEvent('discoveryProgress', {
         phase: 'authenticating',
@@ -532,6 +528,60 @@ class UiServer extends HomebridgePluginUiServer {
       this.eufyClient?.removeAllListeners();
       this.eufyClient?.close();
     }, totalSec * 1000);
+  }
+
+  /**
+   * Check whether a station belongs to a non-guest admin account.
+   * @param {object} station - eufy-security-client Station instance
+   * @returns {boolean}
+   */
+  _isNonGuestAdmin(station) {
+    const rawStation = station.getRawStation();
+    return rawStation.member.member_type !== UserType.ADMIN;
+  }
+
+  /**
+   * Handle detection of a non-guest admin account.
+   * Tears down the client, cancels all timers, notifies the UI, and resets the plugin.
+   */
+  _handleNonGuestAdmin() {
+    this.adminAccountUsed = true;
+    this._cancelAllTimers();
+    this.eufyClient?.removeAllListeners();
+    this.eufyClient?.close();
+    this.pushEvent('AdminAccountUsed', true);
+    this.resetPlugin();
+    this.log.error(`
+      #########################
+      ######### ERROR #########
+      #########################
+      You're not using a guest admin account with this plugin! You must use a guest admin account!
+      Please look here for more details: 
+      https://github.com/homebridge-plugins/homebridge-eufy-security/wiki/Create-a-dedicated-admin-account-for-Homebridge-Eufy-Security-Plugin
+      #########################
+    `);
+  }
+
+  /**
+   * Cancel all pending timers (processing, close, debounce tick, login, discovery inactivity).
+   * Safe to call multiple times.
+   */
+  _cancelAllTimers() {
+    clearTimeout(this._loginTimeout);
+    this._loginTimeout = null;
+    if (this.processingTimeout) {
+      clearTimeout(this.processingTimeout);
+      this.processingTimeout = null;
+    }
+    if (this._closeTimeout) {
+      clearTimeout(this._closeTimeout);
+      this._closeTimeout = null;
+    }
+    if (this._debounceTickInterval) {
+      clearInterval(this._debounceTickInterval);
+      this._debounceTickInterval = null;
+    }
+    this._cancelDiscoveryInactivityTimeout();
   }
 
   /**
@@ -614,22 +664,13 @@ class UiServer extends HomebridgePluginUiServer {
   }
 
   async addStation(station) {
+    if (this.adminAccountUsed) {
+      return;
+    }
+
     // Check if creds are guest admin
-    const rawStation = station.getRawStation();
-    if (rawStation.member.member_type !== UserType.ADMIN) {
-      this.adminAccountUsed = true;
-      this.eufyClient?.close();
-      this.pushEvent('AdminAccountUsed', true);
-      this.resetPlugin();
-      this.log.error(`
-      #########################
-      ######### ERROR #########
-      #########################
-      You're not using a guest admin account with this plugin! You must use a guest admin account!
-      Please look here for more details: 
-      https://github.com/homebridge-plugins/homebridge-eufy-security/wiki/Create-a-dedicated-admin-account-for-Homebridge-Eufy-Security-Plugin
-      #########################
-      `);
+    if (this._isNonGuestAdmin(station)) {
+      this._handleNonGuestAdmin();
       return;
     }
 
@@ -679,15 +720,7 @@ class UiServer extends HomebridgePluginUiServer {
    * Processing begins once no new events arrive for DISCOVERY_DEBOUNCE_SEC seconds.
    */
   resetDiscoveryDebounce() {
-    if (this.processingTimeout) {
-      clearTimeout(this.processingTimeout);
-    }
-    if (this._closeTimeout) {
-      clearTimeout(this._closeTimeout);
-    }
-    if (this._debounceTickInterval) {
-      clearInterval(this._debounceTickInterval);
-    }
+    this._cancelAllTimers();
     const delaySec = UiServer.DISCOVERY_DEBOUNCE_SEC;
     this.log.debug(
       `Discovery debounce reset — will process in ${delaySec}s if no more devices arrive ` +
