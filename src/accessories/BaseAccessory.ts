@@ -86,27 +86,27 @@ export abstract class BaseAccessory extends EventEmitter {
     this.registerCharacteristic({
       serviceType: SERV.AccessoryInformation,
       characteristicType: CHAR.Name,
-      getValue: () => this.name || 'Unknowm',
+      getValue: () => this.name || 'Unknown',
     });
     this.registerCharacteristic({
       serviceType: SERV.AccessoryInformation,
       characteristicType: CHAR.Model,
-      getValue: () => DeviceType[this.device.getDeviceType()] || 'Unknowm',
+      getValue: () => DeviceType[this.device.getDeviceType()] || 'Unknown',
     });
     this.registerCharacteristic({
       serviceType: SERV.AccessoryInformation,
       characteristicType: CHAR.SerialNumber,
-      getValue: () => this.SN || 'Unknowm',
+      getValue: () => this.SN || 'Unknown',
     });
     this.registerCharacteristic({
       serviceType: SERV.AccessoryInformation,
       characteristicType: CHAR.FirmwareRevision,
-      getValue: () => this.device.getSoftwareVersion() || 'Unknowm',
+      getValue: () => this.device.getSoftwareVersion() || 'Unknown',
     });
     this.registerCharacteristic({
       serviceType: SERV.AccessoryInformation,
       characteristicType: CHAR.HardwareRevision,
-      getValue: () => this.device.getHardwareVersion() || 'Unknowm',
+      getValue: () => this.device.getHardwareVersion() || 'Unknown',
     });
 
     // Cameras accumulate many listeners (property changes, events, snapshots, streaming).
