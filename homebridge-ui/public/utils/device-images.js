@@ -59,7 +59,7 @@ const DeviceImages = {
       case 95: return 'BATTERY_DOORBELL_C30.png';
       case 96: return 'BATTERY_DOORBELL_C31.png';
       case 100: return 'indoorcammini_large.jpg';
-      case 104: return 'indoorcams350_large.jpg';
+      case 104: return 'indoorcams350_large.png';
       case 105: return 'indoorcamE30_large.png';
       case 101: case 102:
       case 131: case 132: case 133:
