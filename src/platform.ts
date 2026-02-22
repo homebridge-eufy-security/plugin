@@ -68,6 +68,12 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
   /** Seconds to wait after the last station/device event before processing. */
   private static readonly DISCOVERY_DEBOUNCE_SEC = 15;
 
+  /** Whether the initial batch discovery has finished. */
+  private initialDiscoveryComplete: boolean = false;
+
+  /** Maps UUID → PlatformAccessory for every registered accessory (needed for hot-remove). */
+  private registeredAccessories: Map<string, PlatformAccessory> = new Map();
+
   private _hostSystem: string = '';
 
   private accessoriesStore?: AccessoriesStore;
@@ -567,6 +573,9 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
         this.api.registerPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [accessory]);
         log.info(`Registering new accessory: ${accessory.displayName}`);
       }
+
+      // Track the accessory so we can unregister it on hot-remove
+      this.registeredAccessories.set(accessory.UUID, accessory);
     } catch (error) {
       // Log any errors that occur during accessory addition or update
       log.error(`Error in ${isStation ? 'stationAdded' : 'deviceAdded'}:`, error);
@@ -596,6 +605,12 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
         return;
       }
 
+      if (this.initialDiscoveryComplete) {
+        // Hot-add: process immediately
+        await this.hotAddStation(station);
+        return;
+      }
+
       // Store station for batch processing later
       this.pendingStations.push(station);
       log.debug(`${station.getName()}: Station queued for processing`);
@@ -620,6 +635,12 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
         return;
       }
 
+      if (this.initialDiscoveryComplete) {
+        // Hot-add: process immediately
+        await this.hotAddDevice(device);
+        return;
+      }
+
       // Store device for batch processing later
       this.pendingDevices.push(device);
       log.debug(`${device.getName()}: Device queued for processing`);
@@ -632,12 +653,107 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
 
   private async stationRemoved(station: Station) {
     const serial = station.getSerial();
-    log.debug(`A device has been removed: ${serial}`);
+    const name = station.getName();
+    log.info(`Station removed event received: ${name} (${serial})`);
+
+    const uuid = this.generateUUID(serial, true);
+    this.removeAccessoryByUUID(uuid, name);
   }
 
   private async deviceRemoved(device: Device) {
     const serial = device.getSerial();
-    log.debug(`A device has been removed: ${serial}`);
+    const name = device.getName();
+    log.info(`Device removed event received: ${name} (${serial})`);
+
+    const uuid = this.generateUUID(serial, false);
+    this.removeAccessoryByUUID(uuid, name);
+  }
+
+  /**
+   * Unregisters an accessory from HomeKit by its UUID.
+   * Used by hot-remove handlers to cleanly remove devices/stations at runtime.
+   */
+  private removeAccessoryByUUID(uuid: string, displayName: string): void {
+    const accessory = this.registeredAccessories.get(uuid);
+    if (!accessory) {
+      log.debug(`No registered accessory found for UUID ${uuid} (${displayName}) — may have been ignored or already removed`);
+      return;
+    }
+
+    try {
+      this.api.unregisterPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [accessory]);
+      this.registeredAccessories.delete(uuid);
+
+      const idx = this.activeAccessoryIds.indexOf(uuid);
+      if (idx !== -1) {
+        this.activeAccessoryIds.splice(idx, 1);
+      }
+
+      log.info(`Successfully removed accessory: ${displayName}`);
+
+      // Refresh the accessories store so the UI reflects the change
+      this.accessoriesStore?.persistNow();
+    } catch (error) {
+      log.error(`Error removing accessory ${displayName}: ${error}`);
+    }
+  }
+
+  /**
+   * Hot-adds a single device after initial discovery is complete.
+   * Processes it immediately without debouncing.
+   */
+  private async hotAddDevice(device: Device): Promise<void> {
+    const deviceType = device.getDeviceType();
+
+    if (!Device.isSupported(deviceType)) {
+      log.warn(`[HOT-ADD] "${device.getName()}" (type ${deviceType}) is unsupported — skipping`);
+      return;
+    }
+
+    const deviceContainer: DeviceContainer = {
+      deviceIdentifier: {
+        uniqueId: device.getSerial(),
+        displayName: 'DEVICE ' + device.getName().replace(/[^a-zA-Z0-9]/g, ''),
+        type: deviceType,
+      } as DeviceIdentifier,
+      eufyDevice: device,
+    };
+
+    log.info(`[HOT-ADD] Adding new device: ${device.getName()} (${device.getSerial()})`);
+    await this.addOrUpdateAccessory(deviceContainer, false);
+
+    // Refresh the accessories store so the UI reflects the change
+    this.accessoriesStore?.persistNow();
+  }
+
+  /**
+   * Hot-adds a single station after initial discovery is complete.
+   * Processes it immediately without debouncing.
+   */
+  private async hotAddStation(station: Station): Promise<void> {
+    const stationType = station.getDeviceType();
+    const stationSerial = station.getSerial();
+
+    const isKnownStation = Device.isStation(stationType);
+    if (!isKnownStation && !Device.isSupported(stationType)) {
+      log.warn(`[HOT-ADD] "${station.getName()}" (type ${stationType}) is unsupported — skipping`);
+      return;
+    }
+
+    const stationContainer: StationContainer = {
+      deviceIdentifier: {
+        uniqueId: stationSerial,
+        displayName: 'STATION ' + station.getName().replace(/[^a-zA-Z0-9]/g, ''),
+        type: stationType,
+      } as DeviceIdentifier,
+      eufyDevice: station,
+    };
+
+    log.info(`[HOT-ADD] Adding new station: ${station.getName()} (${stationSerial})`);
+    await this.addOrUpdateAccessory(stationContainer, true);
+
+    // Refresh the accessories store so the UI reflects the change
+    this.accessoriesStore?.persistNow();
   }
 
   /**
@@ -767,6 +883,9 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
     // Clear pending queues
     this.pendingStations = [];
     this.pendingDevices = [];
+
+    // Mark initial discovery as complete — subsequent events will be processed immediately
+    this.initialDiscoveryComplete = true;
 
     log.info(`[PROCESSING COMPLETE] All pending devices and stations processed`);
   }
