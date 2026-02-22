@@ -65,7 +65,7 @@ class UiServer extends HomebridgePluginUiServer {
     this.storagePath = this.homebridgeStoragePath + '/eufysecurity';
     this.storedAccessories_file = this.storagePath + '/accessories.json';
     this.unsupported_file = this.storagePath + '/unsupported.json';
-    this.diagnosticsZipFilePath = null; // generated dynamically with timestamp
+    this.diagnosticsZipFilePath = null;
     this.config.persistentDir = this.storagePath;
 
     this.initLogger();
@@ -74,17 +74,7 @@ class UiServer extends HomebridgePluginUiServer {
     this.ready();
   }
 
-  /**
-   * Compute a unified power descriptor from a properties object.
-   * Works for both devices and stations.
-   * @param {object} props - the properties object (from device.getProperties() or station.getProperties())
-   * @returns {{ source: string, icon: string, label: string, battery?: number, batteryLow?: boolean }}
-   *   source: 'battery' | 'solar' | 'plugged' | null
-   *   icon: icon filename for the UI
-   *   label: display text for the UI
-   *   battery: percentage (0-100) if available
-   *   batteryLow: true/false for simple sensors without percentage
-   */
+  /** Build a unified power descriptor (source, icon, label, battery) from a properties object. */
   _computePower(props) {
     const power = { source: null, icon: null, label: null };
 
@@ -140,35 +130,35 @@ class UiServer extends HomebridgePluginUiServer {
 
   initLogger() {
     const logOptions = {
-      name: `[UI-${LIB_VERSION}]`, // Name prefix for log messages
-      prettyLogTemplate: '[{{mm}}/{{dd}}/{{yyyy}}, {{hh}}:{{MM}}:{{ss}}]\t{{name}}\t{{logLevelName}}\t', // Template for pretty log output
-      prettyErrorTemplate: '\n{{errorName}} {{errorMessage}}\nerror stack:\n{{errorStack}}', // Template for pretty error output
-      prettyErrorStackTemplate: '  • {{fileName}}\t{{method}}\n\t{{fileNameWithLine}}', // Template for error stack trace
-      prettyErrorParentNamesSeparator: '', // Separator for parent names in error messages
-      prettyErrorLoggerNameDelimiter: '\t', // Delimiter for logger name in error messages
-      stylePrettyLogs: true, // Enable styling for logs
-      minLevel: 2, // Minimum log level to display (3 corresponds to INFO)
-      prettyLogTimeZone: 'local', // Time zone for log timestamps
-      prettyLogStyles: { // Styles for different log elements
-        logLevelName: { // Styles for log level names
-          '*': ['bold', 'black', 'bgWhiteBright', 'dim'], // Default style
-          SILLY: ['bold', 'white'], // Style for SILLY level
-          TRACE: ['bold', 'whiteBright'], // Style for TRACE level
-          DEBUG: ['bold', 'green'], // Style for DEBUG level
-          INFO: ['bold', 'blue'], // Style for INFO level
-          WARN: ['bold', 'yellow'], // Style for WARN level
-          ERROR: ['bold', 'red'], // Style for ERROR level
-          FATAL: ['bold', 'redBright'], // Style for FATAL level
+      name: `[UI-${LIB_VERSION}]`,
+      prettyLogTemplate: '[{{mm}}/{{dd}}/{{yyyy}}, {{hh}}:{{MM}}:{{ss}}]\t{{name}}\t{{logLevelName}}\t',
+      prettyErrorTemplate: '\n{{errorName}} {{errorMessage}}\nerror stack:\n{{errorStack}}',
+      prettyErrorStackTemplate: '  • {{fileName}}\t{{method}}\n\t{{fileNameWithLine}}',
+      prettyErrorParentNamesSeparator: '',
+      prettyErrorLoggerNameDelimiter: '\t',
+      stylePrettyLogs: true,
+      minLevel: 2,
+      prettyLogTimeZone: 'local',
+      prettyLogStyles: {
+        logLevelName: {
+          '*': ['bold', 'black', 'bgWhiteBright', 'dim'],
+          SILLY: ['bold', 'white'],
+          TRACE: ['bold', 'whiteBright'],
+          DEBUG: ['bold', 'green'],
+          INFO: ['bold', 'blue'],
+          WARN: ['bold', 'yellow'],
+          ERROR: ['bold', 'red'],
+          FATAL: ['bold', 'redBright'],
         },
-        dateIsoStr: 'gray', // Style for ISO date strings
-        filePathWithLine: 'white', // Style for file paths with line numbers
-        name: 'green', // Style for logger names
-        nameWithDelimiterPrefix: ['white', 'bold'], // Style for logger names with delimiter prefix
-        nameWithDelimiterSuffix: ['white', 'bold'], // Style for logger names with delimiter suffix
-        errorName: ['bold', 'bgRedBright', 'whiteBright'], // Style for error names
-        fileName: ['yellow'], // Style for file names
+        dateIsoStr: 'gray',
+        filePathWithLine: 'white',
+        name: 'green',
+        nameWithDelimiterPrefix: ['white', 'bold'],
+        nameWithDelimiterSuffix: ['white', 'bold'],
+        errorName: ['bold', 'bgRedBright', 'whiteBright'],
+        fileName: ['yellow'],
       },
-      maskValuesOfKeys: [ // Keys whose values should be masked in logs
+      maskValuesOfKeys: [
         'username',
         'password',
         'token',
@@ -248,11 +238,7 @@ class UiServer extends HomebridgePluginUiServer {
     return { ok: true };
   }
 
-  /**
-   * Load valid country codes from the shared countries.js file.
-   * Parsed lazily and cached for subsequent calls.
-   * @returns {Set<string>}
-   */
+  /** Lazily load and cache valid ISO 3166-1 alpha-2 country codes from countries.js. */
   _getValidCountryCodes() {
     if (!this._validCountryCodes) {
       const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -310,9 +296,7 @@ class UiServer extends HomebridgePluginUiServer {
   }
 
   async login(options) {
-    // --- Plugin heartbeat safeguard ---
-    // If the plugin is running (accessories.json updated within the last 90s),
-    // block login to prevent a competing eufy-security-client instance.
+    // Block login if the plugin is already running (accessories updated within 90s)
     if (!this.eufyClient) {
       try {
         if (fs.existsSync(this.storedAccessories_file)) {
@@ -346,7 +330,6 @@ class UiServer extends HomebridgePluginUiServer {
     }
 
     if (!this.eufyClient && options && options.username && options.password && options.country) {
-      // Clear any pending timeouts from a previous login attempt
       this._clearAllTimers();
       this.stations = [];
       this.pendingStations = [];
@@ -354,7 +337,7 @@ class UiServer extends HomebridgePluginUiServer {
       this._discoveryPhase = 'authenticating';
       this.log.debug('init eufyClient');
 
-      // Validate country code against known list
+      // Validate country code
       const country = typeof options.country === 'string' ? options.country.trim().toUpperCase() : '';
       if (!this._getValidCountryCodes().has(country)) {
         const raw = typeof options.country === 'object' ? JSON.stringify(options.country) : String(options.country);
@@ -450,10 +433,7 @@ class UiServer extends HomebridgePluginUiServer {
     return { pending: true };
   }
 
-  /**
-   * Register one-time auth outcome handlers on the eufy client.
-   * All outcomes are delivered to the UI via push events.
-   */
+  /** Register once-only auth event handlers (TFA, captcha, connect) on the eufy client. */
   _registerOneTimeAuthHandlers() {
     this.eufyClient?.once('tfa request', () => {
       clearTimeout(this._loginTimeout);
@@ -478,13 +458,8 @@ class UiServer extends HomebridgePluginUiServer {
     });
   }
 
-  /**
-   * Start the discovery inactivity timeout.
-   * If no station or device is discovered within DISCOVERY_INACTIVITY_SEC seconds
-   * after authentication, save the account and send an empty result to the UI.
-   */
+  /** Start a timer that gives up on device discovery after DISCOVERY_INACTIVITY_SEC seconds. */
   _startDiscoveryInactivityTimer() {
-    // If stations or devices were already discovered before connect fired, skip
     if (this.pendingStations.length > 0 || this.pendingDevices.length > 0) {
       this.log.debug('Devices already discovered before connect event — skipping inactivity timeout');
       return;
@@ -493,7 +468,6 @@ class UiServer extends HomebridgePluginUiServer {
     const totalSec = UiServer.DISCOVERY_INACTIVITY_SEC;
     const start = Date.now();
 
-    // Tick every second: progress 15 → 95 during the wait, with countdown
     this._discoveryInactivityTickInterval = setInterval(() => {
       const elapsed = Math.floor((Date.now() - start) / 1000);
       const remaining = Math.max(0, totalSec - elapsed);
@@ -530,20 +504,13 @@ class UiServer extends HomebridgePluginUiServer {
     }, totalSec * 1000);
   }
 
-  /**
-   * Check whether a station belongs to a non-guest admin account.
-   * @param {object} station - eufy-security-client Station instance
-   * @returns {boolean}
-   */
+  /** Return true if the station's account is the main admin (not a guest admin). */
   _isMainAdminAccount(station) {
     const rawStation = station.getRawStation();
     return rawStation.member.member_type !== UserType.ADMIN;
   }
 
-  /**
-   * Handle detection of a non-guest admin account.
-   * Tears down the client, cancels all timers, notifies the UI, and resets the plugin.
-   */
+  /** Abort login: tear down client, cancel timers, notify UI, and reset plugin storage. */
   _abortNonGuestAdminLogin() {
     this.adminAccountUsed = true;
     this._clearAllTimers();
@@ -562,10 +529,7 @@ class UiServer extends HomebridgePluginUiServer {
     `);
   }
 
-  /**
-   * Cancel all pending timers (processing, close, debounce tick, login, discovery inactivity).
-   * Safe to call multiple times.
-   */
+  /** Clear all pending timers (login, processing, close, debounce tick, discovery inactivity). */
   _clearAllTimers() {
     clearTimeout(this._loginTimeout);
     this._loginTimeout = null;
@@ -584,6 +548,7 @@ class UiServer extends HomebridgePluginUiServer {
     this._clearDiscoveryInactivityTimer();
   }
 
+  /** Clear the post-auth discovery inactivity timer. */
   _clearDiscoveryInactivityTimer() {
     if (this._discoveryInactivityTickInterval) {
       clearInterval(this._discoveryInactivityTickInterval);
@@ -595,11 +560,7 @@ class UiServer extends HomebridgePluginUiServer {
     }
   }
 
-  /**
-   * Parse a semver string into [major, minor, patch].
-   * @param {string} ver - e.g. '4.4.2-beta.18'
-   * @returns {number[]}
-   */
+  /** Parse a semver string (e.g. '4.4.2-beta.18') into [major, minor, patch]. */
   _parseSemver(ver) {
     return (ver || '0.0.0').replace(/-.*$/, '').split('.').map(Number);
   }
@@ -665,7 +626,6 @@ class UiServer extends HomebridgePluginUiServer {
       return;
     }
 
-    // Check if creds are guest admin
     if (this._isMainAdminAccount(station)) {
       this._abortNonGuestAdminLogin();
       return;
@@ -711,6 +671,7 @@ class UiServer extends HomebridgePluginUiServer {
     this._restartDiscoveryDebounce();
   }
 
+  /** Restart the debounce timer — processing fires after DISCOVERY_DEBOUNCE_SEC of silence. */
   _restartDiscoveryDebounce() {
     this._clearAllTimers();
     const delaySec = UiServer.DISCOVERY_DEBOUNCE_SEC;
@@ -747,6 +708,7 @@ class UiServer extends HomebridgePluginUiServer {
     }, closeAfterSec * 1000);
   }
 
+  /** Process all queued stations and devices after the debounce window closes. */
   async _processPendingAccessories() {
     this.log.debug(`Processing ${this.pendingStations.length} stations and ${this.pendingDevices.length} devices`);
 
@@ -766,9 +728,7 @@ class UiServer extends HomebridgePluginUiServer {
       );
     }
 
-    // --- Collect unsupported items (stations + devices) upfront ---
-    // Hub/base stations (type 0, HB3, etc.) are not in DeviceProperties so
-    // Device.isSupported() returns false for them — exclude known station types.
+    // Collect unsupported items (exclude hub/base station types that aren't in DeviceProperties)
     const unsupportedItems = [];
 
     for (const station of this.pendingStations) {
@@ -783,7 +743,7 @@ class UiServer extends HomebridgePluginUiServer {
       } catch (e) { /* ignore */ }
     }
 
-    // If unsupported items exist, notify UI and wait (user can skip via /skipIntelWait)
+    // Wait for raw data on unsupported items (user can skip via /skipIntelWait)
     if (unsupportedItems.length > 0) {
       const names = unsupportedItems.map(i => `${i.getName()} (type ${i.getDeviceType()})`).join(', ');
       this._skipIntelWait = false;
@@ -797,7 +757,7 @@ class UiServer extends HomebridgePluginUiServer {
 
       this.log.info(`Unsupported intel: waiting up to ${UNSUPPORTED_INTEL_WAIT_MS / 1000}s for raw data (user can skip)`);
 
-      // Cancellable wait — check _skipIntelWait every second, ticking progress 50 → 95
+      // Poll every second, ticking progress 50 → 95
       const pollMs = 1000;
       let waited = 0;
       while (waited < UNSUPPORTED_INTEL_WAIT_MS && !this._skipIntelWait) {
@@ -987,6 +947,7 @@ class UiServer extends HomebridgePluginUiServer {
     this.pushEvent('addAccessory', { stations: this.stations, extendedDiscovery: unsupportedItems.length > 0 });
   }
 
+  /** Persist discovered stations/devices to accessories.json. */
   storeAccessories() {
     if (!fs.existsSync(this.storagePath)) {
       fs.mkdirSync(this.storagePath, { recursive: true });
@@ -996,11 +957,8 @@ class UiServer extends HomebridgePluginUiServer {
   }
 
   // ── Sensitive-field redaction ──────────────────────────────────────────────
-  // Keys whose string values must be partially masked before persisting to
-  // unsupported.json.  Values are [keepStart, keepEnd] — the number of
-  // characters to leave visible at the beginning and end of the string.
-  // An empty / falsy string is left as-is so we can tell the field is blank.
 
+  /** Keys whose string values are partially masked before persisting to unsupported.json. */
   static SENSITIVE_KEYS = new Map([
     // Serial numbers — keep model prefix (e.g. T8170)
     ['station_sn',        [5, 0]],
@@ -1090,10 +1048,7 @@ class UiServer extends HomebridgePluginUiServer {
 
   // ── Unsupported device storage ──────────────────────────────────────────
 
-  /**
-   * Collect raw intel for all unsupported devices/stations and write to unsupported.json.
-   * This data is only used by the Plugin UI for triage and diagnostics.
-   */
+  /** Collect raw intel for unsupported devices/stations and write to unsupported.json. */
   storeUnsupportedDevices(pendingStations, pendingDevices) {
     const unsupportedEntries = [];
 
@@ -1121,9 +1076,7 @@ class UiServer extends HomebridgePluginUiServer {
     this.log.debug(`Persisted ${unsupportedEntries.length} unsupported device(s) to unsupported.json`);
   }
 
-  /**
-   * Build a triage-ready intel object for an unsupported device.
-   */
+  /** Build a triage-ready intel object for an unsupported device. */
   _buildUnsupportedDeviceEntry(device) {
     const rawDevice = device.getRawDevice ? device.getRawDevice() : {};
     const rawProps = device.getRawProperties ? device.getRawProperties() : {};
@@ -1147,9 +1100,7 @@ class UiServer extends HomebridgePluginUiServer {
     };
   }
 
-  /**
-   * Build a triage-ready intel object for an unsupported standalone station.
-   */
+  /** Build a triage-ready intel object for an unsupported standalone station. */
   _buildUnsupportedStationEntry(station) {
     const rawStation = station.getRawStation ? station.getRawStation() : {};
     const rawProps = station.getRawProperties ? station.getRawProperties() : {};
@@ -1173,9 +1124,7 @@ class UiServer extends HomebridgePluginUiServer {
     };
   }
 
-  /**
-   * Load unsupported device intel from disk.
-   */
+  /** Load unsupported device intel from disk. */
   async loadUnsupportedDevices() {
     try {
       if (!fs.existsSync(this.unsupported_file)) {
