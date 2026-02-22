@@ -24,7 +24,7 @@ const DeviceImages = {
       case 24: return 'eufycame330_large.jpg';
       case 25: return 'minibase_chime_T8023_large.jpg';
       case 26: return 'eufycam3pro_large.png';
-      case 28: return 'homebasemini_large.jpg';
+      case 28: return 'homebasemini_large.png';
       case 30: return 'indoorcamc120_large.png';
       case 31: case 35: return 'indoorcamp24_large.png';
       case 32: case 33: return 'solocame20_large.jpg';
