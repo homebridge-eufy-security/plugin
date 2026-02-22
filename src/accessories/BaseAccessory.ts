@@ -152,8 +152,8 @@ export abstract class BaseAccessory extends EventEmitter {
           reg.characteristic.updateValue(newValue);
           this.log.debug(`CACHE '${reg.serviceTypeName} / ${reg.characteristicTypeName}':`, newValue);
         }
-      } catch {
-        // silently ignore errors during cache refresh
+      } catch (e) {
+        this.log.debug(`Cache refresh error for '${reg.serviceTypeName} / ${reg.characteristicTypeName}':`, e);
       }
     }
   }
