@@ -257,9 +257,13 @@ const LoginView = {
     // Pre-fill from existing config if available
     this._prefillCredentials(body);
 
-    // Generate random device name
+    // Generate random device name (default if not already set by config)
+    const deviceInput = body.querySelector('#login-device');
+    if (!deviceInput.value) {
+      deviceInput.value = Helpers.generateDeviceName();
+    }
     body.querySelector('#btn-generate-name').addEventListener('click', () => {
-      body.querySelector('#login-device').value = Helpers.generateDeviceName();
+      deviceInput.value = Helpers.generateDeviceName();
     });
 
     // Submit
