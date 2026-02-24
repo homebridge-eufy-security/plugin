@@ -230,12 +230,12 @@ const LoginView = {
       <div class="mb-3">
         <label for="login-device" class="form-label">Device Name</label>
         <div class="input-group">
-          <input type="text" class="form-control" id="login-device" value="" placeholder="e.g. My Homebridge">
+          <input type="text" class="form-control" id="login-device" value="" placeholder="e.g. My Homebridge" required>
           <button class="btn btn-outline-secondary eufy-tooltip" type="button" id="btn-generate-name" data-tooltip="Generate random name">
             ${Helpers.iconHtml('refresh.svg', 16, 'Generate name')}
           </button>
         </div>
-        <div class="form-text">A name to identify this Homebridge instance to Eufy. Can be left blank.</div>
+        <div class="form-text">A name to identify this Homebridge instance to Eufy.</div>
       </div>
       <div id="login-error" class="alert alert-danger d-none" role="alert"></div>
       <button class="btn btn-primary w-100" id="btn-login" type="button">
@@ -293,10 +293,10 @@ const LoginView = {
     const email = body.querySelector('#login-email').value.trim();
     const password = body.querySelector('#login-password').value;
     const country = body.querySelector('#login-country').value;
-    const deviceName = body.querySelector('#login-device').value.trim() || '';
+    const deviceName = body.querySelector('#login-device').value.trim();
 
-    if (!email || !password) {
-      this._showError(body, 'Please enter your email and password.');
+    if (!email || !password || !deviceName) {
+      this._showError(body, 'Please enter your email, password, and device name.');
       return;
     }
 
