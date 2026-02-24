@@ -404,6 +404,16 @@
   margin: 0px auto;
 }
 
+.login-card .input-group {
+  overflow: visible;
+}
+
+.login-card .input-group > .eufy-tooltip::after {
+  left: auto;
+  right: 0;
+  transform: none;
+}
+
 .login-section-title {
   font-size: 1.2rem;
   font-weight: 600;

@@ -84,4 +84,32 @@ const Helpers = {
     const level = Math.max(0, Math.min(6, Math.round((pct / 100) * 6)));
     return 'battery_' + level + '.svg';
   },
+
+  /**
+   * Generate a random device name to identify this Homebridge instance to Eufy.
+   * @returns {string}
+   */
+  generateDeviceName() {
+    const _d = (s) => atob(s).split('|');
+    const _p = (a) => a[Math.floor(Math.random() * a.length)];
+    const style = Math.floor(Math.random() * 3);
+
+    if (style === 1) {
+      return _p(_d('Sm9obnxFbW1hfEphbWVzfE9saXZpYXxXaWxsaWFtfFNvcGhpYXxBbGV4fE1pYXxEYW5pZWx8RWxsYXxEYXZpZHxHcmFjZXxDaHJpc3xMaWx5fFNhbQ=='))
+        + '\u2019s '
+        + _p(_d('aVBob25lfGlQaG9uZSAxM3xpUGhvbmUgMTMgUHJvfGlQaG9uZSAxNHxpUGhvbmUgMTQgUHJvfGlQaG9uZSAxNXxpUGhvbmUgMTUgUHJvfGlQaG9uZSAxNSBQcm8gTWF4fGlQaG9uZSAxNnxpUGhvbmUgMTYgUHJvfGlQaG9uZSAxNiBQcm8gTWF4fGlQYWR8aVBhZCBBaXJ8aVBhZCBQcm8='));
+    }
+
+    if (style === 2) {
+      return _p(_d('Sm9obnxNYXJpYXxDYXJsb3N8U2FyYWh8QWxleHxQcml5YXxMZW98TmluYXxPbWFyfFphcmF8S2FpfFl1a2l8QmVufEF2YXxNYXg='))
+        + '\u2019s '
+        + _p(_d('R2FsYXh5IFMyM3xHYWxheHkgUzI0fEdhbGF4eSBTMjQgVWx0cmF8R2FsYXh5IEE1NHxHYWxheHkgWiBGbGlwNXxHYWxheHkgWiBGb2xkNXxQaXhlbCA3fFBpeGVsIDh8UGl4ZWwgOCBQcm98UGl4ZWwgOXxQaXhlbCA5IFByb3xPbmVQbHVzIDEyfEdhbGF4eSBUYWIgUzl8UGl4ZWwgVGFibGV0'));
+    }
+
+    return _p(_d('Q29yYWx8THVuYXJ8U29sYXJ8U3RlbGxhcnxBcmN0aWN8QW1iZXJ8QXp1cmV8Q3JpbXNvbnxHb2xkZW58SXZvcnl8SmFkZXxNYXBsZXxPbnl4fFBlYXJsfFF1YXJ0enxSdWJ5fFNpbHZlcnxUb3BhenxWZWx2ZXR8Q2VkYXI='))
+      + ' '
+      + _p(_d('QnJpZGdlfEh1YnxMaW5rfE5vZGV8R2F0ZXxSZWxheXxWYXVsdHxUb3dlcnxCZWFjb258TmV4dXN8UG9ydHxDb3JlfEFyY3xTcGFyaw=='))
+      + ' '
+      + Math.floor(Math.random() * 100);
+  },
 };
