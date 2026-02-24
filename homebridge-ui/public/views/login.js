@@ -229,7 +229,12 @@ const LoginView = {
       </div>
       <div class="mb-3">
         <label for="login-device" class="form-label">Device Name</label>
-        <input type="text" class="form-control" id="login-device" value="" placeholder="e.g. My Homebridge">
+        <div class="input-group">
+          <input type="text" class="form-control" id="login-device" value="" placeholder="e.g. My Homebridge">
+          <button class="btn btn-outline-secondary eufy-tooltip" type="button" id="btn-generate-name" data-tooltip="Generate random name">
+            ${Helpers.iconHtml('refresh.svg', 16, 'Generate name')}
+          </button>
+        </div>
         <div class="form-text">A name to identify this Homebridge instance to Eufy. Can be left blank.</div>
       </div>
       <div id="login-error" class="alert alert-danger d-none" role="alert"></div>
@@ -251,6 +256,11 @@ const LoginView = {
 
     // Pre-fill from existing config if available
     this._prefillCredentials(body);
+
+    // Generate random device name
+    body.querySelector('#btn-generate-name').addEventListener('click', () => {
+      body.querySelector('#login-device').value = Helpers.generateDeviceName();
+    });
 
     // Submit
     body.querySelector('#btn-login').addEventListener('click', () => this._doLogin(body));
