@@ -12,7 +12,11 @@ Use `$ARGUMENTS` for the issue URL or device details.
 ## Phase 1 — Gather Information
 
 1. **Fetch the GitHub issue** (if URL provided) to extract: device name, model number (e.g. T86P2), device type number, raw properties JSON, firmware version, and any reference PRs.
-2. **Identify the closest existing device** by analyzing the raw properties. Compare param_type numbers against existing DeviceProperties blocks in `eufy-security-client/src/http/types.ts` to find the best base device.
+2. **Run the property mapping script**: Save the raw properties JSON to a temp file and run:
+   ```bash
+   node homebridge-eufy-security/.claude/skills/new-device-support/map-properties.mjs /tmp/<device>-raw-props.json
+   ```
+   This maps each raw `param_type` to its `CommandType`/`ParamType` enum name, matching property constants, and which existing device types use them. It also outputs a suggested DeviceProperties block. Use this output to identify the closest existing device and plan the property mapping.
 3. **Ask the user** two questions:
    - Image naming convention (check if images already exist or need renaming)
    - Enum name for the DeviceType (e.g. `CAMERA_4G_S330`)
@@ -91,7 +95,7 @@ case <type_number>: return '<image_large>.png';
 
 Execute the plan. Key implementation notes:
 
-- **Property mapping**: Each raw property `param_type` number corresponds to a specific `PropertyName.*` constant. Look at existing DeviceProperties blocks to find the mapping. The property constant names (e.g. `DeviceBatteryProperty`, `DeviceMotionDetectionProperty`) define which `param_type` they handle via their `key` field.
+- **Property mapping**: Use the output from `map-properties.mjs` (Phase 1) as the primary guide. When multiple property constants match the same `param_type` (e.g. `DeviceWatermarkProperty` vs `DeviceWatermarkSoloWiredDoorbellProperty`), pick the variant used by the closest existing device. Check the "Used by DeviceTypes" column in the script output.
 - **Insert in order**: When adding to enums, switch statements, or `if` chains, maintain numeric ordering by device type number.
 - **Audio recording property**: Different device families use different audio recording property constants (e.g. `DeviceAudioRecordingProperty`, `DeviceAudioRecordingStarlight4gLTEProperty`). Match the closest existing device.
 - **No Co-Authored-By**: Do not add co-author lines to commits.
