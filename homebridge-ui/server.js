@@ -320,6 +320,13 @@ class UiServer extends HomebridgePluginUiServer {
     try {
       if (options && options.username && options.password && !options.reconnect) {
         this.log.info('deleting persistent.json and accessories due to new login');
+        // Tear down any existing client so the new device name and credentials take effect
+        if (this.eufyClient) {
+          this.log.debug('Tearing down previous eufy client before fresh login');
+          this.eufyClient.removeAllListeners();
+          this.eufyClient.close();
+          this.eufyClient = null;
+        }
         await this.resetAccessoryData();
         await this.resetPersistentData();
       } else if (options && options.reconnect) {
