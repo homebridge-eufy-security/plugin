@@ -170,7 +170,7 @@ const App = {
    */
   _showAdminError() {
     this._root.innerHTML = `
-      <div class="alert alert-danger alert-admin mt-4" role="alert">
+      <div class="alert alert-danger alert-admin" role="alert">
         <h5 class="alert-heading">${Helpers.iconHtml('warning.svg')} Admin Account Detected</h5>
         <p>
           You are not using a <strong>dedicated guest admin account</strong>. 

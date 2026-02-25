@@ -547,6 +547,10 @@
 /* ===== Alert overrides ===== */
 .alert-admin {
   border-radius: var(--eufy-border-radius);
+  overflow-wrap: break-word;
+  word-break: break-word;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 /* ===== Node.js Version Warning Banner ===== */
