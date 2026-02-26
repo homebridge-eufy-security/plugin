@@ -48,7 +48,7 @@
     "tslog": "^4.10.2",
     "rotating-file-stream": "^3.2.9",
     "pick-port": "^2.2.0",
-    "zip-lib": "^1.2.1"
+    "tar": "^7.5.9"
   },
   "devDependencies": {
     "typescript": "^5.9.3",

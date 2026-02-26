@@ -202,7 +202,7 @@ const DiagnosticsView = {
     try {
       const result = await Api.downloadDiagnostics();
       const rawBuffer = result.buffer || result;
-      const filename = result.filename || 'eufy-security-diagnostics.zip';
+      const filename = result.filename || 'eufy-security-diagnostics.tar.gz';
       const bytes = new Uint8Array(rawBuffer.data || rawBuffer);
       let binary = '';
       for (let i = 0; i < bytes.length; i++) {
@@ -210,7 +210,7 @@ const DiagnosticsView = {
       }
       const base64 = btoa(binary);
       const a = document.createElement('a');
-      a.href = 'data:application/zip;base64,' + base64;
+      a.href = 'data:application/gzip;base64,' + base64;
       a.download = filename;
       document.body.appendChild(a);
       a.click();
