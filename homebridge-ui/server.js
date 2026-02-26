@@ -2,7 +2,7 @@ import { EufySecurity, libVersion, Device, PropertyName, CommandName, DeviceType
 import * as fs from 'fs';
 import { Logger as TsLogger } from 'tslog';
 import { createStream } from 'rotating-file-stream';
-import { Zip } from 'zip-lib';
+import { create as tarCreate } from 'tar';
 import { HomebridgePluginUiServer } from '@homebridge/plugin-ui-utils';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -22,7 +22,7 @@ class UiServer extends HomebridgePluginUiServer {
   tsLog;
   storagePath;
   storedAccessories_file;
-  diagnosticsZipFilePath;
+  diagnosticsArchivePath;
 
   adminAccountUsed = false;
 
@@ -65,7 +65,7 @@ class UiServer extends HomebridgePluginUiServer {
     this.storagePath = this.homebridgeStoragePath + '/eufysecurity';
     this.storedAccessories_file = this.storagePath + '/accessories.json';
     this.unsupported_file = this.storagePath + '/unsupported.json';
-    this.diagnosticsZipFilePath = null;
+    this.diagnosticsArchivePath = null;
     this.config.persistentDir = this.storagePath;
 
     this.initLogger();
@@ -1178,45 +1178,37 @@ class UiServer extends HomebridgePluginUiServer {
     this.pushEvent('diagnosticsProgress', { progress: 10, status: 'Collecting log files' });
     const finalLogFiles = await this.getLogFiles();
 
-    this.pushEvent('diagnosticsProgress', { progress: 30, status: 'Adding files to archive' });
-    const zip = new Zip();
-    let numberOfFiles = 0;
-    finalLogFiles.forEach(logFile => {
-      const filePath = path.join(this.storagePath, logFile);
-      zip.addFile(filePath);
-      numberOfFiles++;
-    });
+    this.pushEvent('diagnosticsProgress', { progress: 30, status: 'Collecting diagnostic files' });
+    const filesToArchive = [...finalLogFiles];
 
     // Include accessories.json for diagnostics
     if (fs.existsSync(this.storedAccessories_file)) {
-      zip.addFile(this.storedAccessories_file);
-      numberOfFiles++;
+      filesToArchive.push(path.basename(this.storedAccessories_file));
     }
 
     // Include unsupported.json for diagnostics
     if (fs.existsSync(this.unsupported_file)) {
-      zip.addFile(this.unsupported_file);
-      numberOfFiles++;
+      filesToArchive.push(path.basename(this.unsupported_file));
     }
 
     this.pushEvent('diagnosticsProgress', { progress: 40, status: 'Checking archive content' });
-    if (numberOfFiles === 0) {
+    if (filesToArchive.length === 0) {
       throw new Error('No diagnostic files were found');
     }
 
     try {
       const now = new Date();
       const timestamp = now.toISOString().replace(/[:T]/g, '-').replace(/\..+/, '');
-      this.diagnosticsZipFilePath = path.join(this.storagePath, `diagnostics-${timestamp}.zip`);
+      this.diagnosticsArchivePath = path.join(this.storagePath, `diagnostics-${timestamp}.tar.gz`);
 
-      this.pushEvent('diagnosticsProgress', { progress: 45, status: `Compressing ${numberOfFiles} files` });
-      await zip.archive(this.diagnosticsZipFilePath);
+      this.pushEvent('diagnosticsProgress', { progress: 45, status: `Compressing ${filesToArchive.length} files` });
+      await tarCreate({ gzip: true, file: this.diagnosticsArchivePath, cwd: this.storagePath }, filesToArchive);
 
       this.pushEvent('diagnosticsProgress', { progress: 80, status: 'Reading content' });
-      const fileBuffer = fs.readFileSync(this.diagnosticsZipFilePath);
+      const fileBuffer = fs.readFileSync(this.diagnosticsArchivePath);
 
-      this.pushEvent('diagnosticsProgress', { progress: 90, status: 'Returning zip file' });
-      return { buffer: fileBuffer, filename: path.basename(this.diagnosticsZipFilePath) };
+      this.pushEvent('diagnosticsProgress', { progress: 90, status: 'Returning archive' });
+      return { buffer: fileBuffer, filename: path.basename(this.diagnosticsArchivePath) };
     } catch (error) {
       this.log.error('Error while generating diagnostics archive: ' + error);
       throw error;
@@ -1227,8 +1219,8 @@ class UiServer extends HomebridgePluginUiServer {
 
   removeDiagnosticsArchive() {
     try {
-      if (fs.existsSync(this.diagnosticsZipFilePath)) {
-        fs.unlinkSync(this.diagnosticsZipFilePath);
+      if (fs.existsSync(this.diagnosticsArchivePath)) {
+        fs.unlinkSync(this.diagnosticsArchivePath);
       }
       return true;
     } catch {
