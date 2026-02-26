@@ -42,7 +42,7 @@
     "camera"
   ],
   "dependencies": {
-    "eufy-security-client": "^3.7.2",
+    "eufy-security-client": "dev",
     "@homebridge/plugin-ui-utils": "^2.2.0",
     "ffmpeg-for-homebridge": "2.2.1",
     "tslog": "^4.10.2",
