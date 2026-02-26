@@ -47,6 +47,10 @@ gh pr create --base beta-*.*.* --title "<concise title>" --body-file /tmp/pr-bod
 
 ## Dependency Updates — `eufy-security-client`
 
+**CRITICAL: `eufy-security-client` version policy**
+- **`beta-*.*.*` branches** — use the `dev` dist-tag (`"eufy-security-client": "dev"`) to always pick up the latest dev release
+- **`master` branch** — **NEVER** use the `dev` dist-tag. Always use a pinned stable version (e.g. `"eufy-security-client": "^3.7.2"`). Before merging to master, replace `"dev"` with the corresponding stable release version.
+
 When updating the `eufy-security-client` version in `package.json`:
 
 1. Check the upstream changelog and README at https://github.com/bropat/eufy-security-client/blob/master/README.md
