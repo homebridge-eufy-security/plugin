@@ -477,11 +477,9 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
         ***** WARNING MESSAGE *****
         ***************************
         Important Notice: CAPTCHA Required
-        Your account seems to have triggered a security measure that requires CAPTCHA verification for the next 24 hours...
-        Please abstain from any activities until this period elapses...
-        Should your issue persist beyond this timeframe, you may need to consider setting up a new account.
-        For more detailed instructions, please consult:
-        https://github.com/homebridge-plugins/homebridge-eufy-security/wiki/Create-a-dedicated-admin-account-for-Homebridge-Eufy-Security-Plugin
+        Your account requires CAPTCHA verification to log in.
+        The plugin will now shut down.
+        Please open the Homebridge UI, go to the homebridge-eufy-security plugin settings, and complete the CAPTCHA to reconnect.
         ***************************
         `);
         await this.pluginShutdown();
@@ -491,12 +489,10 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
         ***************************
         ***** WARNING MESSAGE *****
         ***************************
-        Attention: Two-Factor Authentication (2FA) Requested
-        It appears that your account is currently under a temporary 24-hour flag for security reasons...
-        Kindly refrain from making any further attempts during this period...
-        If your concern remains unresolved after 24 hours, you may need to consider creating a new account.
-        For additional information, refer to:
-        https://github.com/homebridge-plugins/homebridge-eufy-security/wiki/Create-a-dedicated-admin-account-for-Homebridge-Eufy-Security-Plugin
+        Attention: Two-Factor Authentication (2FA) Required
+        Your account requires 2FA verification to log in.
+        The plugin will now shut down.
+        Please open the Homebridge UI, go to the homebridge-eufy-security plugin settings, and complete the 2FA verification to reconnect.
         ***************************
         `);
         await this.pluginShutdown();
