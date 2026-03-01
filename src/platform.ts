@@ -467,9 +467,8 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
       this.eufyClient.on('close', () => {
         log.debug('Closed!');
       });
-      this.eufyClient.on('connection error', async (error: Error) => {
-        log.debug(`Error: ${error}`);
-        await this.pluginShutdown();
+      this.eufyClient.on('connection error', (error: Error) => {
+        log.warn(`Connection error: ${error}`);
       });
       this.eufyClient.once('captcha request', async () => {
         log.error(`
