@@ -68,6 +68,12 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
   /** Seconds to wait after the last station/device event before processing. */
   private static readonly DISCOVERY_DEBOUNCE_SEC = 15;
 
+  /** Maximum number of connection attempts before giving up. */
+  private static readonly MAX_CONNECT_ATTEMPTS = 3;
+
+  /** Seconds to wait between connection retry attempts. */
+  private static readonly CONNECT_RETRY_DELAY_SEC = 30;
+
   /** Whether the initial batch discovery has finished. */
   private initialDiscoveryComplete: boolean = false;
 
@@ -382,7 +388,55 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
   }
 
   private async pluginSetup(eufyConfig: EufySecurityConfig) {
+    let connected = false;
 
+    for (let attempt = 1; attempt <= EufySecurityPlatform.MAX_CONNECT_ATTEMPTS; attempt++) {
+      // If a fatal handler (captcha/tfa) triggered shutdown during a previous attempt, stop
+      if (this.already_shutdown) {
+        return;
+      }
+
+      if (attempt > 1) {
+        log.warn(`Connection attempt ${attempt}/${EufySecurityPlatform.MAX_CONNECT_ATTEMPTS}...`);
+      }
+
+      connected = await this.attemptConnect(eufyConfig);
+
+      if (connected || this.already_shutdown) {
+        break;
+      }
+
+      if (attempt < EufySecurityPlatform.MAX_CONNECT_ATTEMPTS) {
+        log.warn(`Retrying in ${EufySecurityPlatform.CONNECT_RETRY_DELAY_SEC} seconds...`);
+        await this.delay(EufySecurityPlatform.CONNECT_RETRY_DELAY_SEC * 1000);
+      }
+    }
+
+    if (!connected) {
+      if (!this.already_shutdown) {
+        log.error(`All ${EufySecurityPlatform.MAX_CONNECT_ATTEMPTS} connection attempts failed. Shutting down plugin.`);
+        await this.pluginShutdown();
+      }
+      return;
+    }
+
+    log.info('Connected to Eufy. Waiting for stations and devices to be discovered...');
+
+    if (this.config.CameraMaxLivestreamDuration > 86400) {
+      this.config.CameraMaxLivestreamDuration = 86400;
+      log.warn('Your maximum livestream duration value is too large. Since this can cause problems it was reset to 86400 seconds (1 day maximum).');
+    }
+
+    this.eufyClient.setCameraMaxLivestreamDuration(this.config.CameraMaxLivestreamDuration);
+    log.debug(`CameraMaxLivestreamDuration: ${this.eufyClient.getCameraMaxLivestreamDuration()}`);
+  }
+
+  /**
+   * Attempts a single connection to the Eufy cloud service.
+   * Initializes the client, sets up event handlers, and connects.
+   * @returns true if connected successfully, false otherwise.
+   */
+  private async attemptConnect(eufyConfig: EufySecurityConfig): Promise<boolean> {
     try {
       this.eufyClient = await EufySecurity.initialize(
         eufyConfig,
@@ -449,9 +503,8 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
       });
 
     } catch (e) {
-      log.error(`Error while setup : ${e}`);
-      log.error('Not connected can\'t continue!');
-      return;
+      log.error(`Error while setup: ${e}`);
+      return false;
     }
 
     try {
@@ -459,22 +512,17 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
       log.debug('EufyClient connected ' + this.eufyClient?.isConnected?.());
     } catch (e) {
       log.error(`Error authenticating Eufy: ${e}`);
+      try { this.eufyClient.close(); } catch { /* ignore cleanup errors */ }
+      return false;
     }
 
     if (!this.eufyClient?.isConnected?.()) {
       log.error('Not connected can\'t continue!');
-      return;
+      try { this.eufyClient.close(); } catch { /* ignore cleanup errors */ }
+      return false;
     }
 
-    log.info('Connected to Eufy. Waiting for stations and devices to be discovered...');
-
-    if (this.config.CameraMaxLivestreamDuration > 86400) {
-      this.config.CameraMaxLivestreamDuration = 86400;
-      log.warn('Your maximum livestream duration value is too large. Since this can cause problems it was reset to 86400 seconds (1 day maximum).');
-    }
-
-    this.eufyClient.setCameraMaxLivestreamDuration(this.config.CameraMaxLivestreamDuration);
-    log.debug(`CameraMaxLivestreamDuration: ${this.eufyClient.getCameraMaxLivestreamDuration()}`);
+    return true;
   }
 
   /**
