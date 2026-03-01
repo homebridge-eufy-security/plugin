@@ -67,7 +67,9 @@ const DeviceImages = {
         return 'garage_camera_t8452_large.png';
       case 110: return '4g_lte_starlight_large.jpg';
       case 111: return '4g_lte_cam_s330_large.png';
+      case 123: return 'siren_sensor_e20_large.png';
       case 126: return 'sensor_large.png';
+      case 127: return 'pir_sensor_e20_large.png';
       case 140: return 'smartsafe_s10_t7400_large.png';
       case 141: return 'smartsafe_s12_t7401_large.png';
       case 142: case 143: return 'smartsafe_s10_t7400_large.png';
@@ -76,10 +78,15 @@ const DeviceImages = {
       case 159: return 'smarttrack_card_t87B2_large.png';
       case 180: return 'smartlock_touch_and_wifi_t8502_large.png';
       case 184: return 'smartlock_touch_and_wifi_t8506_large.png';
+      case 189: return 'smartlock_video_t8531_large.png';
+      case 201: return 'smartlock_t85L0_large.png';
+      case 202: return 'smartlock_t85D0_large.png';
+      case 203: return 'smartlock_t85V0_large.png';
       case 10005: return 'walllight_s120_large.png';
       case 10008: return 'indoorcamC220_large.png';
       case 10009: return 'indoorcamC210_large.png';
       case 10010: return 'indoorcamC220_large.png';
+      case 10011: return 'indoorcamC220_t8419N_large.png';
       case 10035: return 'solocamc35_large.png';
       default: return 'unknown.png';
     }
