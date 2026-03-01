@@ -38,7 +38,7 @@ class UiServer extends HomebridgePluginUiServer {
   _discoveryPhase = 'idle';
 
   /** Seconds to wait after the last station/device event before processing. */
-  static DISCOVERY_DEBOUNCE_SEC = 15;
+  static DISCOVERY_DEBOUNCE_SEC = 10;
 
   /** Seconds to wait after auth before giving up on device discovery. */
   static DISCOVERY_INACTIVITY_SEC = 30;
