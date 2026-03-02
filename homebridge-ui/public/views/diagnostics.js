@@ -48,13 +48,20 @@ const DiagnosticsView = {
       checked: !!config.enableDetailedLogging,
       onChange: async (checked) => {
         await Config.updateGlobal({ enableDetailedLogging: checked });
+        const livestreamInput = document.getElementById('toggle-debug-livestream');
+        if (!checked && livestreamInput && livestreamInput.checked) {
+          livestreamInput.checked = false;
+          livestreamInput.dispatchEvent(new Event('change'));
+        }
+        if (livestreamInput) livestreamInput.disabled = !checked;
       },
     });
     Toggle.render(step1, {
       id: 'toggle-debug-livestream',
       label: 'Debug Livestream',
       help: 'Record every HomeKit livestream to an mp4 file on disk for troubleshooting.',
-      checked: !!config.debugLivestream,
+      checked: !!config.debugLivestream && !!config.enableDetailedLogging,
+      disabled: !config.enableDetailedLogging,
       onChange: async (checked) => {
         await Config.updateGlobal({ debugLivestream: checked });
       },
