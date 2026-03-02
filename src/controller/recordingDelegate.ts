@@ -13,7 +13,7 @@ import { EufySecurityPlatform } from '../platform.js';
 import { CameraConfig, VideoConfig } from '../utils/configTypes.js';
 import { FFmpeg, FFmpegParameters } from '../utils/ffmpeg.js';
 import net from 'net';
-import { CHAR, SERV, isRtspReady, log } from '../utils/utils.js';
+import { CHAR, SERV, isRtspReady, log, ffmpegLoggerFactory } from '../utils/utils.js';
 import { LocalLivestreamManager } from './LocalLivestreamManager.js';
 import { snapshotDelegate } from './snapshotDelegate.js';
 
@@ -147,6 +147,7 @@ export class RecordingDelegate implements CameraRecordingDelegate {
       const ffmpeg = new FFmpeg(
         `[${this.camera.getName()}] [HSV Recording Process]`,
         audioEnabled ? [videoParams, audioParams] : videoParams,
+        ffmpegLoggerFactory.forCamera(this.camera.getSerial()),
       );
 
       this.session = await ffmpeg.startFragmentedMP4Session();
