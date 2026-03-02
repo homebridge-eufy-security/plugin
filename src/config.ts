@@ -28,6 +28,7 @@ export interface EufySecurityPlatformConfig extends PlatformConfig {
   ignoreMultipleDevicesWarning: boolean;
   autoSyncStation: boolean;
   enableEmbeddedPKCS1Support: boolean;
+  debugLivestream: boolean;
 }
 
 export const DEFAULT_CONFIG_VALUES: EufySecurityPlatformConfig = {
@@ -53,4 +54,5 @@ export const DEFAULT_CONFIG_VALUES: EufySecurityPlatformConfig = {
   ignoreMultipleDevicesWarning: false,
   autoSyncStation: false,
   enableEmbeddedPKCS1Support: false,
+  debugLivestream: false,
 };
