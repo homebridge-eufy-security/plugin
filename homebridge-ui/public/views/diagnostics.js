@@ -66,6 +66,13 @@ const DiagnosticsView = {
         await Config.updateGlobal({ debugLivestream: checked });
       },
     });
+
+    const livestreamHint = document.createElement('div');
+    livestreamHint.className = 'alert alert-danger mt-2 mb-2';
+    livestreamHint.style.fontSize = '0.85rem';
+    livestreamHint.innerHTML = Helpers.iconHtml('warning.svg') + ' <strong>Debug Livestream:</strong> Only enable this if asked by a developer. Diagnostics files may contain recorded video sessions. Use <strong>Clean Storage</strong> to remove them afterwards, or reposition the camera if you are not comfortable sharing recordings.';
+    step1.appendChild(livestreamHint);
+
     const debugHint = document.createElement('div');
     debugHint.className = 'alert alert-warning mt-2 mb-2';
     debugHint.style.fontSize = '0.85rem';
