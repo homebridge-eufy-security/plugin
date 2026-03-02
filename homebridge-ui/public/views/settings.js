@@ -171,15 +171,20 @@ const SettingsView = {
       },
     });
 
-    Toggle.render(advSection, {
-      id: 'toggle-pkcs1',
-      label: 'Embedded PKCS1 Support',
-      help: 'Enable embedded PKCS1 support for device communication.',
-      checked: !!config.enableEmbeddedPKCS1Support,
-      onChange: async (checked) => {
-        await Config.updateGlobal({ enableEmbeddedPKCS1Support: checked });
-      },
-    });
+    // Only show PKCS1 toggle when the Node.js version is affected (native PKCS1 removed).
+    // Node.js >= 24.5.0 restores native PKCS1 padding — the workaround is not needed.
+    const warning = App.state.nodeVersionWarning;
+    if (warning && warning.affected) {
+      Toggle.render(advSection, {
+        id: 'toggle-pkcs1',
+        label: 'Embedded PKCS1 Support',
+        help: 'Enable embedded PKCS1 support for device communication. Required on Node.js versions where native RSA_PKCS1_PADDING was removed.',
+        checked: !!config.enableEmbeddedPKCS1Support,
+        onChange: async (checked) => {
+          await Config.updateGlobal({ enableEmbeddedPKCS1Support: checked });
+        },
+      });
+    }
 
     container.appendChild(advSection);
 
