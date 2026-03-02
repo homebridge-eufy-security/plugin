@@ -788,23 +788,13 @@ body.dark-mode img[src*="assets/icons/"] {
   filter: brightness(0) invert(1);
 }
 
-/* ── Diagnostics step reveal animation ── */
+/* ── Diagnostics step visibility ── */
 .diag-step-reveal {
-  max-height: 0;
-  opacity: 0;
-  transform: translateY(-10px);
-  overflow: hidden;
-  transition: max-height 0.35s ease, opacity 0.3s ease, transform 0.3s ease;
+  display: none;
 }
 
 .diag-debug-steps--active .diag-step-reveal {
-  max-height: 800px;
-  opacity: 1;
-  transform: translateY(0);
-}
-
-.diag-debug-steps--active .diag-step-reveal:nth-child(2) {
-  transition-delay: 0.15s;
+  display: block;
 }
 
 .diag-download-row {
