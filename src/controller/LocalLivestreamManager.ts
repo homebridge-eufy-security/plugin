@@ -78,9 +78,8 @@ export class LocalLivestreamManager {
 
     const deferred = new Deferred<LivestreamData>();
     const timer = setTimeout(() => {
-      this.log.error(`Livestream timeout: no P2P stream event received within ${P2P_TIMEOUT_MS / 1000}s for serial ${this.serialNumber}.`);
-      this.log.warn('If using a recent Node.js version, try enabling "Embedded PKCS1 Support" in the plugin settings.');
-      this.settlePending('reject', 'Livestream timeout — try enabling Embedded PKCS1 Support in settings.');
+      this.log.error(`Livestream timeout: no P2P stream event received within ${P2P_TIMEOUT_MS / 1000}s for serial ${this.serialNumber}. Check eufy-lib.log for details.`);
+      this.settlePending('reject', 'Livestream timeout — check eufy-lib.log for P2P errors.');
     }, P2P_TIMEOUT_MS);
 
     this.pending = { deferred, timer };
