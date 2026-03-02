@@ -48,20 +48,36 @@ const DiagnosticsView = {
       checked: !!config.enableDetailedLogging,
       onChange: async (checked) => {
         await Config.updateGlobal({ enableDetailedLogging: checked });
-        const livestreamInput = document.getElementById('toggle-debug-livestream');
-        if (!checked && livestreamInput && livestreamInput.checked) {
-          livestreamInput.checked = false;
-          livestreamInput.dispatchEvent(new Event('change'));
+        // Show/hide the livestream section
+        const livestreamSection = document.getElementById('debug-livestream-section');
+        if (livestreamSection) livestreamSection.style.display = checked ? '' : 'none';
+        // Turn off livestream when debug logging is disabled
+        if (!checked) {
+          const livestreamInput = document.getElementById('toggle-debug-livestream');
+          if (livestreamInput && livestreamInput.checked) {
+            livestreamInput.checked = false;
+            livestreamInput.dispatchEvent(new Event('change'));
+          }
         }
-        if (livestreamInput) livestreamInput.disabled = !checked;
       },
     });
-    Toggle.render(step1, {
+
+    const debugHint = document.createElement('div');
+    debugHint.className = 'alert alert-warning mt-2 mb-2';
+    debugHint.style.fontSize = '0.85rem';
+    debugHint.innerHTML = Helpers.iconHtml('warning.svg') + ' Remember to <strong>disable debug logging</strong> once done — it generates a lot of data and may impact performance.';
+    step1.appendChild(debugHint);
+
+    // Debug Livestream — only visible when Debug Logging is enabled
+    const livestreamSection = document.createElement('div');
+    livestreamSection.id = 'debug-livestream-section';
+    livestreamSection.style.display = config.enableDetailedLogging ? '' : 'none';
+
+    Toggle.render(livestreamSection, {
       id: 'toggle-debug-livestream',
       label: 'Debug Livestream',
       help: 'Record every HomeKit livestream to an mp4 file on disk for troubleshooting.',
       checked: !!config.debugLivestream && !!config.enableDetailedLogging,
-      disabled: !config.enableDetailedLogging,
       onChange: async (checked) => {
         await Config.updateGlobal({ debugLivestream: checked });
       },
@@ -71,13 +87,9 @@ const DiagnosticsView = {
     livestreamHint.className = 'alert alert-danger mt-2 mb-2';
     livestreamHint.style.fontSize = '0.85rem';
     livestreamHint.innerHTML = Helpers.iconHtml('warning.svg') + ' <strong>Debug Livestream:</strong> Only enable this if asked by a developer. Diagnostics files may contain recorded video sessions. Use <strong>Clean Storage</strong> to remove them afterwards, or reposition the camera if you are not comfortable sharing recordings.';
-    step1.appendChild(livestreamHint);
+    livestreamSection.appendChild(livestreamHint);
 
-    const debugHint = document.createElement('div');
-    debugHint.className = 'alert alert-warning mt-2 mb-2';
-    debugHint.style.fontSize = '0.85rem';
-    debugHint.innerHTML = Helpers.iconHtml('warning.svg') + ' Remember to <strong>disable debug logging</strong> once done — it generates a lot of data and may impact performance.';
-    step1.appendChild(debugHint);
+    step1.appendChild(livestreamSection);
     stepsSection.appendChild(step1);
 
     // Step 2 — Download Diagnostics
