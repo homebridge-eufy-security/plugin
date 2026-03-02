@@ -51,27 +51,8 @@ const DiagnosticsView = {
         // Show/hide steps that depend on debug logging
         const livestreamSection = document.getElementById('debug-livestream-section');
         if (livestreamSection) livestreamSection.style.display = checked ? '' : 'none';
-        const step2El = document.getElementById('diag-step-2');
-        const step3El = document.getElementById('diag-step-3');
-        if (checked) {
-          // Staggered slide-in via CSS classes
-          [step2El, step3El].forEach((el, i) => {
-            if (!el) return;
-            el.classList.remove('diag-step--hidden');
-            el.classList.add('diag-step--pre-anim');
-            el.classList.remove('diag-step--anim-1', 'diag-step--anim-2', 'diag-step--visible');
-            void el.offsetHeight; // force reflow
-            el.classList.add(i === 0 ? 'diag-step--anim-1' : 'diag-step--anim-2');
-            el.classList.add('diag-step--visible');
-            el.classList.remove('diag-step--pre-anim');
-          });
-        } else {
-          [step2El, step3El].forEach(el => {
-            if (!el) return;
-            el.classList.remove('diag-step--visible', 'diag-step--anim-1', 'diag-step--anim-2', 'diag-step--pre-anim');
-            el.classList.add('diag-step--hidden');
-          });
-        }
+        const debugSteps = document.getElementById('diag-debug-steps');
+        if (debugSteps) debugSteps.classList.toggle('diag-debug-steps--active', checked);
         // Turn off livestream when debug logging is disabled
         if (!checked) {
           const livestreamInput = document.getElementById('toggle-debug-livestream');
@@ -114,12 +95,14 @@ const DiagnosticsView = {
     stepsSection.appendChild(step1);
 
     // Steps 2 & 3 — only visible when Debug Logging is enabled
-    const debugVisible = !!config.enableDetailedLogging;
+    const debugSteps = document.createElement('div');
+    debugSteps.id = 'diag-debug-steps';
+    debugSteps.className = 'diag-debug-steps';
+    if (config.enableDetailedLogging) debugSteps.classList.add('diag-debug-steps--active');
 
     // Step 2 — Download Diagnostics
     const step2 = this._stepBlock('2', 'Download Diagnostics', 'Download an encrypted archive containing log files and accessories data. Only developers can decrypt it.');
-    step2.id = 'diag-step-2';
-    if (!debugVisible) step2.classList.add('diag-step--hidden');
+    step2.className += ' diag-step-reveal';
 
     const warning = document.createElement('div');
     warning.className = 'alert alert-warning mt-2 mb-2';
@@ -154,12 +137,11 @@ const DiagnosticsView = {
     const logProgress = document.createElement('div');
     logProgress.id = 'log-download-progress';
     step2.appendChild(logProgress);
-    stepsSection.appendChild(step2);
+    debugSteps.appendChild(step2);
 
     // Step 3 — Report Issue
     const step3 = this._stepBlock('3', 'Report Issue', 'Open a pre-filled bug report on GitHub with your system information.');
-    step3.id = 'diag-step-3';
-    if (!debugVisible) step3.classList.add('diag-step--hidden');
+    step3.className += ' diag-step-reveal';
 
     const attachHint = document.createElement('div');
     attachHint.className = 'alert alert-info mb-2';
@@ -172,8 +154,9 @@ const DiagnosticsView = {
     btnReport.innerHTML = ''; btnReport.appendChild(Helpers.icon('bug-report.svg')); btnReport.append(' Report Issue');
     btnReport.addEventListener('click', () => this._reportIssue());
     step3.appendChild(btnReport);
-    stepsSection.appendChild(step3);
+    debugSteps.appendChild(step3);
 
+    stepsSection.appendChild(debugSteps);
     container.appendChild(stepsSection);
 
     // ── Clean Storage ──

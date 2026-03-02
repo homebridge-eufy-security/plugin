@@ -789,26 +789,22 @@ body.dark-mode img[src*="assets/icons/"] {
 }
 
 /* ── Diagnostics step reveal animation ── */
-.diag-step--hidden {
-  display: none;
-}
-
-.diag-step--pre-anim {
+.diag-step-reveal {
+  max-height: 0;
   opacity: 0;
   transform: translateY(-10px);
+  overflow: hidden;
+  transition: max-height 0.35s ease, opacity 0.3s ease, transform 0.3s ease;
 }
 
-.diag-step--visible {
+.diag-debug-steps--active .diag-step-reveal {
+  max-height: 800px;
   opacity: 1;
   transform: translateY(0);
 }
 
-.diag-step--anim-1 {
-  transition: opacity 0.3s ease, transform 0.3s ease;
-}
-
-.diag-step--anim-2 {
-  transition: opacity 0.3s ease 0.15s, transform 0.3s ease 0.15s;
+.diag-debug-steps--active .diag-step-reveal:nth-child(2) {
+  transition-delay: 0.15s;
 }
 
 .diag-download-row {
