@@ -52,6 +52,15 @@ body:
       required: true
 
   - type: textarea
+    id: diagnostics
+    attributes:
+      label: Diagnostics File
+      description: "Drag & drop the diagnostics `.tar.gz.enc` file downloaded from the plugin's Diagnostics page. This helps developers investigate your issue much faster."
+      placeholder: "Drag & drop your diagnostics file here..."
+    validations:
+      required: true
+
+  - type: textarea
     id: description
     attributes:
       label: What happened?

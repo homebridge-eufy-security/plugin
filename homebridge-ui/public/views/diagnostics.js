@@ -49,8 +49,17 @@ const DiagnosticsView = {
       onChange: async (checked) => {
         await Config.updateGlobal({ enableDetailedLogging: checked });
         // Show/hide steps that depend on debug logging
+        const debugHint = document.getElementById('diag-debug-hint');
+        if (debugHint) debugHint.style.display = checked ? '' : 'none';
         const livestreamSection = document.getElementById('debug-livestream-section');
         if (livestreamSection) livestreamSection.style.display = checked ? '' : 'none';
+        const restartHint = document.getElementById('diag-restart-hint');
+        if (restartHint) restartHint.style.display = checked ? '' : 'none';
+        // Hide livestream warning when debug logging is turned off
+        if (!checked) {
+          const lsHint = document.getElementById('diag-livestream-hint');
+          if (lsHint) lsHint.style.display = 'none';
+        }
         const debugSteps = document.getElementById('diag-debug-steps');
         if (debugSteps) debugSteps.classList.toggle('diag-debug-steps--active', checked);
         // Turn off livestream when debug logging is disabled
@@ -65,8 +74,10 @@ const DiagnosticsView = {
     });
 
     const debugHint = document.createElement('div');
+    debugHint.id = 'diag-debug-hint';
     debugHint.className = 'alert alert-warning mt-2 mb-2';
     debugHint.style.fontSize = '0.85rem';
+    debugHint.style.display = config.enableDetailedLogging ? '' : 'none';
     debugHint.innerHTML = Helpers.iconHtml('warning.svg') + ' Remember to <strong>disable debug logging</strong> once done — it generates a lot of data and may impact performance.';
     step1.appendChild(debugHint);
 
@@ -82,30 +93,37 @@ const DiagnosticsView = {
       checked: !!config.debugLivestream && !!config.enableDetailedLogging,
       onChange: async (checked) => {
         await Config.updateGlobal({ debugLivestream: checked });
+        const lsHint = document.getElementById('diag-livestream-hint');
+        if (lsHint) lsHint.style.display = checked ? '' : 'none';
       },
     });
 
     const livestreamHint = document.createElement('div');
+    livestreamHint.id = 'diag-livestream-hint';
     livestreamHint.className = 'alert alert-danger mt-2 mb-2';
     livestreamHint.style.fontSize = '0.85rem';
+    livestreamHint.style.display = (config.debugLivestream && config.enableDetailedLogging) ? '' : 'none';
     livestreamHint.innerHTML = Helpers.iconHtml('warning.svg') + ' <strong>Debug Livestream:</strong> Only enable this if asked by a developer. Diagnostics files may contain recorded video sessions. Use <strong>Clean Storage</strong> to remove them afterwards, or reposition the camera if you are not comfortable sharing recordings.';
     livestreamSection.appendChild(livestreamHint);
 
     step1.appendChild(livestreamSection);
     stepsSection.appendChild(step1);
 
+    // Restart / reproduce instruction — visible when Debug Logging is enabled
+    const restartHint = document.createElement('div');
+    restartHint.id = 'diag-restart-hint';
+    restartHint.className = 'alert alert-info mt-3 mb-3';
+    restartHint.style.fontSize = '0.85rem';
+    restartHint.style.display = config.enableDetailedLogging ? '' : 'none';
+    restartHint.innerHTML = Helpers.iconHtml('info.svg') + ' <strong>Next:</strong> Restart the plugin, reproduce the issue you are experiencing, then come back here to download the diagnostics.';
+
+    stepsSection.appendChild(restartHint);
+
     // Steps 2 & 3 — only visible when Debug Logging is enabled
     const debugSteps = document.createElement('div');
     debugSteps.id = 'diag-debug-steps';
     debugSteps.className = 'diag-debug-steps';
     if (config.enableDetailedLogging) debugSteps.classList.add('diag-debug-steps--active');
-
-    // Restart / reproduce instruction between step 1 and step 2
-    const restartHint = document.createElement('div');
-    restartHint.className = 'alert alert-info diag-step-reveal mb-3';
-    restartHint.style.fontSize = '0.85rem';
-    restartHint.innerHTML = Helpers.iconHtml('info.svg') + ' <strong>Next:</strong> Restart the plugin, reproduce the issue you are experiencing, then come back here to download the diagnostics.';
-    debugSteps.appendChild(restartHint);
 
     // Step 2 — Download Diagnostics
     const step2 = this._stepBlock('2', 'Download Diagnostics', 'Download an encrypted archive containing log files and accessories data. Only developers can decrypt it.');
