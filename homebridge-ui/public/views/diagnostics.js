@@ -100,6 +100,13 @@ const DiagnosticsView = {
     debugSteps.className = 'diag-debug-steps';
     if (config.enableDetailedLogging) debugSteps.classList.add('diag-debug-steps--active');
 
+    // Restart / reproduce instruction between step 1 and step 2
+    const restartHint = document.createElement('div');
+    restartHint.className = 'alert alert-info diag-step-reveal mb-3';
+    restartHint.style.fontSize = '0.85rem';
+    restartHint.innerHTML = Helpers.iconHtml('info.svg') + ' <strong>Next:</strong> Restart the plugin, reproduce the issue you are experiencing, then come back here to download the diagnostics.';
+    debugSteps.appendChild(restartHint);
+
     // Step 2 — Download Diagnostics
     const step2 = this._stepBlock('2', 'Download Diagnostics', 'Download an encrypted archive containing log files and accessories data. Only developers can decrypt it.');
     step2.className += ' diag-step-reveal';
@@ -139,9 +146,10 @@ const DiagnosticsView = {
     step2.appendChild(logProgress);
     debugSteps.appendChild(step2);
 
-    // Step 3 — Report Issue
+    // Step 3 — Report Issue (hidden until download completes)
     const step3 = this._stepBlock('3', 'Report Issue', 'Open a pre-filled bug report on GitHub with your system information.');
-    step3.className += ' diag-step-reveal';
+    step3.className += ' diag-step-reveal diag-step-3';
+    step3.id = 'diag-step-3';
 
     const attachHint = document.createElement('div');
     attachHint.className = 'alert alert-info mb-2';
@@ -282,6 +290,10 @@ const DiagnosticsView = {
       document.body.removeChild(a);
 
       homebridge.toast.success('Diagnostics downloaded.');
+
+      // Reveal step 3 (Report Issue) now that the file has been downloaded
+      const step3El = container.querySelector('#diag-step-3');
+      if (step3El) step3El.classList.remove('diag-step-3');
     } catch (e) {
       homebridge.toast.error('Failed to download diagnostics: ' + (e.message || e));
     } finally {
