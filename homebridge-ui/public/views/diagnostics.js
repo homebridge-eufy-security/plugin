@@ -72,7 +72,7 @@ const DiagnosticsView = {
     const warning = document.createElement('div');
     warning.className = 'alert alert-warning mt-2 mb-2';
     warning.style.fontSize = '0.85rem';
-    warning.innerHTML = Helpers.iconHtml('warning.svg') + ' <strong>Security notice:</strong> Diagnostics may contain sensitive session data. If you share this archive with anyone, it is strongly recommended to reset your Eufy account password afterwards.';
+    warning.innerHTML = Helpers.iconHtml('warning.svg') + ' <strong>Security notice:</strong> Diagnostics may contain sensitive session data. When encrypted, only developers can read the archive. If you disable encryption or share the archive with anyone, it is strongly recommended to reset your Eufy account password afterwards.';
     step2.appendChild(warning);
 
     // Download button + encrypt checkbox in a single row
