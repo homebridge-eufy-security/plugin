@@ -638,10 +638,10 @@ class UiServer extends HomebridgePluginUiServer {
       return;
     }
 
-    // if (this._isMainAdminAccount(station)) {
-    //   this._abortNonGuestAdminLogin();
-    //   return;
-    // }
+    if (this._isMainAdminAccount(station)) {
+      this._abortNonGuestAdminLogin();
+      return;
+    }
 
     this._clearDiscoveryInactivityTimer();
     this.pendingStations.push(station);
