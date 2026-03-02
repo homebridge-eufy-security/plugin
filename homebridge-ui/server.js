@@ -638,10 +638,10 @@ class UiServer extends HomebridgePluginUiServer {
       return;
     }
 
-    if (this._isMainAdminAccount(station)) {
-      this._abortNonGuestAdminLogin();
-      return;
-    }
+    // if (this._isMainAdminAccount(station)) {
+    //   this._abortNonGuestAdminLogin();
+    //   return;
+    // }
 
     this._clearDiscoveryInactivityTimer();
     this.pendingStations.push(station);
@@ -1179,7 +1179,9 @@ class UiServer extends HomebridgePluginUiServer {
     return nonEmptyLogFiles.filter(file => file !== null);
   }
 
-  async downloadDiagnostics() {
+  async downloadDiagnostics(options = {}) {
+    const skipEncryption = !!options.skipEncryption;
+
     // Rate-limit: one download per DIAGNOSTICS_COOLDOWN_MS
     const now = Date.now();
     const elapsed = now - this._lastDiagnosticsTime;
@@ -1224,6 +1226,11 @@ class UiServer extends HomebridgePluginUiServer {
         chunks.push(chunk);
       }
       const fileBuffer = Buffer.concat(chunks);
+
+      if (skipEncryption) {
+        this.pushEvent('diagnosticsProgress', { progress: 90, status: 'Returning plain archive' });
+        return { buffer: fileBuffer, filename: archiveName };
+      }
 
       this.pushEvent('diagnosticsProgress', { progress: 80, status: 'Encrypting archive' });
       const encryptedBuffer = encryptDiagnostics(fileBuffer);
