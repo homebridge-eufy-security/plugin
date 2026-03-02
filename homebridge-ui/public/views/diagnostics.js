@@ -75,10 +75,20 @@ const DiagnosticsView = {
     warning.innerHTML = Helpers.iconHtml('warning.svg') + ' <strong>Security notice:</strong> Diagnostics may contain sensitive session data. If you share this archive with anyone, it is strongly recommended to reset your Eufy account password afterwards.';
     step2.appendChild(warning);
 
+    // Toggle to disable encryption (advanced / self-hosted)
+    let skipEncryption = false;
+    Toggle.render(step2, {
+      id: 'toggle-skip-encryption',
+      label: 'Disable Encryption',
+      help: 'Download a plain .tar.gz instead of an encrypted archive. Use this only if you intend to inspect the archive yourself.',
+      checked: false,
+      onChange: (checked) => { skipEncryption = checked; },
+    });
+
     const btnDownload = document.createElement('button');
     btnDownload.className = 'btn btn-primary btn-sm';
     btnDownload.innerHTML = ''; btnDownload.appendChild(Helpers.icon('download.svg')); btnDownload.append(' Download Diagnostics');
-    btnDownload.addEventListener('click', () => this._downloadDiagnostics(container));
+    btnDownload.addEventListener('click', () => this._downloadDiagnostics(container, skipEncryption));
     step2.appendChild(btnDownload);
 
     const logProgress = document.createElement('div');
@@ -92,7 +102,7 @@ const DiagnosticsView = {
     const attachHint = document.createElement('div');
     attachHint.className = 'alert alert-info mb-2';
     attachHint.style.fontSize = '0.85rem';
-    attachHint.innerHTML = Helpers.iconHtml('attach.svg') + ' Don\'t forget to <strong>attach the diagnostics zip</strong> downloaded in step 2 to your GitHub issue.';
+    attachHint.innerHTML = Helpers.iconHtml('attach.svg') + ' Don\'t forget to <strong>attach the diagnostics file</strong> downloaded in step 2 to your GitHub issue.';
     step3.appendChild(attachHint);
 
     const btnReport = document.createElement('button');
@@ -185,7 +195,7 @@ const DiagnosticsView = {
   },
 
   // ===== Diagnostics Download =====
-  async _downloadDiagnostics(container) {
+  async _downloadDiagnostics(container, skipEncryption = false) {
     if (this._downloadInProgress) return;
     this._downloadInProgress = true;
 
@@ -209,9 +219,10 @@ const DiagnosticsView = {
     });
 
     try {
-      const result = await Api.downloadDiagnostics();
+      const result = await Api.downloadDiagnostics({ skipEncryption });
       const rawBuffer = result.buffer || result;
-      const filename = result.filename || 'eufy-security-diagnostics.tar.gz.enc';
+      const fallbackExt = skipEncryption ? '.tar.gz' : '.tar.gz.enc';
+      const filename = result.filename || ('eufy-security-diagnostics' + fallbackExt);
       const bytes = new Uint8Array(rawBuffer.data || rawBuffer);
       let binary = '';
       for (let i = 0; i < bytes.length; i++) {
