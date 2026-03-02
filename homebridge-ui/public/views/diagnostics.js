@@ -75,21 +75,29 @@ const DiagnosticsView = {
     warning.innerHTML = Helpers.iconHtml('warning.svg') + ' <strong>Security notice:</strong> Diagnostics may contain sensitive session data. If you share this archive with anyone, it is strongly recommended to reset your Eufy account password afterwards.';
     step2.appendChild(warning);
 
-    // Toggle to disable encryption (advanced / self-hosted)
-    let skipEncryption = false;
-    Toggle.render(step2, {
-      id: 'toggle-skip-encryption',
-      label: 'Disable Encryption',
-      help: 'Download a plain .tar.gz instead of an encrypted archive. Use this only if you intend to inspect the archive yourself.',
-      checked: false,
-      onChange: (checked) => { skipEncryption = checked; },
-    });
+    // Download button + encrypt checkbox in a single row
+    let encrypt = true;
+
+    const downloadRow = document.createElement('div');
+    downloadRow.style.cssText = 'display:flex;align-items:center;gap:12px;';
 
     const btnDownload = document.createElement('button');
     btnDownload.className = 'btn btn-primary btn-sm';
     btnDownload.innerHTML = ''; btnDownload.appendChild(Helpers.icon('download.svg')); btnDownload.append(' Download Diagnostics');
-    btnDownload.addEventListener('click', () => this._downloadDiagnostics(container, skipEncryption));
-    step2.appendChild(btnDownload);
+    btnDownload.addEventListener('click', () => this._downloadDiagnostics(container, !encrypt));
+    downloadRow.appendChild(btnDownload);
+
+    const encLabel = document.createElement('label');
+    encLabel.style.cssText = 'display:flex;align-items:center;gap:4px;margin:0;cursor:pointer;font-size:0.85rem;';
+    const encCheckbox = document.createElement('input');
+    encCheckbox.type = 'checkbox';
+    encCheckbox.checked = true;
+    encCheckbox.addEventListener('change', (e) => { encrypt = e.target.checked; });
+    encLabel.appendChild(encCheckbox);
+    encLabel.append('Encrypt');
+    downloadRow.appendChild(encLabel);
+
+    step2.appendChild(downloadRow);
 
     const logProgress = document.createElement('div');
     logProgress.id = 'log-download-progress';
