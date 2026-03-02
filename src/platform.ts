@@ -35,16 +35,13 @@ import {
   LogLevel,
 } from 'eufy-security-client';
 
-import { ILogObjMeta } from 'tslog';
-import { createStream } from 'rotating-file-stream';
-
 import fs from 'fs';
 
 import os from 'node:os';
 import { platform } from 'node:process';
 import { readFileSync } from 'node:fs';
 
-import { initLog, log, tsLogger, ffmpegLogger, HAP } from './utils/utils.js';
+import { initLog, log, tsLogger, HAP, configureLogStreams } from './utils/utils.js';
 import { hasFdkAac } from './utils/ffmpeg.js';
 import { AccessoriesStore } from './utils/accessoriesStore.js';
 import { LIB_VERSION } from './version.js';
@@ -213,86 +210,7 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
     initLog(logOptions);
 
     // Configures log streams for various log files
-    this.configureLogStreams();
-  }
-
-  /**
-  * Configures log streams for various log files if log file storage is not omitted.
-  */
-  private configureLogStreams() {
-
-    // Log a message if log file storage will be omitted
-    if (this.config.omitLogFiles) {
-      log.info('log file storage will be omitted.');
-      return;
-    }
-
-    // Log streams configuration: main log keeps file info, lib logs omit it
-    const logStreamsWithFile = [
-      { name: 'eufy-security.log', logger: log },
-      { name: 'ffmpeg.log', logger: ffmpegLogger },
-    ];
-
-    const logStreamsWithoutFile = [
-      { name: 'eufy-lib.log', logger: tsLogger },
-    ];
-
-    const parentName = log.settings.name;
-
-    // Attach transports for logs that include file info (eufy-security, ffmpeg)
-    for (const { name, logger } of logStreamsWithFile) {
-      const logStream = createStream(name, {
-        path: this.eufyPath,
-        interval: '1d',
-        rotate: 3,
-        maxSize: '200M',
-        compress: 'gzip',
-      });
-
-      logger.attachTransport((logObj: ILogObjMeta) => {
-        const meta = logObj['_meta'];
-        const loggerName = meta.name || parentName;
-        const level = meta.logLevelName;
-        const date = meta.date.toISOString();
-        const fileNameWithLine = meta.path?.fileNameWithLine || '';
-
-        let message = '';
-        for (let i = 0; i <= 5; i++) {
-          if (logObj[i]) {
-            message += ' ' + (typeof logObj[i] === 'string' ? logObj[i] : JSON.stringify(logObj[i]));
-          }
-        }
-
-        logStream.write(date + '\t' + loggerName + '\t' + level + '\t' + fileNameWithLine + '\t' + message + '\n');
-      });
-    }
-
-    // Attach transports for lib logs (no file column)
-    for (const { name, logger } of logStreamsWithoutFile) {
-      const logStream = createStream(name, {
-        path: this.eufyPath,
-        interval: '1d',
-        rotate: 3,
-        maxSize: '200M',
-        compress: 'gzip',
-      });
-
-      logger.attachTransport((logObj: ILogObjMeta) => {
-        const meta = logObj['_meta'];
-        const loggerName = meta.name;
-        const level = meta.logLevelName;
-        const date = meta.date.toISOString();
-
-        let message = '';
-        for (let i = 0; i <= 5; i++) {
-          if (logObj[i]) {
-            message += ' ' + (typeof logObj[i] === 'string' ? logObj[i] : JSON.stringify(logObj[i]));
-          }
-        }
-
-        logStream.write(date + '\t' + loggerName + '\t' + level + '\t' + message + '\n');
-      });
-    }
+    configureLogStreams(this.eufyPath, this.config.omitLogFiles);
   }
 
   // This function is responsible for identifying the hardware and operating system environment the application is running on.
@@ -360,6 +278,12 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
     // Log the final configuration object for debugging purposes
     log.debug('The config is:', this.config);
 
+    const [nodeMajor, nodeMinor] = process.versions.node.split('.').map(Number);
+    const nativePKCS1Restored = nodeMajor > 24 || (nodeMajor === 24 && nodeMinor >= 5);
+    if (nativePKCS1Restored && this.config.enableEmbeddedPKCS1Support) {
+      log.info('Native PKCS1 padding support available (Node.js >= 24.5.0) — ignoring enableEmbeddedPKCS1Support config option');
+    }
+
     const eufyConfig = {
       username: this.config.username,
       password: this.config.password,
@@ -369,7 +293,7 @@ export class EufySecurityPlatform implements DynamicPlatformPlugin {
       persistentDir: this.eufyPath,
       p2pConnectionSetup: 0,
       pollingIntervalMinutes: this.config.pollingIntervalMinutes,
-      enableEmbeddedPKCS1Support: this.config.enableEmbeddedPKCS1Support,
+      enableEmbeddedPKCS1Support: nativePKCS1Restored ? false : this.config.enableEmbeddedPKCS1Support,
       eventDurationSeconds: 10,
       logging: {
         level: (this.config.enableDetailedLogging) ? LogLevel.Debug : LogLevel.Info,
