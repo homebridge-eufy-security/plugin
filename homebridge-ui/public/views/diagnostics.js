@@ -67,7 +67,7 @@ const DiagnosticsView = {
     stepsSection.appendChild(step1);
 
     // Step 2 — Download Diagnostics
-    const step2 = this._stepBlock('2', 'Download Diagnostics', 'Download a zip archive containing log files and accessories data.');
+    const step2 = this._stepBlock('2', 'Download Diagnostics', 'Download an encrypted archive containing log files and accessories data. Only developers can decrypt it.');
 
     const warning = document.createElement('div');
     warning.className = 'alert alert-warning mt-2 mb-2';
@@ -211,7 +211,7 @@ const DiagnosticsView = {
     try {
       const result = await Api.downloadDiagnostics();
       const rawBuffer = result.buffer || result;
-      const filename = result.filename || 'eufy-security-diagnostics.tar.gz';
+      const filename = result.filename || 'eufy-security-diagnostics.tar.gz.enc';
       const bytes = new Uint8Array(rawBuffer.data || rawBuffer);
       let binary = '';
       for (let i = 0; i < bytes.length; i++) {
@@ -219,7 +219,7 @@ const DiagnosticsView = {
       }
       const base64 = btoa(binary);
       const a = document.createElement('a');
-      a.href = 'data:application/gzip;base64,' + base64;
+      a.href = 'data:application/octet-stream;base64,' + base64;
       a.download = filename;
       document.body.appendChild(a);
       a.click();
