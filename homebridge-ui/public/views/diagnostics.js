@@ -51,8 +51,28 @@ const DiagnosticsView = {
         // Show/hide steps that depend on debug logging
         const livestreamSection = document.getElementById('debug-livestream-section');
         if (livestreamSection) livestreamSection.style.display = checked ? '' : 'none';
-        const debugSteps = document.getElementById('debug-dependent-steps');
-        if (debugSteps) debugSteps.style.display = checked ? '' : 'none';
+        const step2El = document.getElementById('diag-step-2');
+        const step3El = document.getElementById('diag-step-3');
+        if (checked) {
+          // Staggered slide-in
+          [step2El, step3El].forEach((el, i) => {
+            if (!el) return;
+            el.style.transition = 'none';
+            el.style.opacity = '0';
+            el.style.transform = 'translateY(-10px)';
+            el.style.display = '';
+            // Force reflow then animate
+            void el.offsetHeight;
+            el.style.transition = `opacity 0.3s ease ${i * 0.15}s, transform 0.3s ease ${i * 0.15}s`;
+            el.style.opacity = '1';
+            el.style.transform = 'translateY(0)';
+          });
+        } else {
+          [step2El, step3El].forEach(el => {
+            if (!el) return;
+            el.style.display = 'none';
+          });
+        }
         // Turn off livestream when debug logging is disabled
         if (!checked) {
           const livestreamInput = document.getElementById('toggle-debug-livestream');
@@ -95,12 +115,12 @@ const DiagnosticsView = {
     stepsSection.appendChild(step1);
 
     // Steps 2 & 3 — only visible when Debug Logging is enabled
-    const debugDependentSteps = document.createElement('div');
-    debugDependentSteps.id = 'debug-dependent-steps';
-    debugDependentSteps.style.display = config.enableDetailedLogging ? '' : 'none';
+    const debugVisible = !!config.enableDetailedLogging;
 
     // Step 2 — Download Diagnostics
     const step2 = this._stepBlock('2', 'Download Diagnostics', 'Download an encrypted archive containing log files and accessories data. Only developers can decrypt it.');
+    step2.id = 'diag-step-2';
+    if (!debugVisible) step2.style.display = 'none';
 
     const warning = document.createElement('div');
     warning.className = 'alert alert-warning mt-2 mb-2';
@@ -135,10 +155,12 @@ const DiagnosticsView = {
     const logProgress = document.createElement('div');
     logProgress.id = 'log-download-progress';
     step2.appendChild(logProgress);
-    debugDependentSteps.appendChild(step2);
+    stepsSection.appendChild(step2);
 
     // Step 3 — Report Issue
     const step3 = this._stepBlock('3', 'Report Issue', 'Open a pre-filled bug report on GitHub with your system information.');
+    step3.id = 'diag-step-3';
+    if (!debugVisible) step3.style.display = 'none';
 
     const attachHint = document.createElement('div');
     attachHint.className = 'alert alert-info mb-2';
@@ -151,9 +173,8 @@ const DiagnosticsView = {
     btnReport.innerHTML = ''; btnReport.appendChild(Helpers.icon('bug-report.svg')); btnReport.append(' Report Issue');
     btnReport.addEventListener('click', () => this._reportIssue());
     step3.appendChild(btnReport);
-    debugDependentSteps.appendChild(step3);
+    stepsSection.appendChild(step3);
 
-    stepsSection.appendChild(debugDependentSteps);
     container.appendChild(stepsSection);
 
     // ── Clean Storage ──
