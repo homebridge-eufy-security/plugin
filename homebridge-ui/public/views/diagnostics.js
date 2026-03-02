@@ -54,23 +54,22 @@ const DiagnosticsView = {
         const step2El = document.getElementById('diag-step-2');
         const step3El = document.getElementById('diag-step-3');
         if (checked) {
-          // Staggered slide-in
+          // Staggered slide-in via CSS classes
           [step2El, step3El].forEach((el, i) => {
             if (!el) return;
-            el.style.transition = 'none';
-            el.style.opacity = '0';
-            el.style.transform = 'translateY(-10px)';
-            el.style.display = '';
-            // Force reflow then animate
-            void el.offsetHeight;
-            el.style.transition = `opacity 0.3s ease ${i * 0.15}s, transform 0.3s ease ${i * 0.15}s`;
-            el.style.opacity = '1';
-            el.style.transform = 'translateY(0)';
+            el.classList.remove('diag-step--hidden');
+            el.classList.add('diag-step--pre-anim');
+            el.classList.remove('diag-step--anim-1', 'diag-step--anim-2', 'diag-step--visible');
+            void el.offsetHeight; // force reflow
+            el.classList.add(i === 0 ? 'diag-step--anim-1' : 'diag-step--anim-2');
+            el.classList.add('diag-step--visible');
+            el.classList.remove('diag-step--pre-anim');
           });
         } else {
           [step2El, step3El].forEach(el => {
             if (!el) return;
-            el.style.display = 'none';
+            el.classList.remove('diag-step--visible', 'diag-step--anim-1', 'diag-step--anim-2', 'diag-step--pre-anim');
+            el.classList.add('diag-step--hidden');
           });
         }
         // Turn off livestream when debug logging is disabled
@@ -120,7 +119,7 @@ const DiagnosticsView = {
     // Step 2 — Download Diagnostics
     const step2 = this._stepBlock('2', 'Download Diagnostics', 'Download an encrypted archive containing log files and accessories data. Only developers can decrypt it.');
     step2.id = 'diag-step-2';
-    if (!debugVisible) step2.style.display = 'none';
+    if (!debugVisible) step2.classList.add('diag-step--hidden');
 
     const warning = document.createElement('div');
     warning.className = 'alert alert-warning mt-2 mb-2';
@@ -132,7 +131,7 @@ const DiagnosticsView = {
     let encrypt = true;
 
     const downloadRow = document.createElement('div');
-    downloadRow.style.cssText = 'display:flex;align-items:center;gap:12px;';
+    downloadRow.className = 'diag-download-row';
 
     const btnDownload = document.createElement('button');
     btnDownload.className = 'btn btn-primary btn-sm';
@@ -141,7 +140,7 @@ const DiagnosticsView = {
     downloadRow.appendChild(btnDownload);
 
     const encLabel = document.createElement('label');
-    encLabel.style.cssText = 'display:flex;align-items:center;gap:4px;margin:0;cursor:pointer;font-size:0.85rem;';
+    encLabel.className = 'diag-encrypt-label';
     const encCheckbox = document.createElement('input');
     encCheckbox.type = 'checkbox';
     encCheckbox.checked = true;
@@ -160,7 +159,7 @@ const DiagnosticsView = {
     // Step 3 — Report Issue
     const step3 = this._stepBlock('3', 'Report Issue', 'Open a pre-filled bug report on GitHub with your system information.');
     step3.id = 'diag-step-3';
-    if (!debugVisible) step3.style.display = 'none';
+    if (!debugVisible) step3.classList.add('diag-step--hidden');
 
     const attachHint = document.createElement('div');
     attachHint.className = 'alert alert-info mb-2';
@@ -224,7 +223,7 @@ const DiagnosticsView = {
 
     const btnReset = document.createElement('button');
     btnReset.className = 'btn btn-outline-danger btn-sm';
-    btnReset.innerHTML = ''; btnReset.appendChild(Helpers.icon('settings_backup_restore.svg')); btnReset.append(' Reset Plugin');
+    btnReset.innerHTML = ''; btnReset.appendChild(Helpers.icon('delete.svg')); btnReset.append(' Reset Plugin');
     btnReset.addEventListener('click', () => this._confirmReset(container));
     resetSection.appendChild(btnReset);
 
