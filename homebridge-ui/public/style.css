@@ -797,6 +797,11 @@ body.dark-mode img[src*="assets/icons/"] {
   display: block;
 }
 
+/* Step 3 stays hidden until download completes (JS removes this class) */
+.diag-debug-steps--active .diag-step-3 {
+  display: none;
+}
+
 .diag-download-row {
   display: flex;
   align-items: center;
