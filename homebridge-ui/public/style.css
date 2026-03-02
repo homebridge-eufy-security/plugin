@@ -787,3 +787,41 @@ body.dark-mode .node-version-banner__text a {
 body.dark-mode img[src*="assets/icons/"] {
   filter: brightness(0) invert(1);
 }
+
+/* ── Diagnostics step reveal animation ── */
+.diag-step--hidden {
+  display: none;
+}
+
+.diag-step--pre-anim {
+  opacity: 0;
+  transform: translateY(-10px);
+}
+
+.diag-step--visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.diag-step--anim-1 {
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.diag-step--anim-2 {
+  transition: opacity 0.3s ease 0.15s, transform 0.3s ease 0.15s;
+}
+
+.diag-download-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.diag-encrypt-label {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin: 0;
+  cursor: pointer;
+  font-size: 0.85rem;
+}
