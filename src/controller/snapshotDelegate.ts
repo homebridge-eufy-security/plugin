@@ -14,7 +14,7 @@ import {
 } from '../settings.js';
 import { CameraConfig, SnapshotHandlingMethod } from '../utils/configTypes.js';
 import { FFmpeg, FFmpegParameters } from '../utils/ffmpeg.js';
-import { isRtspReady } from '../utils/utils.js';
+import { isRtspReady, ffmpegLoggerFactory } from '../utils/utils.js';
 import { LocalLivestreamManager } from './LocalLivestreamManager.js';
 
 type PlaceholderKey = 'unavailable' | 'offline' | 'disabled';
@@ -407,6 +407,6 @@ export class snapshotDelegate {
   ): Promise<Buffer> {
     const params = await FFmpegParameters.forSnapshot(this.cameraConfig.videoConfig?.debug);
     await configure(params);
-    return new FFmpeg(label, params).getResult(input);
+    return new FFmpeg(label, params, ffmpegLoggerFactory.forSnapshots()).getResult(input);
   }
 }

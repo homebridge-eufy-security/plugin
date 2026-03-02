@@ -21,7 +21,7 @@ import { CameraAccessory } from '../accessories/CameraAccessory.js';
 import { SessionInfo, VideoConfig } from '../utils/configTypes.js';
 import { FFmpeg, FFmpegParameters } from '../utils/ffmpeg.js';
 import { TalkbackStream } from '../utils/Talkback.js';
-import { HAP, isRtspReady } from '../utils/utils.js';
+import { HAP, isRtspReady, ffmpegLoggerFactory } from '../utils/utils.js';
 import { LocalLivestreamManager } from './LocalLivestreamManager.js';
 import { snapshotDelegate } from './snapshotDelegate.js';
 
@@ -39,6 +39,7 @@ export class StreamingDelegate implements CameraStreamingDelegate {
   private controller?: CameraController;
 
   private readonly log: Logger<ILogObj>;
+  private readonly ffmpegLog: Logger<ILogObj>;
 
   private readonly localLivestreamManager: LocalLivestreamManager;
   private readonly snapshotDelegate: snapshotDelegate;
@@ -59,6 +60,7 @@ export class StreamingDelegate implements CameraStreamingDelegate {
     private camera: CameraAccessory,
   ) {
     this.log = camera.log;
+    this.ffmpegLog = ffmpegLoggerFactory.forCamera(camera.device.getSerial());
 
     this.localLivestreamManager = new LocalLivestreamManager(camera);
 
@@ -161,6 +163,13 @@ export class StreamingDelegate implements CameraStreamingDelegate {
       const { videoParams, audioParams } = await this.buildStreamParameters(sessionInfo, request);
 
       const isP2P = await this.configureStreamInput(videoParams, audioParams);
+
+      // Record a parallel copy of the video stream to disk for debugging.
+      if (this.camera.platform.config.debugLivestream) {
+        const recDir = this.camera.platform.eufyPath + '/recordings';
+        const recPath = videoParams.setFileRecording(recDir, this.device.getSerial());
+        this.log.info(`Recording stream to ${recPath}`);
+      }
 
       await this.startFFmpegProcesses(activeSession, videoParams, audioParams, request, callback, isP2P);
 
@@ -298,6 +307,7 @@ export class StreamingDelegate implements CameraStreamingDelegate {
     const videoProcess = new FFmpeg(
       '[Video Process]',
       !isP2P && audioParams ? [videoParams, audioParams] : videoParams,
+      this.ffmpegLog,
     );
     videoProcess.on('started', () => callback());
     videoProcess.on('error', (error) => {
@@ -308,7 +318,7 @@ export class StreamingDelegate implements CameraStreamingDelegate {
     await videoProcess.start();
 
     if (isP2P && audioParams) {
-      const audioProcess = new FFmpeg('[Audio Process]', audioParams);
+      const audioProcess = new FFmpeg('[Audio Process]', audioParams, this.ffmpegLog);
 
       if (isP2P) {
         // For P2P, audio failure must not tear down the video stream.
@@ -367,7 +377,7 @@ export class StreamingDelegate implements CameraStreamingDelegate {
     }
 
     activeSession.talkbackStream = new TalkbackStream(this.camera.platform, this.device);
-    activeSession.returnProcess = new FFmpeg('[Talkback Process]', talkbackParams);
+    activeSession.returnProcess = new FFmpeg('[Talkback Process]', talkbackParams, this.ffmpegLog);
     activeSession.returnProcess.on('error', (error) => {
       this.log.error('Talkback process ended with error: ' + error);
     });
