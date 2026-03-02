@@ -1,8 +1,10 @@
 // Node built-ins
 import { ChildProcessWithoutNullStreams, execFileSync, spawn } from 'child_process';
 import EventEmitter from 'events';
+import { mkdirSync } from 'fs';
 import net from 'net';
 import os from 'os';
+import path from 'path';
 import { Readable, Writable } from 'stream';
 
 // External packages
@@ -21,6 +23,7 @@ import {
 import { pickPort } from 'pick-port';
 
 // Internal modules
+import { ILogObj, Logger } from 'tslog';
 import { CameraConfig, SessionInfo, VideoConfig } from './configTypes.js';
 import { ffmpegLogger } from './utils.js';
 
@@ -242,6 +245,9 @@ export class FFmpegParameters {
     private maxMuxingQueueSize?: number;
     private iFrameInterval?: number;
     private processAudio = true;
+
+    // debug file recording (parallel copy of stream to disk)
+    public fileRecordingPath?: string;
 
     private constructor(port: number, isVideo: boolean, isAudio: boolean, isSnapshot: boolean, debug = false) {
         this.progressPort = port;
@@ -521,6 +527,22 @@ export class FFmpegParameters {
         this.channels = channels;
     }
 
+    /**
+     * Enable parallel file recording.  Generates a timestamped mp4
+     * filename inside `recordingDir`, creates the directory if needed,
+     * and configures this parameter set so the ffmpeg command will
+     * include an additional output that writes a copy of the encoded
+     * video to disk (mp4 container, fragmented).
+     *
+     * @returns The absolute path to the recording file.
+     */
+    public setFileRecording(recordingDir: string, serial: string): string {
+        const ts = new Date().toISOString().replace(/[:.]/g, '-');
+        mkdirSync(recordingDir, { recursive: true });
+        this.fileRecordingPath = path.join(recordingDir, `${serial}_${ts}.mp4`);
+        return this.fileRecordingPath;
+    }
+
     private buildGenericParameters(): string[] {
         const params: string[] = [];
 
@@ -706,6 +728,15 @@ export class FFmpegParameters {
             params.push(...p.buildEncodingParameters());
             params.push(...p.buildOutputParameters());
         }
+
+        // Append a parallel file-recording output when configured.
+        // Uses codec copy so there is virtually no extra CPU cost.
+        const recPath = parameters[0].fileRecordingPath;
+        if (recPath) {
+            params.push('-map 0:v -c:v copy -an -f mp4 -movflags frag_keyframe+empty_moov');
+            params.push(recPath);
+        }
+
         params.push(`-progress tcp://127.0.0.1:${parameters[0].progressPort}`);
 
         return params;
@@ -740,9 +771,12 @@ export class FFmpeg extends EventEmitter {
     private starttime?: number;
     private killTimeout?: NodeJS.Timeout;
 
-    constructor(name: string, parameters: FFmpegParameters | FFmpegParameters[]) {
+    private log: Logger<ILogObj>;
+
+    constructor(name: string, parameters: FFmpegParameters | FFmpegParameters[], logger?: Logger<ILogObj>) {
         super();
         this.name = name;
+        this.log = logger ?? ffmpegLogger;
         if (Array.isArray(parameters)) {
             if (parameters.length === 0) {
                 throw new Error('No ffmpeg parameters found.');
@@ -771,8 +805,8 @@ export class FFmpeg extends EventEmitter {
         this.progress = await FFmpegProgress.create(this.parameters[0].progressPort);
         this.progress.on('progress started', this.onProgressStarted.bind(this));
 
-        ffmpegLogger.debug(this.name, `${label}: ${this.ffmpegExec} ${processArgs.join(' ')}`);
-        this.parameters.forEach((p) => ffmpegLogger.info(this.name, p.getStreamStartText()));
+        this.log.debug(this.name, `${label}: ${this.ffmpegExec} ${processArgs.join(' ')}`);
+        this.parameters.forEach((p) => this.log.info(this.name, p.getStreamStartText()));
 
         const child = spawn(this.ffmpegExec, processArgs.join(' ').split(/\s+/), { env: process.env });
         child.stderr.on('data', this.handleStderrData.bind(this));
@@ -933,7 +967,7 @@ export class FFmpeg extends EventEmitter {
     private onProgressStarted() {
         this.emit('started');
         const runtime = this.starttime ? (Date.now() - this.starttime) / 1000 : undefined;
-        ffmpegLogger.debug(this.name, `process started. Getting the first response took ${runtime} seconds.`);
+        this.log.debug(this.name, `process started. Getting the first response took ${runtime} seconds.`);
     }
 
     private handleStderrData(chunk: Buffer) {
@@ -941,9 +975,9 @@ export class FFmpeg extends EventEmitter {
         const isError = output.includes('[panic]') || output.includes('[error]') || output.includes('[fatal]');
 
         if (isError) {
-            ffmpegLogger.error(this.name, 'ffmpeg log message:\n' + output);
+            this.log.error(this.name, 'ffmpeg log message:\n' + output);
         } else if (this.parameters[0].debug) {
-            ffmpegLogger.debug(this.name, 'ffmpeg log message:\n' + output);
+            this.log.debug(this.name, 'ffmpeg log message:\n' + output);
         }
     }
 
@@ -960,16 +994,16 @@ export class FFmpeg extends EventEmitter {
 
         const message = 'FFmpeg exited with code: ' + code + ' and signal: ' + signal;
         if (this.killTimeout && code === 0) {
-            ffmpegLogger.info(this.name, message + ' (Expected)');
+            this.log.info(this.name, message + ' (Expected)');
         } else if (code === null || code === 255) {
             if (this.process?.killed) {
-                ffmpegLogger.info(this.name, message + ' (Forced)');
+                this.log.info(this.name, message + ' (Forced)');
             } else {
-                ffmpegLogger.error(this.name, message + ' (Unexpected)');
+                this.log.error(this.name, message + ' (Unexpected)');
             }
         } else {
             this.emit('error', message + ' (Error)');
-            // ffmpegLogger.error(this.name, message + ' (Error)');
+            // this.log.error(this.name, message + ' (Error)');
         }
     }
 }
