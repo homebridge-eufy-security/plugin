@@ -7,6 +7,7 @@ import { HomebridgePluginUiServer } from '@homebridge/plugin-ui-utils';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { createRequire } from 'module';
+import { encryptDiagnostics } from './diagnosticsCrypto.js';
 
 const require = createRequire(import.meta.url);
 const { version: LIB_VERSION } = require('../package.json');
@@ -22,7 +23,6 @@ class UiServer extends HomebridgePluginUiServer {
   tsLog;
   storagePath;
   storedAccessories_file;
-  diagnosticsArchivePath;
 
   adminAccountUsed = false;
 
@@ -37,11 +37,17 @@ class UiServer extends HomebridgePluginUiServer {
   /** Current discovery phase — exposed via /discoveryState for UI catch-up. */
   _discoveryPhase = 'idle';
 
+  /** Timestamp (ms) of the last diagnostics download — used for rate-limiting. */
+  _lastDiagnosticsTime = 0;
+
   /** Seconds to wait after the last station/device event before processing. */
   static DISCOVERY_DEBOUNCE_SEC = 10;
 
   /** Seconds to wait after auth before giving up on device discovery. */
   static DISCOVERY_INACTIVITY_SEC = 30;
+
+  /** Minimum cooldown between diagnostics downloads (ms). */
+  static DIAGNOSTICS_COOLDOWN_MS = 60_000;
 
   config = {
     username: '',
@@ -65,7 +71,6 @@ class UiServer extends HomebridgePluginUiServer {
     this.storagePath = this.homebridgeStoragePath + '/eufysecurity';
     this.storedAccessories_file = this.storagePath + '/accessories.json';
     this.unsupported_file = this.storagePath + '/unsupported.json';
-    this.diagnosticsArchivePath = null;
     this.config.persistentDir = this.storagePath;
 
     this.initLogger();
@@ -1175,6 +1180,15 @@ class UiServer extends HomebridgePluginUiServer {
   }
 
   async downloadDiagnostics() {
+    // Rate-limit: one download per DIAGNOSTICS_COOLDOWN_MS
+    const now = Date.now();
+    const elapsed = now - this._lastDiagnosticsTime;
+    if (elapsed < UiServer.DIAGNOSTICS_COOLDOWN_MS) {
+      const waitSec = Math.ceil((UiServer.DIAGNOSTICS_COOLDOWN_MS - elapsed) / 1000);
+      throw new Error(`Please wait ${waitSec}s before downloading diagnostics again.`);
+    }
+    this._lastDiagnosticsTime = now;
+
     this.pushEvent('diagnosticsProgress', { progress: 10, status: 'Collecting log files' });
     const finalLogFiles = await this.getLogFiles();
 
@@ -1199,32 +1213,27 @@ class UiServer extends HomebridgePluginUiServer {
     try {
       const now = new Date();
       const timestamp = now.toISOString().replace(/[:T]/g, '-').replace(/\..+/, '');
-      this.diagnosticsArchivePath = path.join(this.storagePath, `diagnostics-${timestamp}.tar.gz`);
+      const archiveName = `diagnostics-${timestamp}.tar.gz`;
 
       this.pushEvent('diagnosticsProgress', { progress: 45, status: `Compressing ${filesToArchive.length} files` });
-      await tarCreate({ gzip: true, file: this.diagnosticsArchivePath, cwd: this.storagePath }, filesToArchive);
 
-      this.pushEvent('diagnosticsProgress', { progress: 80, status: 'Reading content' });
-      const fileBuffer = fs.readFileSync(this.diagnosticsArchivePath);
+      // Stream tar+gzip into memory — no unencrypted file touches disk
+      const tarStream = tarCreate({ gzip: true, cwd: this.storagePath }, filesToArchive);
+      const chunks = [];
+      for await (const chunk of tarStream) {
+        chunks.push(chunk);
+      }
+      const fileBuffer = Buffer.concat(chunks);
 
-      this.pushEvent('diagnosticsProgress', { progress: 90, status: 'Returning archive' });
-      return { buffer: fileBuffer, filename: path.basename(this.diagnosticsArchivePath) };
+      this.pushEvent('diagnosticsProgress', { progress: 80, status: 'Encrypting archive' });
+      const encryptedBuffer = encryptDiagnostics(fileBuffer);
+
+      this.pushEvent('diagnosticsProgress', { progress: 90, status: 'Returning encrypted archive' });
+      const encFilename = archiveName + '.enc';
+      return { buffer: encryptedBuffer, filename: encFilename };
     } catch (error) {
       this.log.error('Error while generating diagnostics archive: ' + error);
       throw error;
-    } finally {
-      this.removeDiagnosticsArchive();
-    }
-  }
-
-  removeDiagnosticsArchive() {
-    try {
-      if (fs.existsSync(this.diagnosticsArchivePath)) {
-        fs.unlinkSync(this.diagnosticsArchivePath);
-      }
-      return true;
-    } catch {
-      return false;
     }
   }
 
