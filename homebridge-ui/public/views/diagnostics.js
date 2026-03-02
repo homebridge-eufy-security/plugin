@@ -50,6 +50,15 @@ const DiagnosticsView = {
         await Config.updateGlobal({ enableDetailedLogging: checked });
       },
     });
+    Toggle.render(step1, {
+      id: 'toggle-debug-livestream',
+      label: 'Debug Livestream',
+      help: 'Record every HomeKit livestream to an mp4 file on disk for troubleshooting.',
+      checked: !!config.debugLivestream,
+      onChange: async (checked) => {
+        await Config.updateGlobal({ debugLivestream: checked });
+      },
+    });
     const debugHint = document.createElement('div');
     debugHint.className = 'alert alert-warning mt-2 mb-2';
     debugHint.style.fontSize = '0.85rem';
