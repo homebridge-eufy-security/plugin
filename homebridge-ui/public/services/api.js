@@ -78,8 +78,8 @@ const Api = {
    * Download compressed diagnostics archive (logs + accessories)
    * @returns {Promise<{buffer: Buffer, filename: string}>}
    */
-  async downloadDiagnostics() {
-    return homebridge.request('/downloadDiagnostics');
+  async downloadDiagnostics(payload = {}) {
+    return homebridge.request('/downloadDiagnostics', payload);
   },
 
   /**
