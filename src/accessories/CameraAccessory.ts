@@ -18,7 +18,7 @@ import {
 import { EufySecurityPlatform } from '../platform.js';
 import { DeviceAccessory } from './Device.js';
 
- 
+
 // @ts-ignore  
 import { Camera, DeviceEvents, PropertyName, CommandName, StreamMetadata, PropertyValue } from 'eufy-security-client';
 
@@ -93,17 +93,16 @@ export class CameraAccessory extends DeviceAccessory {
   protected recordingDelegate?: RecordingDelegate | null = null;
 
   public resolutions: Resolution[] = [
-    [320, 180, 30],
-    [320, 240, 15], // Apple Watch requires this configuration
-    [320, 240, 30],
-    [480, 270, 30],
-    [480, 360, 30],
-    [640, 360, 30],
-    [640, 480, 30],
+    [1920, 1024, 30],
     [1280, 720, 30],
-    [1280, 960, 30],
-    [1920, 1080, 30],
-    [1600, 1200, 30],
+    [1024, 768, 30],
+    [640, 480, 30],
+    [640, 360, 30],
+    [480, 360, 30],
+    [480, 270, 30],
+    [320, 240, 30],
+    [320, 240, 15], // Apple Watch requires this configuration
+    [320, 180, 30],
   ];
 
   constructor(
@@ -268,7 +267,7 @@ export class CameraAccessory extends DeviceAccessory {
       getValue: () => this.device.getPropertyValue(PropertyName.DeviceMotionDetected),
       onValue: (service, characteristic) => {
         this.eventTypesToHandle.forEach(eventType => {
-           
+
           this.device.on(eventType as keyof any, (device: any, state: any) => {
             this.log.info(`MOTION DETECTED (${eventType})': ${state}`);
             characteristic.updateValue(state);
@@ -362,7 +361,6 @@ export class CameraAccessory extends DeviceAccessory {
     }
   }
 
-   
   protected getCameraPropertyValue(characteristic: any, propertyName: PropertyName): CharacteristicValue {
     try {
       const value = this.device.getPropertyValue(propertyName);
@@ -373,7 +371,6 @@ export class CameraAccessory extends DeviceAccessory {
     }
   }
 
-   
   protected applyPropertyValue(characteristic: any, propertyName: PropertyName, value: PropertyValue): CharacteristicValue {
     this.log.debug(`GET '${characteristic.displayName}' ${propertyName}: ${value}`);
 
@@ -402,7 +399,6 @@ export class CameraAccessory extends DeviceAccessory {
     return value as CharacteristicValue;
   }
 
-   
   protected async setCameraPropertyValue(characteristic: any, propertyName: PropertyName, value: CharacteristicValue) {
     try {
       this.log.debug(`SET '${characteristic.displayName}' ${propertyName}: ${value}`);
