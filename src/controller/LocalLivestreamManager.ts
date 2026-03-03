@@ -16,10 +16,14 @@ export type LivestreamData = Pick<ActiveStream, 'videostream' | 'audiostream'>;
 
 const P2P_TIMEOUT_MS = 15_000;
 const DUPLICATE_STREAM_GUARD_S = 5;
+const MAX_RETRIES = 3;
+const BASE_RETRY_DELAY_MS = 2_000;
+const MAX_RETRY_DELAY_MS = 10_000;
 
 export class LocalLivestreamManager {
   private stationStream: ActiveStream | null = null;
   private pending: { deferred: Deferred<LivestreamData>; timer: NodeJS.Timeout } | null = null;
+  private retryCount = 0;
 
   private readonly eufyClient: EufySecurity;
   private readonly log: Logger<ILogObj>;
@@ -77,9 +81,21 @@ export class LocalLivestreamManager {
     this.log.debug(`Starting station livestream for serial: ${this.serialNumber}...`);
 
     const deferred = new Deferred<LivestreamData>();
+    this.issueP2PRequest(deferred);
+    return deferred.promise;
+  }
+
+  /**
+   * Issue a P2P start request with a timeout. Used for both initial
+   * attempts and retries (reusing the same deferred).
+   */
+  private issueP2PRequest(deferred: Deferred<LivestreamData>): void {
     const timer = setTimeout(() => {
-      this.log.error(`Livestream timeout: no P2P stream event received within ${P2P_TIMEOUT_MS / 1000}s for serial ${this.serialNumber}. Check eufy-lib.log for details.`);
-      this.settlePending('reject', 'Livestream timeout — check eufy-lib.log for P2P errors.');
+      this.log.error(
+        `Livestream timeout: no P2P stream event within ${P2P_TIMEOUT_MS / 1000}s` +
+        ` for serial ${this.serialNumber}.`,
+      );
+      this.settlePending('reject', new Error('Livestream timeout — check eufy-lib.log for P2P errors.'));
     }, P2P_TIMEOUT_MS);
 
     this.pending = { deferred, timer };
@@ -88,13 +104,12 @@ export class LocalLivestreamManager {
       this.log.error(`startStationLivestream failed: ${err}`);
       this.settlePending('reject', err);
     });
-
-    return deferred.promise;
   }
 
   /**
    * Settle (resolve or reject) the pending start promise, clear the timer,
-   * and optionally stop the livestream on rejection.
+   * and optionally stop the livestream on rejection. On failure, retries
+   * with exponential backoff before final rejection.
    */
   private settlePending(action: 'resolve', value: LivestreamData): void;
   private settlePending(action: 'reject', reason: unknown): void;
@@ -102,11 +117,37 @@ export class LocalLivestreamManager {
     const p = this.pending;
     if (!p) return;
     clearTimeout(p.timer);
-    this.pending = null;
 
     if (action === 'resolve') {
+      this.retryCount = 0;
+      this.pending = null;
       p.deferred.resolve(payload as LivestreamData);
+      return;
+    }
+
+    // Failure path — retry with exponential backoff if attempts remain
+    if (this.retryCount < MAX_RETRIES) {
+      const delay = Math.min(
+        BASE_RETRY_DELAY_MS * Math.pow(2, this.retryCount) + Math.random() * 1000,
+        MAX_RETRY_DELAY_MS,
+      );
+      this.retryCount++;
+      this.log.warn(
+        `P2P connection failed. Retrying in ${(delay / 1000).toFixed(1)}s` +
+        ` (attempt ${this.retryCount + 1}/${MAX_RETRIES + 1})...`,
+      );
+      // Keep pending alive during backoff so new callers piggyback
+      p.timer = setTimeout(() => {
+        this.log.debug(
+          `Retrying station livestream for serial: ${this.serialNumber}` +
+          ` (attempt ${this.retryCount + 1}/${MAX_RETRIES + 1})...`,
+        );
+        this.issueP2PRequest(p.deferred);
+      }, delay);
     } else {
+      this.retryCount = 0;
+      this.pending = null;
+      this.log.error(`Livestream failed after ${MAX_RETRIES + 1} attempts.`);
       p.deferred.reject(payload instanceof Error ? payload : new Error(String(payload)));
       this.stopLocalLiveStream();
     }
@@ -114,6 +155,11 @@ export class LocalLivestreamManager {
 
   public stopLocalLiveStream(): void {
     this.log.debug('Stopping station livestream.');
+    this.retryCount = 0;
+    if (this.pending) {
+      clearTimeout(this.pending.timer);
+      this.pending = null;
+    }
     this.eufyClient.stopStationLivestream(this.serialNumber).catch((err) => {
       this.log.warn(`stopStationLivestream failed: ${err}`);
     });
