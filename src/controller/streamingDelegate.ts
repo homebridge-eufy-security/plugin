@@ -30,9 +30,13 @@ type ActiveSession = {
   audioProcess?: FFmpeg;
   returnProcess?: FFmpeg;
   timeout?: NodeJS.Timeout;
+  graceTimeout?: NodeJS.Timeout;
   socket?: Socket;
   talkbackStream?: TalkbackStream;
 };
+
+/** Grace period (ms) before the first RTCP keep-alive is expected. */
+const STREAM_INITIAL_GRACE_MS = 15_000;
 
 export class StreamingDelegate implements CameraStreamingDelegate {
 
@@ -197,6 +201,7 @@ export class StreamingDelegate implements CameraStreamingDelegate {
     activeSession: ActiveSession,
   ): Socket {
     const socket = createSocket(sessionInfo.ipv6 ? 'udp6' : 'udp4');
+    let firstMessageReceived = false;
 
     socket.on('error', (err: Error) => {
       this.log.error('Socket error: ' + err.message);
@@ -204,6 +209,14 @@ export class StreamingDelegate implements CameraStreamingDelegate {
     });
 
     socket.on('message', () => {
+      if (!firstMessageReceived) {
+        firstMessageReceived = true;
+        if (activeSession.graceTimeout) {
+          clearTimeout(activeSession.graceTimeout);
+          activeSession.graceTimeout = undefined;
+        }
+        this.log.debug('First RTCP keep-alive received — stream health monitoring active.');
+      }
       if (activeSession.timeout) {
         clearTimeout(activeSession.timeout);
       }
@@ -213,6 +226,17 @@ export class StreamingDelegate implements CameraStreamingDelegate {
         this.stopStream(request.sessionID);
       }, request.video.rtcp_interval * 5 * 1000);
     });
+
+    // Initial grace period: warn if no RTCP arrives at all
+    // (helps diagnose "stream starts but shows black screen" issues)
+    activeSession.graceTimeout = setTimeout(() => {
+      if (!firstMessageReceived) {
+        this.log.warn(
+          'No RTCP keep-alive received within initial grace period (' +
+          `${STREAM_INITIAL_GRACE_MS / 1000}s). Stream may not be reaching the Home app.`,
+        );
+      }
+    }, STREAM_INITIAL_GRACE_MS);
 
     socket.bind(sessionInfo.videoReturnPort);
     return socket;
@@ -446,6 +470,9 @@ export class StreamingDelegate implements CameraStreamingDelegate {
 
     if (session.timeout) {
       clearTimeout(session.timeout);
+    }
+    if (session.graceTimeout) {
+      clearTimeout(session.graceTimeout);
     }
 
     const cleanupSteps: Array<[string, () => void]> = [
