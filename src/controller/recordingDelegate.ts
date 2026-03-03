@@ -129,7 +129,8 @@ export class RecordingDelegate implements CameraRecordingDelegate {
         return;
       }
 
-      const audioEnabled = this.controller?.recordingManagement?.recordingManagementService.getCharacteristic(CHAR.RecordingAudioActive).value;
+      const audioEnabled = this.cameraConfig.audio !== false
+        && this.controller?.recordingManagement?.recordingManagementService.getCharacteristic(CHAR.RecordingAudioActive).value;
       log.debug(this.camera.getName(), `HKSV audio recording: ${audioEnabled ? 'enabled' : 'disabled'}.`);
 
       const videoParams = await FFmpegParameters.forVideoRecording();
