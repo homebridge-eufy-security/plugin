@@ -6,7 +6,8 @@ import { HAP as HAPHB } from 'homebridge';
 import type { Characteristic, Service } from 'homebridge';
 
 import { CameraConfig } from './configTypes.js';
-import { Camera, PropertyName } from 'eufy-security-client';
+import { AudioCodec, Camera, PropertyName } from 'eufy-security-client';
+import { FFmpegParameters } from './ffmpeg.js';
 
 export let HAP!: HAPHB;
 export let SERV!: typeof Service;
@@ -237,4 +238,21 @@ export function isRtspReady(device: Camera, cameraConfig: CameraConfig): boolean
   }
 
   return true;
+}
+
+/**
+ * Configure FFmpeg input format hints for a P2P audio stream based on the
+ * audio codec reported by the eufy-security-client stream metadata.
+ */
+export function applyP2PAudioFormat(params: FFmpegParameters, codec: AudioCodec): void {
+  switch (codec) {
+    case AudioCodec.AAC:
+    case AudioCodec.AAC_LC:
+    case AudioCodec.AAC_ELD:
+      params.setInputFormat('adts');
+      break;
+    case AudioCodec.NONE:
+    case AudioCodec.UNKNOWN:
+      break;
+  }
 }

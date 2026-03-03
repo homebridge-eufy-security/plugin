@@ -13,7 +13,7 @@ import { EufySecurityPlatform } from '../platform.js';
 import { CameraConfig, VideoConfig } from '../utils/configTypes.js';
 import { FFmpeg, FFmpegParameters } from '../utils/ffmpeg.js';
 import net from 'net';
-import { CHAR, SERV, isRtspReady, log, ffmpegLoggerFactory } from '../utils/utils.js';
+import { CHAR, SERV, isRtspReady, applyP2PAudioFormat, log, ffmpegLoggerFactory } from '../utils/utils.js';
 import { LocalLivestreamManager } from './LocalLivestreamManager.js';
 import { snapshotDelegate } from './snapshotDelegate.js';
 
@@ -112,6 +112,7 @@ export class RecordingDelegate implements CameraRecordingDelegate {
     } else {
       const streamData = await this.localLivestreamManager.getLocalLiveStream();
       await videoParams.setInputStream(streamData.videostream);
+      applyP2PAudioFormat(audioParams, streamData.metadata.audioCodec);
       await audioParams.setInputStream(streamData.audiostream);
     }
   }

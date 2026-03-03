@@ -21,7 +21,7 @@ import { CameraAccessory } from '../accessories/CameraAccessory.js';
 import { SessionInfo, VideoConfig } from '../utils/configTypes.js';
 import { FFmpeg, FFmpegParameters } from '../utils/ffmpeg.js';
 import { TalkbackStream } from '../utils/Talkback.js';
-import { HAP, isRtspReady, ffmpegLoggerFactory } from '../utils/utils.js';
+import { HAP, isRtspReady, applyP2PAudioFormat, ffmpegLoggerFactory } from '../utils/utils.js';
 import { LocalLivestreamManager } from './LocalLivestreamManager.js';
 import { snapshotDelegate } from './snapshotDelegate.js';
 
@@ -294,7 +294,10 @@ export class StreamingDelegate implements CameraStreamingDelegate {
     const streamData = await this.localLivestreamManager.getLocalLiveStream();
     this.log.debug('Livestream obtained successfully. Setting up FFmpeg input streams...');
     await videoParams.setInputStream(streamData.videostream);
-    await audioParams?.setInputStream(streamData.audiostream);
+    if (audioParams) {
+      applyP2PAudioFormat(audioParams, streamData.metadata.audioCodec);
+      await audioParams.setInputStream(streamData.audiostream);
+    }
     this.log.debug('FFmpeg input streams configured.');
     return true;
   }
