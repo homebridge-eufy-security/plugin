@@ -311,7 +311,21 @@ export class FFmpegParameters {
 
     public async setInputStream(input: Readable) {
         const { port } = await createOneShotTcpServer((socket) => {
-            input.pipe(socket);
+            // Manual backpressure handling instead of pipe() — prevents
+            // unbounded memory growth when FFmpeg is slower than the camera
+            // (common on Raspberry Pi during HKSV transcoding).
+            socket.on('drain', () => input.resume());
+
+            input.on('data', (chunk: Buffer) => {
+                if (!socket.write(chunk)) {
+                    input.pause();
+                }
+            });
+
+            input.on('end', () => socket.end());
+            input.on('error', () => socket.destroy());
+            socket.on('error', () => { if (!input.destroyed) input.destroy(); });
+            socket.on('close', () => { if (!input.destroyed) input.destroy(); });
         });
         this.setInputSource(`tcp://127.0.0.1:${port}`);
     }
