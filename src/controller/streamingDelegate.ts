@@ -261,7 +261,7 @@ export class StreamingDelegate implements CameraStreamingDelegate {
     }
 
     let audioParams: FFmpegParameters | undefined;
-    if (isCodecSupported) {
+    if (isCodecSupported && this.camera.cameraConfig.audio !== false) {
       audioParams = await FFmpegParameters.forAudio(this.videoConfig.debug);
       audioParams.setup(this.camera.cameraConfig, request);
       audioParams.setRTPTarget(sessionInfo, request);
