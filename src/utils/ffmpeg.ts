@@ -33,6 +33,8 @@ const TCP_SERVER_TIMEOUT_MS = 30_000;
 const PROCESS_RESULT_TIMEOUT_MS = 15_000;
 /** Grace period after SIGTERM before sending SIGKILL (ms) */
 const KILL_GRACE_PERIOD_MS = 2_000;
+/** Maximum allowed fMP4 box size (50 MB). Anything larger is likely corruption. */
+const MAX_FRAG_BOX_SIZE = 50 * 1024 * 1024;
 
 /** Returns true when the value is a non-empty string (guards `undefined | ''`). */
 function isNonEmpty(value: string | undefined): value is string {
@@ -623,6 +625,7 @@ export class FFmpegParameters {
             if (this.pixFormat) params.push(`-pix_fmt ${this.pixFormat}`);
             if (this.colorRange) params.push(`-color_range ${this.colorRange}`);
             if (this.codecOptions) params.push(this.codecOptions);
+            if (this.codec !== 'copy') params.push('-sc_threshold 0');
 
             params.push(...this.buildVideoFilterParams());
 
@@ -695,6 +698,7 @@ export class FFmpegParameters {
         params.push(...parameters[0].buildEncodingParameters());
         if (parameters[0].iFrameInterval) {
             params.push(`-force_key_frames expr:gte(t,n_forced*${parameters[0].iFrameInterval / 1000})`);
+            params.push('-sc_threshold 0');
         }
 
         // audio encoding
@@ -866,6 +870,7 @@ export class FFmpeg extends EventEmitter {
     public async startFragmentedMP4Session(): Promise<{
         socket: net.Socket;
         process?: ChildProcessWithoutNullStreams;
+        ffmpeg: FFmpeg;
         generator: AsyncGenerator<{
             header: Buffer;
             length: number;
@@ -882,6 +887,7 @@ export class FFmpeg extends EventEmitter {
                 resolve({
                     socket: socket,
                     process: this.process,
+                    ffmpeg: this,
                     generator: this.parseFragmentedMP4(socket),
                 });
             });
@@ -899,6 +905,13 @@ export class FFmpeg extends EventEmitter {
             const header = await this.readLength(socket, 8);
             const length = header.readInt32BE(0) - 8;
             const type = header.slice(4).toString();
+
+            if (length > MAX_FRAG_BOX_SIZE) {
+                throw new Error(
+                    `fMP4 box '${type}' reports size ${length} bytes, exceeding limit of ${MAX_FRAG_BOX_SIZE}. Stream likely corrupted.`,
+                );
+            }
+
             const data = await this.readLength(socket, length);
 
             yield {
