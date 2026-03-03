@@ -8,11 +8,12 @@ import { ILogObj, Logger } from 'tslog';
 interface ActiveStream {
   videostream: Readable;
   audiostream: Readable;
+  metadata: StreamMetadata;
   createdAt: number;
 }
 
 /** Data returned to consumers — only the streams they need. */
-export type LivestreamData = Pick<ActiveStream, 'videostream' | 'audiostream'>;
+export type LivestreamData = Pick<ActiveStream, 'videostream' | 'audiostream' | 'metadata'>;
 
 const P2P_TIMEOUT_MS = 15_000;
 const DUPLICATE_STREAM_GUARD_S = 5;
@@ -201,7 +202,7 @@ export class LocalLivestreamManager {
     this.log.debug(`${station.getName()} P2P livestream for ${device.getName()} started.`);
     this.log.debug('Stream metadata:', JSON.stringify(metadata));
 
-    this.stationStream = { videostream, audiostream, createdAt: Date.now() };
+    this.stationStream = { videostream, audiostream, metadata, createdAt: Date.now() };
     this.settlePending('resolve', this.stationStream);
   };
 }
