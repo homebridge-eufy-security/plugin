@@ -96,6 +96,7 @@ case <type_number>: return '<image_large>.png';
 Execute the plan. Key implementation notes:
 
 - **Property mapping**: Use the output from `map-properties.mjs` (Phase 1) as the primary guide. When multiple property constants match the same `param_type` (e.g. `DeviceWatermarkProperty` vs `DeviceWatermarkSoloWiredDoorbellProperty`), pick the variant used by the closest existing device. Check the "Used by DeviceTypes" column in the script output.
+- **Companion custom properties**: Some properties have required companions with `custom_*` keys that never appear in raw device data (they're populated at runtime). The script detects these and marks them with `⚠ companion`. Always include them — omitting a companion breaks functionality silently. Key pairs: `DeviceRTSPStream` → `DeviceRTSPStreamUrl`, `DeviceWifiRSSI` → `DeviceWifiSignalLevel`, `DeviceCellularRSSI` → `DeviceCellularSignalLevel`.
 - **Insert in order**: When adding to enums, switch statements, or `if` chains, maintain numeric ordering by device type number.
 - **Audio recording property**: Different device families use different audio recording property constants (e.g. `DeviceAudioRecordingProperty`, `DeviceAudioRecordingStarlight4gLTEProperty`). Match the closest existing device.
 - **No Co-Authored-By**: Do not add co-author lines to commits.

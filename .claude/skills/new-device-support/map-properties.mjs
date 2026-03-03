@@ -298,12 +298,39 @@ if (unmatched.length > 0) {
   }
 }
 
+// ── Step 6: Companion custom properties ─────────────────────────────────────
+// Some param_type-based properties require a companion custom (runtime) property
+// that never appears in raw device data. Define those pairings here so the
+// suggested block always includes both.
+
+const COMPANION_PROPERTIES = new Map([
+  // DeviceRTSPStream (CMD_NAS_SWITCH) → DeviceRTSPStreamUrl (custom_rtspStreamUrl)
+  ["PropertyName.DeviceRTSPStream", {
+    propertyName: "PropertyName.DeviceRTSPStreamUrl",
+    constName: "DeviceRTSPStreamUrlProperty",
+    reason: "RTSP URL is set at runtime by the station — must accompany DeviceRTSPStream",
+  }],
+  // DeviceWifiRSSI → DeviceWifiSignalLevel (custom_wifiSignalLevel)
+  ["PropertyName.DeviceWifiRSSI", {
+    propertyName: "PropertyName.DeviceWifiSignalLevel",
+    constName: "DeviceWifiSignalLevelProperty",
+    reason: "WiFi signal level is derived at runtime from RSSI",
+  }],
+  // DeviceCellularRSSI → DeviceCellularSignalLevel (custom_cellularSignalLevel)
+  ["PropertyName.DeviceCellularRSSI", {
+    propertyName: "PropertyName.DeviceCellularSignalLevel",
+    constName: "DeviceCellularSignalLevelProperty",
+    reason: "Cellular signal level is derived at runtime from RSSI",
+  }],
+]);
+
 // Output a suggested PropertyName list for use in DeviceProperties block
 console.log();
 console.log("=".repeat(80));
 console.log("SUGGESTED DeviceProperties block entries:");
 console.log("=".repeat(80));
 const seen = new Set();
+const companionsAdded = [];
 for (const m of matched) {
   for (let i = 0; i < m.constNames.length; i++) {
     const pn = m.propertyNames[0]; // Use first PropertyName
@@ -311,6 +338,24 @@ for (const m of matched) {
     if (pn && !seen.has(pn)) {
       seen.add(pn);
       console.log(`  [${pn}]: ${cn},`);
+
+      // Check if this property has a required companion
+      const companion = COMPANION_PROPERTIES.get(pn);
+      if (companion && !seen.has(companion.propertyName)) {
+        seen.add(companion.propertyName);
+        console.log(`  [${companion.propertyName}]: ${companion.constName},  // ⚠ companion (custom/runtime)`);
+        companionsAdded.push(companion);
+      }
     }
+  }
+}
+
+if (companionsAdded.length > 0) {
+  console.log();
+  console.log("=".repeat(80));
+  console.log("⚠  COMPANION PROPERTIES (custom/runtime — not in raw device data):");
+  console.log("=".repeat(80));
+  for (const c of companionsAdded) {
+    console.log(`  ${c.constName}: ${c.reason}`);
   }
 }
