@@ -198,3 +198,12 @@ Based on triage findings, suggest one or more labels for the issue:
 | `dependencies` | Dependency updates |
 | `hoobs` | HOOBS-specific issues — HOOBS is an alternative to Homebridge where the Plugin UI is known to not work properly. Label as `hoobs` + `wontfix` and close the issue. |
 | `stale` | Inactive issue |
+
+## Closing Comments
+
+When a fix has been merged and published, leave a concise comment on the issue:
+
+- **Audience is end users** — keep language simple, avoid internal jargon or FFmpeg/P2P technical details
+- Don't scope the fix to a specific device model when it applies broadly (e.g. "all cameras using P2P" not just "the E42")
+- Always check the published beta version (`npm view @homebridge-plugins/homebridge-eufy-security dist-tags`) and mention it so the user knows which version to install
+- Label the issue `resolved in beta`
