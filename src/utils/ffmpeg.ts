@@ -79,6 +79,93 @@ export function hasFdkAac(): boolean {
     return _hasFdkAac;
 }
 
+/** Description of a detected hardware encoder. */
+export interface HardwareEncoder {
+    encoder: string;
+    decoder?: string;
+    hwaccel?: string;
+    /** Encoder-specific options (replaces libx264's `-preset`/`-tune`). */
+    customOptions: string;
+}
+
+/** Cached result: `undefined` = not yet probed, `null` = no hardware encoder found. */
+let _hwEncoder: HardwareEncoder | null | undefined;
+
+/**
+ * Probes for hardware H.264 encoders by running a real test encode.
+ * Result is cached after the first call. Call early at platform init.
+ */
+export function probeHardwareEncoder(hostSystem: string): HardwareEncoder | null {
+    if (_hwEncoder !== undefined) return _hwEncoder;
+
+    const ffmpegExec: string = (ffmpegPath as unknown as string) || 'ffmpeg';
+
+    const candidates: Array<{
+        systems: string[];
+        encoder: string;
+        decoder?: string;
+        hwaccel?: string;
+        options: string;
+    }> = [
+        {
+            systems: ['macOS.Apple', 'macOS.Intel'],
+            encoder: 'h264_videotoolbox',
+            hwaccel: 'videotoolbox',
+            options: '-allow_sw 1 -realtime 1',
+        },
+        {
+            systems: ['raspbian'],
+            encoder: 'h264_v4l2m2m',
+            options: '',
+        },
+        {
+            systems: ['generic', 'raspbian'],
+            encoder: 'h264_vaapi',
+            hwaccel: 'vaapi',
+            options: '',
+        },
+        {
+            systems: ['generic'],
+            encoder: 'h264_qsv',
+            hwaccel: 'qsv',
+            options: '-preset veryfast',
+        },
+    ];
+
+    const toTry = candidates.filter(c => c.systems.includes(hostSystem) || c.systems.includes('generic'));
+
+    for (const candidate of toTry) {
+        try {
+            execFileSync(ffmpegExec, [
+                '-hide_banner', '-loglevel', 'error',
+                '-f', 'lavfi', '-i', 'color=black:s=64x64:d=0.1',
+                '-c:v', candidate.encoder,
+                '-frames:v', '1',
+                '-f', 'null', '-',
+            ], { timeout: 10_000, stdio: ['pipe', 'pipe', 'pipe'] });
+
+            _hwEncoder = {
+                encoder: candidate.encoder,
+                decoder: candidate.decoder,
+                hwaccel: candidate.hwaccel,
+                customOptions: candidate.options,
+            };
+            ffmpegLogger.info(`Hardware encoder detected and validated: ${candidate.encoder}`);
+            return _hwEncoder;
+        } catch {
+            // This encoder doesn't work — try next candidate
+        }
+    }
+
+    _hwEncoder = null;
+    ffmpegLogger.info(
+        'No hardware H.264 encoder available — using software encoding (libx264). ' +
+        'If running in Docker, make sure hardware devices are exposed to the container ' +
+        '(e.g. --device /dev/dri for VAAPI, --device /dev/video* for V4L2).',
+    );
+    return _hwEncoder;
+}
+
 /**
  * Returns the preferred AAC encoder and codec options for AAC-ELD output.
  * Falls back to the built-in `aac` encoder when `libfdk_aac` is absent.
@@ -358,15 +445,26 @@ export class FFmpegParameters {
 
         if (this.isVideo) {
             const req = request as StartStreamRequest | ReconfigureStreamRequest;
-            this.codec = isNonEmpty(videoConfig.vcodec) ? videoConfig.vcodec : 'libx264';
+            if (isNonEmpty(videoConfig.vcodec)) {
+                this.codec = videoConfig.vcodec;
+            } else {
+                const hw = probeHardwareEncoder('generic');
+                this.codec = hw?.encoder ?? 'libx264';
+            }
             if (this.codec !== 'copy') {
                 this.fps = videoConfig.maxFPS ?? req.video.fps;
                 const bitrate = videoConfig.maxBitrate ?? req.video.max_bit_rate;
                 this.bitrate = bitrate;
                 this.bufsize = bitrate * 2;
                 this.maxrate = bitrate;
-                this.codecOptions = videoConfig.encoderOptions
-                    ?? (this.codec === 'libx264' ? '-preset ultrafast -tune zerolatency' : '');
+                if (isNonEmpty(videoConfig.encoderOptions)) {
+                    this.codecOptions = videoConfig.encoderOptions;
+                } else {
+                    const hw = probeHardwareEncoder('generic');
+                    this.codecOptions = (hw && this.codec === hw.encoder)
+                        ? hw.customOptions
+                        : '-preset ultrafast -tune zerolatency';
+                }
                 this.pixFormat = 'yuv420p';
                 this.colorRange = 'mpeg';
                 this.applyVisualConfig(req.video.width, req.video.height, videoConfig);
@@ -446,24 +544,31 @@ export class FFmpegParameters {
             if (isNonEmpty(videoConfig.vcodec)) {
                 this.codec = videoConfig.vcodec;
             } else {
-                this.codec = 'libx264';
+                const hw = probeHardwareEncoder('generic');
+                this.codec = hw?.encoder ?? 'libx264';
             }
+
+            const profile =
+                configuration.videoCodec.parameters.profile === H264Profile.HIGH
+                    ? 'high'
+                    : configuration.videoCodec.parameters.profile === H264Profile.MAIN
+                        ? 'main'
+                        : 'baseline';
+            const level =
+                configuration.videoCodec.parameters.level === H264Level.LEVEL4_0
+                    ? '4.0'
+                    : configuration.videoCodec.parameters.level === H264Level.LEVEL3_2
+                        ? '3.2'
+                        : '3.1';
 
             if (this.codec === 'libx264') {
                 this.pixFormat = 'yuv420p';
-                const profile =
-                    configuration.videoCodec.parameters.profile === H264Profile.HIGH
-                        ? 'high'
-                        : configuration.videoCodec.parameters.profile === H264Profile.MAIN
-                            ? 'main'
-                            : 'baseline';
-                const level =
-                    configuration.videoCodec.parameters.level === H264Level.LEVEL4_0
-                        ? '4.0'
-                        : configuration.videoCodec.parameters.level === H264Level.LEVEL3_2
-                            ? '3.2'
-                            : '3.1';
                 this.codecOptions = `-preset ultrafast -tune zerolatency -profile:v ${profile} -level:v ${level}`;
+            } else if (this.codec !== 'copy') {
+                this.pixFormat = 'yuv420p';
+                const hw = probeHardwareEncoder('generic');
+                const hwOpts = (hw && this.codec === hw.encoder) ? hw.customOptions : '';
+                this.codecOptions = `${hwOpts} -profile:v ${profile} -level:v ${level}`.trim();
             }
             if (this.codec !== 'copy') {
                 this.bitrate = videoConfig.maxBitrate ?? configuration.videoCodec.parameters.bitRate;

@@ -23,6 +23,7 @@ import { DeviceAccessory } from './Device.js';
 import { Camera, DeviceEvents, PropertyName, CommandName, StreamMetadata, PropertyValue } from 'eufy-security-client';
 
 import { CameraConfig, DEFAULT_CAMERACONFIG_VALUES } from '../utils/configTypes.js';
+import { probeHardwareEncoder } from '../utils/ffmpeg.js';
 import { CHAR, SERV } from '../utils/utils.js';
 import { StreamingDelegate } from '../controller/streamingDelegate.js';
 import { RecordingDelegate } from '../controller/recordingDelegate.js';
@@ -119,6 +120,13 @@ export class CameraAccessory extends DeviceAccessory {
     this.log.debug(`Constructed Camera`);
 
     this.cameraConfig = this.getCameraConfig();
+
+    const hw = probeHardwareEncoder(this.platform.hostSystem);
+    this.hardwareTranscoding = hw !== null;
+    this.hardwareDecoding = hw?.decoder !== undefined;
+    if (hw) {
+      this.log.debug(`Using hardware encoder: ${hw.encoder}`);
+    }
 
     this.standalone = device.getSerial() === device.getStationSerial();
 
