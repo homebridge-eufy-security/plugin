@@ -226,7 +226,7 @@ export function isRtspReady(device: Camera, cameraConfig: CameraConfig): boolean
     [!device.hasProperty('rtspStream'), 'device not compatible with RTSP'],
     [!cameraConfig.rtsp, 'RTSP not enabled in camera config'],
     [!device.getPropertyValue(PropertyName.DeviceRTSPStream), 'RTSP capability not enabled on device'],
-    [device.getPropertyValue(PropertyName.DeviceRTSPStreamUrl) === '', 'RTSP URL is unknown'],
+    [!device.getPropertyValue(PropertyName.DeviceRTSPStreamUrl), 'RTSP URL is unknown'],
   ];
 
   for (const [failed, reason] of checks) {
