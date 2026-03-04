@@ -400,6 +400,10 @@ export class FFmpegParameters {
         this.inputFormat = value;
     }
 
+    public setInputCodec(value: string) {
+        this.inputCodec = value;
+    }
+
     public async setInputStream(input: Readable) {
         const { port } = await createOneShotTcpServer((socket) => {
             // Manual backpressure handling instead of pipe() — prevents
