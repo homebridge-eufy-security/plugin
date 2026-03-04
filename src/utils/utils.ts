@@ -248,8 +248,11 @@ export function applyP2PAudioFormat(params: FFmpegParameters, codec: AudioCodec)
   switch (codec) {
     case AudioCodec.AAC:
     case AudioCodec.AAC_LC:
+      params.setInputFormat('aac');
+      break;
     case AudioCodec.AAC_ELD:
       params.setInputFormat('aac');
+      params.setInputCodec('libfdk_aac');
       break;
     case AudioCodec.NONE:
     case AudioCodec.UNKNOWN:
