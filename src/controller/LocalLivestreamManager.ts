@@ -1,4 +1,4 @@
-import { Readable } from 'stream';
+import { PassThrough, Readable } from 'stream';
 import { Station, Device, StreamMetadata, EufySecurity } from 'eufy-security-client';
 import { CameraAccessory } from '../accessories/CameraAccessory.js';
 import { Deferred } from '../utils/utils.js';
@@ -20,22 +20,36 @@ const DUPLICATE_STREAM_GUARD_S = 5;
 const MAX_RETRIES = 3;
 const BASE_RETRY_DELAY_MS = 2_000;
 const MAX_RETRY_DELAY_MS = 10_000;
+/** Grace period before actually stopping a P2P stream after the last consumer releases. */
+const STOP_GRACE_MS = 5_000;
 
 export class LocalLivestreamManager {
   private stationStream: ActiveStream | null = null;
   private pending: { deferred: Deferred<LivestreamData>; timer: NodeJS.Timeout } | null = null;
   private retryCount = 0;
+  private stopGraceTimer: NodeJS.Timeout | null = null;
+  /** Number of consumers currently holding a forked copy of the stream. */
+  private activeConsumers = 0;
+  /** Per-consumer max-duration timer — resets each time a new consumer joins. */
+  private maxDurationTimer: NodeJS.Timeout | null = null;
 
   private readonly eufyClient: EufySecurity;
   private readonly log: Logger<ILogObj>;
   private readonly serialNumber: string;
+  /** Maximum livestream duration in seconds (0 = unlimited). */
+  private readonly maxLivestreamSeconds: number;
 
   constructor(camera: CameraAccessory) {
     this.eufyClient = camera.platform.eufyClient;
     this.serialNumber = camera.device.getSerial();
     this.log = camera.log;
+    this.maxLivestreamSeconds = camera.platform.config.CameraMaxLivestreamDuration;
 
     this.log.debug(`LocalLivestreamManager initialized for ${camera.device.getName()} (serial: ${this.serialNumber})`);
+
+    // Disable eufy-security-client's built-in timer — we manage it ourselves
+    // so we can reset it when a new consumer joins.
+    this.eufyClient.setCameraMaxLivestreamDuration(0);
 
     this.eufyClient.on('station livestream start', this.onStationLivestreamStart);
     this.eufyClient.on('station livestream stop', this.onStationLivestreamStop);
@@ -43,23 +57,94 @@ export class LocalLivestreamManager {
 
   /** Destroy active streams and reset state. */
   private destroyStreams(): void {
+    if (this.maxDurationTimer) {
+      clearTimeout(this.maxDurationTimer);
+      this.maxDurationTimer = null;
+    }
     if (this.stationStream) {
       this.stationStream.audiostream.unpipe();
       this.stationStream.audiostream.destroy();
       this.stationStream.videostream.unpipe();
       this.stationStream.videostream.destroy();
       this.stationStream = null;
+      this.activeConsumers = 0;
     }
   }
 
-  /** Return the active livestream, or start a new one. Concurrent callers share the same pending request. */
-  public async getLocalLiveStream(): Promise<LivestreamData> {
-    if (this.stationStream) {
-      const runtime = ((Date.now() - this.stationStream.createdAt) / 1000).toFixed(1);
-      this.log.debug(`Reusing livestream started ${runtime}s ago.`);
-      return this.stationStream;
+  /**
+   * (Re)start the max-duration timer.  Called each time a new consumer joins
+   * so that every consumer gets the full configured duration from the moment
+   * it starts watching.
+   */
+  private resetMaxDurationTimer(): void {
+    if (this.maxLivestreamSeconds <= 0) return;
+
+    if (this.maxDurationTimer) {
+      clearTimeout(this.maxDurationTimer);
     }
-    return this.startLocalLiveStream();
+    this.log.debug(`Max-duration timer (re)set to ${this.maxLivestreamSeconds}s.`);
+    this.maxDurationTimer = setTimeout(() => {
+      this.maxDurationTimer = null;
+      this.log.info(
+        `Stopping livestream for ${this.serialNumber} — reached max duration ` +
+        `(${this.maxLivestreamSeconds}s).`,
+      );
+      this.forceStopLocalLiveStream();
+    }, this.maxLivestreamSeconds * 1000);
+  }
+
+  /**
+   * Return a forked copy of the active livestream, or start a new one.
+   * Each caller gets its own PassThrough fork so that when one consumer's
+   * FFmpeg exits and destroys its input, the underlying P2P stream survives
+   * for other consumers.  A consumer count tracks active forks so the P2P
+   * session is only stopped when the last consumer calls stopLocalLiveStream().
+   */
+  public async getLocalLiveStream(): Promise<LivestreamData> {
+    if (this.stopGraceTimer) {
+      clearTimeout(this.stopGraceTimer);
+      this.stopGraceTimer = null;
+      this.log.debug('Cancelled deferred stop — reusing active stream.');
+    }
+
+    if (!this.stationStream) {
+      await this.startLocalLiveStream();
+    }
+
+    if (!this.stationStream) {
+      throw new Error('Livestream failed to start.');
+    }
+
+    const runtime = ((Date.now() - this.stationStream.createdAt) / 1000).toFixed(1);
+    this.activeConsumers++;
+    this.resetMaxDurationTimer();
+    this.log.debug(
+      `Providing forked stream (consumers: ${this.activeConsumers}, ` +
+      `stream age: ${runtime}s).`,
+    );
+
+    return this.forkStream(this.stationStream);
+  }
+
+  /**
+   * Create PassThrough forks of the video and audio streams.  The forks
+   * automatically unpipe when closed so the originals stay healthy.
+   */
+  private forkStream(source: ActiveStream): LivestreamData {
+    const videoFork = new PassThrough();
+    const audioFork = new PassThrough();
+
+    source.videostream.pipe(videoFork);
+    source.audiostream.pipe(audioFork);
+
+    videoFork.on('close', () => source.videostream.unpipe(videoFork));
+    audioFork.on('close', () => source.audiostream.unpipe(audioFork));
+
+    return {
+      videostream: videoFork,
+      audiostream: audioFork,
+      metadata: source.metadata,
+    };
   }
 
   /** True when a P2P livestream is currently active. */
@@ -150,12 +235,45 @@ export class LocalLivestreamManager {
       this.pending = null;
       this.log.error(`Livestream failed after ${MAX_RETRIES + 1} attempts.`);
       p.deferred.reject(payload instanceof Error ? payload : new Error(String(payload)));
-      this.stopLocalLiveStream();
+      this.forceStopLocalLiveStream();
     }
   }
 
+  /**
+   * Signal that a consumer is done with its forked stream.  When the last
+   * consumer releases, the P2P session is stopped after a short grace period
+   * to allow a subsequent consumer (e.g. a livestream right after a snapshot)
+   * to reuse the session without a stop/start cycle.
+   */
   public stopLocalLiveStream(): void {
+    this.activeConsumers = Math.max(0, this.activeConsumers - 1);
+    this.log.debug(`Consumer released (remaining: ${this.activeConsumers}).`);
+
+    if (this.activeConsumers > 0) {
+      return;
+    }
+
+    // Last consumer — schedule a deferred stop
+    if (this.stopGraceTimer) return;
+    this.log.debug(`Deferring stream stop by ${STOP_GRACE_MS / 1000}s to allow reuse.`);
+    this.stopGraceTimer = setTimeout(() => {
+      this.stopGraceTimer = null;
+      if (this.activeConsumers > 0) {
+        this.log.debug('Grace period expired but new consumer(s) present — not stopping.');
+        return;
+      }
+      this.log.debug('Grace period expired — stopping stream now.');
+      this.forceStopLocalLiveStream();
+    }, STOP_GRACE_MS);
+  }
+
+  /** Unconditionally tear down the P2P session and all state. */
+  private forceStopLocalLiveStream(): void {
     this.log.debug('Stopping station livestream.');
+    if (this.stopGraceTimer) {
+      clearTimeout(this.stopGraceTimer);
+      this.stopGraceTimer = null;
+    }
     this.retryCount = 0;
     if (this.pending) {
       clearTimeout(this.pending.timer);
