@@ -77,13 +77,4 @@ jobs:
 
       - name: Publish to npm with OIDC
         if: steps.release-type.outputs.type != 'none'
-        run: |
-          for attempt in 1 2 3; do
-            if npm publish --tag ${{ steps.release-type.outputs.tag }} --provenance --access public; then
-              exit 0
-            fi
-            echo "Publish attempt $attempt failed, bumping prerelease version and retrying..."
-            npm version pre --preid=${{ steps.release-type.outputs.type }} --no-git-tag-version
-          done
-          echo "All publish attempts failed"
-          exit 1
+        run: npm publish --tag ${{ steps.release-type.outputs.tag }} --provenance --access public
