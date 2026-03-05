@@ -77,4 +77,4 @@ jobs:
 
       - name: Publish to npm with OIDC
         if: steps.release-type.outputs.type != 'none'
-        run: npm publish --tag ${{ steps.release-type.outputs.tag }} --access public
+        run: npm publish --tag ${{ steps.release-type.outputs.tag }} --provenance --access public
