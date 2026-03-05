@@ -30,26 +30,17 @@ export class LocalLivestreamManager {
   private stopGraceTimer: NodeJS.Timeout | null = null;
   /** Number of consumers currently holding a forked copy of the stream. */
   private activeConsumers = 0;
-  /** Per-consumer max-duration timer — resets each time a new consumer joins. */
-  private maxDurationTimer: NodeJS.Timeout | null = null;
 
   private readonly eufyClient: EufySecurity;
   private readonly log: Logger<ILogObj>;
   private readonly serialNumber: string;
-  /** Maximum livestream duration in seconds (0 = unlimited). */
-  private readonly maxLivestreamSeconds: number;
 
   constructor(camera: CameraAccessory) {
     this.eufyClient = camera.platform.eufyClient;
     this.serialNumber = camera.device.getSerial();
     this.log = camera.log;
-    this.maxLivestreamSeconds = camera.platform.config.CameraMaxLivestreamDuration;
 
     this.log.debug(`LocalLivestreamManager initialized for ${camera.device.getName()} (serial: ${this.serialNumber})`);
-
-    // Disable eufy-security-client's built-in timer — we manage it ourselves
-    // so we can reset it when a new consumer joins.
-    this.eufyClient.setCameraMaxLivestreamDuration(0);
 
     this.eufyClient.on('station livestream start', this.onStationLivestreamStart);
     this.eufyClient.on('station livestream stop', this.onStationLivestreamStop);
@@ -57,10 +48,6 @@ export class LocalLivestreamManager {
 
   /** Destroy active streams and reset state. */
   private destroyStreams(): void {
-    if (this.maxDurationTimer) {
-      clearTimeout(this.maxDurationTimer);
-      this.maxDurationTimer = null;
-    }
     if (this.stationStream) {
       this.stationStream.audiostream.unpipe();
       this.stationStream.audiostream.destroy();
@@ -69,28 +56,6 @@ export class LocalLivestreamManager {
       this.stationStream = null;
       this.activeConsumers = 0;
     }
-  }
-
-  /**
-   * (Re)start the max-duration timer.  Called each time a new consumer joins
-   * so that every consumer gets the full configured duration from the moment
-   * it starts watching.
-   */
-  private resetMaxDurationTimer(): void {
-    if (this.maxLivestreamSeconds <= 0) return;
-
-    if (this.maxDurationTimer) {
-      clearTimeout(this.maxDurationTimer);
-    }
-    this.log.debug(`Max-duration timer (re)set to ${this.maxLivestreamSeconds}s.`);
-    this.maxDurationTimer = setTimeout(() => {
-      this.maxDurationTimer = null;
-      this.log.info(
-        `Stopping livestream for ${this.serialNumber} — reached max duration ` +
-        `(${this.maxLivestreamSeconds}s).`,
-      );
-      this.forceStopLocalLiveStream();
-    }, this.maxLivestreamSeconds * 1000);
   }
 
   /**
@@ -117,7 +82,6 @@ export class LocalLivestreamManager {
 
     const runtime = ((Date.now() - this.stationStream.createdAt) / 1000).toFixed(1);
     this.activeConsumers++;
-    this.resetMaxDurationTimer();
     this.log.debug(
       `Providing forked stream (consumers: ${this.activeConsumers}, ` +
       `stream age: ${runtime}s).`,
