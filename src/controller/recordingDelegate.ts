@@ -19,7 +19,7 @@ import { snapshotDelegate } from './snapshotDelegate.js';
 
 const MAX_RECORDING_MINUTES = 1; // should never be used
 /** Max time (ms) to wait for the next fMP4 box before considering the stream stalled. */
-const SEGMENT_HEARTBEAT_TIMEOUT_MS = 10_000;
+const SEGMENT_HEARTBEAT_TIMEOUT_MS = 30_000;
 
 const HKSVQuitReason = [
   'Normal',
@@ -266,31 +266,22 @@ export class RecordingDelegate implements CameraRecordingDelegate {
   }
 
   updateRecordingActive(active: boolean): void {
-    log.debug(`Recording: ${active}`, this.accessory.displayName);
+    log.info(this.camera.getName(), `HKSV updateRecordingActive: ${active}`);
   }
 
   updateRecordingConfiguration(configuration: CameraRecordingConfiguration | undefined): void {
+    log.info(this.camera.getName(), `HKSV updateRecordingConfiguration called: ${configuration ? 'config received' : 'undefined'}`);
     this.configuration = configuration;
   }
 
   closeRecordingStream(streamId: number, reason: HDSProtocolSpecificErrorReason | undefined): void {
-    log.info(this.camera.getName(), 'Closing recording process');
-
-    this.closeReason = reason;
-    this.handlingStreamingRequest = false;
+    log.info(this.camera.getName(),
+      `Closing recording process (reason: ${reason !== undefined ? HKSVQuitReason[reason] ?? reason : 'none'})`);
 
     if (this.session) {
       log.debug(this.camera.getName(), 'Stopping recording session.');
-      const isCancelled = reason === HDSProtocolSpecificErrorReason.CANCELLED;
-
-      if (isCancelled) {
-        this.session.socket?.destroy();
-        this.session.ffmpeg?.stop();
-      } else {
-        this.session.ffmpeg?.stop();
-        const socket = this.session.socket;
-        setTimeout(() => socket?.destroy(), 2_500);
-      }
+      this.session.socket?.destroy();
+      this.session.process?.kill('SIGKILL');
       this.session = undefined;
     } else {
       log.warn('Recording session could not be closed gracefully.');
@@ -298,6 +289,9 @@ export class RecordingDelegate implements CameraRecordingDelegate {
 
     this.clearForceStopTimeout();
     this.resetMotionSensor();
+
+    this.closeReason = reason;
+    this.handlingStreamingRequest = false;
   }
 
   acknowledgeStream(streamId) {
