@@ -136,10 +136,14 @@ export function probeHardwareEncoder(hostSystem: string): HardwareEncoder | null
 
     for (const candidate of toTry) {
         try {
+            // Include candidate-specific options (e.g. `-allow_sw 1` for VideoToolbox)
+            // so the probe reflects actual encoding conditions.
+            const extraArgs = candidate.options ? candidate.options.split(/\s+/) : [];
             execFileSync(ffmpegExec, [
                 '-hide_banner', '-loglevel', 'error',
                 '-f', 'lavfi', '-i', 'color=black:s=64x64:d=0.1',
                 '-c:v', candidate.encoder,
+                ...extraArgs,
                 '-frames:v', '1',
                 '-f', 'null', '-',
             ], { timeout: 10_000, stdio: ['pipe', 'pipe', 'pipe'] });
@@ -465,13 +469,30 @@ export class FFmpegParameters {
                 this.bitrate = bitrate;
                 this.bufsize = bitrate * 2;
                 this.maxrate = bitrate;
+
+                // Resolve H.264 profile & level from the HomeKit request.
+                const startReq = request as StartStreamRequest;
+                const profile =
+                    startReq.video.profile === H264Profile.HIGH
+                        ? 'high'
+                        : startReq.video.profile === H264Profile.MAIN
+                            ? 'main'
+                            : 'baseline';
+                const level =
+                    startReq.video.level === H264Level.LEVEL4_0
+                        ? '4.0'
+                        : startReq.video.level === H264Level.LEVEL3_2
+                            ? '3.2'
+                            : '3.1';
+
                 if (isNonEmpty(videoConfig.encoderOptions)) {
                     this.codecOptions = videoConfig.encoderOptions;
+                } else if (this.codec === 'libx264') {
+                    this.codecOptions = `-preset ultrafast -tune zerolatency -profile:v ${profile} -level:v ${level}`;
                 } else {
                     const hw = probeHardwareEncoder('generic');
-                    this.codecOptions = (hw && this.codec === hw.encoder)
-                        ? hw.customOptions
-                        : '-preset ultrafast -tune zerolatency';
+                    const hwOpts = (hw && this.codec === hw.encoder) ? hw.customOptions : '';
+                    this.codecOptions = `${hwOpts} -profile:v ${profile} -level:v ${level}`.trim();
                 }
                 this.pixFormat = 'yuv420p';
                 this.colorRange = 'mpeg';
@@ -752,7 +773,7 @@ export class FFmpegParameters {
             if (this.pixFormat) params.push(`-pix_fmt ${this.pixFormat}`);
             if (this.colorRange) params.push(`-color_range ${this.colorRange}`);
             if (this.codecOptions) params.push(this.codecOptions);
-            if (this.codec !== 'copy') params.push('-sc_threshold 0');
+            if (this.codec === 'libx264') params.push('-sc_threshold 0');
 
             params.push(...this.buildVideoFilterParams());
 
