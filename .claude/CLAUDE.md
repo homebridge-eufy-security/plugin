@@ -95,6 +95,7 @@ gh pr create --base beta-*.*.* --title "<concise title>" --body-file /tmp/pr-bod
 - Describe the **spirit** of the change, not the code diff
 - Concise description of the problem and fix
 - PR body is **not** the release note -- keep it focused on the code change for reviewers
+- No Co-Authored-By
 
 ### Release notes
 
