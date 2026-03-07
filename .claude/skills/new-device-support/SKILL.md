@@ -99,35 +99,22 @@ Execute the plan. Key implementation notes:
 - **Companion custom properties**: Some properties have required companions with `custom_*` keys that never appear in raw device data (they're populated at runtime). The script detects these and marks them with `⚠ companion`. Always include them — omitting a companion breaks functionality silently. Key pairs: `DeviceRTSPStream` → `DeviceRTSPStreamUrl`, `DeviceWifiRSSI` → `DeviceWifiSignalLevel`, `DeviceCellularRSSI` → `DeviceCellularSignalLevel`.
 - **Insert in order**: When adding to enums, switch statements, or `if` chains, maintain numeric ordering by device type number.
 - **Audio recording property**: Different device families use different audio recording property constants (e.g. `DeviceAudioRecordingProperty`, `DeviceAudioRecordingStarlight4gLTEProperty`). Match the closest existing device.
-- **No Co-Authored-By**: Do not add co-author lines to commits.
 
 ## Phase 4 — Build & Lint Verification
 
-Run these in parallel:
-```bash
-cd eufy-security-client && npm run build
-cd homebridge-eufy-security && npm run build
-```
-
-Then verify lint:
-```bash
-cd eufy-security-client && npm run lint
-cd homebridge-eufy-security && npm run lint
-```
-
-Note: eufy-security-client lint may fail due to a pre-existing `jiti` library issue unrelated to our changes. The TypeScript build succeeding is sufficient validation.
+Run build and lint for both repos. Note: eufy-security-client lint may fail due to a pre-existing `jiti` library issue unrelated to our changes — the TypeScript build succeeding is sufficient validation.
 
 ## Phase 5 — Git & PR
 
-### eufy-security-client
+Follow CLAUDE.md Git Workflow for commit messages, branch naming, and PR body format. This skill creates **two PRs** across repos:
 
-1. Discard any unrelated changes (e.g. `package-lock.json`)
-2. Sync develop with upstream: `git fetch upstream && git checkout develop && git merge upstream/develop`
-3. Create branch: `git checkout -b feat/<device-slug>`
-4. Stage only relevant files (images (should match the `<device-slug>`), `src/http/types.ts`, `src/http/device.ts`, `src/push/service.ts`, `docs/supported_devices.md`)
-5. Commit: `git commit -m "feat: add <Device Name> (<Model>, type <number>) support"`
-6. Push: `git push origin feat/<device-slug>`
-7. Create cross-fork PR:
+### eufy-security-client (cross-fork)
+
+1. Discard unrelated changes (e.g. `package-lock.json`)
+2. Sync develop: `git fetch upstream && git checkout develop && git merge upstream/develop`
+3. Branch: `git checkout -b feat/<device-slug>`
+4. Stage only: images, `src/http/types.ts`, `src/http/device.ts`, `src/push/service.ts`, `docs/supported_devices.md`
+5. Cross-fork PR:
    ```bash
    gh pr create --repo bropat/eufy-security-client --base develop \
      --head lenoxys:feat/<device-slug> \
@@ -137,26 +124,9 @@ Note: eufy-security-client lint may fail due to a pre-existing `jiti` library is
 
 ### homebridge-eufy-security
 
-1. Branch from the current beta branch (check with `git branch`): `git checkout -b feat/<device-slug>`
+1. Branch from current beta: `git checkout -b feat/<device-slug>`
 2. Stage: `homebridge-ui/public/utils/device-images.js` + any added image
-3. Commit: `git commit -m "feat: add <Device Name> (<Model>, type <number>) device image mapping"`
-4. Push: `git push origin feat/<device-slug>`
-5. Create PR:
-   ```bash
-   gh pr create --repo homebridge-plugins/homebridge-eufy-security \
-     --base <beta-branch> \
-     --title "feat: add <Device Name> (<Model>, type <number>) device image" \
-     --body-file /tmp/pr-body-<branch>.md
-   ```
 
-### PR body format
+### Cross-referencing
 
-Write PR bodies to `/tmp/pr-body-<branch>.md` files. Include:
-- `## Summary` — bullet points describing the changes
-- Cross-references: `Closes homebridge-plugins/homebridge-eufy-security#<issue>` in the client PR, `Closes #<issue>` in the plugin PR
-- `Depends on bropat/eufy-security-client#<pr>` in the plugin PR
-- `## Test plan` — checklist of verification steps
-
-### Link the issue
-
-After both PRs are created, update both PR bodies so they reference the issue with closing keywords.
+After both PRs are created, update both bodies so they reference each other.

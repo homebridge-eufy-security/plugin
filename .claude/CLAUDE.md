@@ -8,6 +8,8 @@ Homebridge plugin that exposes Eufy Security devices to Apple HomeKit. Published
 
 Depends on `eufy-security-client` (upstream: bropat/eufy-security-client) for cloud API, P2P, push notifications, and MQTT communication.
 
+For detailed functional requirements, device coverage, configuration options, and architecture boundaries, see `.claude/PRD.md`.
+
 ## Build & Dev Commands
 
 ```bash
@@ -17,9 +19,10 @@ npm run lint           # eslint 'src/**/*.ts' --max-warnings=0
 npm run lint-fix       # eslint with --fix
 ```
 
+- No test suite -- there are no unit or integration tests
 - Output: `dist/`
 - `--max-warnings=0` is enforced -- all warnings must be fixed before committing
-- `@typescript-eslint/no-explicit-any` is globally disabled; do not add eslint-disable comments for it
+- ESLint uses flat config (`eslint.config.mjs`); `@typescript-eslint/no-explicit-any` is globally disabled -- do not add eslint-disable comments for it
 - Run `npm run lint` and `npm run build` before pushing
 
 ## Architecture
@@ -27,11 +30,12 @@ npm run lint-fix       # eslint with --fix
 Entry point `src/index.ts` registers `EufySecurityPlatform` with Homebridge. The platform class (`src/platform.ts`) is the core -- it initializes the `EufySecurity` client, discovers devices, and creates HomeKit accessories.
 
 **Accessory classes** in `src/accessories/` map Eufy device types to HomeKit services:
-- `CameraAccessory` -- cameras, doorbells, floodlights (handles streaming delegates)
-- `StationAccessory` -- base stations (security system service for arm/disarm)
-- `LockAccessory`, `EntrySensorAccessory`, `MotionSensorAccessory`, `SmartDropAccessory`
+- `BaseAccessory.ts` -- root base class (characteristic registration, service pruning)
+- `Device.ts` (`DeviceAccessory`) -- extends `BaseAccessory`; adds sensor/battery services, property helpers
+- `CameraAccessory` -- cameras, doorbells, floodlights (handles streaming delegates); extends `DeviceAccessory`
+- `StationAccessory` -- base stations (security system service for arm/disarm); extends `BaseAccessory` directly
+- `LockAccessory`, `EntrySensorAccessory`, `MotionSensorAccessory`, `SmartDropAccessory` -- extend `DeviceAccessory`
 - `AutoSyncStationAccessory` -- virtual accessory that syncs station guard mode with HomeKit
-- `Device.ts` -- base class shared by all accessories
 
 **Streaming pipeline** in `src/controller/`:
 - `streamingDelegate.ts` -- HomeKit camera streaming (FFmpeg-based)
@@ -39,20 +43,19 @@ Entry point `src/index.ts` registers `EufySecurityPlatform` with Homebridge. The
 - `snapshotDelegate.ts` -- snapshot handling
 - `LocalLivestreamManager.ts` -- manages P2P livestream sessions
 
-**Utilities** in `src/utils/`: logging (`utils.ts`), FFmpeg wrapper (`ffmpeg.ts`), two-way audio (`Talkback.ts`).
+**Utilities** in `src/utils/`: logging (`utils.ts`), FFmpeg wrapper (`ffmpeg.ts`), two-way audio (`Talkback.ts`), config schema (`configTypes.ts`), internal interfaces (`interfaces.ts`).
 
-**Plugin UI** in `homebridge-ui/`: `server.js` handles UI server logic and diagnostics generation.
+**Constants** in `src/settings.ts`: HKSV segment lengths, snapshot cache ages, streaming bitrate headroom, IDR intervals -- reference this when tuning streaming or recording behaviour.
+
+**Plugin UI** in `homebridge-ui/`: `server.js` (plain JS, eslint-ignored) handles UI server logic and diagnostics generation. The UI and the plugin runtime (`src/`) are **separate processes** that share state through `accessories.json` on disk (written by `src/utils/accessoriesStore.ts`, read by `homebridge-ui/server.js`). Both independently import `eufy-security-client` types (`DeviceType`, `PropertyName`, `Device`, etc.) -- changes to the device/station record shape must be kept in sync between `accessoriesStore.ts` and `server.js`.
 
 ### Key source files for device registration and triage
 
 - `src/platform.ts` (`register_device`) -- device registration logic; devices can stack multiple capabilities (independent `if` blocks, not `else if`)
-- `src/accessories/BaseAccessory.ts` -- characteristic registration, service pruning
-- `src/accessories/Device.ts` -- sensor/battery service, property helpers
-- `src/accessories/<Type>Accessory.ts` -- device-specific HomeKit mapping
 
 ## Key Technical Details
 
-- ESM project (`"type": "module"`) -- imports use `.js` extensions
+- ESM project (`"type": "module"`, `"module": "NodeNext"`) -- imports must use `.js` extensions (NodeNext resolution requires explicit extensions)
 - TypeScript strict mode, ES2022 target (`noImplicitAny: false` relaxes implicit-any checks)
 - Node.js 20, 22, or 24 required
 - Homebridge >=1.9.0 or ^2.0.0-beta
@@ -131,9 +134,24 @@ When updating the `eufy-security-client` version in `package.json`:
 3. Summarize the impact in the PR body
 4. If there are breaking changes, note any required code adjustments
 
+## Skills
+
+Skills in `.claude/skills/` provide structured workflows for common tasks:
+
+| Skill | Purpose |
+|---|---|
+| `planner` | Build a step-by-step action plan with guardrails before coding |
+| `developer` | Execute code changes following an approved plan or direct instructions |
+| `qa` | Verify build, lint, imports, architecture, and git hygiene before pushing |
+| `architect` | Quick codebase questions, mini-bug debugging, workflow improvement |
+| `support` | Triage GitHub issues using diagnostics archives and logs |
+| `new-device-support` | Full workflow to add a new Eufy device type across both repos |
+
+Typical flow: **planner** -> **developer** -> **qa**. Use **architect** for exploration and **support** for issue triage.
+
 ## Diagnostic Triage
 
-For issue triage using diagnostics archives, see the full triage prompt at `.github/prompts/diag-triage.prompt.md`. For adding new device types, use the `new-device-support` skill. Key points:
+For issue triage, use the `support` skill with an issue number (e.g. `/support 423`). For the full triage reference, see `.github/prompts/diag-triage.prompt.md`. For adding new device types, use the `new-device-support` skill. Key points:
 
 - Diagnostics archives are encrypted (RSA-4096 + AES-256-GCM); decrypt with `node scripts/decrypt-diagnostics.mjs <file>.tar.gz.enc`
 - Always check archive completeness before analysis -- missing runtime logs means the plugin wasn't running
