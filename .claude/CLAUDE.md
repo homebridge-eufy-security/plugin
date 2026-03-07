@@ -57,7 +57,8 @@ Entry point `src/index.ts` registers `EufySecurityPlatform` with Homebridge. The
 - Node.js 20, 22, or 24 required
 - Homebridge >=1.9.0 or ^2.0.0-beta
 - Uses `ffmpeg-for-homebridge` for video transcoding
-- `src/version.ts` is auto-generated at prebuild time -- do not edit manually.
+- `src/version.ts` is auto-generated at prebuild time -- do not edit manually
+- `prepublishOnly` runs lint + build automatically before `npm publish`
 - For local development, `eufy-security-client` can be pointed to a local path (e.g. `"../eufy-security-client"`)
 
 ## Git Workflow
@@ -101,7 +102,9 @@ gh pr create --base beta-*.*.* --title "<concise title>" --body-file /tmp/pr-bod
 - **Audience is end users** -- focus on what matters to them: new devices, behaviour changes, removed settings, required actions
 - **Concise, bullet-driven** -- no markdown tables, no verbose paragraphs. Short section intros (1-2 sentences max) followed by bullet lists
 - **No internal milestones** -- don't mention "first GA since X" or beta iteration counts
-- **Structure for a branch** (e.g., `4.4.x`), not a single version
+- **Structure for a branch** (e.g., `4.4.x`), not a single version:
+  - Individual `## v4.4.x` entries at the top with version-specific changes
+  - A shared `## What's in 4.4.x` section below covering the full branch
 - **Required actions front and center** -- if users need to change config or upgrade Node.js, say so early and clearly
 - **Tone**: direct, no filler, no emojis
 
@@ -129,7 +132,7 @@ When updating the `eufy-security-client` version in `package.json`:
 
 ## Diagnostic Triage
 
-For issue triage using diagnostics archives, see the full triage prompt at `.github/prompts/diag-triage.prompt.md`. Key points:
+For issue triage using diagnostics archives, see the full triage prompt at `.github/prompts/diag-triage.prompt.md`. For adding new device types, use the `new-device-support` skill. Key points:
 
 - Diagnostics archives are encrypted (RSA-4096 + AES-256-GCM); decrypt with `node scripts/decrypt-diagnostics.mjs <file>.tar.gz.enc`
 - Always check archive completeness before analysis -- missing runtime logs means the plugin wasn't running
