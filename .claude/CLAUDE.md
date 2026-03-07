@@ -12,7 +12,7 @@ Depends on `eufy-security-client` (upstream: bropat/eufy-security-client) for cl
 
 ```bash
 npm run build          # rimraf dist -> tsc -> copy media/ to dist/
-npm run build-plugin   # tsc only (no media copy)
+npm run build-plugin   # rimraf dist -> tsc (no media copy)
 npm run lint           # eslint 'src/**/*.ts' --max-warnings=0
 npm run lint-fix       # eslint with --fix
 ```
@@ -30,6 +30,7 @@ Entry point `src/index.ts` registers `EufySecurityPlatform` with Homebridge. The
 - `CameraAccessory` -- cameras, doorbells, floodlights (handles streaming delegates)
 - `StationAccessory` -- base stations (security system service for arm/disarm)
 - `LockAccessory`, `EntrySensorAccessory`, `MotionSensorAccessory`, `SmartDropAccessory`
+- `AutoSyncStationAccessory` -- virtual accessory that syncs station guard mode with HomeKit
 - `Device.ts` -- base class shared by all accessories
 
 **Streaming pipeline** in `src/controller/`:
@@ -52,11 +53,12 @@ Entry point `src/index.ts` registers `EufySecurityPlatform` with Homebridge. The
 ## Key Technical Details
 
 - ESM project (`"type": "module"`) -- imports use `.js` extensions
-- TypeScript strict mode, ES2022 target
+- TypeScript strict mode, ES2022 target (`noImplicitAny: false` relaxes implicit-any checks)
 - Node.js 20, 22, or 24 required
 - Homebridge >=1.9.0 or ^2.0.0-beta
 - Uses `ffmpeg-for-homebridge` for video transcoding
-- `src/version.ts` is auto-generated at prebuild time -- do not edit manually
+- `src/version.ts` is auto-generated at prebuild time -- do not edit manually.
+- For local development, `eufy-security-client` can be pointed to a local path (e.g. `"../eufy-security-client"`)
 
 ## Git Workflow
 
