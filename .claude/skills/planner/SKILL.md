@@ -88,6 +88,10 @@ Output the plan in this format:
 
 Wait for the user to approve, modify, or reject before proceeding.
 
+## Chaining
+
+When the user approves the plan (says "go", "looks good", "approved", "do it", etc.), immediately invoke the **developer** skill to execute it. Pass the approved plan as context -- do not ask the user to repeat it.
+
 ## What NOT to do
 
 - Never start editing files during planning

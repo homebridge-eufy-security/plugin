@@ -65,6 +65,11 @@ Read the full diff and check for: accidental debug logging, hardcoded values tha
 ### Ready to push: YES / NO
 ```
 
+## Chaining
+
+- **If QA passes**: Ask the user if they want to push and/or create a PR.
+- **If QA fails**: Fix issues that are safe to fix silently (typos, missing `.js` extensions). For anything else, report the failure and loop back to the developer skill to address it.
+
 ## When to flag vs fix
 
 - **Typos in your own changes**: Fix silently

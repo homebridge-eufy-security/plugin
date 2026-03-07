@@ -47,6 +47,10 @@ If either fails, fix the issue immediately. Do not commit code that doesn't lint
 
 Follow the git workflow from CLAUDE.md. Stage each logical change individually.
 
+## Chaining
+
+After committing, automatically invoke the **qa** skill to verify the changes before pushing. Do not wait for the user to ask -- QA is part of the development flow.
+
 ## When things go wrong
 
 - **Lint failure**: Fix the warning. Don't disable the rule.
