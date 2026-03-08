@@ -738,6 +738,24 @@ export class FFmpegParameters {
     }
 
     /**
+     * Overrides the default scale/crop behaviour so a portrait (tall) source
+     * is fitted inside the target resolution with black sidebars instead of
+     * being cropped.  The `none` sentinel prevents `buildVideoFilterParams`
+     * from appending any additional default scaling.
+     */
+    public setPortraitPadFilter(): void {
+        if (!this.width || !this.height) {
+            return;
+        }
+        this.crop = false;
+        this.filters = [
+            `scale=-2:${this.height}:force_original_aspect_ratio=decrease`,
+            `pad=${this.width}:${this.height}:(ow-iw)/2:(oh-ih)/2:black`,
+            'none',
+        ].join(',');
+    }
+
+    /**
      * Builds scale/crop video filter arguments based on current width, height, crop settings,
      * and any user-specified filters. Shared between video and snapshot encoding.
      */

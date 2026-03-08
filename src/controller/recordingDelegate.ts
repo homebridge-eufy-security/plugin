@@ -140,6 +140,15 @@ export class RecordingDelegate implements CameraRecordingDelegate {
       videoParams.setupForRecording(videoConfig, this.configuration);
       audioParams.setupForRecording(videoConfig, this.configuration);
 
+      // E340 Dual Camera Doorbell stitches two camera feeds into a single
+      // portrait stream (1600×2200 native).  The default crop filter would
+      // discard most of the frame to fit landscape 1920×1080.  Instead, pad
+      // the portrait image into the landscape container with black sidebars.
+      if (this.camera.isBatteryDoorbellDualE340()) {
+        log.debug(this.camera.getName(), 'E340 portrait feed detected — using pad filter for HKSV recording.');
+        videoParams.setPortraitPadFilter();
+      }
+
       await this.configureInputSource(videoParams, audioParams);
 
       // Opportunistically capture a snapshot from the HKSV recording stream
